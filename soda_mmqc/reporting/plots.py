@@ -11,11 +11,24 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from soda_mmqc.core.property_rollup import instance_eligible_for_mean_score
-from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, field_order, leaf_property_tail
+from soda_mmqc.reporting.aggregate import (
+    RunSummaries,
+    RunSummary,
+    field_order,
+    field_order_for_summary,
+    leaf_property_tail,
+    load_check_schema_dict,
+    schema_leaf_property_patterns,
+)
 from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
     COMPARISON_SERIES_OPACITIES,
     COMPARISON_SERIES_PATTERNS,
+    COMPARISON_BOX_FILLS,
+    COMPARISON_BOX_LINES,
+    COMPARISON_INSTANCE_JITTER_STDDEV,
+    COMPARISON_INSTANCE_MARKER_OPACITY,
+    COMPARISON_INSTANCE_MARKER_SIZE,
     INSTANCE_SCORE_MARKER_COLOR,
     INSTANCE_SCORE_MARKER_BORDER_COLOR,
     INSTANCE_SCORE_MARKER_BORDER_WIDTH,
@@ -78,6 +91,25 @@ def _zero_rangemode() -> dict[str, str]:
     return {"rangemode": "tozero"}
 
 
+def _stack_segment_text(values: Sequence[int | float]) -> list[str]:
+    """Text labels for stacked bar segments (omit zeros)."""
+    return [str(int(value)) if value > 0 else "" for value in values]
+
+
+def _apply_stacked_bar_labels(fig: go.Figure) -> None:
+    """Show segment counts inside stacked bar traces."""
+    for trace in fig.data:
+        if trace.type != "bar":
+            continue
+        y_values = trace.y
+        if y_values is None:
+            continue
+        trace.text = _stack_segment_text(y_values)
+        trace.textposition = "inside"
+        trace.insidetextanchor = "middle"
+        trace.textfont = dict(color="white", size=10)
+
+
 def _apply_plot_template(fig: go.Figure) -> go.Figure:
     """Apply the shared Plotly template to a reporting figure."""
     fig.update_layout(template=PLOTLY_TEMPLATE)
@@ -87,7 +119,7 @@ def _apply_plot_template(fig: go.Figure) -> go.Figure:
 def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
     """Per-property mean scores for supplementary bar charts."""
     rows: list[dict[str, Any]] = []
-    for leaf_property in field_order(summary.manifest, summary.by_property.keys()):
+    for leaf_property in field_order_for_summary(summary):
         rollup = summary.by_property[leaf_property]
         rows.append(
             {
@@ -266,6 +298,13 @@ def _series_label(summary: RunSummary, *, compare: Literal["prompt", "model"]) -
     return summary.prompt if compare == "prompt" else summary.model
 
 
+def _comparison_box_style(series_index: int) -> tuple[str, str]:
+    """Return (fill, line) colors for a comparison box/scatter series."""
+    fill = COMPARISON_BOX_FILLS[series_index % len(COMPARISON_BOX_FILLS)]
+    line = COMPARISON_BOX_LINES[series_index % len(COMPARISON_BOX_LINES)]
+    return fill, line
+
+
 def _comparison_series_opacity(series_index: int, series_count: int) -> float:
     """Fade later comparison series so grouped bars stay distinguishable."""
     if series_index < len(COMPARISON_SERIES_OPACITIES):
@@ -381,6 +420,10 @@ def _plot_comparison_stacked(
                     x=list(series_order),
                     y=values,
                     name=outcome,
+                    text=_stack_segment_text(values),
+                    textposition="inside",
+                    insidetextanchor="middle",
+                    textfont=dict(color="white", size=9),
                     marker=_comparison_marker_for_points(
                         color_map[outcome],
                         series_indices=series_indices,
@@ -506,6 +549,7 @@ def _plot_property_stacked(
         labels={"field": "leaf field", "outcome": outcome_label},
     )
     fig.update_layout(yaxis=_zero_rangemode())
+    _apply_stacked_bar_labels(fig)
     return _apply_plot_template(fig)
 
 
@@ -538,8 +582,16 @@ def plot_comparison_mean_scores(
     model: str | None = None,
     prompt: str | None = None,
     title: str | None = None,
+    show_instances: bool = False,
+    compact: bool = False,
 ) -> go.Figure:
-    """Grouped mean-score bars across prompts (or models) per leaf field."""
+    """Grouped mean-score bars across prompts (or models) per leaf field.
+
+    When ``show_instances`` is True, draw grouped box plots with small
+    transparent instance scatters per prompt (or model).
+
+    When ``compact`` is True, pack fields closer on the x-axis (overview grids).
+    """
     selected = _comparison_summaries(
         summaries,
         compare=compare,
@@ -549,16 +601,131 @@ def plot_comparison_mean_scores(
     field_order_keys: list[str] = []
     seen: set[str] = set()
     for summary in selected:
-        for leaf_property in field_order(
-            summary.manifest, summary.by_property.keys()
-        ):
+        for leaf_property in summary.by_property.keys():
             if leaf_property not in seen:
                 seen.add(leaf_property)
                 field_order_keys.append(leaf_property)
+    preferred = schema_leaf_property_patterns(
+        load_check_schema_dict(selected[0].checklist, selected[0].check)
+    )
+    field_order_keys = field_order(
+        selected[0].manifest,
+        field_order_keys,
+        preferred=preferred,
+    )
     field_labels = [leaf_property_tail(key) for key in field_order_keys]
+
+    if title is None:
+        if compare == "prompt":
+            title = f"Mean scores by field — model={model}"
+        else:
+            title = f"Mean scores by field — prompt={prompt}"
 
     fig = go.Figure()
     series_count = len(selected)
+    if not field_labels or series_count == 0:
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    if show_instances:
+        field_spacing = 0.55 if compact else 1.0
+        group_span = 0.42 if compact else 0.70
+        jitter_scale = 0.7 if compact else 1.0
+        field_to_x = {
+            label: float(index) * field_spacing
+            for index, label in enumerate(field_labels)
+        }
+        box_width = group_span / max(series_count, 1)
+        rng = np.random.default_rng(0)
+        legend_labels: set[str] = set()
+
+        for series_index, summary in enumerate(selected):
+            label = _series_label(summary, compare=compare)
+            fill_color, line_color = _comparison_box_style(series_index)
+            show_in_legend = label not in legend_labels
+            if show_in_legend:
+                legend_labels.add(label)
+            inst = applicable_instance_scores_frame(summary)
+            for field_label in field_labels:
+                if inst.empty:
+                    continue
+                field_scores = inst.loc[
+                    inst["field"] == field_label, "score"
+                ].tolist()
+                if not field_scores:
+                    continue
+                x_center = (
+                    field_to_x[field_label]
+                    + (series_index - (series_count - 1) / 2) * box_width
+                )
+                fig.add_trace(
+                    go.Box(
+                        x=[x_center] * len(field_scores),
+                        y=field_scores,
+                        name=label,
+                        legendgroup=label,
+                        showlegend=show_in_legend,
+                        width=box_width * 0.85,
+                        boxpoints=False,
+                        fillcolor=fill_color,
+                        line=dict(color=line_color, width=1.2),
+                        whiskerwidth=0.6,
+                        hovertemplate=(
+                            f"{label}<br>{field_label}"
+                            "<br>score: %{y:.3f}<extra></extra>"
+                        ),
+                    )
+                )
+                show_in_legend = False
+                jitter = rng.normal(
+                    0,
+                    COMPARISON_INSTANCE_JITTER_STDDEV * jitter_scale,
+                    size=len(field_scores),
+                )
+                fig.add_trace(
+                    go.Scatter(
+                        x=[x_center + offset for offset in jitter],
+                        y=field_scores,
+                        mode="markers",
+                        name=label,
+                        legendgroup=label,
+                        showlegend=False,
+                        marker=dict(
+                            size=COMPARISON_INSTANCE_MARKER_SIZE,
+                            color=line_color,
+                            opacity=COMPARISON_INSTANCE_MARKER_OPACITY,
+                            line=dict(width=0),
+                        ),
+                        hovertemplate=(
+                            f"{label}<br>{field_label}"
+                            "<br>score: %{y:.3f}<extra></extra>"
+                        ),
+                    )
+                )
+
+        x_pad = field_spacing * 0.35
+        x_max = field_to_x[field_labels[-1]]
+        xaxis: dict[str, Any] = {
+            "tickmode": "array",
+            "tickvals": list(field_to_x.values()),
+            "ticktext": field_labels,
+            "range": [-x_pad, x_max + x_pad],
+            "title": None if compact else "leaf field",
+        }
+        if compact:
+            xaxis["tickangle"] = -35
+            xaxis["tickfont"] = dict(size=9)
+        fig.update_layout(
+            title=title,
+            xaxis=xaxis,
+            yaxis=dict(
+                range=[0, MEAN_SCORE_Y_MAX],
+                title=None if compact else "score",
+                tickfont=dict(size=9) if compact else None,
+            ),
+        )
+        return _apply_plot_template(fig)
+
     for series_index, summary in enumerate(selected):
         label = _series_label(summary, compare=compare)
         scores = [
@@ -581,11 +748,6 @@ def plot_comparison_mean_scores(
             )
         )
 
-    if title is None:
-        if compare == "prompt":
-            title = f"Mean scores by field — model={model}"
-        else:
-            title = f"Mean scores by field — prompt={prompt}"
     fig.update_layout(
         title=title,
         barmode="group",
@@ -908,3 +1070,185 @@ def build_dashboard(
         layout_kwargs[f"legend{col}"] = legend_layout
     fig.update_layout(**layout_kwargs)
     return _apply_plot_template(fig)
+
+
+def key_field_role_instance_frame(
+    check_summaries: Mapping[str, RunSummaries],
+    *,
+    models: Sequence[str],
+    role: str,
+    mapping: Sequence[tuple[str, Mapping[str, Sequence[str]]]] | None = None,
+) -> pd.DataFrame:
+    """Applicable instance scores for one curated key-field role.
+
+    Columns: check, model, prompt, role, fields, field, score.
+    Uses the best prompt (by macro) per check × model.
+    """
+    from soda_mmqc.reporting.key_fields import (
+        FIG_KEY_FIELD_SUMMARY,
+        KEY_FIELD_ROLES,
+        best_prompt_summary,
+        role_field_label,
+    )
+
+    if mapping is None:
+        mapping = FIG_KEY_FIELD_SUMMARY
+    if role not in KEY_FIELD_ROLES:
+        raise ValueError(f"role must be one of {KEY_FIELD_ROLES}, got {role!r}")
+
+    rows: list[dict[str, Any]] = []
+    for check, role_fields in mapping:
+        fields = tuple(role_fields.get(role, ()))
+        if not fields:
+            continue
+        summaries = check_summaries.get(check)
+        if summaries is None:
+            continue
+        field_set = set(fields)
+        for model in models:
+            best = best_prompt_summary(summaries, model=model)
+            if best is None:
+                continue
+            inst = applicable_instance_scores_frame(best)
+            if inst.empty:
+                continue
+            matched = inst.loc[inst["field"].isin(field_set)]
+            for row in matched.itertuples(index=False):
+                rows.append(
+                    {
+                        "check": check,
+                        "model": model,
+                        "prompt": best.prompt,
+                        "role": role,
+                        "fields": role_field_label(fields),
+                        "field": row.field,
+                        "score": float(row.score),
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def plot_key_field_role_scores(
+    frame: pd.DataFrame,
+    *,
+    role: str,
+    models: Sequence[str],
+    check_fields: Sequence[tuple[str, str]],
+    title: str | None = None,
+) -> go.Figure:
+    """Box + scatter of curated field instance scores; x-axis = checks.
+
+    Expects ``frame`` from :func:`key_field_role_instance_frame` for ``role``.
+    ``check_fields`` is ordered ``(check, fields_label)`` for tick labels.
+    """
+    if title is None:
+        title = f"Key-field {role} scores (best prompt)"
+    fig = go.Figure()
+    if not check_fields:
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    checks = [check for check, _ in check_fields]
+    tick_labels = [f"{check}<br>({fields})" for check, fields in check_fields]
+    check_spacing = 1.0
+    group_span = 0.70
+    series_count = max(len(models), 1)
+    box_width = group_span / series_count
+    check_to_x = {
+        check: float(index) * check_spacing for index, check in enumerate(checks)
+    }
+    rng = np.random.default_rng(0)
+    legend_labels: set[str] = set()
+
+    role_frame = frame
+    if not frame.empty and "role" in frame.columns:
+        role_frame = frame.loc[frame["role"] == role]
+
+    for series_index, model in enumerate(models):
+        fill_color, line_color = _comparison_box_style(series_index)
+        show_in_legend = model not in legend_labels
+        if show_in_legend:
+            legend_labels.add(model)
+        model_frame = (
+            role_frame.loc[role_frame["model"] == model]
+            if not role_frame.empty
+            else role_frame
+        )
+        for check in checks:
+            if model_frame.empty:
+                continue
+            scores = model_frame.loc[
+                model_frame["check"] == check, "score"
+            ].tolist()
+            if not scores:
+                continue
+            fields_label = next(
+                (label for name, label in check_fields if name == check),
+                "",
+            )
+            x_center = (
+                check_to_x[check]
+                + (series_index - (series_count - 1) / 2) * box_width
+            )
+            fig.add_trace(
+                go.Box(
+                    x=[x_center] * len(scores),
+                    y=scores,
+                    name=model,
+                    legendgroup=model,
+                    showlegend=show_in_legend,
+                    width=box_width * 0.85,
+                    boxpoints=False,
+                    fillcolor=fill_color,
+                    line=dict(color=line_color, width=1.2),
+                    whiskerwidth=0.6,
+                    hovertemplate=(
+                        f"{model}<br>{check}<br>{fields_label}"
+                        "<br>score: %{y:.3f}<extra></extra>"
+                    ),
+                )
+            )
+            show_in_legend = False
+            jitter = rng.normal(
+                0.0,
+                COMPARISON_INSTANCE_JITTER_STDDEV,
+                size=len(scores),
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[x_center + offset for offset in jitter],
+                    y=scores,
+                    mode="markers",
+                    name=model,
+                    legendgroup=model,
+                    showlegend=False,
+                    marker=dict(
+                        size=COMPARISON_INSTANCE_MARKER_SIZE,
+                        color=line_color,
+                        opacity=COMPARISON_INSTANCE_MARKER_OPACITY,
+                        line=dict(width=0),
+                    ),
+                    hovertemplate=(
+                        f"{model}<br>{check}<br>{fields_label}"
+                        "<br>score: %{y:.3f}<extra></extra>"
+                    ),
+                )
+            )
+
+    fig.update_layout(
+        title=title,
+        xaxis=dict(
+            title="check",
+            tickmode="array",
+            tickvals=[check_to_x[check] for check in checks],
+            ticktext=tick_labels,
+            tickangle=-35,
+        ),
+        yaxis=dict(title="score", range=[-0.05, 1.05]),
+        height=max(420, 80 + 28 * len(checks)),
+        margin=dict(l=60, r=40, t=80, b=140),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0),
+        boxmode="overlay",
+    )
+    return _apply_plot_template(fig)
+

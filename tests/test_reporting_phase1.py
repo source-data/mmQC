@@ -139,6 +139,23 @@ class TestTables:
         assert profile.matching_metric == MatchingMetric.BINARY_POLARITY
         assert micrograph_row["TP"] + micrograph_row["TN"] > 0
 
+    def test_split_layer2_includes_multiclass_with_graded(self):
+        runs = load_flat_runs(
+            "fig-checklist",
+            "stat-significance-level",
+            models="gpt-5.4",
+            prompts="prompt.2",
+        )
+        assert runs
+        summary = aggregate_run(runs[0])
+        profile = summary.manifest.profile_for("outputs[].decision")
+        assert profile is not None
+        assert profile.matching_metric == MatchingMetric.MULTICLASS
+        _, graded_df = split_layer2_by_metric(summary)
+        assert "decision" in graded_df["field"].tolist()
+        decision_row = graded_df.loc[graded_df["field"] == "decision"].iloc[0]
+        assert decision_row["match"] + decision_row["mismatch"] > 0
+
     def test_layer_counts_by_property(self, prompt1_summary):
         frame = layer_counts_by_property(
             prompt1_summary, LAYER1_ORDER, "layer1_counts"

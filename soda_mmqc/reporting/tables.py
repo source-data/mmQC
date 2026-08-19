@@ -11,7 +11,7 @@ from soda_mmqc.core.evaluation import format_ancestor_context
 
 from soda_mmqc.reporting.aggregate import (
     RunSummary,
-    field_order,
+    field_order_for_summary,
     leaf_property_tail,
 )
 from soda_mmqc.reporting.load import FlatRecord, record_source
@@ -40,7 +40,7 @@ def layer_counts_by_property(
 ) -> pd.DataFrame:
     """Wide table of layer counts per leaf property."""
     rows: list[dict[str, Any]] = []
-    keys = field_order(summary.manifest, summary.by_property.keys())
+    keys = field_order_for_summary(summary)
     for leaf_property in keys:
         rollup = summary.by_property[leaf_property]
         counts = (
@@ -59,11 +59,15 @@ def layer_counts_by_property(
 def split_layer2_by_metric(
     summary: RunSummary,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Split layer-2 counts by manifest ``matching_metric``."""
+    """Split layer-2 counts by manifest ``matching_metric``.
+
+    Binary polarity → TP/TN/FP/FN chart. Graded string **and** multiclass →
+    match/mismatch chart (same Layer-2 labels).
+    """
     binary_rows: list[dict[str, Any]] = []
     graded_rows: list[dict[str, Any]] = []
 
-    for leaf_property in field_order(summary.manifest, summary.by_property.keys()):
+    for leaf_property in field_order_for_summary(summary):
         profile = summary.manifest.profile_for(leaf_property)
         if profile is None:
             continue
@@ -82,7 +86,10 @@ def split_layer2_by_metric(
                     },
                 }
             )
-        elif profile.matching_metric == MatchingMetric.GRADED_STRING:
+        elif profile.matching_metric in (
+            MatchingMetric.GRADED_STRING,
+            MatchingMetric.MULTICLASS,
+        ):
             graded_rows.append(
                 {
                     **base,

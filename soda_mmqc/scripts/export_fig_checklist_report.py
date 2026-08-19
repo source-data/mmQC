@@ -80,6 +80,8 @@ def main(argv: list[str] | None = None) -> int:
     for item in skipped:
         print(f"  - {item.check}: skipped ({item.skipped_reason})")
     print(f"Open {args.out / 'index.html'} in a browser.")
+    print(f"Mean-scores overview: {args.out / 'mean-scores.html'}")
+    print(f"Key-fields summary: {args.out / 'key-fields.html'}")
     return 0
 
 

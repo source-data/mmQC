@@ -40,20 +40,94 @@ class RunSummary:
 
 
 def leaf_property_tail(leaf_property: str) -> str:
-    """Display label for a leaf property pattern."""
+    """Display label for a leaf property pattern (schema-relative when possible)."""
+    prefix = "outputs[]."
+    if leaf_property.startswith(prefix):
+        return leaf_property[len(prefix) :]
     return leaf_property.rsplit(".", maxsplit=1)[-1]
+
+
+def schema_leaf_property_patterns(schema: Mapping[str, Any] | None) -> list[str]:
+    """Leaf ``outputs[].…`` patterns in ``schema.json`` panel-property order.
+
+    Nested object arrays expand to ``outputs[].parent[].child`` leaves (the
+    container itself is not a leaf). Primitive arrays stay as one leaf.
+    """
+    if not schema:
+        return []
+    try:
+        properties = schema["format"]["schema"]["properties"]["outputs"]["items"][
+            "properties"
+        ]
+    except (KeyError, TypeError):
+        return []
+    if not isinstance(properties, dict):
+        return []
+
+    ordered: list[str] = []
+    for field_name, raw_spec in properties.items():
+        if not isinstance(raw_spec, dict):
+            continue
+        if raw_spec.get("type") == "array":
+            items = raw_spec.get("items")
+            if isinstance(items, dict) and items.get("type") == "object":
+                nested = items.get("properties")
+                if isinstance(nested, dict):
+                    for nested_name in nested:
+                        ordered.append(f"outputs[].{field_name}[].{nested_name}")
+                    continue
+            ordered.append(f"outputs[].{field_name}")
+            continue
+        ordered.append(f"outputs[].{field_name}")
+    return ordered
+
+
+def load_check_schema_dict(checklist: str, check: str) -> dict[str, Any] | None:
+    """Load checklist ``schema.json`` as a dict, if present."""
+    import json
+
+    from soda_mmqc.config import CHECKLIST_DIR
+
+    path = CHECKLIST_DIR / checklist / check / "schema.json"
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, json.JSONDecodeError):
+        return None
+    return data if isinstance(data, dict) else None
 
 
 def field_order(
     manifest: EvalManifest,
     property_keys: Sequence[str],
+    *,
+    preferred: Sequence[str] | None = None,
 ) -> list[str]:
-    """Order leaf properties: manifest profile order, then remaining sorted."""
-    profiled = list(manifest.profiled_leaf_properties())
-    profiled_set = set(profiled)
-    ordered = [key for key in profiled if key in property_keys]
-    remainder = sorted(key for key in property_keys if key not in profiled_set)
+    """Order leaf properties: preferred (schema), then manifest, then sorted rest."""
+    keys = set(property_keys)
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for key in preferred or ():
+        if key in keys and key not in seen:
+            ordered.append(key)
+            seen.add(key)
+    for key in manifest.field_patterns():
+        if key in keys and key not in seen:
+            ordered.append(key)
+            seen.add(key)
+    remainder = sorted(key for key in keys if key not in seen)
     return ordered + remainder
+
+
+def field_order_for_summary(summary: RunSummary) -> list[str]:
+    """Order a run's leaf properties using that check's ``schema.json``."""
+    schema = load_check_schema_dict(summary.checklist, summary.check)
+    return field_order(
+        summary.manifest,
+        summary.by_property.keys(),
+        preferred=schema_leaf_property_patterns(schema),
+    )
 
 
 def _merge_row_counts(

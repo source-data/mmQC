@@ -5,7 +5,7 @@ from __future__ import annotations
 LAYER_S_TITLE = "Structure (Layer S)"
 LAYER1_TITLE = "Applicability (Layer 1)"
 LAYER2_BINARY_TITLE = "Matching-binary (Layer 2)"
-LAYER2_GRADED_TITLE = "Matching-graded (Layer 2)"
+LAYER2_GRADED_TITLE = "Matching-graded / multiclass (Layer 2)"
 
 LAYER_S_ORDER = ("correct_row", "missing_row", "spurious_row")
 
@@ -27,6 +27,29 @@ LAYER_S_COLORS = {
 
 # Opacity ladder for prompt comparison series on outcome-colored bars.
 COMPARISON_SERIES_OPACITIES = (1.0, 0.6, 0.35)
+
+# Box-plot fills and lines for score-distribution comparison series.
+COMPARISON_BOX_FILLS = (
+    "rgba(59, 130, 246, 0.25)",
+    "rgba(239, 68, 68, 0.25)",
+    "rgba(34, 197, 94, 0.25)",
+    "rgba(234, 179, 8, 0.25)",
+    "rgba(168, 85, 247, 0.25)",
+    "rgba(236, 72, 153, 0.25)",
+)
+
+COMPARISON_BOX_LINES = (
+    "#2563eb",
+    "#dc2626",
+    "#16a34a",
+    "#ca8a04",
+    "#9333ea",
+    "#db2777",
+)
+
+COMPARISON_INSTANCE_MARKER_SIZE = 5
+COMPARISON_INSTANCE_MARKER_OPACITY = 0.4
+COMPARISON_INSTANCE_JITTER_STDDEV = 0.035
 
 # Hatch patterns for model comparison series (first entry = solid fill).
 COMPARISON_SERIES_PATTERNS = ("", "/", "\\", "x", "|", "-", "+", ".")

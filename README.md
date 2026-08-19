@@ -340,11 +340,11 @@ To freeze the current evaluation state as shareable HTML (mean-score charts per 
 
 ```bash
 export-fig-report
-export-fig-report --models gpt-5.4,gpt-5-mini-2025-08-07
+export-fig-report --models gpt-5-mini-2025-08-07,gpt-5.4
 export-fig-report --checks stat-significance-level,plot-gap-labeling --out reports/fig-checklist/demo
 ```
 
-Open `reports/fig-checklist/<date>/index.html` in a browser. Interactive drill-down remains in the Streamlit app.
+Open `reports/fig-checklist/<date>/index.html` in a browser. The report also includes `mean-scores.html` (check × model prompt-comparison boxplots) and `key-fields.html` (three curated role plots — binary / semantic / extraction — with box + scatter of instance scores by check). Interactive drill-down remains in the Streamlit app.
 
 Programmatic use of the same plots and tables remains available via `soda_mmqc.reporting` and the comparative-reporting notebook.
 

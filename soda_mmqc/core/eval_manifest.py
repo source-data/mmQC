@@ -78,11 +78,11 @@ class EvalManifest:
         return self.list_alignment.get(normalized)
 
     def profiled_leaf_properties(self) -> tuple[str, ...]:
-        return tuple(sorted(self._fields))
+        return tuple(self._fields)
 
     def field_patterns(self) -> tuple[str, ...]:
-        """All manifest ``fields`` path keys."""
-        return tuple(sorted(self._fields))
+        """All manifest ``fields`` path keys (schema / insertion order)."""
+        return tuple(self._fields)
 
 
 def load_eval_manifest(path: Path | str) -> EvalManifest:

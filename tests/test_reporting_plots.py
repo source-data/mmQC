@@ -25,6 +25,7 @@ from soda_mmqc.reporting.plots import (
     _field_numeric_positions,
     applicable_instance_scores_frame,
     mean_scores_frame,
+    plot_comparison_mean_scores,
 )
 from soda_mmqc.reporting.styles import MEAN_SCORE_BAR_SPACING, PLOTLY_TEMPLATE
 from soda_mmqc.reporting.styles import (
@@ -91,6 +92,7 @@ class TestSingleRunPlots:
         assert len(fig.data) > 0
         all_fields = {field for trace in fig.data for field in trace.x}
         assert "micrograph" in all_fields
+        assert any(trace.text for trace in fig.data if trace.type == "bar")
 
     def test_plot_layer2_binary_and_graded(self, prompt1_summary):
         binary_df, graded_df = split_layer2_by_metric(prompt1_summary)
@@ -226,6 +228,46 @@ class TestComparisonPlots:
             model=MODEL_MINI,
         )
         assert len(fig.data) > 0
+        assert any(trace.text for trace in fig.data if trace.type == "bar")
+
+    def test_comparison_mean_scores_with_instances(self, summaries_prompt):
+        fig = plot_comparison_mean_scores(
+            summaries_prompt,
+            compare="prompt",
+            model=MODEL_MINI,
+            show_instances=True,
+        )
+        trace_types = [trace.type for trace in fig.data]
+        assert "box" in trace_types
+        assert "scatter" in trace_types
+        assert "bar" not in trace_types
+        assert "violin" not in trace_types
+        scatter = next(trace for trace in fig.data if trace.type == "scatter")
+        assert scatter.marker.size == 5
+        assert scatter.marker.opacity == 0.4
+        box = next(trace for trace in fig.data if trace.type == "box")
+        assert box.width is not None
+        assert box.width > 0.1
+
+    def test_comparison_mean_scores_compact_packs_fields(self, summaries_prompt):
+        wide = plot_comparison_mean_scores(
+            summaries_prompt,
+            compare="prompt",
+            model=MODEL_MINI,
+            show_instances=True,
+            compact=False,
+        )
+        compact = plot_comparison_mean_scores(
+            summaries_prompt,
+            compare="prompt",
+            model=MODEL_MINI,
+            show_instances=True,
+            compact=True,
+        )
+        wide_span = wide.layout.xaxis.range[1] - wide.layout.xaxis.range[0]
+        compact_span = compact.layout.xaxis.range[1] - compact.layout.xaxis.range[0]
+        assert compact_span < wide_span
+        assert compact.layout.xaxis.tickangle == -35
 
     def test_comparison_requires_selector(self, summaries_prompt):
         with pytest.raises(ValueError, match="model is required"):

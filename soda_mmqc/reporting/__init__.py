@@ -6,7 +6,9 @@ from soda_mmqc.reporting.aggregate import (
     RunSummary,
     aggregate_run,
     field_order,
+    field_order_for_summary,
     leaf_property_tail,
+    schema_leaf_property_patterns,
     summarize_runs,
 )
 from soda_mmqc.reporting.load import (
@@ -116,6 +118,7 @@ __all__ = [
     "ensure_record_payloads",
     "export_fig_checklist_report",
     "field_order",
+    "field_order_for_summary",
     "filter_by_doc",
     "filter_by_field",
     "filter_by_layer_outcome",
@@ -155,6 +158,7 @@ __all__ = [
     "plot_layer_s_bar",
     "plot_mean_score_bars",
     "plot_mean_score_with_instances",
+    "schema_leaf_property_patterns",
     "score_rows_for_summaries",
     "scores_table",
     "show_comparison_errors",
