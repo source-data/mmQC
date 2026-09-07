@@ -52,6 +52,10 @@ There is already a check named `external-data-url-validation-agentic`, but it is
 | Provider priority | Anthropic Agent SDK first; OpenAI Agents later via same abstraction |
 | Skill versioning | **Checklist versioning manifest** pins every skill. Runner default = all pinned. CLI may **unpin exactly one** skill; runner sweeps that skill’s versions against the pins. Skill store + runtime assembly; agent sees one version per name. Cache per expanded SkillSet. Langfuse exposes the pinned (production) manifest. |
 | Production exposure | **Langfuse remains the surface** that applications use to pull the **production** prompt/skill (as today). Repo/git holds all versions; Langfuse labels/points at what is production for runtime apps. |
+| Agent working directory | **Outside the repo**, one per example; skills **copied** into `<runtime>/.claude/skills/`; `setting_sources=["project"]`, `skills=[explicit names]` |
+| Example inputs | **Staged** into the runtime dir against a stable workspace contract — not exposed in place via `add_dirs` |
+| Gold isolation | Structural: `checks/` is on no path the agent has, plus Bash removed, a deny rule and a `PreToolUse` hook |
+| Subagents | **Suppressed** (tool removed, allowlist, no `agents=`, `SubagentStart` alarm). Nested *skills* are unaffected — they run in-session |
 
 ## Skill versioning and Langfuse
 
@@ -62,7 +66,7 @@ We need all of:
 | Consumer | Needs |
 |----------|--------|
 | Apps (production) | One labeled “production” resolution (today: Langfuse) |
-| Benchmarking | Compare skill revisions (`prompt.1` vs `prompt.4` today) — **including** changing one skill in a chain while holding others fixed |
+| Benchmarking | Compare skill revisions (`prompt.1` vs `prompt.2` today) — **including** changing one skill in a chain while holding others fixed |
 | Agent runtime | **Exactly one** body per skill name (no `SKILL.1` + `SKILL.2` in view) |
 | Cache | Correct, non-mysterious keys when a leaf depends on three versioned upstream skills |
 
@@ -91,9 +95,9 @@ An immutable, addressable object: `{skill_name, version_id}` → folder contents
                                       │  resolve SkillSet (lock / CLI)
                                       ▼
 ┌──────────────────────── Runtime view (one version per name) ────────────────────────┐
-│  .runtime/<run_id>/skills/identify-panels      → symlink → store/.../v2             │
-│  .runtime/<run_id>/skills/micrograph-scale-bar → symlink → store/.../v4             │
-│  Agent + CLAUDE.md only see this flat skills/ tree                                  │
+│  <runtime>/.claude/skills/identify-panels      ← copy of store/.../v2               │
+│  <runtime>/.claude/skills/micrograph-scale-bar ← copy of store/.../v4               │
+│  cwd = <runtime>, outside the repo; agent sees only this tree + CLAUDE.md           │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -108,7 +112,7 @@ An immutable, addressable object: `{skill_name, version_id}` → folder contents
     micrograph-scale-bar: 4
   ```
 
-- **Assembly:** orchestrator builds a temp (or cacheable) runtime directory with **symlinks** (or copies) so the agent sees `skills/<name>/SKILL.md` only.
+- **Assembly:** orchestrator builds a temp runtime directory so the agent sees one `SKILL.md` per name. **Copies, not symlinks** — see “Runtime assembly: copy, don’t symlink”. The versioning model is unaffected; only the mechanism changed.
 - **Comparative eval:** run the same examples under SkillSet A vs SkillSet B (two assemblies, two prediction dirs). Reporting keys off SkillSet id, not a single “prompt version” integer.
 
 Langfuse `production` becomes a **named SkillSet** (or a pointer to one): apps fetch that resolution; they do not browse the store.
@@ -177,7 +181,7 @@ v1 recommendation: **session-level cache only** (whole check run for one example
 
 **No second hash needed.** Removing the pre-run closure walk does not touch `skillset_hash`: it hashes the checklist's pinned version manifest (± one unpin), which fixes every skill's version regardless of whether, or how many times, the agent actually invokes a given skill for a particular example — “the agent never sees multiple versions” already guarantees that *if* a skill is called, it resolves to the one pinned version. What changes with agent-driven discovery is only *which skills get exercised*, never *which version they'd resolve to* — so the pre-run cache key is unaffected and stays exactly `(example, skillset_hash, model, config)`. The skill-invocation log (“Logging skill invocations” above) is still worth keeping, but purely as a **debugging artifact**: comparing two examples' logs directly (e.g. “did the leaf skip its declared `requires`?”) is more informative than comparing a hash of them, and there is no caching decision a trace hash would improve on what `skillset_hash` already provides.
 
-Comparative reporting: baseline manifest vs each version of the unpinned skill (same idea as today’s prompt.1 vs prompt.4, with the rest of the chain held fixed).
+Comparative reporting: baseline manifest vs each version of the unpinned skill (same idea as today’s prompt.1 vs prompt.2, with the rest of the chain held fixed).
 
 ### Langfuse’s role
 
@@ -192,7 +196,7 @@ Comparative reporting: baseline manifest vs each version of the unpinned skill (
 - Whether `version_id` is author-chosen (`v4`) or content hash (tags for human names).
 - CLI shape: `--unpin SKILL` and optional `--versions 1,2,4` vs always sweep all versions of the unpinned skill.
 - Promote: publish versioning manifest → Langfuse (multi-skill payload or bundled closure for legacy apps).
-- Symlink vs copy on Windows / sandbox.
+- ~~Symlink vs copy on Windows / sandbox.~~ **Resolved 2026-09-04: copy** (hardlink for bulk inputs) — see “Runtime assembly: copy, don’t symlink”.
 - Manifest filename / whether unused skills outside a leaf’s closure must still be pinned (lean yes: whole-checklist manifest).
 
 ## Recommended architecture
@@ -259,7 +263,7 @@ soda_mmqc/data/checklist/fig-checklist/
       benchmark.json
 ```
 
-`.claude/skills/...` may **symlink** into `skills/` so Claude Code / Agent SDK discovers the same files without duplicating content.
+The agent does **not** read this tree directly. Skills are **copied** into a per-example runtime directory outside the repo, at `<runtime>/.claude/skills/<name>/`, with `cwd` pointed there — see “Agent runtime and session isolation (Claude Agent SDK)” above for why symlinks and in-repo working directories were rejected.
 
 ### Skill frontmatter (illustrative)
 
@@ -274,9 +278,124 @@ needs: []    # e.g. [web, code] — usually empty; checklist defaults apply
 ---
 ```
 
-`needs` is read by **our** runner (unioned into session options), not enforced by Anthropic/OpenAI Agent SDKs — see “Note: frontmatter is not provider-enforced (SDK)” under Config model.
+`needs` is read by **our** runner (unioned into session options). The Agent SDK does apply `allowed-tools` frontmatter for project skills, but not model/effort/budget or the isolation controls — see “Note: frontmatter is only partly provider-enforced (SDK)” under Config model.
 
 `schema.json` on a **leaf** remains the **eval/curation contract**. Upstream skills may also declare a schema — see next section.
+
+## Agent runtime and session isolation (Claude Agent SDK)
+
+Added 2026-09-04, after reading the current [Agent SDK skills](https://code.claude.com/docs/en/agent-sdk/skills) and [permissions](https://code.claude.com/docs/en/agent-sdk/permissions) docs. This section makes the “agent runs per example” line of the architecture concrete, and supersedes the earlier symlink sketch in “On-disk sketch”.
+
+The governing constraint: **a benchmark run must depend on nothing but the checklist, the example and the model.** Anything else the session can see — a developer’s personal skills, a repo-level settings file, the gold labels, an untraced subagent — is a source of score variance that will not show up as an error, only as a number nobody can reproduce.
+
+### Skills are discovered from the filesystem, not registered
+
+There is no programmatic skill API. The SDK inherits Claude Code’s discovery: `.claude/skills/<name>/SKILL.md` under `cwd` **and every parent directory up to the repository root**, plus `~/.claude/skills/`, plus each `add_dirs` entry — all gated by `setting_sources` (default `["user", "project"]`). Claude Code also ships **bundled** skills (`code-review`, `verify`, …) that are discoverable regardless of the filesystem.
+
+Three consequences:
+
+| Risk | Control |
+|------|---------|
+| A future repo-root `.claude/` joins every run invisibly (parent traversal) | Runtime dir lives **outside the repo**, so no ancestor `.claude/` is ever in scope |
+| A developer’s `~/.claude/skills/` makes runs machine-dependent | `setting_sources=["project"]` — drops the user source |
+| Bundled skills pollute the run and the skill trace | `skills=[explicit checklist names]` — the DAG is the sole authority on what may **run**. **Measured 2026-09-05:** this gates *invocation* only; ~16 bundled/plugin skills still appear in the `init` `skills` array on every setting. See [agentic-m2-spike-findings.md](agentic-m2-spike-findings.md) → C1 |
+
+Note that `skills=[…]` does not restrict `/name` dispatch, and a *listed but absent* skill is not an error, so the runner still validates its own inventory against the generated `dag.yaml`. Because the `init` array also carries the installation's bundled skills, that validation is a **subset** check (`set(expected) <= set(init.skills)`), never equality.
+
+### Runtime assembly: copy, don’t symlink
+
+Earlier drafts assumed symlinking store versions into `.runtime/<run_id>/skills/`. Two problems: the docs do not say whether discovery follows symlinked **directories**, and a symlink inside the workspace resolves to a realpath in the repo, which re-opens containment. A `SKILL.md` is a few KB.
+
+**Copy** each skill folder into `<runtime>/.claude/skills/<name>/`. The copied tree is also a self-contained provenance artifact that can be archived beside the predictions. **Hardlink** (not symlink) large read-only inputs such as data-checklist source-data tables — a hardlink is a real directory entry inside the workspace, not a link out of it.
+
+This does not change the versioning model: the store still holds many versions, the manifest still resolves exactly one per name, and `skillset_hash` is unaffected. Only the assembly mechanism changes.
+
+### Example staging and the agent workspace contract
+
+The agent reads files rather than receiving content blocks, so examples must reach it as files. Two options were considered: expose the repo directory via `add_dirs`, or stage inputs into the runtime dir. **Staging wins**, for a reason that is about authoring rather than cost:
+
+**Skills are prompts.** Any path a `SKILL.md` names becomes frozen contract. Pointing skills at `data/examples/{doc}/content/{fig}/content/` would make every future reorganisation of the examples tree a prompt migration requiring re-benchmarking. Staging inserts an adapter, so `data/examples/` stays free to be organised for curation and human readability — which is what it is for — while the agent sees a stable, designed workspace:
+
+```text
+<runtime>/                          # cwd; the ONLY workspace root
+├── CLAUDE.md
+├── .claude/skills/<name>/SKILL.md  # copied
+└── example/
+    ├── example.json                # example_id, example_class, source path, inventory
+    ├── figure.<ext>                # stem normalised so skills can glob figure.*
+    ├── caption.txt
+    └── source_data/…               # only when the check enables it
+```
+
+Word examples substitute `example/manuscript.html` (the docx→HTML conversion already happens in memory; the agent cannot usefully read a `.docx`). `example.json` lets a skill know what exists instead of probing, and carries `example_id` so the submit tool and the skill trace correlate without the model echoing anything back.
+
+**Authoring rule:** skill bodies address the workspace contract, never `data/examples/…`. Worth a lint.
+
+### Benchmark integrity: the gold must be unreachable
+
+Gold lives at `<fig>/checks/{check}/expected_output.json` — a **sibling of** `<fig>/content/`. Exposing the figure directory would put the answer key inside the agent’s workspace. Not a malicious-agent scenario, just a capable one that lists its working directory; and the failure mode is *suspiciously good scores*, not an error.
+
+Staging makes this structural rather than configurational: `checks/` is on no path the agent has, instead of being excluded by pointing one level down. Defence in depth on top:
+
+- **`disallowed_tools=["Bash"]`** — a bare-name deny rule *removes the tool definition from the request*; the model never sees it. This matters because `Read`/`Edit` rules take **path** patterns (`//abs/**`) but `Bash` rules take **command-string** patterns only — Bash is not confined to `cwd`/`add_dirs` and can read anything the OS user can.
+- **`disallowed_tools=["Read(//**/checks/**/expected_output.json)"]`** — deny rules are evaluated before the permission mode and hold even under `bypassPermissions`, so this survives future config loosening.
+- **`permission_mode="dontAsk"`** — anything not pre-approved is denied rather than falling through to a `canUseTool` callback we do not supply. Never `bypassPermissions`: it ignores `allowed_tools` entirely.
+- A **`PreToolUse` hook** denying the same paths and *recording the attempt* — hooks run first and a hook deny holds in every mode. An attempt is itself a signal worth seeing.
+
+### No subagents
+
+**Nested skills are not subagents, and suppressing subagents costs the skill DAG nothing.** A `Skill` call runs in the same session: the skill body loads into the current context and the call is visible to the `PostToolUse` trace hook. A subagent runs in its own context, and the skills it invokes never reach that hook.
+
+That is the decisive argument, beyond the obvious ones about unbounded fan-out, cost and latency: the brief’s observability claim (“Logging skill invocations”, above) is that the trace records *the actual sequence of skills an example exercised*. With subagents available, the trace would silently become **wrong** rather than error. Subagent privilege inheritance compounds it — a subagent inherits the parent’s permission mode, and an `AgentDefinition` may override it except under `bypassPermissions`/`acceptEdits`/`auto`.
+
+Four layers, all cheap:
+
+1. `disallowed_tools=["Task", "Agent"]` — bare-name deny removes the definition. Both names listed because the current tool name needs confirming from the session’s `init` message; listing both costs nothing.
+2. An explicit `tools=[…]` allowlist that omits it — independent of which name is right.
+3. The runtime dir never gets a `.claude/agents/` directory, and `agents=` is never passed.
+4. A `SubagentStart` hook that **fails the example loudly** if one starts anyway. A benchmark that quietly scores a run produced through an untraced path is worse than one that errors.
+
+### Session options (the load-bearing configuration)
+
+```python
+ClaudeAgentOptions(
+    cwd=runtime_dir,                       # outside the repo: no ancestor .claude/
+                                           # no add_dirs — everything is staged under cwd
+    setting_sources=["project"],           # drops ~/.claude/skills
+    skills=[leaf, *upstream_names],        # excludes bundled skills
+    tools=["Read", "Glob", "Skill"],       # "Skill" must be listed explicitly when tools is set
+    disallowed_tools=[
+        "Bash",
+        "Task", "Agent",
+        "Read(//**/checks/**/expected_output.json)",
+    ],
+    permission_mode="dontAsk",
+    output_format={"type": "json_schema",  # corrected 2026-09-05: replaces the
+                   "schema": leaf_inner},  # submit_check_result MCP tool
+    env={"CLAUDE_CONFIG_DIR": runtime_dir / "agent-home"},   # hermetic: transcript
+                                           # and memory stay inside the runtime
+    hooks={"PreToolUse": [...], "PostToolUse": [...], "SubagentStart": [...]},
+    model=..., max_turns=..., max_budget_usd=...,
+    # agents= is never passed
+)
+```
+
+Two further mechanics worth recording:
+
+- **Structured output.** ~~does not exist on the Agent SDK~~ — **corrected 2026-09-05**: `ClaudeAgentOptions.output_format={"type": "json_schema", "schema": …}` exists in SDK 0.2.152 and is enforced (see [agentic-m2-spike-findings.md](agentic-m2-spike-findings.md) → C2), so the original justification below no longer holds. **Measured against the real leaf schema, `output_format` wins**: enum-level enforcement, and the two claimed benefits of the MCP tool are illusory — correlation is free with one session per example, and `output_format` already emits a `StructuredOutput` call into the trace. An in-process MCP server insulates against nothing (same process, same trust boundary). **Use `output_format`; keep the MCP tool in reserve** only for constraints JSON Schema cannot express. Force the contract with an in-process MCP tool `submit_check_result` whose `input_schema` **is** the leaf `schema.json` inner schema; the session’s answer is that payload, not `ResultMessage.result`. Validate with `jsonschema` afterwards, one bounded retry on failure, then record an error — never silently drop the example.
+- **Dispatch by name, and assert before working.** The prompt is `/{leaf_name} {example_ref}` rather than prose; skills support `$ARGUMENTS`/`$1`, so the example is a real parameter. The `system`/`init` message carries a `skills` array of what actually loaded — check the expected names are present and fail fast, or a silent discovery failure shows up only as bad scores. (Skills marked `user-invocable: false` load but do not appear in that array, so keep intermediates user-invocable.)
+
+### ~~Unverified~~ — **resolved 2026-09-05**, see [agentic-m2-spike-findings.md](agentic-m2-spike-findings.md)
+
+All three answered as hoped: copied-skill discovery works, the repo is unreachable *and enforced* (a forced `Read` is denied, not merely declined), and no subagent tool is present. The `system_prompt` fallback is not needed. Three corrections and one addition (`CLAUDE_CONFIG_DIR` for hermetic runs) are in that note.
+
+Original questions, for the record:
+
+1. Does a **copied** `.claude/skills/` tree outside any repo get discovered with `setting_sources=["project"]`? Assert via the `init` message’s `skills` array.
+2. Is the repo genuinely unreachable from a staged workspace? Ask a session to read an absolute path into `data/examples/**/checks/**/expected_output.json` and assert denial.
+3. What is the subagent tool actually called in the current build? Read the `init` tool list.
+
+**Fallback if (1) fails**, costing nothing downstream: inline the leaf `SKILL.md` into `system_prompt` and expose upstream skills as MCP tools running nested sessions. The trace hook then filters `mcp__mmqc__*` instead of `Skill`; predictions, scoring, curation and versioning are untouched.
 
 ## Schemas and evaluation: are upstream structures “lost”?
 
@@ -284,13 +403,19 @@ needs: []    # e.g. [web, code] — usually empty; checklist defaults apply
 
 **No for the agent session; mostly yes for FlatEvaluator (by design).**
 
-Upstream skills still emit **structured artifacts** (e.g. a `panels` JSON list). Those are passed into downstream skills. What we *avoid* is making the **scored** model output a nested mega-document of every skill’s schema — that would break today’s evaluation model and explode gold curation when you unpin an upstream skill.
+~~Upstream skills still emit **structured artifacts** (e.g. a `panels` JSON list).~~ **Corrected 2026-09-06 — they do not, and cannot.** Measured: a `Skill` call returns `"Launching skill: <name>"` and nothing else. It *injects the skill's body into the current context* rather than running it and returning a value. All bodies accumulate into one context, and the session emits exactly **one** `structured_output` — the leaf's.
+
+So an upstream artifact such as `panels` is real but **contextual**: it exists as the model's reasoning, not as a document. Nothing serialises it, nothing validates it, and an intermediate `schema.json` would claim an enforcement that does not exist. Intermediates therefore carry no schema (`dag.py` makes one an error), and what a skill should produce is stated in its body, where the model reads it.
+
+This is a consequence of the in-session nesting chosen two sections above so the skill trace stays honest: one session, one `output_format`. Per-skill structured output would require one session per skill — the fallback the spike made unnecessary — and it would take nested skills out of the trace.
+
+What we still *avoid* is making the **scored** model output a nested mega-document of every skill's schema: that would break today's evaluation model and explode gold curation when you unpin an upstream skill.
 
 ### Three options
 
 | | A. Informal upstream only | B. Nested mega-schema (all skills in one scored tree) | C. Dual role (recommended) |
 |--|---------------------------|------------------------------------------------------|----------------------------|
-| Upstream structure | Prose / ad hoc JSON | Part of final scored JSON | Validated JSON per skill schema |
+| Upstream structure | Prose / ad hoc JSON | Part of final scored JSON | ~~Validated JSON per skill schema~~ → **contextual**: stated in the skill body, held in context, never serialised (measured 2026-09-06) |
 | Agent chaining | Fragile | Strong | Strong |
 | FlatEvaluator / gold | Unchanged (leaf only) | Must score nested tree; gold includes intermediates | **Unchanged (leaf only)** |
 | Unpin upstream skill | Leaf gold still valid | Gold shape may change with upstream | Leaf gold still valid; optional debug dumps of intermediates |
@@ -389,29 +514,45 @@ Needed so skills can call deterministic helpers (load figure, parse caption, val
 
 Avoid shipping OpenAI-shaped `model_config.json` as the long-term skill contract; keep migration shims if needed.
 
-### Note: frontmatter is not provider-enforced (SDK)
+### Note: frontmatter is only partly provider-enforced (SDK)
 
-Putting permissions / model settings only in skill frontmatter (or relying on Anthropic’s `allowed-tools` field) is **not** enough for our planned runtimes:
+**Corrected 2026-09-04.** An earlier version of this section stated that the Claude Agent SDK ignores `allowed-tools` frontmatter. That is no longer true — the current [skills docs](https://code.claude.com/docs/en/agent-sdk/skills) say: *“For project and personal skills, Claude Code applies the `allowed-tools` frontmatter field in SDK sessions.”* Skills synced from claude.ai follow their own rules.
 
 | Surface | Honors skill-level tool restrictions in `SKILL.md`? |
 |---------|-----------------------------------------------------|
 | Claude Code **CLI** | Yes — `allowed-tools` frontmatter applies |
-| Claude **Agent SDK** | **No** — docs: frontmatter `allowed-tools` is ignored; set `allowed_tools` / `permission_mode` on session options |
+| Claude **Agent SDK** | Yes for project and personal skills — but only for **tool restriction**. Model, effort, budget, `setting_sources`, `skills`, `permission_mode` and deny rules are session options only |
 | OpenAI Agents / Codex skills | Frontmatter is mainly `name` / `description`; optional `agents/openai.yaml` covers UI / invocation policy / MCP deps — **not** a portable session permission or model-config contract. Tools/permissions are set on the agent/run in code |
 
-So: skill `needs` (and any richer frontmatter we invent) is **orchestrator-owned metadata**. The Python runner must read it and map into provider session options. Prefer checklist `model_defaults.json` for the common session profile; use per-skill `needs` only for rare exceptions. Do not assume Anthropic or OpenAI will enforce those fields for us on the Agent SDK path.
+So the conclusion stands with a narrower justification: skill `needs` (and any richer frontmatter we invent) is **orchestrator-owned metadata**, because the things it must express — model, effort, budget, and the isolation controls in “Agent runtime and session isolation” — have no frontmatter equivalent and are not portable to OpenAI. Per-skill *tool* narrowing may now live in frontmatter if that reads better. Prefer checklist `model_defaults.json` for the common session profile; use per-skill `needs` only for rare exceptions.
 
 ## CLAUDE.md role
 
-Repo or checklist-level `CLAUDE.md` should set the stage for the agent:
+**Revised 2026-09-06.** There is **one** `CLAUDE.md`, shipped as
+`soda_mmqc/agents/CLAUDE.example.md` and copied into each runtime dir. It is a
+prompt -- Claude Code loads it automatically from `cwd`, so it sits in front of
+the model on every example of every run -- and it is therefore a reviewed file,
+not a string in `runtime.py`.
 
-- Layout of `soda_mmqc/data/` (checklist vs examples vs evaluation outputs).
-- Meaning of a **skill** vs **leaf/check** vs **generated dag**.
-- Where schemas, benchmarks, expected outputs live.
-- How to invoke Python/MCP tools (names, contracts).
-- Output discipline: final answer must validate against the leaf schema.
+There is **no repo-level or checklist-level `CLAUDE.md`**. Two files in one
+session would interact in ways nobody can predict from reading either, and the
+authored, versioned, reviewable prompt surface is already `SKILL.md`. Checklist
+guidance belongs there.
 
-This is agent orientation, not a substitute for per-skill `SKILL.md` procedures.
+The original bullets below are struck because staging made them wrong, and two
+of them dangerous:
+
+- ~~Layout of `soda_mmqc/data/`~~ — the agent never sees a repo path. Staging
+  exists precisely so a prompt never names one.
+- ~~Where schemas, benchmarks, expected outputs live~~ — pointing the session
+  at the gold is the opposite of the isolation the rest of this section builds.
+- ~~How to invoke Python/MCP tools~~ — M5, and per-tool, not ambient.
+- Meaning of a **skill** vs **leaf/check** — generic, so it lives in the one file.
+- Output discipline — now enforced by `output_format`, not by asking.
+
+What remains is orientation to the *workspace*: where the staged example is,
+that nothing outside it exists, and that a named skill should be invoked rather
+than reimplemented.
 
 ## CLI split
 
@@ -539,6 +680,8 @@ Lean **A** for the pilot, introduce **B** when the second leaf shows painful dup
 7. **Langfuse tracing:** whole agent session vs per-skill spans (separate from Langfuse-as-production-surface).
 8. **When (if ever) to cache intermediate skill outputs** — deferred; v1 session-level only.
 9. **fig-checklist rewrite depth:** two-level (`identify-panels` → leaf) vs three-level (+ `classify-panel-kind`) for the pilot.
+10. ~~**Spike items**~~ — **done 2026-09-05**, all three answered as hoped; see [agentic-m2-spike-findings.md](agentic-m2-spike-findings.md).
+11. **Workspace contract stability:** `example.json` field set and the normalised `figure.<ext>` convention become an interface skills are authored against — worth freezing deliberately rather than by accretion.
 
 ## Non-goals (this brief)
 
