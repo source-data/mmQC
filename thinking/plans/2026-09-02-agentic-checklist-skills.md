@@ -44,7 +44,9 @@ Every milestone has two gates: an **automatic gate** (a named pytest command tha
 
 ## Target Layout
 
-Leaf evaluation contracts stay at the check level; only `SKILL.md` is versioned.
+**The hierarchy is not encoded in the directory layout.** Every skill — leaf or intermediate — is a flat sibling directory in one namespace, addressed by name. The DAG exists only because one skill's own `SKILL.md` calls another skill; nothing about a skill's depth, role, or dependencies may be inferred from where its directory sits. There is no `_shared/`, no `leaves/`, no nesting of a dependency underneath its caller. This keeps a skill relocatable and reusable — including across checklists later — without rewriting the graph, and it prevents the two representations from drifting apart.
+
+Leaf evaluation contracts stay at the skill level; only `SKILL.md` is versioned.
 
 ```text
 soda_mmqc/data/checklist/fig-checklist/
@@ -53,21 +55,45 @@ soda_mmqc/data/checklist/fig-checklist/
   dag.yaml                          # generated; never hand-edit
   README.md                         # generated; never hand-edit
   micrograph-scale-bar/             # leaf: an existing check dir, unmoved
-    schema.json                     # shared by all versions of this leaf
+    schema.json                     # shared by all versions of this skill
     eval-manifest.json              # shared by all versions
     benchmark.json                  # shared by all versions
     prompts/                        # legacy; retired only after parity
     v1/SKILL.md
     v2/SKILL.md
-  _shared/                          # non-leaf skills
-    identify-panels/
-      schema.json                   # runtime contract only, no eval assets
-      v1/SKILL.md
+  identify-panels/                  # intermediate skill: a sibling, not nested
+    schema.json                     # runtime contract only, no eval assets
+    v1/SKILL.md
 ```
 
-**Discovery hazard to resolve in Milestone 1:** `list_checks()` in [run.py:1143](../../soda_mmqc/scripts/run.py#L1143) treats *every* subdirectory of a checklist as a check. A new directory for shared skills would be picked up as a phantom check and break existing runs and reports. Resolve it explicitly — a reserved-name filter (`_`-prefixed directories are not checks) is the recommended fix — and cover it with a test before adding any shared-skill directory.
+`identify-panels` sits beside `micrograph-scale-bar` rather than under it precisely because several leaves call it; the fact that it is upstream is a property of the calls, not of the path.
 
-`SKILL.md` frontmatter carries `name`, `description`, `kind`, `requires`, `produces`, and `needs`. `requires` and `produces` are for generated graph documentation, cycle detection, and manifest validation. The actual dependency invocation is a sentence in the skill body telling the agent to call the named skill with the `Skill` tool. A validation test asserts these two stay consistent — every skill named in `requires` is also named in the prose, and vice versa — because prose is what executes and frontmatter is what documents.
+**The only on-disk difference between a leaf and a shared skill is the evaluation contracts.** A leaf carries `schema.json`, `eval-manifest.json`, and `benchmark.json`; a shared skill does not. Nothing else distinguishes them — same level, same shape, no name convention, no marker file, and no `kind` discriminator in frontmatter. Two discriminators would eventually disagree, so there is exactly one, and it is the thing that already has to be true: a check is a directory that owns an evaluation contract.
+
+`SKILL.md` carries the calling relationship in the skill's own file, in two places with two different jobs:
+
+- **Frontmatter** (`name`, `description`, `requires`, `produces`, `needs`) is runner-owned metadata: it is what `cli.py` reads to render the DAG, detect cycles, and validate the manifest. The agent never reads it as a call sequence. `description` is the exception that the agent *does* consume — it is what makes a skill findable during discovery.
+- **Prose** in the body is what actually executes — a sentence instructing the agent to call the named skill with the `Skill` tool.
+
+A validation test asserts the two agree: every skill named in `requires` also appears in the prose, and no skill invoked in prose is missing from `requires`. Frontmatter documents the graph; prose runs it.
+
+## Two Different Discoveries
+
+The word covers two unrelated mechanisms, and conflating them produces exactly the wrong design.
+
+**Runner-side check enumeration** is bookkeeping. `list_checks()` in [run.py:1143](../../soda_mmqc/scripts/run.py#L1143) currently treats *every* subdirectory of a checklist as a check, which with shared skills as flat siblings would report `identify-panels` as a phantom check and break existing runs and reports. The fix follows directly from the layout rule above: a directory is a check when it owns the evaluation contracts. Shared skills have none, so they are not checks — not because they are filtered out, but because there is nothing to score. Resolve this in Milestone 1, with a test, before adding any shared skill.
+
+**Agent-side skill discovery** is the substance of this project, not a hazard to engineer around. Every skill in the assembled runtime — leaves and shared skills alike — has its `description` loaded into the session. The runner preselects nothing and prunes nothing. It names one check, and the agent enters at that leaf and walks down through prose triggers:
+
+```text
+micrograph-scale-bar          entry point; its prose asks the agent to classify panels
+  → classify-panel-kind       its prose asks the agent to work on individual panels
+      → identify-panels       root of the DAG; produces the shared panels artifact
+```
+
+Each hop happens because the skill the agent is currently reading tells it, in prose, to do something that another skill's `description` matches. That three-hop shape is the mechanism in general; the Milestone 2 pilot deliberately starts with the two-hop version (`micrograph-scale-bar` → `identify-panels`) and only adds a middle skill once a second leaf shows the duplication that would justify it. **Delegating that chaining is the entire reason for using an agent instead of walking the DAG deterministically in Python.** So whether the chain fires correctly — with all descriptions competing for the agent's attention — is what Milestones 2 and 4 are built to test, and the `Skill` invocation trace is how we observe it. A runner that precomputed the closure would be measuring its own control flow instead.
+
+The corollary for authoring: a skill's `description` is load-bearing. It has to be specific enough that the intended caller's prose reaches it and vague neighbours do not. That is a real failure mode to watch in the pilot — a wrong or missing hop shows up in the trace, not in a Python error.
 
 There is **one repository-level `CLAUDE.md`** for agent orientation. It is not varied per checklist or per check: per-check variants multiply and interact unpredictably. Anything genuinely specific to a leaf belongs in that leaf's `SKILL.md`. The runtime directory gets a small generated orientation file naming the target leaf, the skills root, the artifacts root, and the final schema — that is generated per run, not checked in per check.
 
@@ -110,13 +136,13 @@ Eleven active leaves, converted in branch groups (see Milestone 5). Select the n
 - Create: `tests/test_agentic_cli.py`
 - Modify: `tests/test_run_analyze_results.py`
 
-**Step 1:** Write failing tests: a `score` entry point loads stored predictions plus gold, and produces the same `FlatEvaluator` `flat` result the current `evaluate` path produces for at least one existing check. Add a test that `list_checks()` ignores `_`-prefixed directories.
+**Step 1:** Write failing tests: a `score` entry point loads stored predictions plus gold, and produces the same `FlatEvaluator` `flat` result the current `evaluate` path produces for at least one existing check. Add tests for check enumeration: a sibling directory owning the evaluation contracts is a check, one without them is not, and every current `fig-checklist` check is still enumerated exactly as today.
 
 **Step 2:** Verify failure: `pytest tests/test_agentic_cli.py -v`
 
 **Step 3:** Implement `python -m soda_mmqc.cli score <checklist> --check <check> --predictions PATH`, reusing `analyze_results` and `save_analysis` from `run.py` verbatim. Do not change evaluator semantics, thresholds, or output shape.
 
-**Step 4:** Implement the reserved-name filter in `list_checks()`.
+**Step 4:** Make `list_checks()` enumerate directories that own the evaluation contracts, rather than every subdirectory, so a shared skill sitting beside the checks cannot become a phantom check. No name convention and no marker file.
 
 **Step 5: Automatic gate:** `pytest tests/ -v` — the whole suite, including reporting, curation, and evaluation tests, passes unchanged.
 
@@ -124,25 +150,27 @@ Eleven active leaves, converted in branch groups (see Milestone 5). Select the n
 
 ## Milestone 2: Pilot the Hierarchy on One Check
 
-**Deliverable:** `micrograph-scale-bar` exists as a two-level hierarchy — `identify-panels` → leaf — hand-authored and reviewed, with its evaluation contracts untouched and shared across versions.
+**Deliverable:** `micrograph-scale-bar` is an entry-point leaf whose prose reaches one shared skill, `identify-panels` — hand-authored and reviewed, with its evaluation contracts untouched and shared across versions.
 
 **Files:**
-- Create: `soda_mmqc/data/checklist/fig-checklist/_shared/identify-panels/v1/SKILL.md`
-- Create: `soda_mmqc/data/checklist/fig-checklist/_shared/identify-panels/schema.json`
+- Create: `soda_mmqc/data/checklist/fig-checklist/identify-panels/v1/SKILL.md`
+- Create: `soda_mmqc/data/checklist/fig-checklist/identify-panels/schema.json`
 - Create: `soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar/v1/SKILL.md`
 - Modify: `tests/test_agentic_cli.py`
 
-**Step 1:** Extract `identify-panels` from the best existing wording (the panel-identification sections of `error-bars-defined`, `micrograph-scale-bar`, and `image-annotation-defined` are nearly identical). Merge once; do not keep N variants. Write `schema.json` as the runtime contract for `panels` — no eval manifest, no expected outputs.
+**Step 1:** Extract `identify-panels` from the best existing wording (the panel-identification sections of `error-bars-defined`, `micrograph-scale-bar`, and `image-annotation-defined` are nearly identical). Merge once; do not keep N variants. Write `schema.json` as the runtime contract for `panels` — no eval manifest, no benchmark, no expected outputs, which is also what keeps it from being enumerated as a check.
+
+Write its `description` deliberately: it is the string the agent matches against when the leaf's prose asks for panels, so it must claim panel identification unambiguously and claim nothing else.
 
 **Step 2:** Convert `micrograph-scale-bar/prompt.2.txt` into `v1/SKILL.md`: delete the duplicated panel-identification section, add a sentence in the prose instructing the agent to call `identify-panels` with the `Skill` tool, and keep only the micrograph applicability rule, scale-bar extraction rules, and the decision logic. Point the output requirement at the check's existing `schema.json` rather than pasting a full JSON example.
 
 **Step 3:** Leave `schema.json`, `eval-manifest.json`, and `benchmark.json` exactly where they are. Assert with a test that no version directory contains a copy of them.
 
-**Step 4:** Write tests for skill loading and consistency: frontmatter parses; `requires` names an existing skill; the graph is acyclic; every name in `requires` also appears in the prose body, and no skill invoked in prose is missing from `requires`.
+**Step 4:** Write tests for skill loading and consistency: frontmatter parses; `requires` names an existing skill; the graph is acyclic; every name in `requires` also appears in the prose body, and no skill invoked in prose is missing from `requires`. Add a test that the resolved graph is unchanged when a skill directory is renamed or moved to a different parent — the edges come from the calls, not the paths.
 
 **Step 5: Automatic gate:** `pytest tests/test_agentic_cli.py tests/test_micrograph_scale_bar_manifest.py -v`
 
-**Step 6: Human gate:** Read `identify-panels/v1/SKILL.md` and `micrograph-scale-bar/v1/SKILL.md` side by side with `prompt.2.txt`. Confirm nothing check-specific was lost, nothing shared was left duplicated, and the sub-skill call reads as a natural instruction rather than a template.
+**Step 6: Human gate:** Read `identify-panels/v1/SKILL.md` and `micrograph-scale-bar/v1/SKILL.md` side by side with `prompt.2.txt`. Confirm nothing check-specific was lost, nothing shared was left duplicated, and the sub-skill call reads as a natural instruction rather than a template. Confirm the leaf's dependency is legible from the skill text alone, without reference to where either directory sits.
 
 ## Milestone 3: Sealed Runtime Directory Outside the Repository
 
@@ -153,11 +181,11 @@ Eleven active leaves, converted in branch groups (see Milestone 5). Select the n
 - Modify: `soda_mmqc/config.py`
 - Modify: `tests/test_agentic_cli.py`
 
-**Step 1:** Write failing tests for assembly: the runtime root is outside the repository tree; skills are placed where the Agent SDK discovers them; exactly one version per skill name is present; the store and sibling versions are absent; only the current example's inputs are present; `benchmark.json`, `eval-manifest.json`, and expected outputs are **absent**.
+**Step 1:** Write failing tests for assembly: the runtime root is outside the repository tree; skills are placed where the Agent SDK discovers them; **every skill of the checklist is present, leaves and shared skills alike, so all of their descriptions load** — the runner preselects nothing and prunes nothing to the named check; exactly one version per skill name is present; the store and sibling versions are absent; only the current example's inputs are present; `benchmark.json`, `eval-manifest.json`, and expected outputs are **absent**.
 
 **Step 2:** Add `AGENTIC_RUNTIME_DIR` to `config.py`, defaulting to a system temp location, never a path inside the repo. Document why: the Agent SDK discovers skills by convention under `.claude`, and a runtime rooted in the repo would let repo-level skills, other checklists, and the gold data leak into the session. Copy inputs in rather than mapping the repo in.
 
-**Step 3:** Implement atomic assembly plus a generated runtime orientation file naming the target leaf, skills root, artifacts root, and final schema. Do not compute or execute a graph closure here.
+**Step 3:** Implement atomic assembly plus a generated runtime orientation file naming the target leaf as the entry point, the skills root, the artifacts root, and the final schema. Name the entry point only — do not list its dependencies, do not order them, and do not compute or execute a graph closure. Finding the rest is the agent's job.
 
 **Step 4:** Add `--keep-runtime` (default: remove the directory after the session; keep it for debugging). Test both paths, including cleanup after an exception.
 
@@ -186,9 +214,11 @@ Frontmatter does not enforce any of this on the Agent SDK path, so the runner se
 
 **Step 2:** Implement `run --mock` first: for each benchmark example, write the expected leaf output as the prediction plus a deterministic `skill_trace.json` sidecar. This keeps CI able to exercise the whole path without credentials.
 
-**Step 3:** Write fake-client tests for a private `_run_agent_session`: the session uses the assembled runtime, the target leaf, and the example inputs; no closure is supplied; the final leaf JSON validates against the leaf `schema.json`; invalid output fails **before** any prediction is written.
+**Step 3:** Write fake-client tests for a private `_run_agent_session`: the session uses the assembled runtime, the target leaf, and the example inputs; every skill description in the checklist is visible to the client while only the entry point is named in the request; no closure is supplied; the final leaf JSON validates against the leaf `schema.json`; invalid output fails **before** any prediction is written.
 
 **Step 4:** Add an SDK `PostToolUse` hook. Filter `tool_name == "Skill"` and append entries incrementally to `intermediates/skill_trace.json` under the prediction directory — `skill`, resolved `version`, `tool_input`, `tool_use_id`, timestamp. Write as calls occur so a failed session still leaves its trace. Never parse transcript JSONL or agent prose to infer calls.
+
+The trace is the only instrument that shows whether the prose actually reached the intended skill, so treat it as the milestone's primary observation. Report the observed chain per example alongside the prediction, and compare it against the `requires` frontmatter to surface hops that were declared but never fired, or fired but never declared. That comparison is diagnostic reporting, not enforcement: a missing hop is a prompt-authoring problem to fix in the skill text, never something the runner should paper over by calling the skill itself.
 
 **Step 5:** Validate intermediate artifacts against the optional intermediate schemas before they are handed onward, and persist them as sidecars.
 
@@ -202,7 +232,7 @@ Frontmatter does not enforce any of this on the Agent SDK path, so the runner se
 python -m soda_mmqc.cli run fig-checklist --check micrograph-scale-bar --model <claude-model> --no-cache --keep-runtime
 ```
 
-Inspect one prediction and its `skill_trace.json`, and confirm `identify-panels` was actually invoked and that panel labels are consistent with the leaf output. Scope this to a handful of examples — never the full checklist — so a debugging cycle stays minutes, not hours.
+Inspect one prediction and its `skill_trace.json`, and confirm `identify-panels` was actually invoked from the leaf's prose — with every other skill description also loaded and competing — and that panel labels are consistent with the leaf output. This is the milestone's real question: does delegated discovery reach the right skill? Also check the traces of the *other* examples for hops that fired inconsistently across examples, which is the signal that a `description` is too vague or two of them overlap. Scope this to a handful of examples — never the full checklist — so a debugging cycle stays minutes, not hours.
 
 ## Milestone 5: Score the Pilot, Then Convert by Group
 
@@ -260,7 +290,11 @@ Inspect one prediction and its `skill_trace.json`, and confirm `identify-panels`
 
 - Running and scoring are separate commands; existing scoring, reporting, and curation behavior is unchanged and covered by the existing suite.
 - All 11 active figure prompts are represented by leaf `SKILL.md` files organized as an acyclic hierarchy, converted in branch groups after a working pilot.
-- Each leaf's `schema.json`, `eval-manifest.json`, and `benchmark.json` remain per-check and shared across versions, so versions stay comparable.
+- Each leaf's `schema.json`, `eval-manifest.json`, and `benchmark.json` remain per-skill and shared across versions, so versions stay comparable.
+- The hierarchy is carried entirely by skill-to-skill calls declared in each skill's own `SKILL.md`. All skills are flat siblings in one namespace; no directory encodes a skill's role, and a test proves renaming or moving a skill directory leaves the resolved graph unchanged.
+- The only on-disk difference between a leaf and a shared skill is that the leaf owns the evaluation contracts. Check enumeration follows from that single fact — no name convention, no marker file, no `kind` discriminator.
+- Every skill's `description` is loaded in every session. The runner names one entry-point leaf and nothing else; reaching the shared skills is delegated to the agent, which is the point of using an agent rather than walking the DAG in Python.
+- The `Skill` trace is the instrument for whether delegated discovery worked. Declared-versus-observed hops are reported, never enforced; a missing hop is fixed in the skill prose, not compensated for by the runner.
 - Sub-skill invocation happens through prose instructions and the `Skill` tool; `requires`/`produces` frontmatter documents and validates the graph and is never executed.
 - One repository-level `CLAUDE.md` orients the agent; runtime orientation is generated per run, not checked in per check.
 - The runtime directory is assembled outside the repository, exposes exactly one version per skill and only the current example, and is removed unless `--keep-runtime` is set.
@@ -294,3 +328,6 @@ Each review comment on the previous draft and where it now lives:
 | Group conversion: micrographs/panels first, then plots/axes | Conversion Map Groups A and B; Milestone 5 Steps 3–5 |
 | Priority is runtime dir + per-example agent + predictions; versioning last | Delivery Order; Milestone 4; Milestone 6 |
 | Plan not progressive or gated enough; want milestones with unit-test gate plus human gate | Whole structure — six milestones, each with an automatic and a human gate |
+| `_shared/` is wrong; hierarchy must be independent of directory layout and come from a skill calling another skill in its own file | Target Layout (flat sibling namespace, no `_shared/`); Milestone 1 Steps 1 and 4; Milestone 2 Steps 4 and 6 |
+| No reserved-name filter; the only on-disk difference is that leaves own manifest/benchmark/schema | Target Layout; "Two Different Discoveries"; Milestone 1 Steps 1 and 4 (the `kind` discriminator is dropped) |
+| All skill descriptions are loaded; the agent enters at the leaf and chains to intermediate then root skills through prose; that delegation is why we use an agent, and it is what we are testing | "Two Different Discoveries"; Milestone 2 Step 1; Milestone 3 Steps 1 and 3; Milestone 4 Steps 3, 4, and 8 |
