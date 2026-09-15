@@ -26,6 +26,14 @@ EXAMPLE_GOLD = (
     / "checks/micrograph-scale-bar/expected_output.json"
 )
 
+# The examples dataset is gitignored, so it is absent on a fresh checkout and
+# in CI. Skip rather than fail there -- the same guard Milestone 1 applied to
+# tests/test_run_analyze_results.py for exactly this reason.
+requires_example_gold = pytest.mark.skipif(
+    not EXAMPLE_GOLD.is_file(),
+    reason=f"examples dataset not available: {EXAMPLE_GOLD} is missing",
+)
+
 
 def _model_schema() -> dict:
     wrapper = json.loads(SCHEMA_WRAPPER.read_text(encoding="utf-8"))
@@ -54,6 +62,7 @@ class TestMicrographScaleBarManifest:
         manifest_patterns = set(manifest.profiled_leaf_properties())
         assert manifest_patterns == schema_patterns
 
+    @requires_example_gold
     def test_validates_against_layout(self, manifest, model_schema):
         gold = json.loads(EXAMPLE_GOLD.read_text(encoding="utf-8"))
         layout = discover_collation_layout(model_schema, gold, gold)

@@ -7,6 +7,48 @@ permissions:
   contents: read
 
 jobs:
+  agentic-checklists:
+    # Scoped deliberately to the agentic checklist suite rather than the whole
+    # of tests/. The repository's wider suite has 38 pre-existing failures and
+    # 23 collection errors (five modules import a `JSONEvaluator` that no
+    # longer exists), so `pytest tests/` would make CI red on arrival and
+    # teach everyone to ignore it. Widening this job is the right thing to do
+    # once those are fixed; until then a narrow green job that actually
+    # protects the new work beats a broad red one that protects nothing.
+    #
+    # No credentials are needed: every test drives the agent session through a
+    # fake client, and `run --mock` never imports the SDK.
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install 3.12
+
+    - name: Install project
+      run: uv venv --python 3.12 && uv pip install -e .
+
+    - name: Run the agentic checklist suite
+      run: |
+        uv run pytest \
+          tests/test_agentic_cli.py \
+          tests/test_micrograph_scale_bar_manifest.py \
+          -q
+
+    # The generated views are only trustworthy if they are checked on every
+    # commit. This is metadata-only -- no example is read and no session is
+    # opened -- so it costs a second and needs no credentials. The suite
+    # already asserts the same thing; running the command too means the
+    # failure a contributor sees is the command they have to run to fix it.
+    - name: Check the generated DAG views are in sync
+      run: uv run python -m soda_mmqc.cli graph fig-checklist
+
   lint-and-test:
     runs-on: ubuntu-latest
 

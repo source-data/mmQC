@@ -491,7 +491,15 @@ class TestCuration(unittest.TestCase):
                 self.assertGreater(len(prompt_content), 0)
 
     def test_load_checklist_with_missing_files(self):
-        """Test load_checklist with missing schema and benchmark files."""
+        """A directory missing the evaluation contracts is not a check.
+
+        Previously any subdirectory was loaded, with empty schema/benchmark
+        dicts. A check is now a directory that owns schema.json *and*
+        benchmark.json, so that a shared skill sitting beside the checks
+        cannot appear in the curation check selector as a phantom entry.
+        The entry this used to produce was unusable anyway: it carried no
+        schema to render an output table from.
+        """
         # Create a check directory without schema and benchmark files
         incomplete_check_dir = self.test_checklist_dir / "incomplete-check"
         incomplete_check_dir.mkdir()
@@ -507,15 +515,11 @@ class TestCuration(unittest.TestCase):
         
         checklist = load_checklist(self.test_checklist_dir)
         
-        # Verify the incomplete check is loaded
-        self.assertIn("incomplete-check", checklist)
+        # Owns neither contract: not a check.
+        self.assertNotIn("incomplete-check", checklist)
         
-        # Verify empty schema and benchmark
-        self.assertEqual(checklist["incomplete-check"]["schema"], {})
-        self.assertEqual(checklist["incomplete-check"]["benchmark"], {})
-        
-        # Verify prompts are loaded
-        self.assertIn("prompt.1.txt", checklist["incomplete-check"]["prompts"])
+        # The real checks in the fixture are unaffected.
+        self.assertIn("test-check", checklist)
 
     def test_load_checklist_skips_empty_schema_file(self):
         """Test load_checklist skips checks with empty schema.json."""
@@ -574,6 +578,12 @@ class TestCuration(unittest.TestCase):
         schema_file = mismatched_check_dir / "schema.json"
         with open(schema_file, "w") as f:
             json.dump(mismatched_schema, f, indent=2)
+        
+        # benchmark.json is required for the directory to count as a check at
+        # all; without it the name mismatch below would never be reached.
+        benchmark_file = mismatched_check_dir / "benchmark.json"
+        with open(benchmark_file, "w") as f:
+            json.dump({"name": "mismatched-check", "examples": []}, f, indent=2)
         
         # The function should still load the checklist but log an error
         # We can't easily test the st.error call, but we can verify the data

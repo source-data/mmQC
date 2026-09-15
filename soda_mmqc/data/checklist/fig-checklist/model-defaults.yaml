@@ -1,0 +1,26 @@
+# Defaults for an agentic run of `fig-checklist`.
+#
+# Provider-neutral: the file names which model each runtime should use
+# without taking a side on which runtime is used. `--model` still wins.
+#
+# Nothing here may touch the permission profile — no allowed_tools, no
+# permission_mode, no setting_sources, no cwd, no skills. That boundary is a
+# property of the sealed runtime, not of a checklist, and the loader refuses
+# the file outright rather than warning about it in a log nobody reads.
+
+models:
+  # The Milestone 5 deltas were measured on this model. Changing it
+  # invalidates the comparison in 2026-09-15-milestone-5-results.md.
+  openai: gpt-5-mini
+
+  # The bare alias tracks the current Sonnet rather than pinning a dated
+  # snapshot. Sonnet rather than Opus because these runs are small and
+  # diagnostic, and cost should not discourage rerunning them.
+  claude-sdk: sonnet
+
+session:
+  # Turn ceiling for one example. A reduction from the MAX_TURNS = 40
+  # hard-coded in agentic_openai.py: a session that has not produced an
+  # answer in 24 turns is looping, not thinking, and the observed runs
+  # finish well inside it.
+  max_turns: 24

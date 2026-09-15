@@ -142,7 +142,6 @@ A **check** is a directory under `soda_mmqc/data/checklist/{checklist}/{check}/`
 - `benchmark.json` — which examples under `data/examples/` to include in the evaluation of the AI check
 
 A **checklist** is a directory of related checks run together (`evaluate fig-checklist`). 
-
 ```text
 soda_mmqc/data/checklist/
 ├── fig-checklist/
@@ -232,6 +231,109 @@ Per-check `model_config.json` enables tools (e.g. `web_search_preview`), reasoni
 ```
 
 Use a reasoning-capable model (e.g. `gpt-5`, `gpt-5-mini`) when setting `reasoning`. Full options: [API Provider Documentation](soda_mmqc/docs/api_providers.md#per-check-model-config-openai).
+
+## Agentic checklists (in development)
+
+A second, **experimental** way to run a check. Instead of one prompt producing
+the whole answer, a check is a *skill* whose prose asks the agent to call other
+skills — so work shared between checks is written once and reused.
+
+`micrograph-scale-bar` is the pilot. Its `v1/SKILL.md` no longer explains how
+to find figure panels; it asks the agent to call `identify-panels`, a skill
+that sits beside the checks and is shared by all of them.
+
+```text
+soda_mmqc/data/checklist/fig-checklist/
+├── version-manifest.yaml        # pins one version of every skill
+├── model-defaults.yaml          # provider-neutral defaults
+├── dag.yaml                     # generated; never hand-edit
+├── README.md                    # generated; never hand-edit
+├── micrograph-scale-bar/        # a check: owns the evaluation contracts
+│   ├── schema.json
+│   ├── eval-manifest.json
+│   ├── benchmark.json
+│   ├── prompts/                 # legacy, still used by `evaluate`
+│   └── v1/SKILL.md              # agentic
+└── identify-panels/             # a shared skill: no evaluation contracts,
+    ├── schema.json              # so it is not a check and is never scored
+    └── v1/SKILL.md
+```
+
+The only on-disk difference between a check and a shared skill is that a check
+owns `schema.json` **and** `benchmark.json`. There is no naming convention and
+no marker file.
+
+### Commands
+
+```bash
+# Write predictions without contacting any model or provider. Fully offline:
+# each example's expected output becomes its prediction, so the whole path --
+# runtime assembly, prediction layout, trace sidecar, scoring -- is exercised
+# without credentials.
+python -m soda_mmqc.cli run fig-checklist --check micrograph-scale-bar --mock
+
+# Score stored predictions through the same evaluator the legacy path uses.
+python -m soda_mmqc.cli score fig-checklist --check micrograph-scale-bar \
+    --predictions path/to/predictions
+
+# Build the sealed runtime directory for one example and print the permission
+# profile, without running a session. Useful for inspecting what an agent
+# would and would not be able to reach.
+python -m soda_mmqc.cli assemble fig-checklist --check micrograph-scale-bar \
+    --example <doc>/content/<n> --keep-runtime
+
+# Check the generated `dag.yaml` and `README.md` still match the skills.
+# Metadata only: no example is read and no session is opened.
+python -m soda_mmqc.cli graph fig-checklist
+
+# Regenerate them after changing a skill's prose or frontmatter.
+python -m soda_mmqc.cli graph fig-checklist --write
+```
+
+A live run additionally needs `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY` with
+the default `--provider openai`) and must be scoped with `--limit` or
+`--example`; `--approve-tools` asks before every tool call.
+
+### Versions
+
+Which version of each skill a run uses comes from `version-manifest.yaml`,
+which pins **every** skill in the checklist — a missing pin, a pin naming a
+skill that is gone, or a pin naming a version that does not exist all refuse.
+Adding a `v2/SKILL.md` therefore changes nothing until its pin moves, which is
+the point: results are attributed to a reviewed set of versions, not to
+whatever happened to be the highest number on disk.
+
+`model-defaults.yaml` holds provider-neutral defaults (which model each
+provider should use, and session knobs like `max_turns`). It may not touch the
+permission profile; the loader refuses the file if it tries.
+
+To compare two versions of one skill, unpin it — everything else stays pinned,
+and each version's predictions land in their own subdirectory, scored against
+the same shared `schema.json` and `eval-manifest.json` so the results are
+comparable:
+
+```bash
+python -m soda_mmqc.cli run fig-checklist --check micrograph-scale-bar \
+    --unpin micrograph-scale-bar --versions v1,v2 --limit 2
+```
+
+### How a session is contained
+
+Each example gets a throwaway directory **outside the repository**, holding the
+checklist's skills, that one figure's caption and image, and an empty output
+directory. Nothing else is reachable: no other example, no gold, no benchmark,
+no repository path, and no symlinks. The agent's tools are scoped to that
+directory, writes are confined to its artifacts folder, and shells, subagents
+and network access are removed outright.
+
+Each run leaves two diagnostic sidecars beside its prediction:
+`skill_trace.json`, recording which skills the agent actually invoked, and
+`tool_audit.json`, recording every tool call it attempted.
+
+> **Status:** the runner works end to end offline. Whether an agent reliably
+> finds a shared skill from a leaf's prose has **not** yet been measured
+> against a real model. Until it has, the legacy `evaluate` path remains the
+> one in use and is unchanged.
 
 ## Benchmarking system
 

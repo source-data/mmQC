@@ -6,7 +6,11 @@ from PIL import Image
 import pandas as pd
 import argparse
 from datetime import datetime
-from soda_mmqc.config import CHECKLIST_DIR, EXAMPLES_DIR
+from soda_mmqc.config import (
+    CHECKLIST_DIR,
+    EXAMPLES_DIR,
+    owns_evaluation_contracts,
+)
 from soda_mmqc import logger
 from soda_mmqc.core.examples import EXAMPLE_FACTORY, WordExample
 # Load environment variables from .env when available
@@ -353,6 +357,13 @@ def load_checklist(checklist_dir):
     
     for check_dir in checklist_dir.glob("*"):
         if not check_dir.is_dir():
+            continue
+
+        # A directory is a check only if it owns the evaluation contracts.
+        # Shared skills sit as flat siblings of the checks and carry at most a
+        # runtime schema.json, so they are not curatable and must not appear
+        # in the check selector. Same rule the runner enumerates by.
+        if not owns_evaluation_contracts(check_dir):
             continue
 
         schema_path = check_dir / "schema.json"

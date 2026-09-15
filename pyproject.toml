@@ -41,6 +41,14 @@ dependencies = [
     "mmqc-utils>=0.3.0",
     "rapidfuzz>=3.0.0",
     "itables>=2.0.0",
+    # Agentic checklist runner. Accepted at human gate 4A (2026-09-14),
+    # confirmed against https://code.claude.com/docs/en/agent-sdk/python
+    #
+    # Pinned exactly rather than floated: the SDK is 0.x with no semver
+    # promise and ships frequently, and a silently updated agent runtime
+    # would make scores non-comparable between runs -- the one property
+    # milestones 5 and 6 depend on. Bumping it is a deliberate change.
+    "claude-agent-sdk==0.2.152",
 ]
 
 [project.scripts]

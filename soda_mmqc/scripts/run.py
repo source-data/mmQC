@@ -15,6 +15,8 @@ from soda_mmqc.config import (
     DEFAULT_MODEL,
     API_PROVIDER,
     DEFAULT_MODEL_CONFIG_PATH,
+    EVALUATION_CONTRACT_FILES,
+    owns_evaluation_contracts,
 )
 from soda_mmqc.lib.api import validate_model_for_provider, get_compatible_models
 from soda_mmqc import logger
@@ -1063,6 +1065,23 @@ def process_check(
     Returns:
         Dictionary mapping string metric names to analysis results
     """
+    # Human gate 5B: "Agentic pipeline should not revert back to legacy
+    # prompts." Enforced here rather than only in the CLI router, because
+    # `process_checklist` also funnels through this function and the
+    # `prompts/` directories are deliberately still on disk (gate 5C). A
+    # converted check that quietly ran its old prompt would file a
+    # prompt-path score under an agentic check's name -- the exact confusion
+    # the whole-checklist routing gap produced before it was fixed. Failing
+    # loudly is the point.
+    if is_agentic_check(check_dir):
+        raise ValueError(
+            f"{check_dir.name} is an agentic check and must not be run "
+            "through the legacy prompt path. Run it with "
+            f"`python -m soda_mmqc.cli run <checklist> --check "
+            f"{check_dir.name}`, or via `evaluate`, which routes it "
+            "automatically."
+        )
+
     # Validate model compatibility
     if not validate_model_for_provider(model):
         compatible_models = get_compatible_models()
@@ -1141,13 +1160,16 @@ def process_check(
 
 
 def list_checks(checklist_dir: Path) -> Dict[str, Path]:
-    """List all checks in a checklist."""
-    # enumerate the subdirectories of the checklist directory
-    checks = {}
-    for check_dir in checklist_dir.iterdir():
-        if check_dir.is_dir():
-            checks[check_dir.name] = check_dir
-    return checks
+    """List all checks in a checklist.
+
+    Only directories owning the evaluation contracts are returned, so a
+    shared skill sitting beside the checks cannot become a phantom check.
+    """
+    return {
+        check_dir.name: check_dir
+        for check_dir in sorted(checklist_dir.iterdir())
+        if owns_evaluation_contracts(check_dir)
+    }
 
 
 def initialize(
@@ -1320,6 +1342,57 @@ def process_checklist(
             continue
 
 
+def is_agentic_check(check_dir: Path) -> bool:
+    """Whether a check is run by the agentic runner rather than a prompt.
+
+    True when the directory is a check *and* owns at least one versioned
+    ``SKILL.md``. Both halves matter: a shared skill has a ``SKILL.md`` and no
+    evaluation contracts, so it is not a check and must never be dispatched
+    as one.
+
+    The discriminator is deliberately **per check** rather than per checklist.
+    The plan words this as "a checklist with an agentic layout dispatches",
+    which is right for a fully converted checklist and wrong during the
+    conversion: `fig-checklist` has one converted leaf and ten that still
+    have only prompts, so checklist-level dispatch would break ten working
+    checks to route one. Per-check routing satisfies the plan's own first
+    clause -- "legacy checks keep present behavior" -- and converges on its
+    wording as the last leaf lands.
+    """
+    if not owns_evaluation_contracts(check_dir):
+        return False
+    return any(check_dir.glob("v*/SKILL.md"))
+
+
+def _agentic_main(argv: list) -> int:
+    """Hand off to the agentic runner. Indirected so tests can substitute."""
+    from soda_mmqc.cli import main as agentic_main
+
+    return agentic_main(argv)
+
+
+def _agentic_argv(args, check_name: str) -> list:
+    """Translate the legacy flags the agentic runner understands."""
+    argv = ["run", args.checklist, "--check", check_name]
+    if args.mock:
+        argv.append("--mock")
+    if args.model:
+        argv += ["--model", args.model]
+    if args.no_cache:
+        argv.append("--no-cache")
+    return argv
+
+
+def _dispatch_check(args, checklist_dir: Path, check_name: str) -> int:
+    """Route one check to the agentic runner. Returns its exit code.
+
+    The code is propagated rather than discarded: a failed agentic run must
+    surface as a failure, never as a silent success and never as a reason to
+    hand the check back to the prompt path (human gate 5B).
+    """
+    return _agentic_main(_agentic_argv(args, check_name))
+
+
 def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(
@@ -1447,11 +1520,57 @@ def main():
         )
         return
 
+    # Agentic checks are dispatched to soda_mmqc.cli; everything else keeps
+    # exactly its present behaviour. `--prompt-version` has no meaning for a
+    # skill, so asking for one is refused rather than silently ignored.
+    # A whole-checklist run names no checks, so resolve it to the full list
+    # before routing. Without this an agentic check would silently fall
+    # through to its legacy prompt during a `evaluate <checklist>` run --
+    # producing a prompt-path score under an agentic check's name, which is
+    # the most confusing possible outcome.
+    routed_checks = selected_checks or sorted(list_checks(checklist_dir))
+    if routed_checks:
+        agentic = [
+            name for name in routed_checks
+            if is_agentic_check(checklist_dir / name)
+        ]
+        if agentic and args.prompt_version:
+            logger.error(
+                "--prompt-version selects between prompt files and has no "
+                "meaning for agentic check(s): %s. Skills are versioned by "
+                "directory (v1, v2, ...) and pinned by manifest, not by this "
+                "flag. Re-run without --prompt-version, or name only legacy "
+                "checks.",
+                ", ".join(agentic),
+            )
+            return 2
+        failed = [
+            name for name in agentic
+            if _dispatch_check(args, checklist_dir, name)
+        ]
+        if failed:
+            logger.error(
+                "Agentic check(s) failed: %s. They are NOT re-run through "
+                "the legacy prompt path.", ", ".join(failed)
+            )
+            return 1
+        if agentic:
+            # Only narrow the legacy selection when something was actually
+            # routed away, so a checklist with no agentic checks keeps
+            # passing the caller's original selection through untouched.
+            selected_checks = [
+                name for name in routed_checks if name not in agentic
+            ]
+            if not selected_checks:
+                return
+
     if selected_checks and len(selected_checks) == 1:
         check_name = selected_checks[0]
-        # Find the check in the checklist
+        # Find the check in the checklist. A directory only counts as a check
+        # if it owns the evaluation contracts, so a shared skill sitting
+        # beside the checks cannot be run as one.
         check_dir = checklist_dir / check_name
-        if check_dir.exists():
+        if owns_evaluation_contracts(check_dir):
             process_check(
                 check_dir, args.checklist, args.mock, not args.no_cache,
                 model=args.model,
@@ -1460,6 +1579,11 @@ def main():
                 fixed_prompt_config=fixed_prompt_config,
                 match_threshold=args.match_threshold,
                 sentence_transformer_model=args.sentence_transformer_model
+            )
+        elif check_dir.is_dir():
+            logger.error(
+                f"Not a check (no {' / '.join(EVALUATION_CONTRACT_FILES)}): "
+                f"{check_name}"
             )
         else:
             logger.error(f"Check not found: {check_name}")

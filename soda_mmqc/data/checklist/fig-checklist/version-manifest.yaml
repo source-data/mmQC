@@ -1,0 +1,32 @@
+# Which version of each skill a run of `fig-checklist` uses.
+#
+# Hand-maintained, and complete by rule: every skill in the checklist is
+# pinned here, including ones no check calls today. `graph fig-checklist`
+# fails if a skill is missing, if a pin names a skill that is gone, or if a
+# pinned version does not exist.
+#
+# This file is the identity a result is attributed to. Adding a version of a
+# skill does not change any run until its pin moves here, and moving a pin is
+# a reviewed edit, not a consequence of committing a directory.
+
+checklist: fig-checklist
+
+skills:
+  # Shared skills. Called by leaves through prose, never by the runner.
+  classify-plot-panels: v1
+  identify-panels: v1
+
+  # Checks. Each owns schema.json, eval-manifest.json and benchmark.json,
+  # which stay above the version directories so two versions of one skill
+  # score against the same contract and stay comparable.
+  error-bars-defined: v1
+  image-annotation-defined: v1
+  individual-data-points: v1
+  micrograph-scale-bar: v1
+  panel-image-matches-caption: v1
+  plot-axis-units: v1
+  plot-gap-labeling: v1
+  replication-reporting: v1
+  single-channel-for-overlay: v1
+  stat-significance-level: v1
+  stat-test: v1

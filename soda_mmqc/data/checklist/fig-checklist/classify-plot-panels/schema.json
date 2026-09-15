@@ -1,0 +1,83 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "classify-plot-panels",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "plot_panels": {
+                    "type": "array",
+                    "description": "One entry per labeled panel of the figure, in label order",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel, exactly as the panel inventory reports it"
+                            },
+                            "plot_types": {
+                                "type": "array",
+                                "description": "Every distinct plot type observed in the panel, named plainly (e.g. 'bar chart', 'scatter plot', 'pie chart', 'heatmap'). Empty when the panel contains no plot",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "has_axes": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel has drawn, labeled coordinate axes"
+                            },
+                            "axes": {
+                                "type": "array",
+                                "description": "One entry per axis present. Empty when has_axes is 'no'",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "axis": {
+                                            "type": "string",
+                                            "enum": ["x", "y", "z"],
+                                            "description": "Which axis this describes"
+                                        },
+                                        "scale": {
+                                            "type": "string",
+                                            "enum": ["numeric", "categorical", "unclear"],
+                                            "description": "Whether the tick labels are numbers, category names, or cannot be determined"
+                                        },
+                                        "tick_labels": {
+                                            "type": "array",
+                                            "description": "The tick labels as printed, in order, verbatim",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "axis_title": {
+                                            "type": "string",
+                                            "description": "The axis title as printed, or an empty string if there is none"
+                                        }
+                                    },
+                                    "required": ["axis", "scale", "tick_labels", "axis_title"],
+                                    "additionalProperties": false
+                                }
+                            },
+                            "evidence": {
+                                "type": "string",
+                                "description": "What in the panel supports this description, briefly"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "plot_types",
+                            "has_axes",
+                            "axes",
+                            "evidence"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["plot_panels"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

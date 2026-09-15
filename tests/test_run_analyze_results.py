@@ -16,13 +16,20 @@ CHECK_DIR = (
 SCHEMA_WRAPPER = json.loads(
     (CHECK_DIR / "schema.json").read_text(encoding="utf-8")
 )
-EXAMPLE_GOLD = json.loads(
-    (
-        Path(__file__).resolve().parents[1]
-        / "soda_mmqc/data/examples/10.1038_s44318-026-00715-1/content/1"
-        / "checks/micrograph-scale-bar/expected_output.json"
-    ).read_text(encoding="utf-8")
+GOLD_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "soda_mmqc/data/examples/10.1038_s44318-026-00715-1/content/1"
+    / "checks/micrograph-scale-bar/expected_output.json"
 )
+if not GOLD_PATH.is_file():
+    # The examples dataset is not tracked in git. Skip rather than raise at
+    # import time, so a missing dataset does not abort collection of the
+    # whole suite.
+    pytest.skip(
+        f"Examples dataset not available: {GOLD_PATH}",
+        allow_module_level=True,
+    )
+EXAMPLE_GOLD = json.loads(GOLD_PATH.read_text(encoding="utf-8"))
 
 
 def _mock_embedder(texts):

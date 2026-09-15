@@ -1,0 +1,54 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "identify-panels",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "panels": {
+                    "type": "array",
+                    "description": "One entry per labeled panel of the figure, in label order",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel as it appears in the figure, normalized to the bare label without brackets (e.g., A, B, C). Empty string if the figure carries no panel labels at all"
+                            },
+                            "location_in_figure": {
+                                "type": "string",
+                                "description": "Where the panel sits in the figure image (e.g., 'top left', 'second row, middle'), enough for another reader to find the same region"
+                            },
+                            "panel_content": {
+                                "type": "string",
+                                "description": "What the panel shows, naming each distinct element of a composite panel separately (e.g., 'microscopy image plus a bar plot quantifying it')"
+                            },
+                            "caption_excerpt": {
+                                "type": "string",
+                                "description": "Verbatim text from the figure caption that describes this panel. Empty string if the caption says nothing about it"
+                            },
+                            "caption_covers_panels": {
+                                "type": "array",
+                                "description": "Every panel label that caption_excerpt describes, including this one. Longer than one entry when a single caption sentence covers several panels",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "location_in_figure",
+                            "panel_content",
+                            "caption_excerpt",
+                            "caption_covers_panels"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["panels"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}
