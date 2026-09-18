@@ -1638,9 +1638,11 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
 
     * ``cwd`` is the runtime root, so project-scope skill discovery finds the
       assembled tree.
-    * ``setting_sources`` omits ``user``, so ``~/.claude/skills/`` -- which
-      loads regardless of ``cwd`` -- cannot put an operator's personal skills
-      into a scored run.
+    * ``setting_sources`` omits ``user``, so the operator's own settings are
+      not read. On its own this does **not** keep foreign skills out of the
+      session's ``init`` report -- the installation's bundled ones are listed
+      either way. What keeps them out of a scored run is the named ``skills``
+      pool below, which is what makes them non-invocable.
     * ``permission_mode`` is ``dontAsk``. Without it ``allowed_tools`` is only
       a list of auto-approvals and every *unlisted* tool remains reachable.
     * The file rules are **scoped to paths**, not bare tool names: reads are
@@ -1655,11 +1657,25 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
     return {
         "cwd": str(layout.root),
         "setting_sources": list(AGENTIC_SETTING_SOURCES),
-        # The assembled skills by name, never "all". A live session reported
-        # 18 skills in the pool: ours plus 16 bundled with Claude Code
-        # (deep-research, code-review, debug, ...). Those foreign
-        # descriptions compete for the agent's attention and would corrupt
-        # the one measurement this milestone exists to make.
+        # The assembled skills by name, never "all". Naming the pool does not
+        # empty the session's `init` report: measured 2026-09-18 against
+        # claude-sonnet-5 and claude_agent_sdk 0.2.152, `init` still listed 29
+        # skills -- ours plus 16 bundled with the CLI installation
+        # (deep-research, code-review, debug, ...). That array is an
+        # installation inventory, not this session's pool, and it is the same
+        # with and without this list. Do not assert on its length.
+        #
+        # What the list does bound is everything downstream of it, which is
+        # what the measurement needs. In the same probe the Skill tool offered
+        # the model exactly our 13 names -- the foreign descriptions never
+        # reached its context, so they cannot compete for its attention -- and
+        # a forced call came back:
+        #
+        #     <tool_use_error>Skill code-review is not in this session's
+        #     skills allowlist</tool_use_error>
+        #
+        # So the bundled skills are present in the report, invisible to the
+        # model, and not invocable. Assert on invocability, never on `init`.
         #
         # This is not preselection: every skill of the checklist is listed, so
         # they all still compete with each other, which is what the plan
@@ -1691,7 +1707,7 @@ def describe_permission_profile(layout: RuntimeLayout) -> str:
         "=" * 34,
         f"  runtime root     : {options['cwd']}",
         f"  setting sources  : {', '.join(options['setting_sources'])}"
-        "   (no 'user': ~/.claude/skills is excluded)",
+        "   (no 'user': the operator's settings are not read)",
         f"  skills           : {options['skills']}"
         f"   ({skill_count} assembled)",
         f"  permission mode  : {options['permission_mode']}"

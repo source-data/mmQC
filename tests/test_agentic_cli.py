@@ -2482,11 +2482,18 @@ class TestPermissionProfile:
         listed = cli.session_options(assembled)["skills"]
         assert set(listed) == set(cli.load_skills(FIG_CHECKLIST_DIR))
 
-    def test_foreign_skills_cannot_join_the_pool(self, assembled):
-        """A live session reported 18 skills: ours plus 16 bundled with
-        Claude Code. Those descriptions compete for the agent's attention and
-        corrupt the one measurement this milestone exists to make, so the
-        pool is named explicitly rather than left as "all"."""
+    def test_the_named_pool_names_only_ours(self, assembled):
+        """The pool is named explicitly rather than left as "all".
+
+        This checks the list we *build*, which is all a unit test can see. It
+        is deliberately not named for the session-level claim: naming the pool
+        does not shorten the session's `init` array, which still reports the
+        installation's bundled skills alongside ours. What it does bound --
+        the Skill tool offering the model only these names, and refusing a
+        call to any other -- costs a live session to observe, so it is
+        measured out-of-band and recorded at `session_options`. An equality
+        assertion against `init` would fail on every machine.
+        """
         listed = cli.session_options(assembled)["skills"]
         assert listed != "all"
         assert "code-review" not in listed and "deep-research" not in listed
