@@ -14,7 +14,23 @@ from soda_mmqc.reporting import (
     summarize_runs,
 )
 
-MODEL_MINI = "gpt-5-mini-2025-08-07"
+from pathlib import Path
+
+
+# The committed snapshot these tests read instead of soda_mmqc/data/evaluation.
+# Reading the live corpus meant asserting whichever evaluation runs happened to
+# be committed -- a statement about data, not about the reporting code -- so the
+# tests broke whenever that corpus was regenerated or removed.
+FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
+
+
+MODEL_A = "model-a"
 
 
 @pytest.fixture
@@ -22,7 +38,7 @@ def summaries_prompt():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models=MODEL_MINI,
+        models=MODEL_A,
         prompts=["prompt.1", "prompt.2", "prompt.3"],
     )
     return summarize_runs(runs)
@@ -33,7 +49,7 @@ def summaries_model():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models=[MODEL_MINI, "gpt-5"],
+        models=[MODEL_A, "model-b"],
         prompts="prompt.1",
     )
     return summarize_runs(runs)
@@ -44,10 +60,10 @@ class TestComparisonReport:
         report = build_comparison_report(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         assert report.compare == "prompt"
-        assert report.anchor == MODEL_MINI
+        assert report.anchor == MODEL_A
         assert report.series_labels == ("prompt.1", "prompt.2", "prompt.3")
         assert report.layer_s_figure is not None
         assert len(report.layer1_figure.data) > 0
@@ -63,14 +79,14 @@ class TestComparisonReport:
         )
         assert report.compare == "model"
         assert report.anchor == "prompt.1"
-        assert report.series_labels == (MODEL_MINI, "gpt-5")
+        assert report.series_labels == (MODEL_A, "model-b")
         assert "model" in report.errors_table.columns
 
     def test_prompt_contrast_layer2_errors_only(self, summaries_prompt):
         report = build_comparison_report(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         prompt2_errors = report.errors_table.loc[
             report.errors_table["prompt"] == "prompt.2"
@@ -83,7 +99,7 @@ class TestComparisonReport:
         fig = plot_comparison_layer_s(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         assert fig is not None
         assert len(fig.data) == 3

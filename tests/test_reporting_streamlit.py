@@ -13,6 +13,20 @@ from soda_mmqc.reporting.plots import plot_mean_score_with_instances
 from soda_mmqc.reporting.streamlit_app import _selected_instance_index
 
 
+# The committed snapshot these tests read instead of soda_mmqc/data/evaluation.
+# Reading the live corpus meant asserting whichever evaluation runs happened to
+# be committed -- a statement about data, not about the reporting code -- so the
+# tests broke whenever that corpus was regenerated or removed.
+FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
+
+
+
 class TestDiscoverEvaluationChecks:
     def test_discovers_micrograph_scale_bar(self):
         refs = discover_evaluation_checks()
@@ -31,7 +45,7 @@ class TestDiscoverEvaluationChecks:
     def test_finds_check_with_analysis_json(self, tmp_path: Path, monkeypatch):
         eval_root = tmp_path / "evaluation"
         analysis_path = (
-            eval_root / "fig-checklist" / "demo-check" / "gpt-5" / "analysis.json"
+            eval_root / "fig-checklist" / "demo-check" / "model-b" / "analysis.json"
         )
         analysis_path.parent.mkdir(parents=True)
         analysis_path.write_text(json.dumps({"prompt.1": {"flat": []}}), encoding="utf-8")
@@ -71,8 +85,8 @@ class TestTryLoadRunSummaries:
     def test_missing_manifest_returns_message(self, tmp_path: Path, monkeypatch):
         eval_root = tmp_path / "evaluation"
         check_eval = eval_root / "fig-checklist" / "demo-check"
-        (check_eval / "gpt-5").mkdir(parents=True)
-        (check_eval / "gpt-5" / "analysis.json").write_text(
+        (check_eval / "model-b").mkdir(parents=True)
+        (check_eval / "model-b" / "analysis.json").write_text(
             json.dumps({"prompt.1": {"flat": []}}),
             encoding="utf-8",
         )
@@ -90,8 +104,8 @@ class TestTryLoadRunSummaries:
     def test_loads_when_manifest_present(self, tmp_path: Path, monkeypatch):
         eval_root = tmp_path / "evaluation"
         check_eval = eval_root / "fig-checklist" / "demo-check"
-        (check_eval / "gpt-5").mkdir(parents=True)
-        (check_eval / "gpt-5" / "analysis.json").write_text(
+        (check_eval / "model-b").mkdir(parents=True)
+        (check_eval / "model-b" / "analysis.json").write_text(
             json.dumps({"prompt.1": {"flat": []}}),
             encoding="utf-8",
         )
@@ -117,15 +131,18 @@ class TestTryLoadRunSummaries:
         assert summaries is not None
         assert len(summaries) == 1
 
-    def test_loads_image_annotation_defined(self):
+    def test_loads_run_summaries_for_a_check(self):
+        # Named for the behaviour, not for one check: it asserts that a check
+        # with results loads without error, and the check it happens to read
+        # was never what was under test.
         summaries, error = try_load_run_summaries(
             "fig-checklist",
-            "image-annotation-defined",
+            "micrograph-scale-bar",
         )
         assert error is None, error
         assert summaries is not None
         assert len(summaries) > 0
-        assert "gpt-5-mini-2025-08-07" in summaries.models
+        assert "model-a" in summaries.models
 
 
 class TestStreamlitSelectionParsing:
@@ -150,7 +167,7 @@ def prompt1_summary():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models="gpt-5-mini-2025-08-07",
+        models="model-a",
         prompts="prompt.1",
     )
     return aggregate_run(runs[0])

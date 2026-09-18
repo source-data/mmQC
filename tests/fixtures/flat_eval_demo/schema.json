@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "required": [
+    "outputs"
+  ],
+  "properties": {
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "label",
+          "is_micrograph"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "is_micrograph": {
+            "type": "string",
+            "enum": [
+              "yes",
+              "no",
+              ""
+            ]
+          }
+        }
+      }
+    }
+  }
+}
