@@ -370,12 +370,6 @@ def validate_model_for_provider(model: str, provider: str = "") -> bool:
     return model in compatible_models
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type((json.JSONDecodeError, ValueError)),
-    reraise=True
-)
 def _extract_output_text_from_response(raw_response) -> str:
     """Get the final assistant text from a Responses API response.
     
@@ -479,6 +473,12 @@ def _sanitize_metadata_for_model(obj: Any, *, max_preview_rows: int = 3, max_str
         return str(obj)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type((json.JSONDecodeError, ValueError)),
+    reraise=True
+)
 def generate_response_openai(
     example,
     prompt: str,
