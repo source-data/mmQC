@@ -8,7 +8,14 @@ from pathlib import Path
 
 
 from soda_mmqc.lib.api import generate_response_anthropic, _create_tool_from_schema
+from soda_mmqc.config import DEFAULT_MODELS
 from tests.conftest import requires_key
+
+# Taken from config rather than hard-coded: these tests pinned
+# claude-3-5-sonnet-20241022, which has since been retired and now answers
+# 404, so they failed for a reason that had nothing to do with the code under
+# test. Following config means a model retirement is fixed in one place.
+ANTHROPIC_MODEL = DEFAULT_MODELS["anthropic"]
 
 
 class TestAnthropicIntegration:
@@ -63,7 +70,10 @@ class TestAnthropicIntegration:
         
         # Create a simple mock example with correct Anthropic format
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -81,7 +91,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "simple_call"}
             )
             
@@ -106,7 +116,10 @@ class TestAnthropicIntegration:
         """Test to identify the content format issue with real examples."""
         # Create a mock example that simulates the real content format
         class MockFigureExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 # This simulates what the real FigureExample produces
                 return {
                     "content": [
@@ -155,7 +168,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "content_format_debug"}
             )
         
@@ -202,7 +215,10 @@ class TestAnthropicIntegration:
         """Test with a mock figure example that simulates real content."""
         # Create a mock example that simulates the real FigureExample
         class MockFigureExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -211,7 +227,7 @@ class TestAnthropicIntegration:
                         },
                         {
                             "type": "input_image",
-                            "image_url": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                            "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
                         }
                     ]
                 }
@@ -236,7 +252,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "mock_figure_example"}
             )
             
@@ -268,7 +284,10 @@ class TestAnthropicIntegration:
         
         # Create a simple mock example
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -286,7 +305,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "nested_schema"}
             )
             
@@ -314,7 +333,10 @@ class TestAnthropicIntegration:
         }
         
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -333,7 +355,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=invalid_schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "error_handling"}
             )
             
