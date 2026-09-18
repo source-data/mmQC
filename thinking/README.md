@@ -28,6 +28,23 @@ In this repo these live under **`thinking/`** (not a separate `wiki/` directory)
 
   New entries go at the **bottom** of `log.md` so `grep '^## \[' thinking/log.md | tail -5` shows the latest activity.
 
+## Subfolders
+
+A subfolder under `thinking/` carries its own `README.md` catalog and gets
+**one row** in [`index.md`](index.md) pointing at it, rather than a row per
+page. This keeps the top-level catalog skimmable as a series grows, and lets
+a sub-catalog use columns that suit it (an experiment wants status and
+result; a design note wants a blurb).
+
+- [`experiments/`](experiments/README.md) — skill-design experiment series.
+- [`plans/`](plans/) — dated milestone plans and results.
+
+**Markdown-only still holds here.** Jupyter notebooks belong in
+`notebooks/experiments/`, not under `thinking/`: `.ipynb` is JSON carrying
+execution counts and outputs, which diffs badly and buries prose a reviewer
+needs to read. An experiment's note and its notebook are paired by sharing
+the stem `exp-NN-<slug>`.
+
 ## Conventions
 
 - **Markdown:** Prefer `[label](relative-path.md)` for links between wiki pages and into the codebase (e.g. `[evaluation.py](../soda_mmqc/core/evaluation.py)`). Paths are relative to the file containing the link.
