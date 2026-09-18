@@ -315,7 +315,8 @@ class TestModelApi(unittest.TestCase):
             schema=self.test_schema,
             model=self.test_model,
             metadata=self.test_metadata,
-            model_config=None
+            model_config=None,
+            prompt_obj=None
         )
 
     @patch('openai.OpenAI')
@@ -588,7 +589,8 @@ class TestModelApi(unittest.TestCase):
             schema=self.test_schema,
             model="gpt-4o-2024-08-06",
             metadata=self.test_metadata,
-            model_config=None
+            model_config=None,
+            prompt_obj=None
         )
 
     @patch('soda_mmqc.lib.api.API_PROVIDER', 'anthropic')
@@ -622,7 +624,9 @@ class TestModelApi(unittest.TestCase):
             prompt=self.test_prompt,
             schema=self.test_schema,
             model="claude-3-5-sonnet-20241022",
-            metadata=self.test_metadata
+            metadata=self.test_metadata,
+            model_config=None,
+            prompt_obj=None
         )
 
     @patch('soda_mmqc.lib.api.API_PROVIDER', 'openai')
@@ -736,7 +740,8 @@ class TestModelApi(unittest.TestCase):
             schema=self.test_schema,
             model="gpt-4o",
             metadata=self.test_metadata,
-            model_config=model_config
+            model_config=model_config,
+            prompt_obj=None
         )
 
     def test_cache_key_includes_model_config(self):
