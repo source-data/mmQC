@@ -3452,12 +3452,21 @@ class TestEvaluateDelegation:
         # provider's models endpoint. Pre-existing behaviour -- the same
         # thing Milestone 1 recorded as "--mock is not offline" -- and out of
         # scope to change here, but it means delegation inherits it.
+        #
+        # So the model has to match the *configured* provider. This was
+        # "gpt-4o", which validation rejects whenever API_PROVIDER is
+        # anthropic -- dispatch never happened and the spy recorded nothing,
+        # which surfaced as an IndexError rather than as the provider
+        # mismatch it was. What is under test is forwarding, not any
+        # particular model.
+        from soda_mmqc.config import DEFAULT_MODEL
+
         self._run([
             "fig-checklist", "--check", PILOT_LEAF, "--mock",
-            "--model", "gpt-4o", "--no-cache",
+            "--model", DEFAULT_MODEL, "--no-cache",
         ])
         argv = spy["agentic"][0]
-        assert "gpt-4o" in argv
+        assert DEFAULT_MODEL in argv
         assert "--no-cache" in argv
 
     def test_a_mixed_selection_routes_each_check_to_its_own_path(

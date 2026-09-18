@@ -12,6 +12,7 @@ And a gate is per-provider. A test that calls Anthropic must not be gated on
 test that could have run, or runs one that cannot.
 """
 
+import logging
 import os
 
 import pytest
@@ -37,3 +38,27 @@ def requires_key(name: str):
         value.lower() in _PLACEHOLDERS,
         reason=f"{name} not set; live test skipped",
     )
+
+
+@pytest.fixture(autouse=True)
+def _propagate_package_logs():
+    """Let `caplog` see this package's log records.
+
+    `soda_mmqc/__init__.py` sets `logger.propagate = False` and installs its
+    own handlers, so records never reach the root logger -- which is exactly
+    where pytest's `caplog` attaches its own. Without this, `caplog.text` and
+    `caplog.records` come back empty and a test asserting on an error message
+    compares against "", which fails in a way that looks nothing like the
+    cause. `capsys` does not see them either: the package's StreamHandler
+    holds the `stderr` it captured at import, not the one pytest swaps in.
+
+    Autouse, because the trap is silent and catches any test that asserts on
+    a log message, not just the ones that hit it today.
+    """
+    package_logger = logging.getLogger("soda_mmqc")
+    previous = package_logger.propagate
+    package_logger.propagate = True
+    try:
+        yield
+    finally:
+        package_logger.propagate = previous
