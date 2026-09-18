@@ -8,6 +8,7 @@ from pathlib import Path
 
 
 from soda_mmqc.lib.api import generate_response_anthropic, _create_tool_from_schema
+from tests.conftest import requires_key
 
 
 class TestAnthropicIntegration:
@@ -15,13 +16,13 @@ class TestAnthropicIntegration:
     
     @pytest.fixture(autouse=True)
     def setup_environment(self):
-        """Set up environment for Anthropic tests."""
-        # Check if we have the required environment variables
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key or api_key == "your_key_here":
-            pytest.skip("ANTHROPIC_API_KEY not set or invalid")
-        
-        # Set provider to anthropic
+        """Point the library at Anthropic for the duration of a test.
+
+        It no longer skips on a missing key. Two tests in this class never
+        reach the network, and skipping those for want of a credential they
+        do not use cost real offline coverage. The tests that do call the API
+        carry `@requires_key("ANTHROPIC_API_KEY")` instead.
+        """
         os.environ["API_PROVIDER"] = "anthropic"
     
     def test_schema_conversion_with_real_schema(self):
@@ -47,6 +48,8 @@ class TestAnthropicIntegration:
         assert input_schema["type"] == "object"
         assert "properties" in input_schema
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_simple_text_call(self):
         """Test a simple text-only call to Anthropic API."""
         # Simple schema for testing
@@ -97,6 +100,8 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Simple API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_content_format_issue(self):
         """Test to identify the content format issue with real examples."""
         # Create a mock example that simulates the real content format
@@ -191,6 +196,8 @@ class TestAnthropicIntegration:
         
         print("✅ Content conversion function works correctly")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_with_mock_figure_example(self):
         """Test with a mock figure example that simulates real content."""
         # Create a mock example that simulates the real FigureExample
@@ -246,6 +253,8 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Mock figure example API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_with_nested_schema(self):
         """Test with a nested schema (like our actual schemas)."""
         # Use a real nested schema
@@ -291,6 +300,8 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Nested schema API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_error_handling(self):
         """Test error handling with invalid schema."""
         # Invalid schema (missing required fields)

@@ -8,20 +8,16 @@ Run explicitly with: pytest tests/test_model_api_integration.py -v
 import os
 import pytest
 
-# Load .env so OPENAI_API_KEY is available when running from project root
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+# .env is loaded by tests/conftest.py, before this module is imported, so the
+# gate below does not depend on which test module happened to import first.
+from tests.conftest import requires_key
 
-# Skip entire module if no API key (avoids importing heavy deps when not needed)
+# Skip entire module if openai is absent (avoids importing heavy deps).
 pytest.importorskip("openai")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-skip_no_key = pytest.mark.skipif(
-    not OPENAI_API_KEY,
-    reason="OPENAI_API_KEY not set; real API integration tests skipped",
-)
+
+# These call OpenAI, so they are gated on OpenAI's key -- never on another
+# provider's, which would skip a runnable test or run an unrunnable one.
+skip_no_key = requires_key("OPENAI_API_KEY")
 
 
 def _minimal_example():
