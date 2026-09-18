@@ -2118,6 +2118,18 @@ class TestNoLeafRestatesTheSharedSkill:
                     f"block calls it with the {cli.SKILL_TOOL} tool"
                 )
 
+    def test_the_shared_skill_explicitly_writes_panels_json(self):
+        shared = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
+        lowered = shared.lower()
+        assert "artifacts/panels.json" in lowered
+        assert "write" in lowered
+
+    def test_the_leaf_reads_panels_json_as_the_source_of_truth(self):
+        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
+        lowered = leaf.lower()
+        assert "read" in lowered
+        assert "artifacts/panels.json" in lowered
+
 
 # ---------------------------------------------------------------------------
 # Milestone 3: the sealed runtime directory
@@ -4422,3 +4434,253 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
             output=tmp_path / "p", examples=[SUBPANEL_FIGURE],
         )
         assert stub_session[0][SHARED_SKILL] == "v1"
+
+
+@requires_subpanel_figure
+class TestRunCheckLiveIntermediateContracts:
+    def test_a_missing_intermediate_for_an_invoked_skill_fails_the_example(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        class _Recorder:
+            invoked = [SHARED_SKILL]
+            entries = []
+
+        class _Audit:
+            path = tmp_path / "missing-audit.json"
+            session_info = {}
+
+            def summary(self):
+                return "Skill (allow) x1"
+
+        async def fake_run_agent_session(
+            layout, *, versions, approver, options, client
+        ):
+            return _valid_prediction(), _Recorder(), _Audit()
+
+        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+
+        _, report = cli.run_check_live(
+            "fig-checklist",
+            PILOT_LEAF,
+            output=tmp_path / "preds",
+            examples=[SUBPANEL_FIGURE],
+        )
+        assert report[0]["status"] == "failed"
+        assert "panels.json" in report[0]["error"]
+
+    def test_valid_intermediates_are_copied_beside_sidecars(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        class _Recorder:
+            invoked = [SHARED_SKILL]
+            entries = []
+
+        class _Audit:
+            path = tmp_path / "copy-audit.json"
+            session_info = {}
+
+            def summary(self):
+                return "Skill (allow) x1"
+
+        panels = {
+            "panels": [
+                {
+                    "panel_label": "A",
+                    "location_in_figure": "top left",
+                    "panel_content": "schematic",
+                    "caption_excerpt": "(A) Schematic",
+                    "caption_covers_panels": ["A"],
+                }
+            ]
+        }
+
+        async def fake_run_agent_session(
+            layout, *, versions, approver, options, client
+        ):
+            layout.artifacts_root.mkdir(parents=True, exist_ok=True)
+            (layout.artifacts_root / "panels.json").write_text(
+                json.dumps(panels), encoding="utf-8"
+            )
+            return _valid_prediction(), _Recorder(), _Audit()
+
+        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+
+        out = tmp_path / "preds"
+        _, report = cli.run_check_live(
+            "fig-checklist",
+            PILOT_LEAF,
+            output=out,
+            examples=[SUBPANEL_FIGURE],
+        )
+
+        assert report[0]["status"] == "ok"
+        copied = (
+            out
+            / SUBPANEL_FIGURE
+            / cli.INTERMEDIATES_DIRNAME
+            / "panels.json"
+        )
+        assert copied.is_file()
+        assert json.loads(copied.read_text(encoding="utf-8")) == panels
+
+    def test_an_invalid_intermediate_for_an_invoked_skill_fails_the_example(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        class _Recorder:
+            invoked = [SHARED_SKILL]
+            entries = []
+
+        class _Audit:
+            path = tmp_path / "invalid-audit.json"
+            session_info = {}
+
+            def summary(self):
+                return "Skill (allow) x1"
+
+        bad_panels = {
+            "panels": [
+                {
+                    "panel_label": "A",
+                    "location_in_figure": "top left",
+                    "panel_content": "schematic",
+                    "caption_excerpt": "(A) Schematic",
+                    "caption_covers_panels": ["A"],
+                    "panel_type": "unexpected-extra-field",
+                }
+            ]
+        }
+
+        async def fake_run_agent_session(
+            layout, *, versions, approver, options, client
+        ):
+            layout.artifacts_root.mkdir(parents=True, exist_ok=True)
+            (layout.artifacts_root / "panels.json").write_text(
+                json.dumps(bad_panels), encoding="utf-8"
+            )
+            return _valid_prediction(), _Recorder(), _Audit()
+
+        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+
+        _, report = cli.run_check_live(
+            "fig-checklist",
+            PILOT_LEAF,
+            output=tmp_path / "preds",
+            examples=[SUBPANEL_FIGURE],
+        )
+        assert report[0]["status"] == "failed"
+        assert "does not match its schema" in report[0]["error"]
+        assert "panel_type" in report[0]["error"]
+
+
+class TestRunAllAgenticChecks:
+    def test_document_example_selector_expands_to_matching_figures(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        checklist_dir = tmp_path / "toy-checklist"
+        _write_check(checklist_dir / "check-a", "check-a")
+        _write_check(checklist_dir / "check-b", "check-b")
+        for check_name in ("check-a", "check-b"):
+            (checklist_dir / check_name / "benchmark.json").write_text(
+                json.dumps(
+                    {
+                        "name": check_name,
+                        "example_class": "figure",
+                        "examples": [
+                            "doc-x/content/1",
+                            "doc-x/content/2",
+                            "doc-y/content/1",
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a"))
+        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b"))
+
+        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
+        calls = []
+
+        def fake_run_check_live(checklist, check, **kwargs):
+            calls.append((check, kwargs))
+            return Path(kwargs["output"]), []
+
+        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+
+        cli.run_checklist_live(
+            "toy-checklist",
+            output=tmp_path / "all-out",
+            examples=["doc-x"],
+        )
+
+        assert len(calls) == 2
+        for _, kwargs in calls:
+            assert kwargs["examples"] == ["doc-x/content/1", "doc-x/content/2"]
+
+    def test_second_check_reuses_shared_artifact_and_denies_rerun(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ):
+        checklist_dir = tmp_path / "toy-checklist"
+        _write_check(checklist_dir / "check-a", "check-a")
+        _write_check(checklist_dir / "check-b", "check-b")
+        (checklist_dir / "identify-panels").mkdir(parents=True, exist_ok=True)
+        (checklist_dir / "identify-panels" / "schema.json").write_text(
+            json.dumps({"format": {"schema": {"type": "object"}}}),
+            encoding="utf-8",
+        )
+        _write_skill(
+            checklist_dir,
+            "identify-panels",
+            "v1",
+            _skill_md("identify-panels", produces=("panels",)),
+        )
+        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a", requires=("identify-panels",)))
+        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b", requires=("identify-panels",)))
+
+        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
+        ex = "doc-x/content/1"
+        calls = []
+
+        def fake_run_check_live(checklist, check, **kwargs):
+            calls.append((check, kwargs))
+            out = Path(kwargs["output"])
+            if check == "check-a":
+                sidecar = out / ex / cli.INTERMEDIATES_DIRNAME
+                sidecar.mkdir(parents=True, exist_ok=True)
+                (sidecar / "panels.json").write_text(
+                    json.dumps({"panels": [{"panel_label": "A"}]}),
+                    encoding="utf-8",
+                )
+                report = [{"example": ex, "status": "ok", "intermediates": ["panels"]}]
+            else:
+                report = [{"example": ex, "status": "ok", "intermediates": []}]
+            return out, report
+
+        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+
+        out = tmp_path / "all-out"
+        _, report = cli.run_checklist_live(
+            "toy-checklist",
+            output=out,
+            examples=[ex],
+            limit=1,
+        )
+
+        assert [name for name, _ in calls] == ["check-a", "check-b"]
+        second = calls[1][1]
+        assert second["seed_intermediates"][ex]["panels"] == {"panels": [{"panel_label": "A"}]}
+        assert "identify-panels" in second["shared_skill_denials"][ex]
+        assert {row["check"] for row in report} == {"check-a", "check-b"}
+
+    def test_main_accepts_run_all_checks(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(
+            cli,
+            "run_checklist_live",
+            lambda *args, **kwargs: (tmp_path / "out", []),
+        )
+        code = cli.main(
+            ["run", "fig-checklist", "--all-checks", "--limit", "1"]
+        )
+        assert code == 0

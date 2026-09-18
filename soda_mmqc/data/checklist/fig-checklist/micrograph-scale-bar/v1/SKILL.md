@@ -31,6 +31,13 @@ the `identify-panels` skill with the `Skill` tool. Work from the panels it
 returns rather than deriving your own list, so that this check and every other
 check of this figure agree on what the panels are.
 
+After that call, read `artifacts/panels.json` with the `Read` tool and use that
+file as the source of truth for panel labels/order/caption mapping.
+
+If `artifacts/panels.json` is missing, call `identify-panels` again and make
+sure it writes `artifacts/panels.json` before you continue. Do not continue
+without this artifact.
+
 Everything below is done for each panel in that inventory, in order.
 
 ## 2. Decide which panels are micrographs

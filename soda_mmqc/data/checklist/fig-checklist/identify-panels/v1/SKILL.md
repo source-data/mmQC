@@ -102,7 +102,11 @@ what is relevant; dropping a panel here silently removes it from that decision.
 ## Output
 
 Return the panel inventory as JSON conforming to the `schema.json` file that
-sits next to this skill, and write the same JSON to `panels.json` in the
-artifacts directory named by the run's orientation file, so that another skill
-can re-read the inventory instead of deriving it a second time. Then report the
-inventory back to the skill that called you.
+sits next to this skill.
+
+Then **immediately write that exact JSON** to `artifacts/panels.json` using the
+`Write` tool (path exactly `artifacts/panels.json`, not `panels.json`), so that
+another skill can re-read the inventory instead of deriving it again.
+
+Only after writing `artifacts/panels.json`, report the same inventory back to
+the skill that called you.

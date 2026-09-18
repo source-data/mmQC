@@ -121,6 +121,7 @@ __all__ = [
     "describe_permission_profile",
     "run_check_mock",
     "run_check_live",
+    "run_checklist_live",
     "SkillTraceRecorder",
     "validate_against_schema",
     "compare_declared_and_observed",
@@ -2148,6 +2149,7 @@ async def _run_agent_session(
     versions: Optional[Mapping[str, str]] = None,
     audit_log: Optional[ToolAuditLog] = None,
     approver: Optional[Any] = None,
+    denied_shared_skills: Optional[Set[str]] = None,
     options: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], SkillTraceRecorder, ToolAuditLog]:
     """Run one session against an assembled runtime and return its output.
@@ -2172,7 +2174,9 @@ async def _run_agent_session(
     run = client or _default_client
     options = dict(options if options is not None else session_options(layout))
     options["hooks"] = {
-        "PreToolUse": [make_pretooluse_hook(audit, approver)]
+        "PreToolUse": [
+            make_pretooluse_hook(audit, approver, denied_shared_skills)
+        ]
     }
 
     async for message in run(_session_prompt(layout), options):
@@ -2254,6 +2258,45 @@ def validate_intermediates(
                 continue
             found[produced] = artifact
     return found, problems
+
+
+def missing_observed_intermediates(
+    layout: RuntimeLayout,
+    skills: Mapping[str, Mapping[str, Skill]],
+    observed: Sequence[str],
+    *,
+    pins: Optional[Mapping[str, str]] = None,
+) -> List[str]:
+    """Return missing intermediate artifacts for skills that actually fired.
+
+    `validate_intermediates()` is intentionally permissive about absence: the
+    gate-4D question is whether a shared skill fired at all. This helper serves
+    a different purpose: if a skill *did* fire and it declares `produces`,
+    accepting a run that omits those artifacts turns a broken contract into a
+    silent success.
+    """
+    selected = select_versions(skills, pins)
+    missing: List[str] = []
+    reported: Set[str] = set()
+    for name in sorted(set(observed)):
+        skill = selected.get(name)
+        if skill is None or name == layout.entry_point:
+            continue
+        schema_path = skill.skill_dir / "schema.json"
+        if not schema_path.is_file():
+            continue
+        for produced in skill.produces:
+            if produced in reported:
+                continue
+            artifact = layout.artifacts_root / f"{produced}.json"
+            if artifact.is_file():
+                continue
+            missing.append(
+                f"{name!r} declared produces: {produced!r} but "
+                f"{artifact.name} was not written"
+            )
+            reported.add(produced)
+    return missing
 
 
 def effective_session_options(
@@ -2460,6 +2503,7 @@ class ToolAuditLog:
 def make_pretooluse_hook(
     audit: ToolAuditLog,
     approver: Optional[Any] = None,
+    denied_shared_skills: Optional[Set[str]] = None,
 ):
     """Build the ``PreToolUse`` hook: audit always, approval optionally.
 
@@ -2485,9 +2529,21 @@ def make_pretooluse_hook(
         tool_name = payload.get("tool_name") or ""
         tool_input = payload.get("tool_input") or {}
         use_id = payload.get("tool_use_id", tool_use_id)
+        denied_names = denied_shared_skills or set()
 
         decision, reason = "allow", ""
-        if approver is not None:
+        if (
+            tool_name == SKILL_TOOL
+            and isinstance(tool_input, Mapping)
+            and isinstance(tool_input.get("name"), str)
+            and tool_input["name"] in denied_names
+        ):
+            decision = "deny"
+            reason = (
+                f"shared skill {tool_input['name']!r} is denied in this run; "
+                "reuse the seeded intermediate artifacts"
+            )
+        elif approver is not None:
             approved, why = approver(tool_name, tool_input)
             if not approved:
                 decision = "deny"
@@ -2605,6 +2661,8 @@ def run_check_live(
     approve_tools: bool = False,
     provider: str = "openai",
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
+    seed_intermediates: Optional[Mapping[str, Mapping[str, Any]]] = None,
+    shared_skill_denials: Optional[Mapping[str, Sequence[str]]] = None,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -2674,30 +2732,57 @@ def run_check_live(
                     checklist, check, relative_source_path,
                     keep=keep_runtime, pins=versions,
                 ) as layout:
+                    seeded = dict((seed_intermediates or {}).get(relative_source_path, {}))
+                    for name, payload in seeded.items():
+                        path = layout.artifacts_root / f"{name}.json"
+                        path.write_text(
+                            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+                            encoding="utf-8",
+                        )
                     options = effective_session_options(
                         layout, skills, defaults=defaults
                     )
                     options["model"] = model
+                    denied_shared = set(
+                        (shared_skill_denials or {}).get(relative_source_path, ())
+                    )
                     client = (
                         _openai_session_client(layout, model)
                         if provider == "openai"
                         else None
                     )
+                    session_kwargs: Dict[str, Any] = {
+                        "versions": versions,
+                        "approver": approver,
+                        "options": options,
+                        "client": client,
+                    }
+                    if denied_shared:
+                        session_kwargs["denied_shared_skills"] = denied_shared
                     prediction, recorder, audit = asyncio.run(
                         _run_agent_session(
                             layout,
-                            versions=versions,
-                            approver=approver,
-                            options=options,
-                            client=client,
+                            **session_kwargs,
                         )
                     )
-                    entry["intermediates"], invalid = validate_intermediates(
+                    missing = missing_observed_intermediates(
+                        layout, skills, recorder.invoked, pins=versions
+                    )
+                    if missing:
+                        raise ValueError(
+                            "Session invoked shared skill(s) but omitted "
+                            "required intermediate artifact(s): "
+                            + "; ".join(missing)
+                        )
+                    found_intermediates, invalid = validate_intermediates(
                         layout, skills, pins=versions, strict=False
                     )
-                    entry["intermediates"] = sorted(entry["intermediates"])
+                    entry["intermediates"] = sorted(found_intermediates)
                     if invalid:
-                        entry["invalid_intermediates"] = invalid
+                        raise ValueError(
+                            "Session produced invalid intermediate artifact(s): "
+                            + "; ".join(invalid)
+                        )
                     entry["hops"] = compare_declared_and_observed(
                         checklist_dir, check, recorder.invoked, pins=versions
                     )
@@ -2710,6 +2795,14 @@ def run_check_live(
                         recorder.entries,
                         skill_set,
                     )
+                    for name, artifact_path in found_intermediates.items():
+                        _copy_sidecar(
+                            artifact_path,
+                            predictions_dir
+                            / relative_source_path
+                            / INTERMEDIATES_DIRNAME
+                            / f"{name}.json",
+                        )
                     _copy_sidecar(
                         audit.path,
                         predictions_dir / relative_source_path
@@ -2728,6 +2821,141 @@ def run_check_live(
         ok, len(report), len(skill_sets), root_dir,
     )
     return root_dir, report
+
+
+def _required_shared_skills(
+    check_name: str, selected: Mapping[str, Skill]
+) -> Set[str]:
+    """Shared skills reachable from `check_name` via declared requirements."""
+    entry = selected.get(check_name)
+    if entry is None:
+        return set()
+    pending = list(entry.requires)
+    seen: Set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        skill = selected.get(name)
+        if skill is None:
+            continue
+        seen.add(name)
+        pending.extend(skill.requires)
+    return seen
+
+
+def _expand_example_selectors(
+    benchmark_examples: Sequence[str], selectors: Optional[Sequence[str]]
+) -> Optional[List[str]]:
+    """Expand doc-level selectors to concrete benchmark example paths."""
+    if not selectors:
+        return None
+    expanded: List[str] = []
+    seen: Set[str] = set()
+    for selector in selectors:
+        selector = selector.strip()
+        if not selector:
+            continue
+        matched = [
+            example
+            for example in benchmark_examples
+            if example == selector or example.startswith(f"{selector}/")
+        ]
+        for example in matched:
+            if example not in seen:
+                seen.add(example)
+                expanded.append(example)
+    return expanded
+
+
+def run_checklist_live(
+    checklist: str,
+    *,
+    output: Optional[Path] = None,
+    model: Optional[str] = None,
+    examples: Optional[Sequence[str]] = None,
+    limit: Optional[int] = None,
+    keep_runtime: bool = False,
+    approve_tools: bool = False,
+    provider: str = "openai",
+    unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
+) -> Tuple[Path, List[Dict[str, Any]]]:
+    """Run all checks in a checklist, reusing shared intermediates per example."""
+    if unpin:
+        raise ValueError("--all-checks does not support --unpin")
+
+    checklist_dir = CHECKLIST_DIR / checklist
+    if not checklist_dir.is_dir():
+        raise FileNotFoundError(f"Checklist not found: {checklist_dir}")
+
+    checks = sorted(list_checks(checklist_dir))
+    if not checks:
+        raise ValueError(f"No checks found in checklist: {checklist}")
+
+    selected = select_versions(validate_skills(checklist_dir), checklist_pins(checklist_dir))
+    run_model = resolve_model(checklist_dir, provider, model)
+    root_dir = Path(
+        output
+        or EVALUATION_DIR / checklist / "__all-checks__" / run_model / "predictions"
+    )
+
+    cache: Dict[str, Dict[str, Any]] = {}
+    denied: Dict[str, Set[str]] = {}
+    combined: List[Dict[str, Any]] = []
+    shared_by_check = {name: _required_shared_skills(name, selected) for name in checks}
+    producers: Dict[str, Set[str]] = {
+        name: set(selected[name].produces)
+        for name in selected
+        if selected[name].produces
+    }
+
+    for check in checks:
+        benchmark = _read_json(checklist_dir / check / "benchmark.json")
+        check_examples = _expand_example_selectors(
+            benchmark.get("examples") or [],
+            examples,
+        )
+        check_output = root_dir / check
+        _, report = run_check_live(
+            checklist,
+            check,
+            output=check_output,
+            model=model,
+            examples=check_examples,
+            limit=limit,
+            keep_runtime=keep_runtime,
+            approve_tools=approve_tools,
+            provider=provider,
+            unpin=unpin,
+            seed_intermediates=cache,
+            shared_skill_denials={k: sorted(v) for k, v in denied.items()},
+        )
+        for entry in report:
+            item = dict(entry)
+            item["check"] = check
+            combined.append(item)
+            if item.get("status") != "ok":
+                continue
+            example = item["example"]
+            produced = set(item.get("intermediates") or ())
+            for skill_name in shared_by_check.get(check, set()):
+                artifacts = producers.get(skill_name, set())
+                available = sorted(artifacts & produced)
+                if not available:
+                    continue
+                denied.setdefault(example, set()).add(skill_name)
+                for artifact_name in available:
+                    artifact_path = (
+                        check_output
+                        / example
+                        / INTERMEDIATES_DIRNAME
+                        / f"{artifact_name}.json"
+                    )
+                    if artifact_path.is_file():
+                        cache.setdefault(example, {})[artifact_name] = _read_json(
+                            artifact_path
+                        )
+    return root_dir, combined
 
 
 def _copy_sidecar(source: Path, destination: Path) -> None:
@@ -2811,7 +3039,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "run", help="Run a check over its benchmark examples"
     )
     run.add_argument("checklist", type=str, help="Name of the checklist")
-    run.add_argument("--check", type=str, required=True, help="Check to run")
+    run_target = run.add_mutually_exclusive_group(required=True)
+    run_target.add_argument("--check", type=str, help="Check to run")
+    run_target.add_argument(
+        "--all-checks",
+        action="store_true",
+        help="Run all checks in the checklist (agentic mode)",
+    )
     run.add_argument(
         "--mock",
         action="store_true",
@@ -2931,6 +3165,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "run":
         try:
             if args.mock:
+                if args.all_checks:
+                    logger.error("--all-checks is not supported with --mock")
+                    return 2
                 path = run_check_mock(
                     args.checklist,
                     args.check,
@@ -2957,18 +3194,36 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "which versions to try, --unpin says of what."
                     )
                     return 2
-                path, report = run_check_live(
-                    args.checklist,
-                    args.check,
-                    output=args.output,
-                    model=args.model,
-                    examples=args.examples,
-                    limit=args.limit,
-                    keep_runtime=args.keep_runtime,
-                    approve_tools=args.approve_tools,
-                    provider=args.provider,
-                    unpin={name: versions for name in (args.unpin or [])},
-                )
+                if args.all_checks:
+                    if args.unpin:
+                        logger.error(
+                            "--all-checks does not support --unpin yet"
+                        )
+                        return 2
+                    path, report = run_checklist_live(
+                        args.checklist,
+                        output=args.output,
+                        model=args.model,
+                        examples=args.examples,
+                        limit=args.limit,
+                        keep_runtime=args.keep_runtime,
+                        approve_tools=args.approve_tools,
+                        provider=args.provider,
+                        unpin={name: versions for name in (args.unpin or [])},
+                    )
+                else:
+                    path, report = run_check_live(
+                        args.checklist,
+                        args.check,
+                        output=args.output,
+                        model=args.model,
+                        examples=args.examples,
+                        limit=args.limit,
+                        keep_runtime=args.keep_runtime,
+                        approve_tools=args.approve_tools,
+                        provider=args.provider,
+                        unpin={name: versions for name in (args.unpin or [])},
+                    )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)
             return 1
