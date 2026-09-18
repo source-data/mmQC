@@ -87,7 +87,6 @@ CACHE_DIR = Path(os.getenv("SODA_MMQC_CACHE_DIR", DATA_DIR / "cache"))
 CHECKLIST_DIR = DATA_DIR / "checklist"
 EXAMPLES_DIR = DATA_DIR / "examples"
 EVALUATION_DIR = DATA_DIR / "evaluation"
-PLOTS_DIR = DATA_DIR / "plots"
 
 # A checklist subdirectory is a check when it owns these files. Everything
 # else beside the checks (shared skills, generated docs) is not scoreable and
