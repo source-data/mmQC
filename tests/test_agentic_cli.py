@@ -2666,6 +2666,13 @@ def _fake_client(messages, *, writes=None, layout=None, captured=None):
         for message in messages:
             yield message
         if writes is not None and layout is not None:
+            # A session that produces a prediction must have opened the
+            # figure: the runner rejects one that did not, because a
+            # schema-valid answer written without looking scores as though
+            # the work was done. Model that here so the doubles stay
+            # faithful to what a real session has to do.
+            image = cli._resolve_staged_inputs(layout.input_root)["image"]
+            yield _tool_use("Read", {"file_path": str(image)}, "t-figure")
             layout.artifacts_root.mkdir(parents=True, exist_ok=True)
             (layout.artifacts_root / cli.PREDICTION_FILENAME).write_text(
                 json.dumps(writes), encoding="utf-8"
@@ -3158,8 +3165,12 @@ class TestToolAudit:
         tool use, which is the contract the SDK implements.
         """
         audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        image = cli._resolve_staged_inputs(assembled.input_root)["image"]
         messages = [
             _tool_use("Read", {"file_path": "input/caption.txt"}, "r1"),
+            # A real session opens the figure, and the runner now refuses a
+            # prediction from one that did not.
+            _tool_use("Read", {"file_path": str(image)}, "r2"),
             _tool_use("Skill", {"name": SHARED_SKILL}, "s1"),
         ]
 
@@ -3184,7 +3195,7 @@ class TestToolAudit:
 
         _run(assembled, client=hook_calling_client, audit_log=audit)
 
-        assert [e["tool"] for e in audit.entries] == ["Read", "Skill"]
+        assert [e["tool"] for e in audit.entries] == ["Read", "Read", "Skill"]
         assert all(e["decision"] == "allow" for e in audit.entries)
 
     def test_the_audit_records_tools_the_trace_does_not(

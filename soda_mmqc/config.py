@@ -205,6 +205,25 @@ AGENTIC_ARTIFACTS_SUBDIR = Path("artifacts")
 #: Where the current example's inputs are copied, relative to the runtime root.
 AGENTIC_INPUT_SUBDIR = Path("input")
 
+#: Extensions the harness will accept as *the* figure image, in priority
+#: order. Deliberately the same list the legacy path uses in
+#: `core/examples.py`, so both routes present the same file to the model.
+#: Picking the image is mechanical harness work: the agent has no directory
+#: listing tool and must never be left to guess a filename.
+AGENTIC_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".tiff", ".webp")
+
+#: Ceiling for the SDK's newline-delimited JSON reader.
+#:
+#: The SDK reads the CLI's stream with a 1 MB default buffer, and a figure the
+#: session opens arrives base64-encoded inside a single JSON message. Reading
+#: one overflows that buffer and kills the session with a decode error rather
+#: than anything that names an image. Nothing hit this until the harness began
+#: naming the staged figure: before that the agent guessed filenames, never
+#: opened one, and answered from the caption alone.
+#:
+#: A ceiling, not an allocation -- nothing is reserved.
+AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
+
 #: The generated per-run orientation file, relative to the runtime root.
 AGENTIC_ORIENTATION_FILENAME = "ORIENTATION.md"
 
@@ -294,6 +313,10 @@ AGENTIC_FORBIDDEN_TOOLS = {
     # message, notify or schedule can move gold-derived content out of the
     # runtime and can act after the run is over.
     "SendMessage": "egress path out of the sealed runtime",
+    # Observed in the reported tool set on 2026-09-19 and missing from this
+    # list: it uploads a local file and returns a shareable link, which is an
+    # exfiltration path for gold-derived content exactly like the three below.
+    "ShareOnboardingGuide": "egress path out of the sealed runtime",
     "PushNotification": "egress path out of the sealed runtime",
     "ScheduleWakeup": "would let the session act after the run ends",
     "CronCreate": "would let the session act after the run ends",

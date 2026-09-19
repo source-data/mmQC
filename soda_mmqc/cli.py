@@ -57,6 +57,8 @@ from soda_mmqc.config import (
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
     AGENTIC_FORBIDDEN_TOOLS,
+    AGENTIC_IMAGE_EXTENSIONS,
+    AGENTIC_MAX_BUFFER_BYTES,
     AGENTIC_INPUT_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_PERMISSION_MODE,
@@ -1463,7 +1465,57 @@ def _copy_skill(skill: Skill, destination: Path) -> None:
         shutil.copy2(schema, destination / "schema.json")
 
 
-def _render_orientation(layout: RuntimeLayout) -> str:
+def _resolve_staged_inputs(input_root: Path) -> Dict[str, Any]:
+    """Pick which staged files are the figure, the caption and the source data.
+
+    Choosing the files to put in front of the model is the harness's job, not
+    the agent's. The session has no `Glob`, no `LS` and no `Bash` -- by
+    design -- so an unnamed input is one it can only guess at, and it does:
+    a run on 2026-09-19 spent 32 of its 24 turns reading `figure.png`,
+    `image.png`, `fig.png`, `a.png`, `figure.xyz` and finally `*`, never
+    reaching `44318_2026_715_Fig1_HTML.webp`. An earlier run guessed ten
+    times, gave up, and wrote a prediction from the caption alone that
+    scored 8/8 against all-negative gold. Silent, and wrong.
+
+    Nothing is renamed or converted: the runtime is a copy, not a processed
+    copy. Only the *names* are resolved, and `_render_orientation` states
+    them.
+
+    Raises:
+        FileNotFoundError: If no file with a known image extension is
+            staged. The legacy path raises for the same reason
+            (`core/examples.py`, "No image found"); a session that cannot
+            see the figure must not be allowed to score one.
+    """
+    files = sorted(p for p in input_root.iterdir() if p.is_file())
+
+    image = None
+    for extension in AGENTIC_IMAGE_EXTENSIONS:
+        for candidate in files:
+            if candidate.suffix.lower() == extension:
+                image = candidate
+                break
+        if image:
+            break
+    if image is None:
+        raise FileNotFoundError(
+            f"No figure image in {input_root}: nothing with an extension in "
+            f"{', '.join(AGENTIC_IMAGE_EXTENSIONS)}. The agent cannot list "
+            f"the directory, so a run without a named image would score the "
+            f"caption alone."
+        )
+
+    caption = next((p for p in files if p.suffix.lower() == ".txt"), None)
+
+    source_root = input_root / "source_data"
+    source_data = (
+        sorted(p for p in source_root.rglob("*") if p.is_file())
+        if source_root.is_dir() else []
+    )
+    return {"image": image, "caption": caption, "source_data": source_data}
+
+
+def _render_orientation(layout: RuntimeLayout, source_root: Path) -> str:
     """Generate the per-run orientation file.
 
     It names the entry point and the roots, and **nothing else**. It does not
@@ -1472,13 +1524,38 @@ def _render_orientation(layout: RuntimeLayout) -> str:
     here would make the Milestone 4 trace a measurement of our own control
     flow rather than of the prose.
     """
+    # Resolve against `source_root`, not `layout.root`: assembly is atomic, so
+    # this runs while the tree is still in its staging directory and the final
+    # root does not exist yet. The two are structurally identical, so the
+    # relative paths written here are the ones the session will see.
+    staged = _resolve_staged_inputs(source_root / AGENTIC_INPUT_SUBDIR)
+    rel = lambda path: path.relative_to(source_root)          # noqa: E731
+    lines = [f"- **Figure image:** `{rel(staged['image'])}`"]
+    if staged["caption"]:
+        lines.append(f"- **Caption:** `{rel(staged['caption'])}`")
+    if staged["source_data"]:
+        listed = "\n".join(
+            f"  - `{rel(p)}`" for p in staged["source_data"][:20]
+        )
+        more = (
+            f"\n  - …and {len(staged['source_data']) - 20} more"
+            if len(staged["source_data"]) > 20 else ""
+        )
+        lines.append("- **Source data:**\n" + listed + more)
+    else:
+        lines.append("- **Source data:** none staged for this figure.")
+    lines.append(
+        "\n  These paths are resolved by the harness. Read them directly; "
+        "do not search for other files."
+    )
+    inputs = "\n".join(lines)
+
     return f"""# This run
 
 You are checking one figure against one quality-control check.
 
 - **Entry point:** the `{layout.entry_point}` skill. Start there.
-- **Figure inputs:** `{AGENTIC_INPUT_SUBDIR}/` — the caption and image for
-  this figure, and nothing else.
+{inputs}
 - **Write results to:** `{AGENTIC_ARTIFACTS_SUBDIR}/` — the only writable
   location. Put the final answer in
   `{AGENTIC_ARTIFACTS_SUBDIR}/{PREDICTION_FILENAME}`.
@@ -1577,7 +1654,7 @@ def assemble_runtime(
             example=example,
         )
         (staging / AGENTIC_ORIENTATION_FILENAME).write_text(
-            _render_orientation(layout), encoding="utf-8"
+            _render_orientation(layout, staging), encoding="utf-8"
         )
 
         _assert_sealed(staging)
@@ -1692,6 +1769,10 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
         ],
         "disallowed_tools": sorted(AGENTIC_FORBIDDEN_TOOLS),
         "permission_mode": AGENTIC_PERMISSION_MODE,
+        # Without this the session dies the moment it opens the figure: the
+        # image arrives base64-encoded in one JSON message and overflows the
+        # SDK's 1 MB default reader buffer.
+        "max_buffer_size": AGENTIC_MAX_BUFFER_BYTES,
     }
 
 
@@ -2141,6 +2222,39 @@ def _extract_tool_calls(message: Any) -> Iterator[Tuple[str, Any, Any]]:
             yield name, payload, use_id
 
 
+def _assert_the_session_read_the_figure(
+    layout: RuntimeLayout, read_paths: Set[str]
+) -> None:
+    """Refuse a prediction produced without opening the figure.
+
+    A schema-valid answer is not evidence that the work happened. On
+    2026-09-18 a session failed to guess the image filename, gave up, and
+    wrote an answer from the caption alone; every panel said `micrograph:
+    "no"`, the gold for that figure is all-negative, and it scored 8/8. The
+    run was recorded as `ok`. Nothing in the pipeline could tell that
+    apart from a real result, which is the failure mode the Milestone 2
+    spike warned about: "a benchmark that quietly scores a run which never
+    did the work".
+
+    The harness now names the image in the orientation, so not reading it is
+    a deliberate act rather than an accident -- but this check is what makes
+    the guarantee hold regardless of what any future skill's prose says.
+
+    Raises:
+        ValueError: If no tool call in the trace read the staged image.
+    """
+    image = _resolve_staged_inputs(layout.input_root)["image"]
+    targets = {str(image), str(image.resolve())}
+    if read_paths & targets:
+        return
+    raise ValueError(
+        f"The session wrote a prediction without reading the figure "
+        f"({image.name}). A schema-valid answer produced from the caption "
+        f"alone scores as though the work was done; it is an error, not a "
+        f"result."
+    )
+
+
 async def _run_agent_session(
     layout: RuntimeLayout,
     *,
@@ -2179,12 +2293,15 @@ async def _run_agent_session(
         ]
     }
 
+    read_paths: Set[str] = set()
     async for message in run(_session_prompt(layout), options):
         info = _extract_session_info(message)
         if info:
             audit.note_session(info)
         for tool_name, tool_input, tool_use_id in _extract_tool_calls(message):
             recorder.record(tool_name, tool_input, tool_use_id)
+            if tool_name == "Read" and isinstance(tool_input, Mapping):
+                read_paths.add(str(tool_input.get("file_path") or ""))
 
     output_path = layout.artifacts_root / PREDICTION_FILENAME
     if not output_path.is_file():
@@ -2194,6 +2311,7 @@ async def _run_agent_session(
         )
     prediction = _read_json(output_path)
     validate_against_schema(prediction, _leaf_schema(layout))
+    _assert_the_session_read_the_figure(layout, read_paths)
     return prediction, recorder, audit
 
 
