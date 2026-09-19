@@ -111,11 +111,29 @@ Two ways to run eleven checks over one figure:
 
 That comparison is a real experiment — cost, accuracy, and whether the agent
 actually fans out from a master entry point — and it needs no harness
-feature, only a checklist shaped that way. Two obstacles to note before
-designing it: `output_format` yields **one** structured answer per session,
-so eleven predictions from one session need a different delivery mechanism;
-and checks sharing a context can influence one another, which is a
-confound for per-check scoring and possibly the finding itself.
+feature, only a checklist shaped that way.
+
+**One structured answer is not an obstacle.** The master skill *is* the
+leaf, so it owns the evaluation contracts, and its `schema.json` is the
+concatenation of the eleven: one object whose keys are the checks. One
+session, one structured result, one `prediction.json` holding every answer.
+
+**But the composite contracts must be generated, never hand-written.**
+Schema, `eval-manifest.json` and gold all concatenate mechanically — gold
+already lives per check at `checks/<check>/expected_output.json`. Derived,
+every leaf property is scored by the same metric at the same threshold in
+both arms, so the composite score decomposes back into per-check scores and
+the comparison is like for like. Hand-authored, the arms differ in their
+measuring instrument as well as in their structure, and the result says
+nothing. This is the standing contracts-held-fixed rule in a new shape, and
+it makes the composite a job for `experiments/build_expNN_checklist.py`.
+
+**The real confound is context.** Eleven checks in one session can influence
+one another: a mistaken panel inventory propagates to all of them, and a
+judgement made for check 3 is visible when answering check 7. For per-check
+scoring that is noise; for the question "does sharing context across checks
+help or hurt?" it is the effect itself. Decide which is being asked before
+running it.
 
 ## Not in scope
 
