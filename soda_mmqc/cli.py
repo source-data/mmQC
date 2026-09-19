@@ -54,6 +54,7 @@ import yaml
 from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_AGENT_HOME_SUBDIR,
+    AGENTIC_BASE_TOOLS,
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
@@ -1741,9 +1742,16 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
             p.parent.name
             for p in layout.skills_root.glob(f"*/{SKILL_FILENAME}")
         ),
+        # What the session *has*. Everything else is absent from its context
+        # rather than merely denied, so it cannot be reached by a tool name
+        # this profile failed to anticipate.
+        "tools": list(AGENTIC_BASE_TOOLS),
+        # What it may use without prompting, scoped to paths. There is no
+        # write rule because there is no write tool: the runner serialises
+        # the structured result, so nothing the session does needs to touch
+        # the filesystem.
         "allowed_tools": [
             f"Read({_abs_rule_path(layout.root)})",
-            f"Edit({_abs_rule_path(layout.artifacts_root)})",
             "Skill",
         ],
         "disallowed_tools": sorted(AGENTIC_FORBIDDEN_TOOLS),
@@ -2400,45 +2408,6 @@ def validate_intermediates(
     return found, problems
 
 
-def missing_observed_intermediates(
-    layout: RuntimeLayout,
-    skills: Mapping[str, Mapping[str, Skill]],
-    observed: Sequence[str],
-    *,
-    pins: Optional[Mapping[str, str]] = None,
-) -> List[str]:
-    """Return missing intermediate artifacts for skills that actually fired.
-
-    `validate_intermediates()` is intentionally permissive about absence: the
-    gate-4D question is whether a shared skill fired at all. This helper serves
-    a different purpose: if a skill *did* fire and it declares `produces`,
-    accepting a run that omits those artifacts turns a broken contract into a
-    silent success.
-    """
-    selected = select_versions(skills, pins)
-    missing: List[str] = []
-    reported: Set[str] = set()
-    for name in sorted(set(observed)):
-        skill = selected.get(name)
-        if skill is None or name == layout.entry_point:
-            continue
-        schema_path = skill.skill_dir / "schema.json"
-        if not schema_path.is_file():
-            continue
-        for produced in skill.produces:
-            if produced in reported:
-                continue
-            artifact = layout.artifacts_root / f"{produced}.json"
-            if artifact.is_file():
-                continue
-            missing.append(
-                f"{name!r} declared produces: {produced!r} but "
-                f"{artifact.name} was not written"
-            )
-            reported.add(produced)
-    return missing
-
-
 def effective_session_options(
     layout: RuntimeLayout,
     skills: Mapping[str, Mapping[str, Skill]],
@@ -2905,15 +2874,12 @@ def run_check_live(
                             **session_kwargs,
                         )
                     )
-                    missing = missing_observed_intermediates(
-                        layout, skills, recorder.invoked, pins=versions
-                    )
-                    if missing:
-                        raise ValueError(
-                            "Session invoked shared skill(s) but omitted "
-                            "required intermediate artifact(s): "
-                            + "; ".join(missing)
-                        )
+                    # The file-production contract is gone with the write
+                    # tool: nothing the session does touches the filesystem.
+                    # What that check protected -- a shared skill that was
+                    # declared but never fired -- is answered by the hop
+                    # trace below, which reads the session's own tool calls
+                    # and needs no artifact to exist.
                     found_intermediates, invalid = validate_intermediates(
                         layout, skills, pins=versions, strict=False
                     )

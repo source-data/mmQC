@@ -215,6 +215,44 @@ AGENTIC_INPUT_SUBDIR = Path("input")
 #: session actually thought.
 AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
 
+#: The base set of built-in tools the session *has*, as opposed to the ones it
+#: may use without prompting.
+#:
+#: `tools` and `allowed_tools` are different mechanisms and the distinction
+#: cost this project real containment. The SDK: `tools` is "the base set of
+#: available built-in tools"; `allowed_tools` is "tool names that are
+#: auto-allowed without prompting". Naming three tools in `allowed_tools`
+#: left roughly twenty in the model's context, and the profile then had to
+#: enumerate every dangerous one by name -- a list that grew on 2026-09-14
+#: after a live session reported what it actually had, missed
+#: `ShareOnboardingGuide` until 2026-09-19, and left `Write` reachable but
+#: unscoped, so a skill told to write `artifacts/panels.json` could equally
+#: have overwritten its own `SKILL.md`.
+#:
+#: Naming what the session may have turns "enumerate everything dangerous"
+#: into "enumerate what is needed", which is a list the checks can justify:
+#: Read for the staged inputs and Skill to reach the DAG. That is all.
+#:
+#: **The session writes nothing.** A check observes an example; it does not
+#: change one. The final answer is a structured result the runner serialises,
+#: so no file needs writing to deliver it, and the only remaining reason to
+#: write was to hand an intermediate to a later check -- which is a channel
+#: between runs that nothing bounds. "Only `panels.json`" is a convention,
+#: not a constraint: a session with a write tool can put anything anywhere it
+#: is allowed to write, and a later check picking that up would be an
+#: interaction nobody declared.
+#:
+#: Not a permanent position. Whether skills should exchange artefacts on disk
+#: is a real design question and deserves an experiment of its own, comparing
+#: arms that do and do not. Starting without means the comparison has a
+#: baseline; starting with means every arm already contains the thing under
+#: test.
+#:
+#: No Glob either: the manifest names every staged file, and searching is not
+#: the agent's job. The deny list below stays as defence in depth over a much
+#: smaller surface.
+AGENTIC_BASE_TOOLS = ("Read", "Skill")
+
 #: Extensions the harness will accept as *the* figure image, in priority
 #: order. Deliberately the same list the legacy path uses in
 #: `core/examples.py`, so both routes present the same file to the model.
@@ -301,7 +339,7 @@ AGENTIC_SETTING_SOURCES = ("project",)
 #: "Edit(path) rules govern all built-in tools that write files, including
 #: Write and NotebookEdit; a Write(path) rule is never matched by the file
 #: permission checks." A scoped `Write(...)` rule would silently match nothing.
-AGENTIC_ALLOWED_TOOL_NAMES = ("Read", "Edit", "Skill")
+AGENTIC_ALLOWED_TOOL_NAMES = ("Read", "Skill")
 
 #: Tools removed from the model's context entirely, each for a specific
 #: reason. Bare names are required: a scoped rule leaves the tool available.

@@ -30,6 +30,7 @@ import dataclasses
 import os
 import tempfile
 import copy
+import inspect
 import json
 import re
 import shutil
@@ -2118,18 +2119,32 @@ class TestNoLeafRestatesTheSharedSkill:
                     f"block calls it with the {cli.SKILL_TOOL} tool"
                 )
 
-    def test_the_shared_skill_explicitly_writes_panels_json(self):
-        shared = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
-        lowered = shared.lower()
-        assert "artifacts/panels.json" in lowered
-        assert "write" in lowered
+    def test_no_skill_asks_the_session_to_write_a_file(self):
+        """The session has no write tool, so prose asking for one would send
+        it after something it cannot do.
 
-    def test_the_leaf_reads_panels_json_as_the_source_of_truth(self):
-        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
-        lowered = leaf.lower()
-        assert "read" in lowered
-        assert "artifacts/panels.json" in lowered
+        Skills exchange nothing through the filesystem. `Skill(x)` loads x's
+        instructions into the session already running -- there is no second
+        agent and no return value -- so what a skill "produces" is simply
+        stated in the reply, already in front of whatever runs next. A file
+        would only matter for carrying state *between* runs, and that is a
+        channel nothing bounds: "only panels.json" is a convention, not a
+        constraint.
+        """
+        for name, versions in cli.load_skills(FIG_CHECKLIST_DIR).items():
+            body = versions["v1"].body.lower()
+            for forbidden in ("panels.json", "plot_panels.json", "`write`"):
+                assert forbidden not in body, (
+                    f"{name} still asks for a filesystem exchange "
+                    f"({forbidden}); the session cannot write"
+                )
 
+    def test_the_leaf_takes_the_inventory_from_the_shared_skill(self):
+        """It must still defer to `identify-panels` rather than deriving its
+        own list -- that is what makes checks agree about what a panel is."""
+        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body.lower()
+        assert SHARED_SKILL in leaf
+        assert "source of truth" in leaf
 
 # ---------------------------------------------------------------------------
 # Milestone 3: the sealed runtime directory
@@ -2403,6 +2418,7 @@ class TestRuntimeLifecycle:
 
 from soda_mmqc.config import (  # noqa: E402
     AGENTIC_ALLOWED_TOOL_NAMES,
+    AGENTIC_BASE_TOOLS,
     AGENTIC_FORBIDDEN_TOOLS,
     AGENTIC_PERMISSION_MODE,
 )
@@ -2414,10 +2430,10 @@ NETWORK_TOOLS = ("WebFetch", "WebSearch")
 
 @requires_subpanel_figure
 class TestPermissionProfile:
-    def test_the_allowlist_is_exactly_the_three_things_allowed(self, assembled):
-        """Read inside the runtime, write into artifacts, call a skill."""
+    def test_the_allowlist_is_exactly_the_two_things_allowed(self, assembled):
+        """Read inside the runtime, and call a skill. Nothing else."""
         rules = cli.session_options(assembled)["allowed_tools"]
-        assert len(rules) == 3
+        assert len(rules) == 2
         named = {rule.split("(")[0] for rule in rules}
         assert named == set(AGENTIC_ALLOWED_TOOL_NAMES)
 
@@ -2432,23 +2448,34 @@ class TestPermissionProfile:
         assert assembled.root.resolve().as_posix().lstrip("/") in read
         assert read.endswith("/**)")
 
-    def test_writes_are_scoped_to_the_artifacts_directory(self, assembled):
-        """Scoped with `Edit`, not `Write`: the SDK documents that
-        `Edit(path)` governs every file-writing tool and that a `Write(path)`
-        rule is never matched by the file permission checks."""
-        rules = cli.session_options(assembled)["allowed_tools"]
-        assert not any(r.startswith("Write(") for r in rules)
-        edit = next(r for r in rules if r.startswith("Edit("))
-        artifacts = assembled.artifacts_root.resolve().as_posix().lstrip("/")
-        assert artifacts in edit
+    def test_the_session_has_no_write_tool_at_all(self, assembled):
+        """A check observes an example; it does not change one.
 
-    def test_the_write_scope_is_narrower_than_the_read_scope(self, assembled):
-        rules = cli.session_options(assembled)["allowed_tools"]
-        read = next(r for r in rules if r.startswith("Read("))
-        edit = next(r for r in rules if r.startswith("Edit("))
-        read_path = read[len("Read(//"):-len("/**)")]
-        edit_path = edit[len("Edit(//"):-len("/**)")]
-        assert edit_path.startswith(read_path) and edit_path != read_path
+        Scoping a write was the old answer -- `Edit(artifacts/**)`, since
+        `Edit(path)` governs every file-writing tool. Removing the tool is a
+        stronger one: the runner serialises the structured result, so nothing
+        the session does needs the filesystem, and an unused capability is
+        one an experiment could accidentally come to depend on.
+        """
+        options = cli.session_options(assembled)
+        assert "Write" not in options["tools"]
+        assert "Edit" not in options["tools"]
+        assert not any(
+            r.startswith(("Write(", "Edit(")) for r in options["allowed_tools"]
+        )
+
+    def test_the_base_tool_set_is_what_the_session_has(self, assembled):
+        """`tools` bounds what exists; `allowed_tools` only auto-approves.
+
+        Naming three tools in `allowed_tools` once left about twenty in the
+        model's context, so the profile had to enumerate every dangerous one
+        by name -- and missed `ShareOnboardingGuide` for months.
+        """
+        options = cli.session_options(assembled)
+        assert set(options["tools"]) == set(AGENTIC_BASE_TOOLS)
+        assert set(options["tools"]) >= {
+            r.split("(")[0] for r in options["allowed_tools"]
+        }
 
     def test_the_permission_mode_denies_anything_unlisted(self, assembled):
         """`allowed_tools` alone is only a list of auto-approvals: the SDK
@@ -2542,13 +2569,14 @@ class TestPermissionProfile:
         ):
             assert tool in denied, f"{tool} is reachable"
 
-    def test_write_stays_available_but_scoped(self, assembled):
-        """`Write` must create prediction.json, and `Edit(path)` governs it.
-        Denying it by name would leave only `Edit`, which cannot create a
-        file that does not exist yet."""
-        options = cli.session_options(assembled)
-        assert "Write" not in options["disallowed_tools"]
-        assert any(r.startswith("Edit(") for r in options["allowed_tools"])
+    def test_the_runner_not_the_session_produces_the_prediction(self):
+        """`Write` used to be needed because the session wrote
+        prediction.json itself. It does not: `output_format` constrains the
+        answer to the leaf schema and the runner serialises the result, so
+        the last reason for a write tool went with it."""
+        source = inspect.getsource(cli._run_agent_session)
+        assert "output_path.write_text" in source
+        assert "json.loads(result_text)" in source
 
     def test_the_profile_prints_what_was_approved(self, assembled):
         text = cli.describe_permission_profile(assembled)
@@ -4469,9 +4497,18 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
 
 @requires_subpanel_figure
 class TestRunCheckLiveIntermediateContracts:
-    def test_a_missing_intermediate_for_an_invoked_skill_fails_the_example(
+    def test_an_invoked_skill_needs_no_artifact_on_disk(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
+        """A fired shared skill used to have to leave a file behind.
+
+        It cannot any more -- the session has no write tool -- and it does not
+        need to: `Skill(x)` loads x's instructions into the session already
+        running, so what x contributes is in context, not on disk. The
+        question that check protected, whether a declared skill actually
+        fired, is answered by the hop trace, which reads the session's own
+        tool calls.
+        """
         class _Recorder:
             invoked = [SHARED_SKILL]
             entries = []
@@ -4497,8 +4534,8 @@ class TestRunCheckLiveIntermediateContracts:
             output=tmp_path / "preds",
             examples=[SUBPANEL_FIGURE],
         )
-        assert report[0]["status"] == "failed"
-        assert "panels.json" in report[0]["error"]
+        assert report[0]["status"] == "ok"
+        assert SHARED_SKILL in (report[0].get("hops") or {}).get("observed", [])
 
     def test_valid_intermediates_are_copied_beside_sidecars(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
