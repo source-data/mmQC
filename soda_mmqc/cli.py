@@ -53,12 +53,15 @@ import yaml
 
 from soda_mmqc import logger
 from soda_mmqc.config import (
+    AGENTIC_AGENT_HOME_SUBDIR,
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
     AGENTIC_FORBIDDEN_TOOLS,
     AGENTIC_IMAGE_EXTENSIONS,
     AGENTIC_MAX_BUFFER_BYTES,
+    AGENTIC_CLAUDE_TEMPLATE,
+    AGENTIC_INPUT_MANIFEST_FILENAME,
     AGENTIC_INPUT_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_PERMISSION_MODE,
@@ -1393,6 +1396,7 @@ class RuntimeLayout:
     orientation_path: Path
     entry_point: str
     schema_path: Path
+    agent_home: Path
     example: str
 
 
@@ -1515,56 +1519,28 @@ def _resolve_staged_inputs(input_root: Path) -> Dict[str, Any]:
     return {"image": image, "caption": caption, "source_data": source_data}
 
 
-def _render_orientation(layout: RuntimeLayout, source_root: Path) -> str:
-    """Generate the per-run orientation file.
+def _write_input_manifest(source_root: Path) -> None:
+    """Write `input/inputs.json`, naming what the harness staged.
 
-    It names the entry point and the roots, and **nothing else**. It does not
-    name the entry point's dependencies, does not order them, and does not
-    describe the graph: discovering that is the agent's job, and stating it
-    here would make the Milestone 4 trace a measurement of our own control
-    flow rather than of the prose.
+    Per-run facts belong in data the agent can parse, not in prose it has to
+    interpret. The session has no shell, no glob and no directory listing, so
+    a file this does not name is a file it can only guess at -- and it does
+    guess, badly: before the harness named them, one run spent 32 turns on
+    `figure.png`, `a.png`, `figure.xyz` and finally `*`, and another answered
+    from the caption alone and scored 8/8 against all-negative gold.
+
+    Filenames are left exactly as curated. The runtime is a copy, not a
+    processed copy; only the *names* are stated.
     """
-    # Resolve against `source_root`, not `layout.root`: assembly is atomic, so
-    # this runs while the tree is still in its staging directory and the final
-    # root does not exist yet. The two are structurally identical, so the
-    # relative paths written here are the ones the session will see.
     staged = _resolve_staged_inputs(source_root / AGENTIC_INPUT_SUBDIR)
-    rel = lambda path: path.relative_to(source_root)          # noqa: E731
-    lines = [f"- **Figure image:** `{rel(staged['image'])}`"]
-    if staged["caption"]:
-        lines.append(f"- **Caption:** `{rel(staged['caption'])}`")
-    if staged["source_data"]:
-        listed = "\n".join(
-            f"  - `{rel(p)}`" for p in staged["source_data"][:20]
-        )
-        more = (
-            f"\n  - …and {len(staged['source_data']) - 20} more"
-            if len(staged["source_data"]) > 20 else ""
-        )
-        lines.append("- **Source data:**\n" + listed + more)
-    else:
-        lines.append("- **Source data:** none staged for this figure.")
-    lines.append(
-        "\n  These paths are resolved by the harness. Read them directly; "
-        "do not search for other files."
-    )
-    inputs = "\n".join(lines)
-
-    return f"""# This run
-
-You are checking one figure against one quality-control check.
-
-- **Entry point:** the `{layout.entry_point}` skill. Start there.
-{inputs}
-- **Write results to:** `{AGENTIC_ARTIFACTS_SUBDIR}/` — the only writable
-  location. Put the final answer in
-  `{AGENTIC_ARTIFACTS_SUBDIR}/{PREDICTION_FILENAME}`.
-- **Final output schema:** `{layout.schema_path.relative_to(layout.root)}`.
-  The answer must conform to it exactly.
-
-Other skills are available to you. Read their descriptions and use the
-`{SKILL_TOOL}` tool to call whichever the work needs.
-"""
+    rel = lambda path: str(path.relative_to(source_root))      # noqa: E731
+    manifest = {
+        "figure": rel(staged["image"]),
+        "caption": rel(staged["caption"]) if staged["caption"] else None,
+        "source_data": [rel(p) for p in staged["source_data"]],
+    }
+    path = source_root / AGENTIC_INPUT_SUBDIR / AGENTIC_INPUT_MANIFEST_FILENAME
+    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
 def assemble_runtime(
@@ -1642,19 +1618,22 @@ def assemble_runtime(
 
         shutil.copytree(input_dir, staging / AGENTIC_INPUT_SUBDIR, symlinks=False)
         (staging / AGENTIC_ARTIFACTS_SUBDIR).mkdir()
+        (staging / AGENTIC_AGENT_HOME_SUBDIR).mkdir()
 
         layout = RuntimeLayout(
             root=root,
             skills_root=root / AGENTIC_SKILLS_SUBDIR,
             input_root=root / AGENTIC_INPUT_SUBDIR,
+            agent_home=root / AGENTIC_AGENT_HOME_SUBDIR,
             artifacts_root=root / AGENTIC_ARTIFACTS_SUBDIR,
             orientation_path=root / AGENTIC_ORIENTATION_FILENAME,
             entry_point=check,
             schema_path=root / AGENTIC_SKILLS_SUBDIR / check / "schema.json",
             example=example,
         )
-        (staging / AGENTIC_ORIENTATION_FILENAME).write_text(
-            _render_orientation(layout, staging), encoding="utf-8"
+        _write_input_manifest(staging)
+        shutil.copy2(
+            AGENTIC_CLAUDE_TEMPLATE, staging / AGENTIC_ORIENTATION_FILENAME
         )
 
         _assert_sealed(staging)
@@ -1773,6 +1752,18 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
         # image arrives base64-encoded in one JSON message and overflows the
         # SDK's 1 MB default reader buffer.
         "max_buffer_size": AGENTIC_MAX_BUFFER_BYTES,
+        # Keeps the transcript and the auto-memory directory inside the
+        # runtime instead of ~/.claude/projects/, where they outlive teardown
+        # and carry gold-derived reasoning out of the sealed tree.
+        "env": {"CLAUDE_CONFIG_DIR": str(layout.agent_home)},
+        # The schema is enforced, not described. Prose asking the model to
+        # "conform exactly" is a request; this is a constraint, and the M2
+        # spike measured it reaching enum level -- the model could not write
+        # "MAYBE" into a yes/no field even when told to.
+        "output_format": {
+            "type": "json_schema",
+            "schema": _leaf_schema(layout),
+        },
     }
 
 
@@ -2165,11 +2156,23 @@ def _session_prompt(layout: RuntimeLayout) -> str:
     measurement of this string rather than of the skills' prose.
     """
     return (
-        f"Read {AGENTIC_ORIENTATION_FILENAME} and follow it. Apply the "
-        f"`{layout.entry_point}` check to the figure in "
-        f"{AGENTIC_INPUT_SUBDIR}/, and write the result to "
-        f"{AGENTIC_ARTIFACTS_SUBDIR}/{PREDICTION_FILENAME}."
+        f"Apply the `{layout.entry_point}` check to the figure staged in "
+        f"{AGENTIC_INPUT_SUBDIR}/, and answer with the structured output "
+        f"you were given a schema for."
     )
+
+
+def _extract_result_text(message: Any) -> Optional[str]:
+    """The session's final structured answer, if this message carries one.
+
+    Tolerant of object and mapping shapes so a fake client can be a plain
+    dict, like the other extractors here.
+    """
+    if isinstance(message, Mapping):
+        value = message.get("result")
+    else:
+        value = getattr(message, "result", None)
+    return value if isinstance(value, str) else None
 
 
 def _extract_session_info(message: Any) -> Optional[Dict[str, Any]]:
@@ -2294,22 +2297,41 @@ async def _run_agent_session(
     }
 
     read_paths: Set[str] = set()
+    result_text: Optional[str] = None
     async for message in run(_session_prompt(layout), options):
         info = _extract_session_info(message)
         if info:
             audit.note_session(info)
+        result_text = _extract_result_text(message) or result_text
         for tool_name, tool_input, tool_use_id in _extract_tool_calls(message):
             recorder.record(tool_name, tool_input, tool_use_id)
             if tool_name == "Read" and isinstance(tool_input, Mapping):
                 read_paths.add(str(tool_input.get("file_path") or ""))
 
-    output_path = layout.artifacts_root / PREDICTION_FILENAME
-    if not output_path.is_file():
+    # The structured result is the answer; the runner serialises it. Asking
+    # the session to write the file made "forgot to write it" and "wrote
+    # something that is not JSON" into failure modes of the measurement
+    # rather than of the model's judgement.
+    if result_text is None:
         raise ValueError(
-            f"The session wrote no {PREDICTION_FILENAME} to "
-            f"{layout.artifacts_root}"
+            "The session returned no structured result. `output_format` "
+            "constrains the answer to the leaf schema, so its absence means "
+            "the session ended without answering."
         )
-    prediction = _read_json(output_path)
+    try:
+        prediction = json.loads(result_text)
+    except json.JSONDecodeError as exc:
+        # Documented behaviour: asked for something the schema cannot express,
+        # the model explains itself in prose instead. That is a real outcome,
+        # and the decode failure is how it is detected.
+        raise ValueError(
+            f"The session's result is not JSON, which means it declined to "
+            f"answer within the schema: {exc}. First 200 characters: "
+            f"{result_text[:200]!r}"
+        ) from exc
+    output_path = layout.artifacts_root / PREDICTION_FILENAME
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(prediction, indent=2) + "\n", encoding="utf-8")
     validate_against_schema(prediction, _leaf_schema(layout))
     _assert_the_session_read_the_figure(layout, read_paths)
     return prediction, recorder, audit

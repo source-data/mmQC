@@ -205,6 +205,16 @@ AGENTIC_ARTIFACTS_SUBDIR = Path("artifacts")
 #: Where the current example's inputs are copied, relative to the runtime root.
 AGENTIC_INPUT_SUBDIR = Path("input")
 
+#: `CLAUDE_CONFIG_DIR` for the session, inside the runtime.
+#:
+#: Without it the session writes its transcript to
+#: `~/.claude/projects/<slugified-cwd>/` -- outside the runtime, surviving
+#: teardown, and holding the gold-derived reasoning the containment exists to
+#: keep in. Redirecting it also folds the transcript into the same artifact as
+#: the skills and the staged example, so `--keep-runtime` preserves what the
+#: session actually thought.
+AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
+
 #: Extensions the harness will accept as *the* figure image, in priority
 #: order. Deliberately the same list the legacy path uses in
 #: `core/examples.py`, so both routes present the same file to the model.
@@ -225,7 +235,21 @@ AGENTIC_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".tiff", ".webp")
 AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
 
 #: The generated per-run orientation file, relative to the runtime root.
-AGENTIC_ORIENTATION_FILENAME = "ORIENTATION.md"
+#: The runtime's project instructions. `CLAUDE.md` rather than a bespoke
+#: orientation file: the SDK loads it automatically when `setting_sources`
+#: includes "project" (which it does), so the session starts with the layout
+#: already in context instead of spending its first turn reading a file. It is
+#: static -- identical for every run -- and everything per-run lives in the
+#: manifest below.
+AGENTIC_ORIENTATION_FILENAME = "CLAUDE.md"
+
+#: Template copied verbatim into each runtime as `CLAUDE.md`.
+AGENTIC_CLAUDE_TEMPLATE = DATA_DIR / "agentic" / "CLAUDE.md"
+
+#: Per-run manifest naming exactly what the harness staged. Machine-readable
+#: on purpose: which files exist is data, not prose, and the agent has no way
+#: to discover them otherwise.
+AGENTIC_INPUT_MANIFEST_FILENAME = "inputs.json"
 
 #: Setting sources passed to the SDK session.
 #:

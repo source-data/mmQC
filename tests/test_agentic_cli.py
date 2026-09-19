@@ -2299,11 +2299,34 @@ class TestRuntimeOrientation:
         assert assembled.orientation_path == path
         assert path.is_file()
 
-    def test_it_names_the_entry_point_and_the_roots(self, assembled):
+    def test_it_names_the_roots(self, assembled):
+        """The instructions are static now, so they describe the layout only.
+
+        The entry point is per-run and travels in the session prompt; the
+        staged files are per-run and travel in the manifest. Neither belongs
+        in a file that is byte-identical for every run.
+        """
         text = assembled.orientation_path.read_text(encoding="utf-8")
-        assert PILOT_LEAF in text
-        for token in ("artifacts", "input", "schema"):
+        for token in ("artifacts", "input", "inputs.json"):
             assert token in text.lower()
+        assert PILOT_LEAF not in text
+
+    def test_the_manifest_names_what_was_staged(self, assembled):
+        """Which files exist is data, not prose: the session has no shell, no
+        glob and no listing, so anything unnamed here is unreachable."""
+        manifest = json.loads(
+            (
+                assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            ).read_text(encoding="utf-8")
+        )
+        figure = assembled.root / manifest["figure"]
+        assert figure.is_file()
+        assert figure.suffix.lower() in cli.AGENTIC_IMAGE_EXTENSIONS
+        assert manifest["caption"] is None or (
+            assembled.root / manifest["caption"]
+        ).is_file()
+        for entry in manifest["source_data"]:
+            assert (assembled.root / entry).is_file()
 
     def test_it_does_not_list_the_entry_points_dependencies(self, assembled):
         """Finding the rest is the agent's job; naming it here would make the
@@ -2673,10 +2696,10 @@ def _fake_client(messages, *, writes=None, layout=None, captured=None):
             # faithful to what a real session has to do.
             image = cli._resolve_staged_inputs(layout.input_root)["image"]
             yield _tool_use("Read", {"file_path": str(image)}, "t-figure")
-            layout.artifacts_root.mkdir(parents=True, exist_ok=True)
-            (layout.artifacts_root / cli.PREDICTION_FILENAME).write_text(
-                json.dumps(writes), encoding="utf-8"
-            )
+            # The answer arrives as the session's structured result, not as a
+            # file the session wrote: `output_format` constrains it to the
+            # leaf schema and the runner serialises it.
+            yield {"result": json.dumps(writes)}
 
     return client
 
@@ -2760,7 +2783,7 @@ class TestAgentSession:
 
     def test_a_session_that_writes_nothing_fails(self, assembled):
         client = _fake_client([])
-        with pytest.raises(ValueError, match=r"wrote no prediction.json"):
+        with pytest.raises(ValueError, match=r"no structured result"):
             _run(assembled, client=client)
 
     def test_schema_errors_are_all_reported_at_once(self, assembled):
@@ -3188,10 +3211,7 @@ class TestToolAudit:
                         None,
                     )
                 yield message
-            assembled.artifacts_root.mkdir(parents=True, exist_ok=True)
-            (assembled.artifacts_root / cli.PREDICTION_FILENAME).write_text(
-                json.dumps(_valid_prediction()), encoding="utf-8"
-            )
+            yield {"result": json.dumps(_valid_prediction())}
 
         _run(assembled, client=hook_calling_client, audit_log=audit)
 
