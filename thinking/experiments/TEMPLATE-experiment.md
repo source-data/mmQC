@@ -2,6 +2,8 @@
 title: exp-NN — <short title>
 date: YYYY-MM-DD
 status: planned        # planned | running | done | abandoned
+kind: experiment
+extends:               # exp-NN, if this is a separate prediction on the same theme
 tags: [experiment, skills, dag]
 ---
 
@@ -13,13 +15,25 @@ One sentence. What do we not know?
 
 ## Paper claim
 
-Which claim in the results section this is evidence for. If no claim needs
-it, say so — that is a reason to drop the experiment, not to invent a claim.
+Which claim in the results section this is evidence for.
+
+If there is no claim yet, this is probably an exploration rather than an
+experiment — use `TEMPLATE-exploration.md`. Inventing a claim to justify a
+run is worse than running it as exploration and seeing what turns up.
 
 ## Hypothesis
 
 What we expect to see, and what would count as being wrong. State the
 direction before running: a prediction made afterwards is not one.
+
+## Decision criteria
+
+Written before the run, so the threshold cannot drift to meet the data. Say
+what each outcome would look like:
+
+- **Supports the hypothesis if** …
+- **Refutes it if** …
+- **Inconclusive if** … — a reportable result, not a failure.
 
 ## Design
 
@@ -56,3 +70,14 @@ an arm that differs in more than one way.
 
 What this settles, what it opens, and whether anything here belongs on the
 backburner rather than in the paper.
+
+## Addendum YYYY-MM-DD *(post-hoc — delete this section if unused)*
+
+Work done after the findings above were seen: an extra condition, a
+follow-up analysis, a control that only became obvious in hindsight.
+
+**This is exploratory with respect to the preregistration above**, however
+closely it follows the same question. If it deserves to be a claim, it needs
+preregistering as its own experiment (`extends: exp-NN`) and testing again.
+
+Runs go under `experiments/runs/exp-NN-<slug>/YYYY-MM-DD-<what>/`.
