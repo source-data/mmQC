@@ -22,12 +22,21 @@ from soda_mmqc.reporting import (
 )
 from soda_mmqc.reporting.styles import LAYER1_ORDER, LAYER2_BINARY_ORDER
 
-EVAL_ROOT = (
-    Path(__file__).resolve().parents[1]
-    / "soda_mmqc/data/evaluation/fig-checklist/micrograph-scale-bar"
-)
-DEMO_DIR = Path(__file__).resolve().parents[1] / "notebooks/fixtures/flat-eval-demo"
+DEMO_DIR = Path(__file__).resolve().parents[1] / "tests/fixtures/flat_eval_demo"
 FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+# EVAL_ROOT used to point at soda_mmqc/data/evaluation, and these tests read
+# whatever evaluation runs happened to be committed: they asserted a corpus,
+# not the reporting code, and broke when the corpus was regenerated or
+# removed. FIXTURES is a committed snapshot in the same on-disk format --
+# two models, three prompts, three records each -- so the assertions below
+# describe the fixture and stay true whatever the real corpus holds.
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
 
 
 class TestNormalizePromptName:
@@ -46,27 +55,27 @@ class TestLoadFlatRuns:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models=["gpt-5-mini-2025-08-07", "gpt-5"],
+            models=["model-a", "model-b"],
         )
         assert len(runs) == 6
         models = {run.model for run in runs}
         prompts = {run.prompt for run in runs}
-        assert models == {"gpt-5-mini-2025-08-07", "gpt-5"}
+        assert models == {"model-a", "model-b"}
         assert prompts == {"prompt.1", "prompt.2", "prompt.3"}
         for run in runs:
-            assert len(run.records) == 14
+            assert len(run.records) == 3
 
     def test_model_contrast_filter(self):
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models=["gpt-5-mini-2025-08-07", "gpt-5"],
+            models=["model-a", "model-b"],
             prompts="prompt.1",
         )
         assert len(runs) == 2
         assert {run.model for run in runs} == {
-            "gpt-5-mini-2025-08-07",
-            "gpt-5",
+            "model-a",
+            "model-b",
         }
 
 
@@ -75,7 +84,7 @@ class TestAggregateRun:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts="prompt.1",
         )
         summary = aggregate_run(runs[0])
@@ -90,22 +99,24 @@ class TestAggregateRun:
             )
             for record in runs[0].records
         )
-        assert total_instances > 14
-        assert micrograph.layer2_counts.get("TN", 0) + micrograph.layer2_counts.get(
-            "TP", 0
-        ) == total_instances
+        assert total_instances > len(runs[0].records)
+        # Every instance must land in exactly one layer-2 bucket. Summing the
+        # buckets (rather than TN + TP alone) is what makes this a statement
+        # about pooling: the old form silently assumed the data contained no
+        # FP or FN, which held for one corpus and nothing more.
+        assert sum(micrograph.layer2_counts.values()) == total_instances
 
     def test_summarize_runs_indexing(self):
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models=["gpt-5-mini-2025-08-07", "gpt-5"],
+            models=["model-a", "model-b"],
             prompts="prompt.1",
         )
         summaries = summarize_runs(runs)
-        assert ("gpt-5-mini-2025-08-07", "prompt.1") in summaries
-        assert ("gpt-5", "prompt.1") in summaries
-        assert len(summaries.for_model("gpt-5")) == 1
+        assert ("model-a", "prompt.1") in summaries
+        assert ("model-b", "prompt.1") in summaries
+        assert len(summaries.for_model("model-b")) == 1
 
 
 class TestTables:
@@ -114,7 +125,7 @@ class TestTables:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts="prompt.1",
         )
         return aggregate_run(runs[0])
@@ -124,7 +135,7 @@ class TestTables:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts="prompt.2",
         )
         return aggregate_run(runs[0])

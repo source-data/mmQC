@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Expected output — plot-axis-units</title>
+<style>body { font-family: system-ui, sans-serif; max-width: 900px; margin: 1rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; color: #333; }
+    h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: #555; }
+    section { margin-bottom: 1.5rem; padding: 0.75rem; background: #f8f9fa; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #dee2e6; }
+    th { background: #e9ecef; font-weight: 600; }
+    .empty { color: #6c757d; font-style: italic; margin: 0.25rem 0; }
+    ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+    .meta { font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem; }</style></head><body>
+<h1>Expected output — plot-axis-units</h1>
+<section><h3>Panel A</h3>
+<p><strong>is_a_plot:</strong> yes</p>
+<p><strong>units_provided:</strong> [{'axis': 'x', 'answer': 'no'}, {'axis': 'y', 'answer': 'no'}]</p>
+<p><strong>justify_why_units_are_missing:</strong> [{'axis': 'x', 'justification': 'GFP fluorescence intensity is plotted on the x-axis (continuous fluorescence measurement) but no units are indicated (e.g., arbitrary units [AU] or channel units).'}, {'axis': 'y', 'justification': 'Forward scatter (FSC-A) or scatter intensity is plotted on the y-axis (continuous optical measurement) but no units are provided (e.g., arbitrary units).'}]</p>
+<p><strong>unit_definition_as_provided:</strong> []</p>
+</section>
+<section><h3>Panel B</h3>
+<p><strong>is_a_plot:</strong> yes</p>
+<p><strong>units_provided:</strong> [{'axis': 'x', 'answer': 'not needed'}, {'axis': 'y', 'answer': 'yes'}]</p>
+<p><strong>justify_why_units_are_missing:</strong> []</p>
+<p><strong>unit_definition_as_provided:</strong> [{'axis': 'y', 'definition': &quot;Number of CPSF6 clusters per cell (labelled as 'Number of CPSF6 clusters / cell')&quot;}, {'axis': 'y', 'definition': 'Early viral reverse transcripts per cell (ERT / cell)'}, {'axis': 'y', 'definition': 'Late viral reverse transcripts per cell (LRT / cell)'}]</p>
+</section>
+<section><h3>Panel C</h3>
+<p><strong>is_a_plot:</strong> yes</p>
+<p><strong>units_provided:</strong> [{'axis': 'x', 'answer': 'not needed'}, {'axis': 'y', 'answer': 'yes'}]</p>
+<p><strong>justify_why_units_are_missing:</strong> []</p>
+<p><strong>unit_definition_as_provided:</strong> [{'axis': 'y', 'definition': &quot;Number of puncta per cell (labelled as 'Number of puncta / cell' on the violin plot)&quot;}]</p>
+</section>
+</body></html>

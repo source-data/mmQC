@@ -67,7 +67,7 @@ class TestCollatedEvaluation:
         ]
 
     def test_demo_collation_ancestor_paths(self):
-        demo_dir = Path(__file__).resolve().parents[1] / "notebooks/fixtures/flat-eval-demo"
+        demo_dir = Path(__file__).resolve().parents[1] / "tests/fixtures/flat_eval_demo"
         evaluator = FlatEvaluator.from_paths(
             str(demo_dir / "schema.json"),
             str(demo_dir / "manifest.json"),

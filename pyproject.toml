@@ -64,7 +64,10 @@ packages = ["soda_mmqc"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v"
+# Live tests are opt-in: they spend money, and "a key happens to be present"
+# is a poor proxy for "I meant to spend money right now" -- CI environments
+# tend to have keys. Run them with: pytest -m integration
+addopts = "-v -m 'not integration'"
 markers = [
-    "integration: tests that call real APIs (skip without OPENAI_API_KEY)",
+    "integration: calls a real provider API; opt-in, gated on its own provider's key (see tests/conftest.py)",
 ] 

@@ -1,0 +1,92 @@
+{
+    "outputs": [
+        {
+            "panel_label": "A",
+            "is_a_plot": "yes",
+            "units_provided": [
+                {
+                    "axis": "x",
+                    "answer": "no"
+                },
+                {
+                    "axis": "y",
+                    "answer": "not needed"
+                }
+            ],
+            "unit_definition_as_provided": [],
+            "decision": "FAIL",
+            "explanation": [
+                {
+                    "axis": "x",
+                    "explanation": "Heatmaps show position relative to gene start/end (numeric ticks such as -1000 to 1000 are visible on some panels) but no unit (bp or kb) is specified on the x-axis or in the caption for these heatmaps."
+                }
+            ]
+        },
+        {
+            "panel_label": "B",
+            "is_a_plot": "yes",
+            "units_provided": [
+                {
+                    "axis": "x",
+                    "answer": "yes"
+                },
+                {
+                    "axis": "y",
+                    "answer": "not needed"
+                }
+            ],
+            "unit_definition_as_provided": [
+                {
+                    "axis": "x",
+                    "definition": "Distance around TADs is indicated in kilobases (shown as -3 kb and +3 kb in the figure and described in the caption)."
+                }
+            ],
+            "decision": "PASS",
+            "explanation": []
+        },
+        {
+            "panel_label": "C",
+            "is_a_plot": "yes",
+            "units_provided": [
+                {
+                    "axis": "x",
+                    "answer": "not needed"
+                },
+                {
+                    "axis": "y",
+                    "answer": "not needed"
+                }
+            ],
+            "unit_definition_as_provided": [],
+            "decision": "PASS",
+            "explanation": []
+        },
+        {
+            "panel_label": "D",
+            "is_a_plot": "yes",
+            "units_provided": [
+                {
+                    "axis": "x",
+                    "answer": "no"
+                },
+                {
+                    "axis": "y",
+                    "answer": "no"
+                }
+            ],
+            "unit_definition_as_provided": [],
+            "decision": "FAIL",
+            "explanation": [
+                {
+                    "axis": "x",
+                    "explanation": "Genomic locus (rps19b) is shown along the x-axis but coordinate units (base pairs or kilobases) are not indicated on the axis or in the caption."
+                },
+                {
+                    "axis": "y",
+                    "explanation": "H3K9me3 signal intensity is plotted on the y-axis (track height with numeric ticks such as '800'), but the signal units or normalization (e.g., RPM, reads, fold enrichment) are not specified."
+                }
+            ]
+        }
+    ],
+    "updated_at": "2026-07-15 11:30:11"
+}

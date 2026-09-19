@@ -30,10 +30,28 @@ from soda_mmqc.reporting.navigate import (
     path_string_to_steps,
 )
 
-DEMO_DIR = Path(__file__).resolve().parents[1] / "notebooks/fixtures/flat-eval-demo"
+
+# The committed snapshot these tests read instead of soda_mmqc/data/evaluation.
+# Reading the live corpus meant asserting whichever evaluation runs happened to
+# be committed -- a statement about data, not about the reporting code -- so the
+# tests broke whenever that corpus was regenerated or removed.
+FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
+
+
+DEMO_DIR = Path(__file__).resolve().parents[1] / "tests/fixtures/flat_eval_demo"
 MICROGRAPH = "micrograph-scale-bar"
-MODEL_MINI = "gpt-5-mini-2025-08-07"
+MODEL_A = "model-a"
 FIGURE1_SOURCE = "10.1038_s44318-026-00715-1/content/1"
+# A record whose `scale_bar_on_image` is actually populated. Asserting a leaf
+# resolves to "" proves little -- an empty string is also what a failed lookup
+# returns -- so the leaf-addressing tests below use a non-empty value.
+FIGURE3_SOURCE = "10.1038_s44318-026-00715-1/content/3"
 
 
 class TestNavigate:
@@ -97,7 +115,7 @@ class TestLoadRecordPayloads:
         expected, model = load_record_payloads(
             "fig-checklist",
             MICROGRAPH,
-            MODEL_MINI,
+            MODEL_A,
             "prompt.2",
             FIGURE1_SOURCE,
         )
@@ -108,7 +126,7 @@ class TestLoadRecordPayloads:
         runs = load_flat_runs(
             "fig-checklist",
             MICROGRAPH,
-            models=MODEL_MINI,
+            models=MODEL_A,
             prompts="prompt.2",
         )
         record = runs[0].records[0]
@@ -119,7 +137,7 @@ class TestLoadRecordPayloads:
         runs = load_flat_runs(
             "fig-checklist",
             MICROGRAPH,
-            models=MODEL_MINI,
+            models=MODEL_A,
             prompts="prompt.2",
             include_payloads=True,
         )
@@ -159,7 +177,7 @@ class TestInspectInstance:
         runs = load_flat_runs(
             "fig-checklist",
             MICROGRAPH,
-            models=MODEL_MINI,
+            models=MODEL_A,
             prompts="prompt.2",
         )
         return aggregate_run(runs[0])
@@ -182,24 +200,24 @@ class TestInspectInstance:
     def test_inspect_leaf_via_object_path_and_leaf(self, summary_p2):
         ctx = inspect_instance(
             summary_p2,
-            source=FIGURE1_SOURCE,
+            source=FIGURE3_SOURCE,
             object_path="outputs[0]",
             leaf="scale_bar_on_image",
             include_example_assets=False,
         )
-        assert ctx.exp_value == ""
+        assert ctx.exp_value == "no"
         assert ctx.pred_value == "no"
         assert ctx.steps == ("outputs", 0, "scale_bar_on_image")
-        assert ctx.ref.source == FIGURE1_SOURCE
+        assert ctx.ref.source == FIGURE3_SOURCE
 
     def test_lazy_payload_inspect_leaf(self, summary_p2):
         ctx = inspect_instance(
             summary_p2,
-            source=FIGURE1_SOURCE,
+            source=FIGURE3_SOURCE,
             steps=["outputs", 0, "scale_bar_on_image"],
             include_example_assets=False,
         )
-        assert ctx.exp_value == ""
+        assert ctx.exp_value == "no"
         assert ctx.pred_value == "no"
         assert ctx.exp_row is not None
         assert ctx.pred_row is not None
@@ -241,7 +259,7 @@ class TestShowInstanceContext:
         runs = load_flat_runs(
             "fig-checklist",
             MICROGRAPH,
-            models=MODEL_MINI,
+            models=MODEL_A,
             prompts="prompt.2",
         )
         return aggregate_run(runs[0])

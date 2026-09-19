@@ -365,17 +365,25 @@ def validate_model_for_provider(model: str, provider: str = "") -> bool:
     if not provider:
         from soda_mmqc.config import API_PROVIDER
         provider = API_PROVIDER
-    
+
     compatible_models = get_compatible_models(provider)
+    if not compatible_models:
+        # The list is empty only when the lookup failed: a live provider
+        # always returns models, and `get_*_models` swallows every exception
+        # and returns []. "Could not check" is not the same claim as
+        # "incompatible", and conflating them rejected *every* model whenever
+        # credentials were absent or the network was down -- reported as
+        # "Model 'X' is not compatible with provider 'Y'. Compatible models:"
+        # with nothing after the colon.
+        logger.warning(
+            f"Could not fetch the model list for provider '{provider}'; "
+            f"skipping the compatibility check for '{model}'. If the model "
+            f"is wrong the provider will say so, with a better error."
+        )
+        return True
     return model in compatible_models
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=4, max=10),
-    retry=retry_if_exception_type((json.JSONDecodeError, ValueError)),
-    reraise=True
-)
 def _extract_output_text_from_response(raw_response) -> str:
     """Get the final assistant text from a Responses API response.
     
@@ -479,6 +487,12 @@ def _sanitize_metadata_for_model(obj: Any, *, max_preview_rows: int = 3, max_str
         return str(obj)
 
 
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type((json.JSONDecodeError, ValueError)),
+    reraise=True
+)
 def generate_response_openai(
     example,
     prompt: str,

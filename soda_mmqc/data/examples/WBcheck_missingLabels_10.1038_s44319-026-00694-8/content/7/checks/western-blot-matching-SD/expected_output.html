@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Expected output — western-blot-matching-SD</title>
+<style>body { font-family: system-ui, sans-serif; max-width: 900px; margin: 1rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; color: #333; }
+    h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: #555; }
+    section { margin-bottom: 1.5rem; padding: 0.75rem; background: #f8f9fa; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #dee2e6; }
+    th { background: #e9ecef; font-weight: 600; }
+    .empty { color: #6c757d; font-style: italic; margin: 0.25rem 0; }
+    ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+    .meta { font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem; }</style></head><body>
+<h1>Expected output — western-blot-matching-SD</h1>
+<section><h3>Panel A — Western blot: FALSE</h3>
+</section>
+<section><h3>Panel B — Western blot: FALSE</h3>
+</section>
+<section><h3>Panel C — Western blot: TRUE</h3>
+<table><thead><tr><th>protein_or_piece_label</th><th>source_data_filename</th><th>source_data_status</th><th>source_data_matches_figure</th><th>western_blot_matching_result</th></tr></thead><tbody><tr><td>PD-L1 (lysate)</td><td>Western blot - 7C.tif</td><td>Source data found</td><td>yes</td><td>The raw tif contains the uncropped lysate gel with a row of ~50 kDa bands matching the PD-L1 lane pattern in the figure (same ladder at left, band positions and relative intensities); cropping/contrast adjustments are consistent with the figure.</td></tr><tr><td>CMTM6 (lysate)</td><td>Western blot - 7C.tif</td><td>Source data found</td><td>yes</td><td>The raw image shows a lower molecular-weight row of bands in the lysate gel that corresponds to the CMTM6 bands in the figure (same band shapes and lane order); visually consistent after cropping.</td></tr><tr><td>Actin (lysate)</td><td>Western blot - 7C.tif</td><td>Source data found</td><td>yes</td><td>The bottom-left uncropped blot in the tif matches the loading-control band shown in the figure (consistent ladder, band uniformity and positions); appears to be the same source with expected cropping.</td></tr><tr><td>PD-L1 (IP: Alfa)</td><td>Western blot - 7C.tif</td><td>Source data found</td><td>yes</td><td>The right-hand panel in the tif contains the IP:Alfa gel with the ~50 kDa PD-L1 bands that match the figure's IP:Alfa PD-L1 panel (band pattern and relative intensities correspond).</td></tr><tr><td>CMTM6 (IP: Alfa)</td><td>Western blot - 7C.tif</td><td>Source data found</td><td>yes</td><td>The lower band row in the IP:Alfa section of the tif corresponds to the CMTM6 IP blot in the figure (same lane-to-lane variation and band morphology), consistent with the figure after cropping.</td></tr></tbody></table>
+</section>
+<section><h3>Panel D — Western blot: FALSE</h3>
+</section>
+</body></html>

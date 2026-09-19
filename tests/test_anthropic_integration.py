@@ -8,6 +8,14 @@ from pathlib import Path
 
 
 from soda_mmqc.lib.api import generate_response_anthropic, _create_tool_from_schema
+from soda_mmqc.config import DEFAULT_MODELS
+from tests.conftest import requires_key
+
+# Taken from config rather than hard-coded: these tests pinned
+# claude-3-5-sonnet-20241022, which has since been retired and now answers
+# 404, so they failed for a reason that had nothing to do with the code under
+# test. Following config means a model retirement is fixed in one place.
+ANTHROPIC_MODEL = DEFAULT_MODELS["anthropic"]
 
 
 class TestAnthropicIntegration:
@@ -15,13 +23,13 @@ class TestAnthropicIntegration:
     
     @pytest.fixture(autouse=True)
     def setup_environment(self):
-        """Set up environment for Anthropic tests."""
-        # Check if we have the required environment variables
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key or api_key == "your_key_here":
-            pytest.skip("ANTHROPIC_API_KEY not set or invalid")
-        
-        # Set provider to anthropic
+        """Point the library at Anthropic for the duration of a test.
+
+        It no longer skips on a missing key. Two tests in this class never
+        reach the network, and skipping those for want of a credential they
+        do not use cost real offline coverage. The tests that do call the API
+        carry `@requires_key("ANTHROPIC_API_KEY")` instead.
+        """
         os.environ["API_PROVIDER"] = "anthropic"
     
     def test_schema_conversion_with_real_schema(self):
@@ -47,6 +55,8 @@ class TestAnthropicIntegration:
         assert input_schema["type"] == "object"
         assert "properties" in input_schema
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_simple_text_call(self):
         """Test a simple text-only call to Anthropic API."""
         # Simple schema for testing
@@ -60,7 +70,10 @@ class TestAnthropicIntegration:
         
         # Create a simple mock example with correct Anthropic format
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -78,7 +91,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "simple_call"}
             )
             
@@ -97,11 +110,16 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Simple API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_content_format_issue(self):
         """Test to identify the content format issue with real examples."""
         # Create a mock example that simulates the real content format
         class MockFigureExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 # This simulates what the real FigureExample produces
                 return {
                     "content": [
@@ -150,7 +168,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "content_format_debug"}
             )
         
@@ -191,11 +209,16 @@ class TestAnthropicIntegration:
         
         print("✅ Content conversion function works correctly")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_with_mock_figure_example(self):
         """Test with a mock figure example that simulates real content."""
         # Create a mock example that simulates the real FigureExample
         class MockFigureExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -204,7 +227,7 @@ class TestAnthropicIntegration:
                         },
                         {
                             "type": "input_image",
-                            "image_url": "data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                            "image_url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
                         }
                     ]
                 }
@@ -229,7 +252,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "mock_figure_example"}
             )
             
@@ -246,6 +269,8 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Mock figure example API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_with_nested_schema(self):
         """Test with a nested schema (like our actual schemas)."""
         # Use a real nested schema
@@ -259,7 +284,10 @@ class TestAnthropicIntegration:
         
         # Create a simple mock example
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -277,7 +305,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "nested_schema"}
             )
             
@@ -291,6 +319,8 @@ class TestAnthropicIntegration:
         except Exception as e:
             pytest.fail(f"Nested schema API call failed: {e}")
     
+    @pytest.mark.integration
+    @requires_key("ANTHROPIC_API_KEY")
     def test_anthropic_api_error_handling(self):
         """Test error handling with invalid schema."""
         # Invalid schema (missing required fields)
@@ -303,7 +333,10 @@ class TestAnthropicIntegration:
         }
         
         class SimpleExample:
-            def prepare_model_input(self, prompt):
+            # Mirrors Example.prepare_model_input: the real signature
+            # grew `model_config`, and a stub that omits it fails with a
+            # TypeError inside the library, which reads like an API fault.
+            def prepare_model_input(self, prompt, model_config=None):
                 return {
                     "content": [
                         {
@@ -322,7 +355,7 @@ class TestAnthropicIntegration:
                 example=example,
                 prompt=prompt,
                 schema=invalid_schema,
-                model="claude-3-5-sonnet-20241022",
+                model=ANTHROPIC_MODEL,
                 metadata={"test": "error_handling"}
             )
             

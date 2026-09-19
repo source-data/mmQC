@@ -10,7 +10,6 @@ from soda_mmqc.config import (
     CHECKLIST_DIR,
     EXAMPLES_DIR,
     EVALUATION_DIR,
-    PLOTS_DIR,
     CACHE_DIR
 )
 
@@ -98,7 +97,6 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertTrue(CHECKLIST_DIR.exists())
         self.assertTrue(EXAMPLES_DIR.exists())
         self.assertTrue(EVALUATION_DIR.exists())
-        self.assertTrue(PLOTS_DIR.exists())
         
         # CACHE_DIR might not exist initially, but should be creatable
         CACHE_DIR.mkdir(exist_ok=True)

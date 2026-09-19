@@ -8,27 +8,35 @@ Run explicitly with: pytest tests/test_model_api_integration.py -v
 import os
 import pytest
 
-# Load .env so OPENAI_API_KEY is available when running from project root
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+# .env is loaded by tests/conftest.py, before this module is imported, so the
+# gate below does not depend on which test module happened to import first.
+from tests.conftest import requires_key
 
-# Skip entire module if no API key (avoids importing heavy deps when not needed)
+# Skip entire module if openai is absent (avoids importing heavy deps).
 pytest.importorskip("openai")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-skip_no_key = pytest.mark.skipif(
-    not OPENAI_API_KEY,
-    reason="OPENAI_API_KEY not set; real API integration tests skipped",
-)
+
+# These call OpenAI, so they are gated on OpenAI's key -- never on another
+# provider's, which would skip a runnable test or run an unrunnable one.
+skip_no_key = requires_key("OPENAI_API_KEY")
+
+# config.DEFAULT_MODEL follows API_PROVIDER, so with the project configured
+# for Anthropic it resolves to a Claude id -- which OpenAI answers with a 404
+# for a model that "does not exist", an error that reads like an outage. A
+# provider-specific test pins that provider's own model, for the same reason
+# its key gate names that provider's key.
+from soda_mmqc.config import DEFAULT_MODELS
+
+DEFAULT_MODEL = DEFAULT_MODELS["openai"]
 
 
 def _minimal_example():
     """Minimal example that returns simple text content for the Responses API."""
 
     class MinimalExample:
-        def prepare_model_input(self, prompt):
+        # Mirrors Example.prepare_model_input: the real signature
+        # grew `model_config`, and a stub that omits it fails with a
+        # TypeError inside the library, which reads like an API fault.
+        def prepare_model_input(self, prompt, model_config=None):
             return {
                 "content": [
                     {"type": "input_text", "text": prompt or "Reply with the word ok."}
@@ -61,7 +69,6 @@ def _minimal_schema():
 def test_openai_valid_tool_type_web_search_preview():
     """Real API call with valid tool type web_search_preview must not return 400."""
     from soda_mmqc.lib.api import generate_response_openai
-    from soda_mmqc.config import DEFAULT_MODEL
 
     example = _minimal_example()
     schema = _minimal_schema()
@@ -89,7 +96,6 @@ def test_openai_invalid_tool_type_web_fetch_returns_400():
     """Real API call with invalid tool type web_fetch must return 400."""
     from openai import APIError
     from soda_mmqc.lib.api import generate_response_openai
-    from soda_mmqc.config import DEFAULT_MODEL
 
     example = _minimal_example()
     schema = _minimal_schema()
@@ -121,7 +127,6 @@ def test_openai_tool_type_web_search_alone():
     """
     from openai import APIError
     from soda_mmqc.lib.api import generate_response_openai
-    from soda_mmqc.config import DEFAULT_MODEL
 
     example = _minimal_example()
     schema = _minimal_schema()
@@ -156,7 +161,6 @@ def test_openai_original_failing_config_web_search_and_web_fetch_returns_400():
     """
     from openai import APIError
     from soda_mmqc.lib.api import generate_response_openai
-    from soda_mmqc.config import DEFAULT_MODEL
 
     example = _minimal_example()
     schema = _minimal_schema()

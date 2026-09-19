@@ -40,7 +40,23 @@ from soda_mmqc.reporting.styles import (
     LAYER_S_TITLE,
 )
 
-MODEL_MINI = "gpt-5-mini-2025-08-07"
+from pathlib import Path
+
+
+# The committed snapshot these tests read instead of soda_mmqc/data/evaluation.
+# Reading the live corpus meant asserting whichever evaluation runs happened to
+# be committed -- a statement about data, not about the reporting code -- so the
+# tests broke whenever that corpus was regenerated or removed.
+FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
+
+
+MODEL_A = "model-a"
 
 
 @pytest.fixture
@@ -48,7 +64,7 @@ def prompt1_summary():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models=MODEL_MINI,
+        models=MODEL_A,
         prompts="prompt.1",
     )
     return aggregate_run(runs[0])
@@ -59,7 +75,7 @@ def summaries_prompt():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models=MODEL_MINI,
+        models=MODEL_A,
         prompts=["prompt.1", "prompt.2", "prompt.3"],
     )
     return summarize_runs(runs)
@@ -70,7 +86,7 @@ def summaries_model():
     runs = load_flat_runs(
         "fig-checklist",
         "micrograph-scale-bar",
-        models=[MODEL_MINI, "gpt-5"],
+        models=[MODEL_A, "model-b"],
         prompts="prompt.1",
     )
     return summarize_runs(runs)
@@ -157,7 +173,7 @@ class TestComparisonPlots:
         fig = plot_comparison_layer1(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         assert len(fig.data) > 0
         assert fig.layout.barmode == "stack"
@@ -201,7 +217,7 @@ class TestComparisonPlots:
             if trace.customdata is not None
             for row in trace.customdata
         }
-        assert series == {MODEL_MINI, "gpt-5"}
+        assert series == {MODEL_A, "model-b"}
         patterns = set()
         for trace in fig.data:
             shape = trace.marker.pattern.shape
@@ -215,7 +231,7 @@ class TestComparisonPlots:
         fig = plot_comparison_layer2_binary(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         assert len(fig.data) > 0
 
@@ -223,7 +239,7 @@ class TestComparisonPlots:
         fig = plot_comparison_layer2_graded(
             summaries_prompt,
             compare="prompt",
-            model=MODEL_MINI,
+            model=MODEL_A,
         )
         assert len(fig.data) > 0
 

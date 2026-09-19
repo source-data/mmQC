@@ -23,6 +23,22 @@ from soda_mmqc.reporting.display import (
     sort_frame as sort_frame_fn,
 )
 
+from pathlib import Path
+
+
+# The committed snapshot these tests read instead of soda_mmqc/data/evaluation.
+# Reading the live corpus meant asserting whichever evaluation runs happened to
+# be committed -- a statement about data, not about the reporting code -- so the
+# tests broke whenever that corpus was regenerated or removed.
+FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
+
+
+@pytest.fixture(autouse=True)
+def _use_fixture_corpus(monkeypatch):
+    """Point the loader at the committed snapshot, not the live corpus."""
+    monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
+
+
 
 class TestSortFrame:
     def test_sorts_by_default_columns(self):
@@ -39,7 +55,7 @@ class TestComparisonErrorsTable:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts=["prompt.1", "prompt.2"],
         )
         return summarize_runs(runs)
@@ -48,7 +64,7 @@ class TestComparisonErrorsTable:
         frame = comparison_errors_table(
             summaries,
             compare="prompt",
-            model="gpt-5-mini-2025-08-07",
+            model="model-a",
         )
         if frame.empty:
             pytest.skip("no layer-2 errors in fixture run")
@@ -59,7 +75,7 @@ class TestComparisonErrorsTable:
         frame = comparison_errors_table(
             summaries,
             compare="prompt",
-            model="gpt-5-mini-2025-08-07",
+            model="model-a",
         )
         prompt2 = frame.loc[frame["prompt"] == "prompt.2"]
         assert not prompt2.empty
@@ -115,11 +131,11 @@ class TestShowTable:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5",
+            models="model-b",
             prompts="prompt.2",
         )
         summaries = summarize_runs(runs)
-        summary = summaries["gpt-5", "prompt.2"]
+        summary = summaries["model-b", "prompt.2"]
 
         with patch("soda_mmqc.reporting.display.show_table") as mock_show:
             show_layer1_errors(summary, layer1="spurious_applicable")
@@ -133,11 +149,11 @@ class TestShowTable:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts="prompt.2",
         )
         summaries = summarize_runs(runs)
-        summary = summaries["gpt-5-mini-2025-08-07", "prompt.2"]
+        summary = summaries["model-a", "prompt.2"]
 
         with patch("soda_mmqc.reporting.display.show_table") as mock_show:
             show_layer2_errors(summary, field="micrograph")
@@ -150,7 +166,7 @@ class TestShowTable:
         runs = load_flat_runs(
             "fig-checklist",
             "micrograph-scale-bar",
-            models="gpt-5-mini-2025-08-07",
+            models="model-a",
             prompts=["prompt.1", "prompt.2"],
         )
         summaries = summarize_runs(runs)
@@ -158,7 +174,7 @@ class TestShowTable:
             show_comparison_errors(
                 summaries,
                 compare="prompt",
-                model="gpt-5-mini-2025-08-07",
+                model="model-a",
             )
         mock_show.assert_called_once()
         passed_frame = mock_show.call_args[0][0]

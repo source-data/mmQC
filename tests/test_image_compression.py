@@ -7,6 +7,22 @@ from unittest.mock import patch, MagicMock
 from soda_mmqc.lib.api import _compress_image_if_needed, _convert_content_for_anthropic
 
 
+def _imagemagick_available() -> bool:
+    """Whether the MagickWand shared library is actually loadable.
+
+    The compression path catches every exception and returns the image
+    unchanged, so a missing ImageMagick does not raise -- it simply makes
+    compression a no-op, and the tests below then fail with "4152637 not less
+    than 4152637", which reads like a compression bug rather than an absent
+    system library. Install it with `brew install imagemagick` to run them
+    for real.
+    """
+    try:
+        import wand.image  # noqa: F401
+    except Exception:
+        return False
+    return True
+
 class TestImageCompression(unittest.TestCase):
     """Test image compression functionality."""
     
@@ -37,6 +53,8 @@ class TestImageCompression(unittest.TestCase):
     
     def test_compress_png_image(self):
         """Test PNG image compression."""
+        if not _imagemagick_available():
+            self.skipTest("ImageMagick (MagickWand) not installed")
         # Read the actual PNG file
         with open(self.png_image_path, "rb") as f:
             png_data = f.read()
@@ -113,6 +131,8 @@ class TestImageCompression(unittest.TestCase):
     
     def test_compress_rgba_png_conversion(self):
         """Test that RGBA PNG images are properly converted to RGB for JPEG compression."""
+        if not _imagemagick_available():
+            self.skipTest("ImageMagick (MagickWand) not installed")
         # Test with the actual RGBA PNG file
         with open(self.png_image_path, "rb") as f:
             png_data = f.read()

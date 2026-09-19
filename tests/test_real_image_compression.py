@@ -8,6 +8,22 @@ from soda_mmqc.lib.api import _compress_image_if_needed, _convert_content_for_an
 from soda_mmqc.core.examples import FigureExample
 
 
+def _imagemagick_available() -> bool:
+    """Whether the MagickWand shared library is actually loadable.
+
+    The compression path catches every exception and returns the image
+    unchanged, so a missing ImageMagick does not raise -- it simply makes
+    compression a no-op, and the tests below then fail with "4152637 not less
+    than 4152637", which reads like a compression bug rather than an absent
+    system library. Install it with `brew install imagemagick` to run them
+    for real.
+    """
+    try:
+        import wand.image  # noqa: F401
+    except Exception:
+        return False
+    return True
+
 class TestRealImageCompression(unittest.TestCase):
     """Test image compression with the actual problematic image."""
     
@@ -33,6 +49,8 @@ class TestRealImageCompression(unittest.TestCase):
     
     def test_compress_problematic_image(self):
         """Test compression of the problematic image."""
+        if not _imagemagick_available():
+            self.skipTest("ImageMagick (MagickWand) not installed")
         with open(self.problematic_image_path, "rb") as f:
             image_data = f.read()
         

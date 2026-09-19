@@ -1,0 +1,27 @@
+{
+  "checklist": "flat-eval-demo",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "papers.figures.outputs": [
+      "label"
+    ]
+  },
+  "fields": {
+    "papers[].figures[].outputs[].label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "papers[].figures[].outputs[].is_micrograph": {
+      "na_values": [
+        ""
+      ],
+      "matching_metric": "binary_polarity"
+    }
+  }
+}
