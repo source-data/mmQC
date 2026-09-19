@@ -93,6 +93,7 @@ panel here silently removes it from that decision.
 
 Return the description as JSON conforming to the `schema.json` file that sits
 next to this skill: a single object whose **`plot_panels`** key holds the list.
-Write the same JSON to `plot_panels.json` in the artifacts directory named by
-the run's orientation file, so another skill can re-read it instead of
-deriving it a second time. Then report it back to the skill that called you.
+
+Nothing is written to disk. Invoking this skill loaded these instructions into
+the session already running, so stating the JSON in your reply is what makes it
+available to the rest of the work.

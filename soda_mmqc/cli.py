@@ -53,10 +53,16 @@ import yaml
 
 from soda_mmqc import logger
 from soda_mmqc.config import (
+    AGENTIC_AGENT_HOME_SUBDIR,
+    AGENTIC_BASE_TOOLS,
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
     AGENTIC_FORBIDDEN_TOOLS,
+    AGENTIC_IMAGE_EXTENSIONS,
+    AGENTIC_MAX_BUFFER_BYTES,
+    AGENTIC_CLAUDE_TEMPLATE,
+    AGENTIC_INPUT_MANIFEST_FILENAME,
     AGENTIC_INPUT_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_PERMISSION_MODE,
@@ -1391,6 +1397,7 @@ class RuntimeLayout:
     orientation_path: Path
     entry_point: str
     schema_path: Path
+    agent_home: Path
     example: str
 
 
@@ -1463,31 +1470,78 @@ def _copy_skill(skill: Skill, destination: Path) -> None:
         shutil.copy2(schema, destination / "schema.json")
 
 
-def _render_orientation(layout: RuntimeLayout) -> str:
-    """Generate the per-run orientation file.
+def _resolve_staged_inputs(input_root: Path) -> Dict[str, Any]:
+    """Pick which staged files are the figure, the caption and the source data.
 
-    It names the entry point and the roots, and **nothing else**. It does not
-    name the entry point's dependencies, does not order them, and does not
-    describe the graph: discovering that is the agent's job, and stating it
-    here would make the Milestone 4 trace a measurement of our own control
-    flow rather than of the prose.
+    Choosing the files to put in front of the model is the harness's job, not
+    the agent's. The session has no `Glob`, no `LS` and no `Bash` -- by
+    design -- so an unnamed input is one it can only guess at, and it does:
+    a run on 2026-09-19 spent 32 of its 24 turns reading `figure.png`,
+    `image.png`, `fig.png`, `a.png`, `figure.xyz` and finally `*`, never
+    reaching `44318_2026_715_Fig1_HTML.webp`. An earlier run guessed ten
+    times, gave up, and wrote a prediction from the caption alone that
+    scored 8/8 against all-negative gold. Silent, and wrong.
+
+    Nothing is renamed or converted: the runtime is a copy, not a processed
+    copy. Only the *names* are resolved, and `_render_orientation` states
+    them.
+
+    Raises:
+        FileNotFoundError: If no file with a known image extension is
+            staged. The legacy path raises for the same reason
+            (`core/examples.py`, "No image found"); a session that cannot
+            see the figure must not be allowed to score one.
     """
-    return f"""# This run
+    files = sorted(p for p in input_root.iterdir() if p.is_file())
 
-You are checking one figure against one quality-control check.
+    image = None
+    for extension in AGENTIC_IMAGE_EXTENSIONS:
+        for candidate in files:
+            if candidate.suffix.lower() == extension:
+                image = candidate
+                break
+        if image:
+            break
+    if image is None:
+        raise FileNotFoundError(
+            f"No figure image in {input_root}: nothing with an extension in "
+            f"{', '.join(AGENTIC_IMAGE_EXTENSIONS)}. The agent cannot list "
+            f"the directory, so a run without a named image would score the "
+            f"caption alone."
+        )
 
-- **Entry point:** the `{layout.entry_point}` skill. Start there.
-- **Figure inputs:** `{AGENTIC_INPUT_SUBDIR}/` — the caption and image for
-  this figure, and nothing else.
-- **Write results to:** `{AGENTIC_ARTIFACTS_SUBDIR}/` — the only writable
-  location. Put the final answer in
-  `{AGENTIC_ARTIFACTS_SUBDIR}/{PREDICTION_FILENAME}`.
-- **Final output schema:** `{layout.schema_path.relative_to(layout.root)}`.
-  The answer must conform to it exactly.
+    caption = next((p for p in files if p.suffix.lower() == ".txt"), None)
 
-Other skills are available to you. Read their descriptions and use the
-`{SKILL_TOOL}` tool to call whichever the work needs.
-"""
+    source_root = input_root / "source_data"
+    source_data = (
+        sorted(p for p in source_root.rglob("*") if p.is_file())
+        if source_root.is_dir() else []
+    )
+    return {"image": image, "caption": caption, "source_data": source_data}
+
+
+def _write_input_manifest(source_root: Path) -> None:
+    """Write `input/inputs.json`, naming what the harness staged.
+
+    Per-run facts belong in data the agent can parse, not in prose it has to
+    interpret. The session has no shell, no glob and no directory listing, so
+    a file this does not name is a file it can only guess at -- and it does
+    guess, badly: before the harness named them, one run spent 32 turns on
+    `figure.png`, `a.png`, `figure.xyz` and finally `*`, and another answered
+    from the caption alone and scored 8/8 against all-negative gold.
+
+    Filenames are left exactly as curated. The runtime is a copy, not a
+    processed copy; only the *names* are stated.
+    """
+    staged = _resolve_staged_inputs(source_root / AGENTIC_INPUT_SUBDIR)
+    rel = lambda path: str(path.relative_to(source_root))      # noqa: E731
+    manifest = {
+        "figure": rel(staged["image"]),
+        "caption": rel(staged["caption"]) if staged["caption"] else None,
+        "source_data": [rel(p) for p in staged["source_data"]],
+    }
+    path = source_root / AGENTIC_INPUT_SUBDIR / AGENTIC_INPUT_MANIFEST_FILENAME
+    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
 def assemble_runtime(
@@ -1565,19 +1619,22 @@ def assemble_runtime(
 
         shutil.copytree(input_dir, staging / AGENTIC_INPUT_SUBDIR, symlinks=False)
         (staging / AGENTIC_ARTIFACTS_SUBDIR).mkdir()
+        (staging / AGENTIC_AGENT_HOME_SUBDIR).mkdir()
 
         layout = RuntimeLayout(
             root=root,
             skills_root=root / AGENTIC_SKILLS_SUBDIR,
             input_root=root / AGENTIC_INPUT_SUBDIR,
+            agent_home=root / AGENTIC_AGENT_HOME_SUBDIR,
             artifacts_root=root / AGENTIC_ARTIFACTS_SUBDIR,
             orientation_path=root / AGENTIC_ORIENTATION_FILENAME,
             entry_point=check,
             schema_path=root / AGENTIC_SKILLS_SUBDIR / check / "schema.json",
             example=example,
         )
-        (staging / AGENTIC_ORIENTATION_FILENAME).write_text(
-            _render_orientation(layout), encoding="utf-8"
+        _write_input_manifest(staging)
+        shutil.copy2(
+            AGENTIC_CLAUDE_TEMPLATE, staging / AGENTIC_ORIENTATION_FILENAME
         )
 
         _assert_sealed(staging)
@@ -1685,13 +1742,36 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
             p.parent.name
             for p in layout.skills_root.glob(f"*/{SKILL_FILENAME}")
         ),
+        # What the session *has*. Everything else is absent from its context
+        # rather than merely denied, so it cannot be reached by a tool name
+        # this profile failed to anticipate.
+        "tools": list(AGENTIC_BASE_TOOLS),
+        # What it may use without prompting, scoped to paths. There is no
+        # write rule because there is no write tool: the runner serialises
+        # the structured result, so nothing the session does needs to touch
+        # the filesystem.
         "allowed_tools": [
             f"Read({_abs_rule_path(layout.root)})",
-            f"Edit({_abs_rule_path(layout.artifacts_root)})",
             "Skill",
         ],
         "disallowed_tools": sorted(AGENTIC_FORBIDDEN_TOOLS),
         "permission_mode": AGENTIC_PERMISSION_MODE,
+        # Without this the session dies the moment it opens the figure: the
+        # image arrives base64-encoded in one JSON message and overflows the
+        # SDK's 1 MB default reader buffer.
+        "max_buffer_size": AGENTIC_MAX_BUFFER_BYTES,
+        # Keeps the transcript and the auto-memory directory inside the
+        # runtime instead of ~/.claude/projects/, where they outlive teardown
+        # and carry gold-derived reasoning out of the sealed tree.
+        "env": {"CLAUDE_CONFIG_DIR": str(layout.agent_home)},
+        # The schema is enforced, not described. Prose asking the model to
+        # "conform exactly" is a request; this is a constraint, and the M2
+        # spike measured it reaching enum level -- the model could not write
+        # "MAYBE" into a yes/no field even when told to.
+        "output_format": {
+            "type": "json_schema",
+            "schema": _leaf_schema(layout),
+        },
     }
 
 
@@ -2084,11 +2164,23 @@ def _session_prompt(layout: RuntimeLayout) -> str:
     measurement of this string rather than of the skills' prose.
     """
     return (
-        f"Read {AGENTIC_ORIENTATION_FILENAME} and follow it. Apply the "
-        f"`{layout.entry_point}` check to the figure in "
-        f"{AGENTIC_INPUT_SUBDIR}/, and write the result to "
-        f"{AGENTIC_ARTIFACTS_SUBDIR}/{PREDICTION_FILENAME}."
+        f"Apply the `{layout.entry_point}` check to the figure staged in "
+        f"{AGENTIC_INPUT_SUBDIR}/, and answer with the structured output "
+        f"you were given a schema for."
     )
+
+
+def _extract_result_text(message: Any) -> Optional[str]:
+    """The session's final structured answer, if this message carries one.
+
+    Tolerant of object and mapping shapes so a fake client can be a plain
+    dict, like the other extractors here.
+    """
+    if isinstance(message, Mapping):
+        value = message.get("result")
+    else:
+        value = getattr(message, "result", None)
+    return value if isinstance(value, str) else None
 
 
 def _extract_session_info(message: Any) -> Optional[Dict[str, Any]]:
@@ -2141,6 +2233,39 @@ def _extract_tool_calls(message: Any) -> Iterator[Tuple[str, Any, Any]]:
             yield name, payload, use_id
 
 
+def _assert_the_session_read_the_figure(
+    layout: RuntimeLayout, read_paths: Set[str]
+) -> None:
+    """Refuse a prediction produced without opening the figure.
+
+    A schema-valid answer is not evidence that the work happened. On
+    2026-09-18 a session failed to guess the image filename, gave up, and
+    wrote an answer from the caption alone; every panel said `micrograph:
+    "no"`, the gold for that figure is all-negative, and it scored 8/8. The
+    run was recorded as `ok`. Nothing in the pipeline could tell that
+    apart from a real result, which is the failure mode the Milestone 2
+    spike warned about: "a benchmark that quietly scores a run which never
+    did the work".
+
+    The harness now names the image in the orientation, so not reading it is
+    a deliberate act rather than an accident -- but this check is what makes
+    the guarantee hold regardless of what any future skill's prose says.
+
+    Raises:
+        ValueError: If no tool call in the trace read the staged image.
+    """
+    image = _resolve_staged_inputs(layout.input_root)["image"]
+    targets = {str(image), str(image.resolve())}
+    if read_paths & targets:
+        return
+    raise ValueError(
+        f"The session wrote a prediction without reading the figure "
+        f"({image.name}). A schema-valid answer produced from the caption "
+        f"alone scores as though the work was done; it is an error, not a "
+        f"result."
+    )
+
+
 async def _run_agent_session(
     layout: RuntimeLayout,
     *,
@@ -2179,21 +2304,44 @@ async def _run_agent_session(
         ]
     }
 
+    read_paths: Set[str] = set()
+    result_text: Optional[str] = None
     async for message in run(_session_prompt(layout), options):
         info = _extract_session_info(message)
         if info:
             audit.note_session(info)
+        result_text = _extract_result_text(message) or result_text
         for tool_name, tool_input, tool_use_id in _extract_tool_calls(message):
             recorder.record(tool_name, tool_input, tool_use_id)
+            if tool_name == "Read" and isinstance(tool_input, Mapping):
+                read_paths.add(str(tool_input.get("file_path") or ""))
 
-    output_path = layout.artifacts_root / PREDICTION_FILENAME
-    if not output_path.is_file():
+    # The structured result is the answer; the runner serialises it. Asking
+    # the session to write the file made "forgot to write it" and "wrote
+    # something that is not JSON" into failure modes of the measurement
+    # rather than of the model's judgement.
+    if result_text is None:
         raise ValueError(
-            f"The session wrote no {PREDICTION_FILENAME} to "
-            f"{layout.artifacts_root}"
+            "The session returned no structured result. `output_format` "
+            "constrains the answer to the leaf schema, so its absence means "
+            "the session ended without answering."
         )
-    prediction = _read_json(output_path)
+    try:
+        prediction = json.loads(result_text)
+    except json.JSONDecodeError as exc:
+        # Documented behaviour: asked for something the schema cannot express,
+        # the model explains itself in prose instead. That is a real outcome,
+        # and the decode failure is how it is detected.
+        raise ValueError(
+            f"The session's result is not JSON, which means it declined to "
+            f"answer within the schema: {exc}. First 200 characters: "
+            f"{result_text[:200]!r}"
+        ) from exc
+    output_path = layout.artifacts_root / PREDICTION_FILENAME
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(prediction, indent=2) + "\n", encoding="utf-8")
     validate_against_schema(prediction, _leaf_schema(layout))
+    _assert_the_session_read_the_figure(layout, read_paths)
     return prediction, recorder, audit
 
 
@@ -2258,45 +2406,6 @@ def validate_intermediates(
                 continue
             found[produced] = artifact
     return found, problems
-
-
-def missing_observed_intermediates(
-    layout: RuntimeLayout,
-    skills: Mapping[str, Mapping[str, Skill]],
-    observed: Sequence[str],
-    *,
-    pins: Optional[Mapping[str, str]] = None,
-) -> List[str]:
-    """Return missing intermediate artifacts for skills that actually fired.
-
-    `validate_intermediates()` is intentionally permissive about absence: the
-    gate-4D question is whether a shared skill fired at all. This helper serves
-    a different purpose: if a skill *did* fire and it declares `produces`,
-    accepting a run that omits those artifacts turns a broken contract into a
-    silent success.
-    """
-    selected = select_versions(skills, pins)
-    missing: List[str] = []
-    reported: Set[str] = set()
-    for name in sorted(set(observed)):
-        skill = selected.get(name)
-        if skill is None or name == layout.entry_point:
-            continue
-        schema_path = skill.skill_dir / "schema.json"
-        if not schema_path.is_file():
-            continue
-        for produced in skill.produces:
-            if produced in reported:
-                continue
-            artifact = layout.artifacts_root / f"{produced}.json"
-            if artifact.is_file():
-                continue
-            missing.append(
-                f"{name!r} declared produces: {produced!r} but "
-                f"{artifact.name} was not written"
-            )
-            reported.add(produced)
-    return missing
 
 
 def effective_session_options(
@@ -2765,15 +2874,12 @@ def run_check_live(
                             **session_kwargs,
                         )
                     )
-                    missing = missing_observed_intermediates(
-                        layout, skills, recorder.invoked, pins=versions
-                    )
-                    if missing:
-                        raise ValueError(
-                            "Session invoked shared skill(s) but omitted "
-                            "required intermediate artifact(s): "
-                            + "; ".join(missing)
-                        )
+                    # The file-production contract is gone with the write
+                    # tool: nothing the session does touches the filesystem.
+                    # What that check protected -- a shared skill that was
+                    # declared but never fired -- is answered by the hop
+                    # trace below, which reads the session's own tool calls
+                    # and needs no artifact to exist.
                     found_intermediates, invalid = validate_intermediates(
                         layout, skills, pins=versions, strict=False
                     )
