@@ -4863,16 +4863,23 @@ class TestANonFigureExampleAssembles:
         assert [p["kind"] for p in layout.input_parts] == ["text"]
         assert "<" in layout.input_parts[0]["text"]  # the HTML conversion
 
-    def test_the_document_is_offered_as_a_supporting_file(
+    def test_the_document_is_staged_but_not_offered_to_fetch(
         self, word_checklist, tmp_path
     ):
+        """inputs.json lists what can be pulled and was not pushed.
+
+        The .docx is staged like every other file of the example, but its
+        content already arrived as a part, so nothing invites the session to
+        open a document it cannot read.
+        """
         layout = self._assemble(tmp_path)
         manifest = json.loads(
             (
                 layout.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
-        assert (layout.root / manifest["manuscript"]).is_file()
+        assert manifest == {}
+        assert list(layout.input_root.glob("*.docx"))
 
     def test_the_staged_copy_is_the_source_minus_its_gold(
         self, word_checklist, tmp_path

@@ -8,14 +8,14 @@ manuscript.
 The example's content came with the request: read it there. Nothing needs to
 be found or opened before you can start.
 
-- `input/inputs.json` — supporting files, if this example has any, and the
-  exact path of each. They are available if you need them; most checks do
-  not.
-- `input/` — those files, under their original names.
+- `input/inputs.json` — the *additional* files this example carries, if any,
+  and the exact path of each. They are there if you need them; most checks
+  do not. What you were already sent is not listed again.
+- `input/` — the example's files, under their original names.
 
 Paths outside this directory are not available and not needed. There is no
-shell, no file search and no directory listing: if a file matters,
-`inputs.json` names it.
+shell, no file search and no directory listing, so anything not sent to you
+and not named in `inputs.json` is not meant to be found.
 
 ## How to work
 

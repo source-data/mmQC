@@ -78,12 +78,14 @@ class TestWordExampleStatesItsContent:
         content = example.source_path / "content"
         assert not list(content.glob("*.html"))
 
-    def test_the_docx_is_offered_as_a_supporting_file(self):
+    def test_nothing_is_offered_to_fetch(self):
+        """The manuscript's content was sent; the .docx is not a pullable extra.
+
+        Listing it would invite a session to open a `.docx` it cannot read in
+        order to obtain text it already has.
+        """
         example = EXAMPLE_FACTORY.create(WORD_EXAMPLE, "word")
-        supporting = example.supporting_files()
-        assert supporting["manuscript"].endswith(".docx")
-        content = example.source_path / "content"
-        assert (content / supporting["manuscript"]).is_file()
+        assert example.supporting_files() == {}
 
     def test_nothing_here_assumes_an_image(self):
         example = EXAMPLE_FACTORY.create(WORD_EXAMPLE, "word")

@@ -681,12 +681,15 @@ class WordExample(Example):
         return [{"kind": "text", "text": self.content}]
 
     def supporting_files(self) -> Dict[str, Any]:
-        """The document itself, for a consumer that can offer files."""
+        """Nothing: a manuscript's content is the manuscript.
+
+        The document is staged like every other file of the example, but it
+        is not listed as something to fetch -- its content was already sent
+        as a part. Listing it would invite a session to open a `.docx` it
+        cannot read in order to obtain text it already has.
+        """
         self._ensure_loaded()
-        content = self.source_path / "content"
-        return {
-            "manuscript": self.word_file_path.relative_to(content).as_posix()
-        }
+        return {}
 
 
 # Register example types
