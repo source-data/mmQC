@@ -18,17 +18,16 @@ harness adds `<arm>/rep-NN/<example>/` beneath that.
 
 **This is a long, expensive job.** Eleven checks over 436 example-checks, two
 arms, N replicates: 872 sessions per replicate, 2,616 at the default three --
-roughly $130 and 24 hours serial. Re-running is
-safe and cheap -- the harness skips an example that already has a prediction,
-so an interruption costs what it interrupted. Use `--force` only to
-deliberately redo work.
+roughly $130 and 24 hours serial. Re-running is safe and cheap: the harness
+skips an example that already has a prediction, so an interruption costs what
+it interrupted. Use `--force` only to deliberately redo work.
 
     python experiments/exp-01-skill-verbosity/run.py
     python experiments/exp-01-skill-verbosity/run.py --check stat-test --replicates 1
 
 The analysis lives in `notebooks/experiments/exp-01-skill-verbosity.ipynb` and
 reads what this writes. It does not run anything: a notebook that triggers
-4,360 sessions is a notebook nobody can re-execute.
+2,616 sessions is a notebook nobody can re-execute.
 """
 
 from __future__ import annotations
