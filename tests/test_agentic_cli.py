@@ -2314,17 +2314,28 @@ class TestRuntimeOrientation:
         assert assembled.orientation_path == path
         assert path.is_file()
 
-    def test_it_names_the_roots(self, assembled):
-        """The instructions are static now, so they describe the layout only.
+    def test_the_instructions_name_no_example_class(self, assembled):
+        """One file serves every checklist, so it may assume none of them.
 
-        The entry point is per-run and travels in the session prompt; the
-        staged files are per-run and travel in the manifest. Neither belongs
-        in a file that is byte-identical for every run.
+        A figure vocabulary here is how `doc-checklist` would silently get
+        instructions about images it does not have.
         """
+        text = assembled.orientation_path.read_text(encoding="utf-8").lower()
+        for forbidden in ("figure", "caption", "micrograph", "image"):
+            assert forbidden not in text
+
+    def test_the_instructions_describe_supporting_files(self, assembled):
+        """The entry point is per-run and travels in the request; the
+        supporting files are per-run and travel in the manifest. Neither
+        belongs in a file that is byte-identical for every run."""
         text = assembled.orientation_path.read_text(encoding="utf-8")
-        for token in ("artifacts", "input", "inputs.json"):
-            assert token in text.lower()
+        assert "inputs.json" in text
         assert PILOT_LEAF not in text
+
+    def test_the_instructions_promise_no_writable_directory(self, assembled):
+        """The profile grants Read and Skill only; promising more wastes turns."""
+        text = assembled.orientation_path.read_text(encoding="utf-8").lower()
+        assert "artifacts" not in text
 
     def test_the_manifest_names_what_was_staged(self, assembled):
         """Which files exist is data, not prose: the session has no shell, no
