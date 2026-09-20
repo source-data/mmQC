@@ -52,6 +52,7 @@ from soda_mmqc.scripts.run import (
 
 import soda_mmqc.cli as cli
 import soda_mmqc.config as config
+import soda_mmqc.agentic.runner as runner
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PILOT_CHECK_DIR = (
@@ -4425,8 +4426,8 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 client=_fake_client([], writes=_valid_prediction()),
             )
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
         return seen
 
     def test_a_single_variant_gets_its_own_directory(
@@ -4522,8 +4523,8 @@ class TestRunCheckLiveIntermediateContracts:
         ):
             return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
         _, report = cli.run_check_live(
             "fig-checklist",
@@ -4569,8 +4570,8 @@ class TestRunCheckLiveIntermediateContracts:
             )
             return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
         out = tmp_path / "preds"
         _, report = cli.run_check_live(
@@ -4626,8 +4627,8 @@ class TestRunCheckLiveIntermediateContracts:
             )
             return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
         _, report = cli.run_check_live(
             "fig-checklist",
@@ -4672,7 +4673,7 @@ class TestRunAllAgenticChecks:
             calls.append((check, kwargs))
             return Path(kwargs["output"]), []
 
-        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+        monkeypatch.setattr(runner, "run_check_live", fake_run_check_live)
 
         cli.run_checklist_live(
             "toy-checklist",
@@ -4723,7 +4724,7 @@ class TestRunAllAgenticChecks:
                 report = [{"example": ex, "status": "ok", "intermediates": []}]
             return out, report
 
-        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+        monkeypatch.setattr(runner, "run_check_live", fake_run_check_live)
 
         out = tmp_path / "all-out"
         _, report = cli.run_checklist_live(
