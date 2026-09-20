@@ -252,7 +252,7 @@ def make_openai_client(
     """
     from openai import OpenAI
 
-    from soda_mmqc.agentic_render import render_openai
+    from soda_mmqc.agentic.render import render_openai
 
     async def client(
         parts: Sequence[Mapping[str, Any]], options: Mapping[str, Any]

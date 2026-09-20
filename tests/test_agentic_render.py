@@ -4,7 +4,7 @@ import base64
 
 import pytest
 
-from soda_mmqc.agentic_render import render_anthropic, render_openai
+from soda_mmqc.agentic.render import render_anthropic, render_openai
 
 # Arbitrary bytes behind a .png name: the renderer encodes what it is given
 # and never decodes an image, so a real raster would test nothing extra.

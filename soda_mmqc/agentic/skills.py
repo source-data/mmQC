@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
+import json
+
 import yaml
 
 from soda_mmqc import config
@@ -27,6 +29,7 @@ from soda_mmqc.scripts.run import (
 )
 
 __all__ = [
+    "_read_json",
     "SKILL_FILENAME",
     "SKILL_TOOL",
     "Skill",
@@ -475,3 +478,8 @@ def select_versions(
             version = max(versions, key=lambda v: int(v[1:]))
         selected[name] = versions[version]
     return selected
+
+
+def _read_json(path: Path) -> Any:
+    with open(path, "r", encoding="utf-8") as handle:
+        return json.load(handle)
