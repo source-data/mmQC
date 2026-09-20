@@ -1,0 +1,32 @@
+{
+  "checklist": "single-channel-for-overlay",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].multicolored_overlay_micrograph": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].number_of_channels_in_overlay": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].number_of_single_channel_images_shown": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].all_channels_shown_separately": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "binary_polarity"
+    }
+  }
+}

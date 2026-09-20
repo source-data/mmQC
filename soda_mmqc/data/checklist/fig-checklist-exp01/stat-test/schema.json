@@ -1,0 +1,64 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "stat-test",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "is_a_plot": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the figure is a plot"
+                            },
+                            "statistical_test_needed": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether a statistical test is needed"
+                            },
+                            "statistical_test_mentioned": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not needed"],
+                                "description": "Whether the statistical test is mentioned"
+                            },
+                            "from_the_caption": {
+                                "type": "string",
+                                "description": "Extracted text describing the statistical test when mentioned"
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL"],
+                                "description": "Panel-level pass/fail verdict on whether the statistical test is adequately reported"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Short explanation of the decision, especially when the test is missing"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "is_a_plot",
+                            "statistical_test_needed",
+                            "statistical_test_mentioned",
+                            "from_the_caption",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

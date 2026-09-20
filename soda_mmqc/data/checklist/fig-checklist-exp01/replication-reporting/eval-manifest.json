@@ -1,0 +1,49 @@
+{
+  "checklist": "replication-reporting",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].involves_replicates": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].replicate_statements": {
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].n_reported": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].replicate_type_reported": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].replicate_type": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].decision": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].explanation": {
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

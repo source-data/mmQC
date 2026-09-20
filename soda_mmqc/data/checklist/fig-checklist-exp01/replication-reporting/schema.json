@@ -1,0 +1,86 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "replication-reporting",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "involves_replicates": {
+                                "type": "string",
+                                "enum": ["yes", "no", "unclear"],
+                                "description": "Whether the panel presents data derived from replicated observations"
+                            },
+                            "replicate_statements": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Verbatim statements from the caption or panel about n-number or replicate type"
+                            },
+                            "n_reported": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether the number of replicates is reported"
+                            },
+                            "n_value_min": {
+                                "anyOf": [
+                                    {
+                                        "type": "integer",
+                                        "minimum": 0
+                                    },
+                                    {
+                                        "type": "string",
+                                        "enum": ["not_reported", "not_applicable"]
+                                    }
+                                ],
+                                "description": "Minimum reported n-number; use the lower bound for ranges; not_reported or not_applicable when no numeric n applies"
+                            },
+                            "replicate_type_reported": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether the type of replicate is reported"
+                            },
+                            "replicate_type": {
+                                "type": "string",
+                                "description": "Verbatim replication type description from the figure caption, or not_reported / not_applicable"
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL"],
+                                "description": "Panel-level pass/fail verdict for replication reporting completeness"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Short explanation of the decision"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "involves_replicates",
+                            "replicate_statements",
+                            "n_reported",
+                            "n_value_min",
+                            "replicate_type_reported",
+                            "replicate_type",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

@@ -1,0 +1,44 @@
+{
+  "checklist": "stat-test",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].statistical_test_needed": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].statistical_test_mentioned": {
+      "na_values": ["not needed", ""],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [""],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].decision": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].explanation": {
+      "matching_metric": "graded_string",
+      "na_values": [""],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

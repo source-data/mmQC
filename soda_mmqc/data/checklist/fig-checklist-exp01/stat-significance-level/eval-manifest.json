@@ -1,0 +1,47 @@
+{
+  "checklist": "stat-significance-level",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].significance_level_symbols_on_image": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].symbols_defined": {
+      "primitive_list_compare": "positional"
+    },
+    "outputs[].symbol_definition": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8,
+      "na_values": ["", "not_needed"]
+    },
+    "outputs[].decision": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].explanation": {
+      "matching_metric": "graded_string",
+      "na_values": [""],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

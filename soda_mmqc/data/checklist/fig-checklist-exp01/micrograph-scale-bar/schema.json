@@ -1,0 +1,64 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "micrograph-scale-bar",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "micrograph": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel contains a micrograph or microscopic image"
+                            },
+                            "scale_bar_on_image": {
+                                "type": "string",
+                                "enum": ["yes", "no", ""],
+                                "description": "Whether there is a scale bar present on the micrograph"
+                            },
+                            "scale_bar_defined_in_caption": {
+                                "type": "string",
+                                "enum": ["yes", "no", ""],
+                                "description": "Whether the scale bar is defined in the caption"
+                            },
+                            "from_the_caption": {
+                                "type": "string",
+                                "description": "The exact text from the caption that defines the scale bar"
+                            },
+                            "scale_bar_defined_in_image": {
+                                "type": "string",
+                                "enum": ["yes", "no", ""],
+                                "description": "Whether the scale bar is defined in the image"
+                            },
+                            "from_the_image": {
+                                "type": "string",
+                                "description": "The exact text from the image that defines the scale bar"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "micrograph",
+                            "scale_bar_on_image",
+                            "scale_bar_defined_in_caption",
+                            "from_the_caption",
+                            "scale_bar_defined_in_image",
+                            "from_the_image"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}
