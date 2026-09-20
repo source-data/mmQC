@@ -1617,7 +1617,18 @@ def assemble_runtime(
         for name, skill in selected.items():
             _copy_skill(skill, skills_root / name)
 
-        shutil.copytree(input_dir, staging / AGENTIC_INPUT_SUBDIR, symlinks=False)
+        # `content/` is copied whole, minus any nested answer key. The
+        # example layout is recursive -- a document-level example's
+        # `content/` holds its figure sub-examples, each with its own
+        # `checks/` -- so a plain copy would stage the gold for every figure
+        # in the manuscript. `_assert_sealed` catches that afterwards; this
+        # is the copier honouring the rule rather than relying on the alarm.
+        shutil.copytree(
+            input_dir,
+            staging / AGENTIC_INPUT_SUBDIR,
+            symlinks=False,
+            ignore=shutil.ignore_patterns(EXAMPLE_GOLD_SUBDIR),
+        )
         (staging / AGENTIC_ARTIFACTS_SUBDIR).mkdir()
         (staging / AGENTIC_AGENT_HOME_SUBDIR).mkdir()
 

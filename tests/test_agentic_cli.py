@@ -4796,3 +4796,129 @@ class TestTheContentIsPushedNotPulled:
         assert not hasattr(cli, "_assert_the_session_read_the_figure")
         assert not hasattr(cli, "_resolve_staged_inputs")
         assert not hasattr(cli, "AGENTIC_IMAGE_EXTENSIONS")
+
+
+WORD_EXAMPLE = "10.1038_embor.2009.217"
+
+requires_word_example = pytest.mark.skipif(
+    not (EXAMPLES_DIR / WORD_EXAMPLE).is_dir(),
+    reason=f"example store has no {WORD_EXAMPLE}",
+)
+
+
+@requires_word_example
+class TestANonFigureExampleAssembles:
+    """The staging path must work for an example class with no image at all.
+
+    Before this change `_resolve_staged_inputs` raised FileNotFoundError on
+    any example without a known image extension, so `doc-checklist` could
+    never have run agentically whatever its skills said.
+    """
+
+    @pytest.fixture
+    def word_checklist(self, tmp_path, monkeypatch):
+        """A minimal one-leaf checklist over a `word` benchmark."""
+        root = tmp_path / "checklists"
+        check_dir = root / "doc-pilot" / "section-order"
+        (check_dir / "v1").mkdir(parents=True)
+        (check_dir / "v1" / "SKILL.md").write_text(
+            _skill_md("section-order"), encoding="utf-8"
+        )
+        (check_dir / "benchmark.json").write_text(
+            json.dumps(
+                {
+                    "name": "section-order",
+                    "example_class": "word",
+                    "examples": [WORD_EXAMPLE],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (check_dir / "schema.json").write_text(
+            json.dumps(
+                {
+                    "format": {
+                        "type": "json_schema",
+                        "name": "section-order",
+                        "schema": {"type": "object", "properties": {}},
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        (check_dir / "eval-manifest.json").write_text(
+            json.dumps({"checklist": "section-order", "fields": {}}),
+            encoding="utf-8",
+        )
+        (root / "doc-pilot" / "version-manifest.yaml").write_text(
+            "checklist: doc-pilot\nskills:\n  section-order: v1\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(cli, "CHECKLIST_DIR", root)
+        return root
+
+    def _assemble(self, tmp_path):
+        return cli.assemble_runtime(
+            "doc-pilot", "section-order", WORD_EXAMPLE,
+            root=tmp_path / "runtime",
+        )
+
+    def test_a_word_example_assembles(self, word_checklist, tmp_path):
+        layout = self._assemble(tmp_path)
+        assert [p["kind"] for p in layout.input_parts] == ["text"]
+        assert "<" in layout.input_parts[0]["text"]  # the HTML conversion
+
+    def test_the_document_is_offered_as_a_supporting_file(
+        self, word_checklist, tmp_path
+    ):
+        layout = self._assemble(tmp_path)
+        manifest = json.loads(
+            (
+                layout.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            ).read_text(encoding="utf-8")
+        )
+        assert (layout.root / manifest["manuscript"]).is_file()
+
+    def test_the_staged_copy_is_the_source_minus_its_gold(
+        self, word_checklist, tmp_path
+    ):
+        """A copy, not a processed copy: the HTML conversion travels in the
+        message and is never written here, and every file that is staged is
+        staged byte for byte.
+
+        The one exclusion is the answer key. This layout is recursive, so a
+        document-level example's `content/` contains its figure
+        sub-examples, each with its own `checks/`.
+        """
+        layout = self._assemble(tmp_path)
+        source = EXAMPLES_DIR / WORD_EXAMPLE / "content"
+        staged = sorted(
+            p.relative_to(layout.input_root)
+            for p in layout.input_root.rglob("*")
+            if p.is_file() and p.name != cli.AGENTIC_INPUT_MANIFEST_FILENAME
+        )
+        original = sorted(
+            p.relative_to(source)
+            for p in source.rglob("*")
+            if p.is_file()
+            and cli.EXAMPLE_GOLD_SUBDIR not in p.relative_to(source).parts
+        )
+        assert staged == original
+        for entry in original:
+            assert (layout.input_root / entry).read_bytes() == (
+                source / entry
+            ).read_bytes()
+
+    def test_no_gold_reaches_the_runtime(self, word_checklist, tmp_path):
+        """18 expected_output.json files sit under this example's content/.
+
+        Staging them would be a scored run that saw the answer key -- the
+        exact failure `_assert_sealed` exists to refuse. It is asserted here
+        directly rather than trusted to the alarm downstream.
+        """
+        layout = self._assemble(tmp_path)
+        assert not list(layout.input_root.rglob("expected_output.json"))
+        assert not [
+            p for p in layout.input_root.rglob("*")
+            if p.name == cli.EXAMPLE_GOLD_SUBDIR
+        ]
