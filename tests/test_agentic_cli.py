@@ -4317,7 +4317,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def _client(self, calls):
         """A model that calls one harmless tool every turn, so the loop is
         bounded only by the ceiling and never by the answer-in-chat nudge."""
-        from soda_mmqc.agentic_openai import make_openai_client
+        from soda_mmqc.agentic.openai_driver import make_openai_client
 
         class _Call:
             id = "c1"
@@ -4354,7 +4354,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def test_the_session_option_overrides_the_module_ceiling(
         self, tmp_path: Path, monkeypatch
     ):
-        import soda_mmqc.agentic_openai as ao
+        import soda_mmqc.agentic.openai_driver as ao
 
         calls = []
         make_openai_client, _Client = self._client(calls)
@@ -4375,7 +4375,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def test_the_module_ceiling_is_the_fallback(
         self, tmp_path: Path, monkeypatch
     ):
-        import soda_mmqc.agentic_openai as ao
+        import soda_mmqc.agentic.openai_driver as ao
 
         calls = []
         make_openai_client, _Client = self._client(calls)

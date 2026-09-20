@@ -661,7 +661,7 @@ def _openai_session_client(layout: RuntimeLayout, model: str):
     only when the model invokes it, mirroring how the Agent SDK's `Skill`
     tool behaves. Nothing tells the model which skill the entry point needs.
     """
-    from soda_mmqc.agentic_openai import RuntimeTools, make_openai_client
+    from soda_mmqc.agentic.openai_driver import RuntimeTools, make_openai_client
 
     bodies, descriptions = {}, {}
     for path in sorted(layout.skills_root.glob(f"*/{SKILL_FILENAME}")):
