@@ -632,6 +632,14 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     run.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Re-run examples that already have a prediction. Without it a run "
+            "skips them, so an interrupted run resumes where it stopped"
+        ),
+    )
+    run.add_argument(
         "--replicates",
         type=int,
         default=1,
@@ -776,6 +784,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     provider=args.provider,
                     unpin={name: versions for name in (args.unpin or [])},
                     replicates=args.replicates,
+                    force=args.force,
                 )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)

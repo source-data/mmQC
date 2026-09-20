@@ -279,6 +279,7 @@ def run_check_live(
     provider: str = "openai",
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
     replicates: int = 1,
+    force: bool = False,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -340,15 +341,31 @@ def run_check_live(
             # relocate the one it already has.
             predictions_dir = root_dir / label / f"rep-{replicate:02d}"
             for relative_source_path in wanted:
-                logger.info(
-                    "Running %s on %s [%s]", check_name, relative_source_path, label
-                )
                 entry: Dict[str, Any] = {
                     "example": relative_source_path,
                     "skill_set": skill_set.digest,
                     "label": label,
                     "replicate": replicate,
                 }
+                done = (
+                    predictions_dir / relative_source_path / PREDICTION_FILENAME
+                )
+                if done.is_file() and not force:
+                    # Resumability is not a convenience at this size: a full
+                    # experiment is thousands of sessions and hours long, so an
+                    # interruption must cost what it interrupted and not the
+                    # whole run. `force` is how a deliberate rerun says so.
+                    logger.info(
+                        "Skipping %s on %s [%s rep-%02d]: already has a "
+                        "prediction",
+                        check_name, relative_source_path, label, replicate,
+                    )
+                    entry["status"] = "skipped"
+                    report.append(entry)
+                    continue
+                logger.info(
+                    "Running %s on %s [%s]", check_name, relative_source_path, label
+                )
                 try:
                     with runtime_session(
                         checklist, check, relative_source_path,

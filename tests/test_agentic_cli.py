@@ -4799,3 +4799,61 @@ class TestPointingAtARunRoot:
             cli.score_check(
                 "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
             )
+
+
+@requires_subpanel_figure
+class TestAnInterruptedRunResumes:
+    """A 4,360-session run will be interrupted; re-running must not redo it."""
+
+    @pytest.fixture
+    def stub_session(self, monkeypatch):
+        calls = []
+        real = cli._run_agent_session
+
+        async def fake_session(layout, *, versions, approver, options, client):
+            calls.append(layout.example)
+            return await real(
+                layout, versions=versions, approver=approver, options=options,
+                client=_fake_client([], writes=_valid_prediction()),
+            )
+
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
+        return calls
+
+    def test_an_existing_prediction_is_not_run_again(
+        self, tmp_path: Path, stub_session
+    ):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert len(stub_session) == 1
+
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert len(stub_session) == 1, "a completed example was run again"
+
+    def test_a_skipped_example_is_reported_as_such(
+        self, tmp_path: Path, stub_session
+    ):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        _, report = cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert [e["status"] for e in report] == ["skipped"]
+
+    def test_force_runs_it_anyway(self, tmp_path: Path, stub_session):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], force=True,
+        )
+        assert len(stub_session) == 2
