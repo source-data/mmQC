@@ -150,7 +150,11 @@ Executed in the plan's order. `_expand_example_selectors` went with
 and is unchanged, per "what to keep". Wiring the expansion into it would be a
 new feature, not a removal, so it was not done.
 
-`validate_intermediates` stays, as this plan's "not in scope" says. It is now
-provably dead rather than merely unused: nothing seeds an artifact and no
-session can write one, so it can only ever find nothing. Removing it is a
-separate, and now trivial, step.
+`validate_intermediates` was out of this plan's scope but went immediately
+after it, as a separate step: with nothing seeding an artifact and no session
+able to write one, it could only ever find nothing. Gone with it are
+`entry["intermediates"]`, the sidecar copy loop that fed on its results, and
+the tests that exercised it directly. What that check protected -- whether a
+declared shared skill actually fired -- is answered by the hop trace, which
+reads the session's own tool calls and needs no artifact to exist; the one
+test asserting that is kept, as `TestASessionNeedsNoFilesystem`.

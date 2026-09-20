@@ -68,7 +68,6 @@ __all__ = [
     "interactive_approver",
     "validate_against_schema",
     "compare_declared_and_observed",
-    "validate_intermediates",
     "load_skill_file",
     "INTERMEDIATES_DIRNAME",
     "PREDICTION_FILENAME",
@@ -425,67 +424,6 @@ async def _run_agent_session(
     return prediction, recorder, audit
 
 
-def validate_intermediates(
-    layout: RuntimeLayout,
-    skills: Mapping[str, Mapping[str, Skill]],
-    *,
-    pins: Optional[Mapping[str, str]] = None,
-    strict: bool = True,
-) -> Tuple[Dict[str, Path], List[str]]:
-    """Validate the intermediate artifacts a session produced.
-
-    A skill that declares ``produces: [panels]`` and ships a ``schema.json``
-    has a runtime contract, and an intermediate that violates it is worth
-    recording.
-
-    Absence is not an error. Whether a shared skill ran at all is the
-    question gate 4D exists to answer, and failing the run because an
-    intermediate is missing would convert that observation into a crash and
-    destroy the evidence.
-
-    ``strict=False`` extends that same reasoning to an *invalid*
-    intermediate, and the runner uses it. This function only ever runs after
-    the session has closed, so the "catch it before a downstream skill
-    consumes it" it was written for is not available to it: by the time it
-    looks, every downstream skill has already consumed the artifact and the
-    leaf has already produced its answer. Raising at that point cannot
-    protect anything -- its only effect is to throw away a completed,
-    schema-valid prediction because a *debug sidecar* was malformed. The plan
-    is explicit that only leaf JSON is scored and intermediates are sidecars,
-    so the violation is reported and kept, not fatal.
-
-    Returns:
-        ``({artifact name: path}, [problem, ...])`` -- the intermediates that
-        were found and valid, and one message per invalid one.
-    """
-    selected = select_versions(skills, pins)
-    found: Dict[str, Path] = {}
-    problems: List[str] = []
-    for name, skill in selected.items():
-        schema_path = skill.skill_dir / "schema.json"
-        for produced in skill.produces:
-            artifact = layout.artifacts_root / f"{produced}.json"
-            if not artifact.is_file() or not schema_path.is_file():
-                continue
-            if produced == layout.entry_point:
-                continue  # the leaf's own output, validated separately
-            envelope = _read_json(schema_path)
-            try:
-                validate_against_schema(
-                    _read_json(artifact), envelope["format"]["schema"]
-                )
-            except ValueError as exc:
-                problem = (
-                    f"Intermediate {artifact.name} produced by {name!r} does "
-                    f"not match its schema: {exc}"
-                )
-                if strict:
-                    raise ValueError(problem) from None
-                logger.warning("%s", problem)
-                problems.append(problem)
-                continue
-            found[produced] = artifact
-    return found, problems
 
 
 class ToolAuditLog:

@@ -49,7 +49,6 @@ from soda_mmqc.agentic.session import (
     _openai_session_client,
     _run_agent_session,
     interactive_approver,
-    validate_intermediates,
 )
 from soda_mmqc.agentic.skills import (
     Skill,
@@ -361,15 +360,6 @@ def run_check_live(
                     # declared but never fired -- is answered by the hop
                     # trace below, which reads the session's own tool calls
                     # and needs no artifact to exist.
-                    found_intermediates, invalid = validate_intermediates(
-                        layout, skills, pins=versions, strict=False
-                    )
-                    entry["intermediates"] = sorted(found_intermediates)
-                    if invalid:
-                        raise ValueError(
-                            "Session produced invalid intermediate artifact(s): "
-                            + "; ".join(invalid)
-                        )
                     entry["hops"] = compare_declared_and_observed(
                         checklist_dir, check, recorder.invoked, pins=versions
                     )
@@ -382,14 +372,6 @@ def run_check_live(
                         recorder.entries,
                         skill_set,
                     )
-                    for name, artifact_path in found_intermediates.items():
-                        _copy_sidecar(
-                            artifact_path,
-                            predictions_dir
-                            / relative_source_path
-                            / INTERMEDIATES_DIRNAME
-                            / f"{name}.json",
-                        )
                     _copy_sidecar(
                         audit.path,
                         predictions_dir / relative_source_path

@@ -93,7 +93,6 @@ from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
     make_pretooluse_hook,
     runtime_session,
     validate_against_schema,
-    validate_intermediates,
 )
 from soda_mmqc.agentic.runner import (  # noqa: F401  (compatibility surface)
     _as_prediction,
@@ -210,7 +209,6 @@ __all__ = [
     "SkillTraceRecorder",
     "validate_against_schema",
     "compare_declared_and_observed",
-    "validate_intermediates",
     "effective_session_options",
     "session_cache_key",
     "runtime_skill_set",
