@@ -377,6 +377,25 @@ def score_check(
             len(scored_examples),
         )
     if not scored_examples:
+        known = set(benchmark_examples)
+        # Every key having the form `<something>/<known example>` means this
+        # is a run root, not a predictions directory: a run writes one leaf
+        # per arm per replicate, and each is scored on its own. Saying so
+        # beats reporting that nothing matched.
+        leaves = set()
+        for key in predictions:
+            for example in known:
+                if key.endswith("/" + example):
+                    leaves.add(key[: -len(example) - 1])
+                    break
+        if leaves:
+            raise ValueError(
+                f"{predictions_path} looks like a run root, not a predictions "
+                f"directory: it holds {len(leaves)} of them "
+                f"({', '.join(sorted(leaves))}). A run writes one per arm per "
+                f"replicate, and each is scored on its own -- point "
+                f"--predictions at one of them."
+            )
         raise ValueError(
             f"None of the predictions in {predictions_path} match an example "
             f"in the benchmark of {check_name}"

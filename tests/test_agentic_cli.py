@@ -4764,3 +4764,38 @@ class TestReplicatesOnTheCommandLine:
             "run", "fig-checklist", "--check", PILOT_LEAF,
             "--example", SUBPANEL_FIGURE, "--replicates", "0",
         ]) == 2
+
+
+class TestPointingAtARunRoot:
+    def test_the_error_names_the_leaves_it_found(self, tmp_path: Path):
+        """Scoring a run root is the one mistake worth diagnosing."""
+        root = tmp_path / "preds"
+        example = SUBPANEL_FIGURE
+        for arm in ("pinned", f"{PILOT_LEAF}@v2"):
+            d = root / arm / "rep-00" / example
+            d.mkdir(parents=True)
+            (d / cli.PREDICTION_FILENAME).write_text(
+                json.dumps(_valid_prediction()), encoding="utf-8"
+            )
+
+        with pytest.raises(ValueError) as exc:
+            cli.score_check(
+                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+            )
+        message = str(exc.value)
+        assert "pinned/rep-00" in message
+        assert f"{PILOT_LEAF}@v2/rep-00" in message
+        assert "--predictions" in message
+
+    def test_a_genuinely_unrelated_directory_says_so_plainly(self, tmp_path: Path):
+        """Not every mismatch is a run root; do not claim it is."""
+        root = tmp_path / "preds"
+        d = root / "not" / "an" / "example"
+        d.mkdir(parents=True)
+        (d / cli.PREDICTION_FILENAME).write_text(
+            json.dumps(_valid_prediction()), encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="match an example"):
+            cli.score_check(
+                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+            )
