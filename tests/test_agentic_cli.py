@@ -4710,3 +4710,57 @@ class TestEveryAxisIsADirectory:
                 "fig-checklist", PILOT_LEAF, output=tmp_path / "p",
                 examples=[SUBPANEL_FIGURE], replicates=0,
             )
+
+
+class TestReplicatesOnTheCommandLine:
+    def _capture(self, monkeypatch):
+        """Patch where `main` looks it up.
+
+        `cli` imports `run_check_live` by name, so `main` calls its own
+        binding: redirecting `runner.run_check_live` would not reach it.
+        """
+        seen = {}
+
+        def fake_run_check_live(checklist, check, **kwargs):
+            seen.update(kwargs)
+            return Path("/tmp/x"), []
+
+        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+        return seen
+
+    def test_the_flag_reaches_the_runner(self, monkeypatch: pytest.MonkeyPatch):
+        seen = self._capture(monkeypatch)
+        cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE, "--replicates", "4",
+        ])
+        assert seen["replicates"] == 4
+
+    def test_the_default_is_one(self, monkeypatch: pytest.MonkeyPatch):
+        seen = self._capture(monkeypatch)
+        cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE,
+        ])
+        assert seen["replicates"] == 1
+
+    def test_the_session_count_is_announced(
+        self, monkeypatch: pytest.MonkeyPatch, caplog
+    ):
+        """380 sessions from one command should not be a surprise."""
+        self._capture(monkeypatch)
+        with caplog.at_level("INFO"):
+            cli.main([
+                "run", "fig-checklist", "--check", PILOT_LEAF,
+                "--example", SUBPANEL_FIGURE, "--replicates", "5",
+            ])
+        assert "5 replicate(s)" in caplog.text
+
+    def test_zero_replicates_is_refused_at_the_cli(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        self._capture(monkeypatch)
+        assert cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE, "--replicates", "0",
+        ]) == 2

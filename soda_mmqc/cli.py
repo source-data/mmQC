@@ -613,6 +613,18 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     run.add_argument(
+        "--replicates",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "Run each configuration N times (default: %(default)s). There is "
+            "no seed to fix, so replicates are resamples of a "
+            "non-deterministic system rather than reproductions: they are how "
+            "its variance is measured, and they are not expected to agree"
+        ),
+    )
+    run.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -725,6 +737,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "which versions to try, --unpin says of what."
                     )
                     return 2
+                if args.replicates < 1:
+                    logger.error("--replicates must be at least one")
+                    return 2
+                logger.info(
+                    "Live run: %d replicate(s) of %s/%s, one session per "
+                    "example per replicate per skill set",
+                    args.replicates, args.checklist, args.check,
+                )
                 path, report = run_check_live(
                     args.checklist,
                     args.check,
@@ -736,6 +756,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     approve_tools=args.approve_tools,
                     provider=args.provider,
                     unpin={name: versions for name in (args.unpin or [])},
+                    replicates=args.replicates,
                 )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)
