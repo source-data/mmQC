@@ -142,3 +142,11 @@ soda_mmqc/data/cache/*
 # Untracked here and easy to `git add` by accident, since `experiments/` is
 # otherwise a tracked tree: builders and committed runs live alongside it.
 experiments/results/
+
+# Run output, regenerable and per-machine: `cli run` writes predictions here
+# by default and `cli score` writes analysis beside them. Committed runs that
+# a paper figure depends on live under `experiments/runs/`, which stays
+# tracked on purpose -- see experiments/runs/README.md.
+soda_mmqc/data/predictions/
+soda_mmqc/data/evaluation/
+
