@@ -79,6 +79,7 @@ from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
 from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
     _default_client,
     _extract_tool_calls,
+    _extract_usage,
     _openai_session_client,
     _run_agent_session,
     _session_message,

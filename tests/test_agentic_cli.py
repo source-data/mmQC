@@ -3171,7 +3171,9 @@ class TestToolAudit:
     def test_the_audit_starts_as_an_empty_file(self, tmp_path: Path):
         path = tmp_path / "a.json"
         cli.ToolAuditLog(path)
-        assert json.loads(path.read_text()) == {"session": {}, "calls": []}
+        assert json.loads(path.read_text()) == {
+            "session": {}, "usage": {}, "calls": [],
+        }
 
     def test_the_audit_records_what_the_sdk_reported_at_startup(
         self, assembled
@@ -4356,6 +4358,7 @@ class TestASessionNeedsNoFilesystem:
         class _Audit:
             path = tmp_path / "missing-audit.json"
             session_info = {}
+            usage = {}
 
             def summary(self):
                 return "Skill (allow) x1"
@@ -4857,3 +4860,47 @@ class TestAnInterruptedRunResumes:
             examples=[SUBPANEL_FIGURE], force=True,
         )
         assert len(stub_session) == 2
+
+
+class TestTheRunRecordsWhatItCost:
+    """Cost and turns are on the SDK's result message and were being discarded.
+
+    Deciding how many replicates an experiment can afford is a question about
+    cost, so a run that does not record it cannot answer it.
+    """
+
+    def test_the_audit_captures_usage(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.note_usage({
+            "total_cost_usd": 0.0371,
+            "num_turns": 3,
+            "duration_ms": 14210,
+            "usage": {"input_tokens": 12000, "output_tokens": 900},
+        })
+        written = json.loads(audit.path.read_text(encoding="utf-8"))
+        assert written["usage"]["total_cost_usd"] == 0.0371
+        assert written["usage"]["num_turns"] == 3
+
+    def test_usage_is_absent_rather_than_zero_when_unreported(self, tmp_path: Path):
+        """A provider that reports no cost must not look like a free run."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        written = json.loads(audit.path.read_text(encoding="utf-8"))
+        assert written["usage"] == {}
+
+    def test_the_extractor_reads_a_result_message(self):
+        info = cli._extract_usage({
+            "subtype": "success",
+            "total_cost_usd": 0.12,
+            "num_turns": 4,
+            "duration_ms": 9000,
+            "usage": {"input_tokens": 1},
+        })
+        assert info == {
+            "total_cost_usd": 0.12,
+            "num_turns": 4,
+            "duration_ms": 9000,
+            "usage": {"input_tokens": 1},
+        }
+
+    def test_a_message_without_cost_yields_nothing(self):
+        assert cli._extract_usage({"subtype": "init", "tools": []}) is None

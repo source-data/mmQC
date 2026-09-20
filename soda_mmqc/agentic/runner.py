@@ -400,6 +400,10 @@ def run_check_live(
                         )
                         entry["tools"] = audit.summary()
                         entry["reported_tools"] = audit.session_info.get("tools")
+                        # What this session spent, so a caller can total a run
+                        # without reopening every sidecar.
+                        if audit.usage:
+                            entry["usage"] = dict(audit.usage)
                         _write_prediction(
                             predictions_dir,
                             relative_source_path,
