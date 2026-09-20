@@ -1,7 +1,7 @@
 ---
 title: How many replicates does a check need?
 date: 2026-09-20
-status: planned
+status: done
 kind: exploration
 tags: [exploration, skills, replicates, cost]
 ---
@@ -106,32 +106,96 @@ share authorship and conventions, so their scores are not independent draws.
 
 ## What happened
 
-*Not yet run.*
+100 sessions, all completed, none failed, none returned an empty answer.
 
-To fill in: the per-example between-replicate variance, the check-level
-spread it implies at 38 examples, the standard error that gives at n = 1, 3
-and 5 replicates, whether the independence assumption held, and the observed
-cost per session.
+### Per-replicate check mean
+
+Nine examples, ten identical runs:
+
+```
+rep-00  0.9049      rep-05  0.9039
+rep-01  0.9116      rep-06  0.9132
+rep-02  0.9128      rep-07  0.9179
+rep-03  0.9142      rep-08  0.9194
+rep-04  0.9143      rep-09  0.9223
+```
+
+Range 0.018 across ten runs of the identical configuration.
+
+### The decomposition
+
+| | |
+|---|---|
+| Mean per-example variance | 0.000643 |
+| Per-example SD across replicates | **0.0254** |
+| SD of a check mean over 38 examples | **0.0041** |
+
+| replicates | SE, one arm | SE, paired difference (upper bound) |
+|---|---|---|
+| 1 | 0.0041 | 0.0058 |
+| **3** | **0.0024** | **0.0034** |
+| 5 | 0.0018 | 0.0026 |
+
+Per-example SD ranged from 0.0038 to 0.0478 — an order of magnitude between
+the steadiest example and the least steady. For comparison, the *between
+example* spread of means is 0.889 to 0.980, far larger than any example's
+run-to-run movement.
+
+### Independence
+
+The extrapolation from 10 examples to 38 assumes examples vary independently.
+Observed SD of the check mean at N=9 was **0.0058** against a derived
+**0.0085** — a ratio of 0.68, just outside the 0.7–1.4 band the notebook
+treats as agreement.
+
+The direction is the safe one: the check mean moves *less* than independence
+predicts, so the figures above **overstate** the noise rather than
+understating it. With nine examples and ten replicates both quantities are
+themselves noisily estimated, and a ratio of 0.68 is within sampling error of
+1. Treat the SE column as conservative.
+
+### One non-response of a different kind
+
+One cell of the hundred — `10.1038_emboj.2009.312`, one replicate — scored
+nothing at all: no property had a single applicable instance, where the other
+nine runs of that example all did. The model classified every panel as not
+involving replicates in that one run.
+
+That is not an empty answer (there were none) and it is not a scoring
+failure. It is the applicability judgement itself moving between runs, which
+no amount of averaging scores will reveal. It is also exactly the case that
+made the first version of this analysis wrong: `mean_score` is `0.0` when a
+property has nothing to score, and averaging those zeros treated "not
+applicable" as "scored zero".
 
 ## What it does and does not establish
 
-*Not yet run.* When it is, this section says plainly what the number supports.
+**Three replicates.** At n=3 the paired-difference standard error is bounded
+above by 0.0034, so a difference of 0.01 in mean score between detailed and
+minimal skills sits about three standard errors clear, and 0.02 sits six.
+Going to five moves that bound from 0.0034 to 0.0026 — a change of 0.0008,
+against roughly 1,700 more sessions and another 16 hours. That is not a
+purchase this evidence supports.
 
-Stated in advance, because it bears on how the result may be used:
+Even **one** replicate would resolve an effect of 0.02. Three is chosen over
+one because it costs little, and because a single run cannot show that an
+arm's own spread is what this probe measured it to be.
 
-- It measures the spread of **one arm**, not of the **difference between
-  arms**. exp-01's statistic is a paired difference, whose variance is not
-  this one — pairing by example cancels some noise and the two arms may be
-  unequally noisy. This bounds the problem; it does not size it exactly.
-- It is one check of eleven, chosen for being the noisiest by construction.
-  It therefore suggests an upper bound on per-check variance, and says
-  nothing about whether variance differs much between checks — which is what
-  would decide whether any single number generalises.
-- Ten examples, extrapolated to thirty-eight. The extrapolation assumes
-  examples are independent draws; the notebook tests that assumption and the
-  finding is only as good as it holds.
-- It cannot support a paper claim. It is a design input for exp-01, and
-  exp-01's note will say which replicate count it chose and cite this.
+What it does not establish:
+
+- It measures **one arm**, not a difference. exp-01's statistic is paired,
+  and pairing cancels whatever noise the two arms share. The paired column
+  above is an upper bound assuming they vary independently, which they do
+  not; the true SE is lower, by an unknown amount.
+- It is **one check**, deliberately the noisiest — three semantic fields,
+  more than any other, and 47% of its output tokens are reasoning. A check
+  whose fields are all binary should move less. This bounds per-check
+  variance from above; it says nothing about the spread *between* checks.
+- It says nothing about **applicability** stability, beyond the one flip
+  observed. That is a separate axis, and layer 1 is where it would be
+  measured.
+- It cannot support a paper claim. It is a design input, and exp-01's note
+  records three replicates and cites this.
 
 ## Open questions
 
@@ -142,48 +206,49 @@ Stated in advance, because it bears on how the result may be used:
 - Is variance comparable across checks? This probe deliberately picked the
   check where it should be highest, so it cannot say. Repeating it on
   `single-channel-for-overlay`, which has no semantic fields, would bracket
-  the range for another ~$3.50 — cheap, and the obvious follow-up if the
-  number here is uncomfortably large.
+  the range for about $3 — but with n=3 already justified by the noisy end,
+  the answer would not change the decision.
+- **How stable is the applicability judgement?** One example flipped to
+  "nothing applicable" in one run of ten. Layer 1 measures that directly and
+  this analysis never looked at it; a check whose panel classification moves
+  between runs is unreliable in a way no mean score shows.
 
 ## Cost
 
-**Measured, not estimated.** Two smoke sessions on this check before the full
-probe:
+**Actual, from the 100 sessions.**
 
 | | |
 |---|---|
-| Cost per session | $0.106, $0.084 — call it **$0.095** |
-| Duration per session | 82 s, 61 s — call it **~70 s** |
-| Turns | 5 |
-| Output tokens | 7,516 and 5,856, of which **5,351 and 3,958 are reasoning** |
+| Total | **$6.28** |
+| Per session | $0.063 mean, $0.055 median, $0.021–$0.134 |
+| Turns | 4 median, 4–9 |
+| Duration | 33 s median, **1.1 h** total |
+| Output tokens | 3,468 median, **47% of them reasoning** |
+| Cache | 7,504 created, 11,273 read (median) |
 
-So the full probe is **100 sessions, about $9.50, and roughly two hours**
-serial.
+The pre-run estimate of $3.50 was low and the corrected one of $9.50 was
+high; the smoke test's two sessions happened to be the slowest of the
+hundred. Median session cost $0.055 against `micrograph-scale-bar`'s $0.035,
+so this check is about 1.6× the cheap one rather than the 2.7× two sessions
+suggested.
 
-An earlier estimate of $3.50 and 20 minutes was wrong by 2.7× and 6×. It was
-costed from a `micrograph-scale-bar` session ($0.035, 845 output tokens, 107
-of them reasoning), which is the *cheapest* check — exactly the wrong basis
-for the one deliberately chosen as the hardest. About 70% of this check's
-output is thinking tokens, some fifty times `micrograph-scale-bar`'s, which is
-the same property that makes it the right place to look for variance.
+### What this implies for exp-01
 
-### What this says about exp-01 before the probe has even run
-
-Per-session cost spans nearly 3× across checks — $0.035 to $0.095 — so
-**exp-01 cannot be projected from any single check**. Its total depends on
-the mix of eleven. Taking $0.06 as a rough middle:
+Per-session cost still spans roughly 2× across checks, so the total depends
+on the mix. Taking $0.05 as a middle:
 
 | replicates | sessions | cost | serial time |
 |---|---|---|---|
-| 3 | 2,616 | ~$157 | **~29 h** |
-| 5 | 4,360 | ~$260 | **~48 h** |
+| **3** | **2,616** | **~$130** | **~24 h** |
+| 5 | 4,360 | ~$218 | ~40 h |
 
-The wall-clock matters more than the money here. Two days of serial running
-is not an overnight job, and replicates are independent by construction — so
-parallelism, deliberately left out of scope in
-[`plans/2026-09-20-replicates-in-the-harness.md`](../plans/2026-09-20-replicates-in-the-harness.md),
-becomes the obvious next thing to want. This probe is itself a reasonable
-test case for it.
+Choosing three over five saves about $88 and 16 hours, for a standard error
+that moves from 0.0034 to 0.0026 — a difference no plausible effect size
+would notice. The probe cost $6.28 to establish that, which it repaid many
+times over.
 
-Actual probe cost to be filled in from the runs; every session records
-`total_cost_usd` in its `tool_audit.json`.
+The wall clock remains the uncomfortable number. 24 hours serial is still an
+overnight-plus job, and replicates are independent by construction, so
+parallelism — left out of scope in
+[`plans/2026-09-20-replicates-in-the-harness.md`](../plans/2026-09-20-replicates-in-the-harness.md)
+— is the obvious next lever if exp-01 needs to be repeated.

@@ -17,12 +17,13 @@ Output lands under `experiments/runs/exp-01-skill-verbosity/<check>/`, and the
 harness adds `<arm>/rep-NN/<example>/` beneath that.
 
 **This is a long, expensive job.** Eleven checks over 436 example-checks, two
-arms, N replicates: 872 sessions per replicate, 4,360 at five. Re-running is
+arms, N replicates: 872 sessions per replicate, 2,616 at the default three --
+roughly $130 and 24 hours serial. Re-running is
 safe and cheap -- the harness skips an example that already has a prediction,
 so an interruption costs what it interrupted. Use `--force` only to
 deliberately redo work.
 
-    python experiments/exp-01-skill-verbosity/run.py --replicates 5
+    python experiments/exp-01-skill-verbosity/run.py
     python experiments/exp-01-skill-verbosity/run.py --check stat-test --replicates 1
 
 The analysis lives in `notebooks/experiments/exp-01-skill-verbosity.ipynb` and
@@ -84,8 +85,15 @@ def planned_sessions(wanted: list[str], replicates: int) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--replicates", type=int, default=5,
-        help="Samples per arm (default: %(default)s)",
+        "--replicates", type=int, default=3,
+        help=(
+            "Samples per arm (default: %(default)s). Three rather than the "
+            "five originally sketched, on the evidence of "
+            "thinking/experiments/exploration-replicate-variability.md: the "
+            "standard error of a paired difference is bounded at 0.0034 for "
+            "n=3 against 0.0026 for n=5, which no plausible effect size would "
+            "notice, for ~1,700 fewer sessions and 16 fewer hours"
+        ),
     )
     parser.add_argument(
         "--check", action="append", dest="checks", default=None,
