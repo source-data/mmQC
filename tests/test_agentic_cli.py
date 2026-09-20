@@ -4298,22 +4298,13 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 output=out, examples=[SUBPANEL_FIGURE],
                 unpin={PILOT_LEAF: ("v2",)},
             )
-            assert (out / f"{PILOT_LEAF}@v2" / SUBPANEL_FIGURE
+            assert (out / f"{PILOT_LEAF}@v2" / "rep-00" / SUBPANEL_FIGURE
                     / cli.PREDICTION_FILENAME).is_file()
-            assert not (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).is_file(), (
-                "a variant was written into the baseline directory"
+            assert not (out / "pinned").exists(), (
+                "a variant-only run wrote into the baseline arm"
             )
         finally:
             shutil.rmtree(v2)
-
-    def test_the_pinned_run_keeps_the_flat_layout(
-        self, tmp_path: Path, stub_session
-    ):
-        out = tmp_path / "preds"
-        cli.run_check_live(
-            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE]
-        )
-        assert (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).is_file()
 
     def test_each_prediction_records_the_skill_set_that_made_it(
         self, tmp_path: Path, stub_session
@@ -4324,8 +4315,8 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE]
         )
         recorded = json.loads(
-            (out / SUBPANEL_FIGURE / cli.INTERMEDIATES_DIRNAME
-             / cli.SKILL_SET_FILENAME).read_text()
+            (out / "pinned" / "rep-00" / SUBPANEL_FIGURE
+             / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME).read_text()
         )
         expected = cli.resolve_skill_set(
             cli.load_skills(CHECKLIST_DIR / "fig-checklist"),
@@ -4622,3 +4613,100 @@ class TestANonFigureExampleAssembles:
             p for p in layout.input_root.rglob("*")
             if p.name == cli.EXAMPLE_GOLD_SUBDIR
         ]
+
+
+@requires_subpanel_figure
+class TestEveryAxisIsADirectory:
+    """One shape for every run: <root>/<arm>/rep-NN/<example>/.
+
+    The baseline arm used to write flat while variants wrote into their own
+    directory, so one run's output had two shapes and pointing `score` at the
+    root scored the baseline alone -- plausibly, and silently.
+    """
+
+    @pytest.fixture
+    def stub_session(self, monkeypatch):
+        """Run the real `run_check_live` loop with the provider faked out."""
+        seen = []
+        real = cli._run_agent_session
+
+        async def fake_session(layout, *, versions, approver, options, client):
+            seen.append(dict(versions))
+            return await real(
+                layout,
+                versions=versions,
+                approver=approver,
+                options=options,
+                client=_fake_client([], writes=_valid_prediction()),
+            )
+
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
+        return seen
+
+    def test_a_plain_run_still_has_both_levels(self, tmp_path: Path, stub_session):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert (
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+        ).is_file()
+        assert not (out / SUBPANEL_FIGURE).exists(), (
+            "the baseline arm must not write flat: that is the special case "
+            "this layout removes"
+        )
+
+    def test_replicates_sit_under_the_arm(self, tmp_path: Path, stub_session):
+        """An arm is not a replicate: arm outermost, samples within it."""
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], replicates=3,
+        )
+        for i in range(3):
+            assert (
+                out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
+                / cli.PREDICTION_FILENAME
+            ).is_file()
+
+    def test_the_sidecar_records_arm_and_replicate(
+        self, tmp_path: Path, stub_session
+    ):
+        """A directory name is not evidence -- the reason skill_set.json exists.
+
+        A notebook reads this rather than parsing paths, so moving a tree
+        cannot change what a prediction claims about itself.
+        """
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], replicates=2,
+        )
+        for i in range(2):
+            sidecar = json.loads(
+                (
+                    out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
+                    / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME
+                ).read_text(encoding="utf-8")
+            )
+            assert sidecar["arm"] == "pinned"
+            assert sidecar["replicate"] == i
+            assert sidecar["digest"]
+
+    def test_mock_writes_the_same_shape(self, tmp_path: Path):
+        """No exceptions: a mock run is scored by the same command."""
+        out = tmp_path / "preds"
+        cli.run_check_mock(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert (
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+        ).is_file()
+
+    def test_zero_replicates_is_refused(self, tmp_path: Path):
+        with pytest.raises(ValueError, match="at least one"):
+            cli.run_check_live(
+                "fig-checklist", PILOT_LEAF, output=tmp_path / "p",
+                examples=[SUBPANEL_FIGURE], replicates=0,
+            )
