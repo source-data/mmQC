@@ -51,6 +51,7 @@ from soda_mmqc.scripts.run import (
 )
 
 import soda_mmqc.cli as cli
+import soda_mmqc.config as config
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PILOT_CHECK_DIR = (
@@ -224,7 +225,7 @@ def pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             json.dumps(golds[relative_path]), encoding="utf-8"
         )
 
-    monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist_root)
+    monkeypatch.setattr(config, "CHECKLIST_DIR", checklist_root)
     monkeypatch.setattr(
         "soda_mmqc.core.examples.EXAMPLES_DIR", examples_root
     )
@@ -643,7 +644,7 @@ def real_pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist_root)
+    monkeypatch.setattr(config, "CHECKLIST_DIR", checklist_root)
 
     return {
         "checklist_root": checklist_root,
@@ -3988,13 +3989,13 @@ class TestSkillSetExpansion:
 
 class TestGeneratedGraphViews:
     def test_write_creates_both_views(self, pinned_checklist, monkeypatch):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         assert cli.main(["graph", "toy-checklist", "--write"]) == 0
         assert (pinned_checklist / cli.DAG_FILENAME).is_file()
         assert (pinned_checklist / cli.GENERATED_README_FILENAME).is_file()
 
     def test_generation_is_deterministic(self, pinned_checklist, monkeypatch):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         first = (pinned_checklist / cli.DAG_FILENAME).read_bytes()
         readme = (pinned_checklist / cli.GENERATED_README_FILENAME).read_bytes()
@@ -4023,14 +4024,14 @@ class TestGeneratedGraphViews:
     def test_the_drift_check_passes_right_after_writing(
         self, pinned_checklist, monkeypatch
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         assert cli.main(["graph", "toy-checklist"]) == 0
 
     def test_the_drift_check_fails_when_a_skill_changes(
         self, pinned_checklist, monkeypatch, capsys
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         path = pinned_checklist / "shared" / "v1" / cli.SKILL_FILENAME
         path.write_text(
@@ -4047,7 +4048,7 @@ class TestGeneratedGraphViews:
     def test_the_drift_check_fails_when_the_views_are_hand_edited(
         self, pinned_checklist, monkeypatch
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         dag = pinned_checklist / cli.DAG_FILENAME
         dag.write_text(dag.read_text() + "\nhand_edited: true\n", encoding="utf-8")
@@ -4084,7 +4085,7 @@ class TestGeneratedGraphViews:
         self, pinned_checklist, monkeypatch
     ):
         """It must stay fast enough to run in CI on every checklist."""
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         monkeypatch.setattr(
             cli, "assemble_runtime",
             lambda *a, **k: pytest.fail("graph assembled a runtime"),
@@ -4101,7 +4102,7 @@ class TestGraphFailureMessages:
     """Gate 6C: a stranger hitting each failure must learn what to fix."""
 
     def _graph(self, checklist: Path, monkeypatch, capsys):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", checklist.parent)
         code = cli.main(["graph", checklist.name])
         captured = capsys.readouterr()
         return code, captured.out + captured.err
@@ -4664,7 +4665,7 @@ class TestRunAllAgenticChecks:
         _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a"))
         _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b"))
 
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", tmp_path)
         calls = []
 
         def fake_run_check_live(checklist, check, **kwargs):
@@ -4703,7 +4704,7 @@ class TestRunAllAgenticChecks:
         _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a", requires=("identify-panels",)))
         _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b", requires=("identify-panels",)))
 
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", tmp_path)
         ex = "doc-x/content/1"
         calls = []
 
@@ -4849,7 +4850,7 @@ class TestANonFigureExampleAssembles:
             "checklist: doc-pilot\nskills:\n  section-order: v1\n",
             encoding="utf-8",
         )
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", root)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", root)
         return root
 
     def _assemble(self, tmp_path):
