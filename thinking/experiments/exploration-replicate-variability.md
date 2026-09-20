@@ -147,12 +147,43 @@ Stated in advance, because it bears on how the result may be used:
 
 ## Cost
 
-100 sessions. At the $0.035 observed for one session during the refactor,
-roughly **$3.50**.
+**Measured, not estimated.** Two smoke sessions on this check before the full
+probe:
 
-exp-01 is about $153 at five replicates and $92 at three, so the decision
-this probe informs is worth roughly $61. It pays for itself many times over
-if it moves that decision at all.
+| | |
+|---|---|
+| Cost per session | $0.106, $0.084 — call it **$0.095** |
+| Duration per session | 82 s, 61 s — call it **~70 s** |
+| Turns | 5 |
+| Output tokens | 7,516 and 5,856, of which **5,351 and 3,958 are reasoning** |
 
-Actual cost to be filled in from the runs — every session now records
+So the full probe is **100 sessions, about $9.50, and roughly two hours**
+serial.
+
+An earlier estimate of $3.50 and 20 minutes was wrong by 2.7× and 6×. It was
+costed from a `micrograph-scale-bar` session ($0.035, 845 output tokens, 107
+of them reasoning), which is the *cheapest* check — exactly the wrong basis
+for the one deliberately chosen as the hardest. About 70% of this check's
+output is thinking tokens, some fifty times `micrograph-scale-bar`'s, which is
+the same property that makes it the right place to look for variance.
+
+### What this says about exp-01 before the probe has even run
+
+Per-session cost spans nearly 3× across checks — $0.035 to $0.095 — so
+**exp-01 cannot be projected from any single check**. Its total depends on
+the mix of eleven. Taking $0.06 as a rough middle:
+
+| replicates | sessions | cost | serial time |
+|---|---|---|---|
+| 3 | 2,616 | ~$157 | **~29 h** |
+| 5 | 4,360 | ~$260 | **~48 h** |
+
+The wall-clock matters more than the money here. Two days of serial running
+is not an overnight job, and replicates are independent by construction — so
+parallelism, deliberately left out of scope in
+[`plans/2026-09-20-replicates-in-the-harness.md`](../plans/2026-09-20-replicates-in-the-harness.md),
+becomes the obvious next thing to want. This probe is itself a reasonable
+test case for it.
+
+Actual probe cost to be filled in from the runs; every session records
 `total_cost_usd` in its `tool_audit.json`.
