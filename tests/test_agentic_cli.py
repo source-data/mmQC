@@ -2712,7 +2712,7 @@ def _tool_use(name: str, payload: dict, use_id: str = "t1"):
     return {"content": [{"name": name, "input": payload, "id": use_id}]}
 
 
-def _fake_client(messages, *, writes=None, layout=None, captured=None):
+def _fake_client(messages, *, writes=None, captured=None):
     """Build a client that emits `messages` and optionally writes an output."""
 
     async def client(parts, options):
@@ -2762,7 +2762,7 @@ class TestAgentSession:
     ):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
 
@@ -2773,7 +2773,7 @@ class TestAgentSession:
         """Naming the dependency would make the trace measure this string."""
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
         assert not any(
@@ -2786,7 +2786,7 @@ class TestAgentSession:
     ):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
 
@@ -2799,7 +2799,7 @@ class TestAgentSession:
         assert set(captured["options"]["skills"]) == present
 
     def test_a_valid_prediction_is_returned(self, assembled):
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         prediction, _, _ = _run(assembled, client=client)
         assert prediction == _valid_prediction()
 
@@ -2807,7 +2807,7 @@ class TestAgentSession:
         self, assembled, tmp_path: Path
     ):
         bad = {"outputs": [{"panel_label": "A", "micrograph": "maybe"}]}
-        client = _fake_client([], writes=bad, layout=assembled)
+        client = _fake_client([], writes=bad)
         with pytest.raises(ValueError, match=r"does not match the schema"):
             _run(assembled, client=client)
 
@@ -2826,7 +2826,7 @@ class TestAgentSession:
                 {"panel_label": "B", "micrograph": "perhaps"},
             ]
         }
-        client = _fake_client([], writes=bad, layout=assembled)
+        client = _fake_client([], writes=bad)
         with pytest.raises(ValueError) as excinfo:
             _run(assembled, client=client)
         assert str(excinfo.value).count("maybe") >= 1
@@ -2840,7 +2840,6 @@ class TestSkillTrace:
         client = _fake_client(
             [_tool_use("Skill", {"name": SHARED_SKILL}, "abc")],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled,
@@ -2862,7 +2861,6 @@ class TestSkillTrace:
                 _tool_use("Skill", {"name": SHARED_SKILL}),
             ],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled, client=client, trace_path=tmp_path / "t.json"
@@ -2892,7 +2890,7 @@ class TestSkillTrace:
         self, assembled, tmp_path: Path
     ):
         trace_path = tmp_path / "t.json"
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         _run(assembled, client=client, trace_path=trace_path)
         assert json.loads(trace_path.read_text()) == []
 
@@ -2902,7 +2900,6 @@ class TestSkillTrace:
         client = _fake_client(
             [_tool_use("Skill", {"command": f"/{SHARED_SKILL}"})],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled, client=client, trace_path=tmp_path / "t.json"
@@ -3336,7 +3333,7 @@ class TestToolAudit:
             "permissionMode": "dontAsk",
         }
         client = _fake_client(
-            [init], writes=_valid_prediction(), layout=assembled
+            [init], writes=_valid_prediction()
         )
         _, _, audit = _run(assembled, client=client)
         assert audit.session_info["tools"] == [
@@ -3349,14 +3346,14 @@ class TestToolAudit:
     def test_the_session_wires_the_hook_into_its_options(self, assembled):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
         hooks = captured["options"]["hooks"]
         assert "PreToolUse" in hooks and callable(hooks["PreToolUse"][0])
 
     def test_the_session_returns_its_audit(self, assembled):
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         _, _, audit = _run(assembled, client=client)
         assert isinstance(audit, cli.ToolAuditLog)
         assert audit.path.name == cli.TOOL_AUDIT_FILENAME
@@ -4424,9 +4421,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 versions=versions,
                 approver=approver,
                 options=options,
-                client=_fake_client(
-                    [], writes=_valid_prediction(), layout=layout
-                ),
+                client=_fake_client([], writes=_valid_prediction()),
             )
 
         monkeypatch.setattr(cli, "_run_agent_session", fake_session)
