@@ -1,7 +1,7 @@
 ---
 title: Replicates belong to the harness, and every axis is a directory
 date: 2026-09-20
-status: proposed, awaiting review
+status: done 2026-09-20
 ---
 
 # Replicates belong to the harness, and every axis is a directory
@@ -689,3 +689,15 @@ git commit -m "Standing rule: a replicate is a resample, and the run layout"
 - **Migrating old output.** Nothing committed depends on the layout: no
   `prediction.json` is tracked, `experiments/runs/` holds only its README,
   and `data/predictions/` and `data/evaluation/` are gitignored.
+
+## Done 2026-09-20
+
+All four tasks, verified against the checklist above. 712 tests.
+
+Two corrections to the plan as written:
+
+- The baseline it quoted (326) was already stale when written: removing
+  `--all-checks` had deleted tests, so the real figure was 314.
+- Task 2's test patched `runner.run_check_live`, which `main` never calls —
+  `cli` imports the name, so `main` uses its own binding. The mirror of the
+  Phase 2 lesson: patch where the caller looks it up, which here is `cli`.
