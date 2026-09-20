@@ -68,7 +68,6 @@ DEFAULT_RUN_LABEL = "agentic"
 __all__ = [
     "run_check_mock",
     "run_check_live",
-    "run_checklist_live",
     "default_predictions_dir",
     "resolve_model",
     "PREDICTION_FILENAME",
@@ -269,8 +268,6 @@ def run_check_live(
     approve_tools: bool = False,
     provider: str = "openai",
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
-    seed_intermediates: Optional[Mapping[str, Mapping[str, Any]]] = None,
-    shared_skill_denials: Optional[Mapping[str, Sequence[str]]] = None,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -340,37 +337,22 @@ def run_check_live(
                     checklist, check, relative_source_path,
                     keep=keep_runtime, pins=versions,
                 ) as layout:
-                    seeded = dict((seed_intermediates or {}).get(relative_source_path, {}))
-                    for name, payload in seeded.items():
-                        path = layout.artifacts_root / f"{name}.json"
-                        path.write_text(
-                            json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
-                            encoding="utf-8",
-                        )
                     options = effective_session_options(
                         layout, skills, defaults=defaults
                     )
                     options["model"] = model
-                    denied_shared = set(
-                        (shared_skill_denials or {}).get(relative_source_path, ())
-                    )
                     client = (
                         _openai_session_client(layout, model)
                         if provider == "openai"
                         else None
                     )
-                    session_kwargs: Dict[str, Any] = {
-                        "versions": versions,
-                        "approver": approver,
-                        "options": options,
-                        "client": client,
-                    }
-                    if denied_shared:
-                        session_kwargs["denied_shared_skills"] = denied_shared
                     prediction, recorder, audit = asyncio.run(
                         _run_agent_session(
                             layout,
-                            **session_kwargs,
+                            versions=versions,
+                            approver=approver,
+                            options=options,
+                            client=client,
                         )
                     )
                     # The file-production contract is gone with the write
@@ -428,139 +410,10 @@ def run_check_live(
     return root_dir, report
 
 
-def _required_shared_skills(
-    check_name: str, selected: Mapping[str, Skill]
-) -> Set[str]:
-    """Shared skills reachable from `check_name` via declared requirements."""
-    entry = selected.get(check_name)
-    if entry is None:
-        return set()
-    pending = list(entry.requires)
-    seen: Set[str] = set()
-    while pending:
-        name = pending.pop()
-        if name in seen:
-            continue
-        skill = selected.get(name)
-        if skill is None:
-            continue
-        seen.add(name)
-        pending.extend(skill.requires)
-    return seen
 
 
-def _expand_example_selectors(
-    benchmark_examples: Sequence[str], selectors: Optional[Sequence[str]]
-) -> Optional[List[str]]:
-    """Expand doc-level selectors to concrete benchmark example paths."""
-    if not selectors:
-        return None
-    expanded: List[str] = []
-    seen: Set[str] = set()
-    for selector in selectors:
-        selector = selector.strip()
-        if not selector:
-            continue
-        matched = [
-            example
-            for example in benchmark_examples
-            if example == selector or example.startswith(f"{selector}/")
-        ]
-        for example in matched:
-            if example not in seen:
-                seen.add(example)
-                expanded.append(example)
-    return expanded
 
 
-def run_checklist_live(
-    checklist: str,
-    *,
-    output: Optional[Path] = None,
-    model: Optional[str] = None,
-    examples: Optional[Sequence[str]] = None,
-    limit: Optional[int] = None,
-    keep_runtime: bool = False,
-    approve_tools: bool = False,
-    provider: str = "openai",
-    unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
-) -> Tuple[Path, List[Dict[str, Any]]]:
-    """Run all checks in a checklist, reusing shared intermediates per example."""
-    if unpin:
-        raise ValueError("--all-checks does not support --unpin")
-
-    checklist_dir = config.CHECKLIST_DIR / checklist
-    if not checklist_dir.is_dir():
-        raise FileNotFoundError(f"Checklist not found: {checklist_dir}")
-
-    checks = sorted(list_checks(checklist_dir))
-    if not checks:
-        raise ValueError(f"No checks found in checklist: {checklist}")
-
-    selected = select_versions(validate_skills(checklist_dir), checklist_pins(checklist_dir))
-    run_model = resolve_model(checklist_dir, provider, model)
-    root_dir = Path(
-        output
-        or EVALUATION_DIR / checklist / "__all-checks__" / run_model / "predictions"
-    )
-
-    cache: Dict[str, Dict[str, Any]] = {}
-    denied: Dict[str, Set[str]] = {}
-    combined: List[Dict[str, Any]] = []
-    shared_by_check = {name: _required_shared_skills(name, selected) for name in checks}
-    producers: Dict[str, Set[str]] = {
-        name: set(selected[name].produces)
-        for name in selected
-        if selected[name].produces
-    }
-
-    for check in checks:
-        benchmark = _read_json(checklist_dir / check / "benchmark.json")
-        check_examples = _expand_example_selectors(
-            benchmark.get("examples") or [],
-            examples,
-        )
-        check_output = root_dir / check
-        _, report = run_check_live(
-            checklist,
-            check,
-            output=check_output,
-            model=model,
-            examples=check_examples,
-            limit=limit,
-            keep_runtime=keep_runtime,
-            approve_tools=approve_tools,
-            provider=provider,
-            unpin=unpin,
-            seed_intermediates=cache,
-            shared_skill_denials={k: sorted(v) for k, v in denied.items()},
-        )
-        for entry in report:
-            item = dict(entry)
-            item["check"] = check
-            combined.append(item)
-            if item.get("status") != "ok":
-                continue
-            example = item["example"]
-            produced = set(item.get("intermediates") or ())
-            for skill_name in shared_by_check.get(check, set()):
-                artifacts = producers.get(skill_name, set())
-                available = sorted(artifacts & produced)
-                if not available:
-                    continue
-                denied.setdefault(example, set()).add(skill_name)
-                for artifact_name in available:
-                    artifact_path = (
-                        check_output
-                        / example
-                        / INTERMEDIATES_DIRNAME
-                        / f"{artifact_name}.json"
-                    )
-                    if artifact_path.is_file():
-                        cache.setdefault(example, {})[artifact_name] = _read_json(
-                            artifact_path
-                        )
-    return root_dir, combined
 
 
 def _copy_sidecar(source: Path, destination: Path) -> None:

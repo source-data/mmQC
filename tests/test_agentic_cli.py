@@ -4641,118 +4641,69 @@ class TestRunCheckLiveIntermediateContracts:
         assert "panel_type" in report[0]["error"]
 
 
-class TestRunAllAgenticChecks:
-    def test_document_example_selector_expands_to_matching_figures(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        checklist_dir = tmp_path / "toy-checklist"
-        _write_check(checklist_dir / "check-a", "check-a")
-        _write_check(checklist_dir / "check-b", "check-b")
-        for check_name in ("check-a", "check-b"):
-            (checklist_dir / check_name / "benchmark.json").write_text(
-                json.dumps(
-                    {
-                        "name": check_name,
-                        "example_class": "figure",
-                        "examples": [
-                            "doc-x/content/1",
-                            "doc-x/content/2",
-                            "doc-y/content/1",
-                        ],
-                    }
-                ),
-                encoding="utf-8",
+class TestNoRunIsDeniedOrSeeded:
+    """What `--all-checks` used to do, asserted as something that cannot return.
+
+    The cross-check cache ran a shared skill once per example, planted its
+    output into later runtimes, and denied those sessions the `Skill` tool so
+    they could not rerun it. That made one check's behaviour depend on whether
+    a different check had succeeded, and it erased the signal the experiments
+    exist to detect: whether a shared skill is reached, and how it is used,
+    may differ depending on which leaf is the entry point.
+
+    Deleting the apparatus without a test would leave nothing to notice it
+    coming back.
+    """
+
+    def test_a_skill_call_can_never_be_denied_by_the_hook(self, tmp_path: Path):
+        """One session per (example, check): nothing suppresses a hop."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        hook = cli.make_pretooluse_hook(audit)
+
+        async def call():
+            return await hook(
+                {
+                    "tool_name": "Skill",
+                    "tool_input": {"name": SHARED_SKILL},
+                    "tool_use_id": "s1",
+                },
+                "s1",
+                None,
             )
-        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a"))
-        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b"))
 
-        monkeypatch.setattr(config, "CHECKLIST_DIR", tmp_path)
-        calls = []
+        result = asyncio.run(call())
+        decision = result["hookSpecificOutput"]["permissionDecision"]
+        assert decision == "allow"
+        assert audit.entries[0]["decision"] == "allow"
 
-        def fake_run_check_live(checklist, check, **kwargs):
-            calls.append((check, kwargs))
-            return Path(kwargs["output"]), []
+    def test_the_hook_takes_no_denial_set(self):
+        """The parameter is the apparatus; without it there is nothing to pass."""
+        import inspect
 
-        monkeypatch.setattr(runner, "run_check_live", fake_run_check_live)
+        params = inspect.signature(cli.make_pretooluse_hook).parameters
+        assert "denied_shared_skills" not in params
+        assert "denied_shared_skills" not in inspect.signature(
+            cli._run_agent_session
+        ).parameters
 
-        cli.run_checklist_live(
-            "toy-checklist",
-            output=tmp_path / "all-out",
-            examples=["doc-x"],
-        )
+    def test_the_runner_cannot_seed_a_runtime(self):
+        """No artifact reaches a session that the session did not produce."""
+        import inspect
 
-        assert len(calls) == 2
-        for _, kwargs in calls:
-            assert kwargs["examples"] == ["doc-x/content/1", "doc-x/content/2"]
+        params = inspect.signature(cli.run_check_live).parameters
+        assert "seed_intermediates" not in params
+        assert "shared_skill_denials" not in params
 
-    def test_second_check_reuses_shared_artifact_and_denies_rerun(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        checklist_dir = tmp_path / "toy-checklist"
-        _write_check(checklist_dir / "check-a", "check-a")
-        _write_check(checklist_dir / "check-b", "check-b")
-        (checklist_dir / "identify-panels").mkdir(parents=True, exist_ok=True)
-        (checklist_dir / "identify-panels" / "schema.json").write_text(
-            json.dumps({"format": {"schema": {"type": "object"}}}),
-            encoding="utf-8",
-        )
-        _write_skill(
-            checklist_dir,
-            "identify-panels",
-            "v1",
-            _skill_md("identify-panels", produces=("panels",)),
-        )
-        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a", requires=("identify-panels",)))
-        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b", requires=("identify-panels",)))
-
-        monkeypatch.setattr(config, "CHECKLIST_DIR", tmp_path)
-        ex = "doc-x/content/1"
-        calls = []
-
-        def fake_run_check_live(checklist, check, **kwargs):
-            calls.append((check, kwargs))
-            out = Path(kwargs["output"])
-            if check == "check-a":
-                sidecar = out / ex / cli.INTERMEDIATES_DIRNAME
-                sidecar.mkdir(parents=True, exist_ok=True)
-                (sidecar / "panels.json").write_text(
-                    json.dumps({"panels": [{"panel_label": "A"}]}),
-                    encoding="utf-8",
-                )
-                report = [{"example": ex, "status": "ok", "intermediates": ["panels"]}]
-            else:
-                report = [{"example": ex, "status": "ok", "intermediates": []}]
-            return out, report
-
-        monkeypatch.setattr(runner, "run_check_live", fake_run_check_live)
-
-        out = tmp_path / "all-out"
-        _, report = cli.run_checklist_live(
-            "toy-checklist",
-            output=out,
-            examples=[ex],
-            limit=1,
-        )
-
-        assert [name for name, _ in calls] == ["check-a", "check-b"]
-        second = calls[1][1]
-        assert second["seed_intermediates"][ex]["panels"] == {"panels": [{"panel_label": "A"}]}
-        assert "identify-panels" in second["shared_skill_denials"][ex]
-        assert {row["check"] for row in report} == {"check-a", "check-b"}
-
-    def test_main_accepts_run_all_checks(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setattr(
-            cli,
-            "run_checklist_live",
-            lambda *args, **kwargs: (tmp_path / "out", []),
-        )
-        code = cli.main(
-            ["run", "fig-checklist", "--all-checks", "--limit", "1"]
-        )
-        assert code == 0
+    def test_there_is_no_whole_checklist_run(self):
+        """Running every check is a loop the caller writes, not a harness feature."""
+        assert not hasattr(cli, "run_checklist_live")
+        # argparse rejects the flag outright, which is the clearest possible
+        # statement that the feature is gone.
+        with pytest.raises(SystemExit) as exc:
+            cli.main(["run", "fig-checklist", "--all-checks", "--mock"])
+        assert exc.value.code != 0
 
 
-@requires_subpanel_figure
 class TestTheContentIsPushedNotPulled:
     """The example's content travels with the request, not behind a Read.
 

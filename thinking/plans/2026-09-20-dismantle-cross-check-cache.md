@@ -1,7 +1,7 @@
 ---
 title: Remove --all-checks and its cache/deny apparatus
 date: 2026-09-20
-status: planned, not started
+status: done 2026-09-20
 ---
 
 # Remove `--all-checks` and its cache/deny apparatus
@@ -140,3 +140,17 @@ running it.
 - `produces` / contract edges (`tl_dev_agentic` models `requires: [panels]`
   against `produces: [panels]`, with `kind: leaf|intermediate`).
 - `validate_intermediates` and the rest of the file-based plumbing.
+
+## Done 2026-09-20
+
+Executed in the plan's order. `_expand_example_selectors` went with
+`run_checklist_live`, its only caller, which costs a capability worth naming:
+`--example doc-x` used to expand to every figure of that document, and did so
+**only** under `--all-checks`. `run_check_live` takes example paths literally
+and is unchanged, per "what to keep". Wiring the expansion into it would be a
+new feature, not a removal, so it was not done.
+
+`validate_intermediates` stays, as this plan's "not in scope" says. It is now
+provably dead rather than merely unused: nothing seeds an artifact and no
+session can write one, so it can only ever find nothing. Removing it is a
+separate, and now trivial, step.

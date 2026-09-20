@@ -356,7 +356,6 @@ async def _run_agent_session(
     versions: Optional[Mapping[str, str]] = None,
     audit_log: Optional[ToolAuditLog] = None,
     approver: Optional[Any] = None,
-    denied_shared_skills: Optional[Set[str]] = None,
     options: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[Dict[str, Any], SkillTraceRecorder, ToolAuditLog]:
     """Run one session against an assembled runtime and return its output.
@@ -382,7 +381,7 @@ async def _run_agent_session(
     options = dict(options if options is not None else session_options(layout))
     options["hooks"] = {
         "PreToolUse": [
-            make_pretooluse_hook(audit, approver, denied_shared_skills)
+            make_pretooluse_hook(audit, approver)
         ]
     }
 
@@ -563,7 +562,6 @@ class ToolAuditLog:
 def make_pretooluse_hook(
     audit: ToolAuditLog,
     approver: Optional[Any] = None,
-    denied_shared_skills: Optional[Set[str]] = None,
 ):
     """Build the ``PreToolUse`` hook: audit always, approval optionally.
 
@@ -578,7 +576,8 @@ def make_pretooluse_hook(
     Omit it for an unattended run: the audit still records everything, which
     is what makes a completed run reviewable after the fact.
 
-    The hook only ever *narrows*: it can deny a call the profile allowed, and
+    The hook only ever *narrows*: an approver can deny a call the profile
+    allowed, and
     never allows one the profile denied -- a hook ``allow`` does not override
     a deny rule in the SDK's evaluation order, and relying on it to do so
     would put the containment boundary in two places.
@@ -589,21 +588,9 @@ def make_pretooluse_hook(
         tool_name = payload.get("tool_name") or ""
         tool_input = payload.get("tool_input") or {}
         use_id = payload.get("tool_use_id", tool_use_id)
-        denied_names = denied_shared_skills or set()
 
         decision, reason = "allow", ""
-        if (
-            tool_name == SKILL_TOOL
-            and isinstance(tool_input, Mapping)
-            and isinstance(tool_input.get("name"), str)
-            and tool_input["name"] in denied_names
-        ):
-            decision = "deny"
-            reason = (
-                f"shared skill {tool_input['name']!r} is denied in this run; "
-                "reuse the seeded intermediate artifacts"
-            )
-        elif approver is not None:
+        if approver is not None:
             approved, why = approver(tool_name, tool_input)
             if not approved:
                 decision = "deny"

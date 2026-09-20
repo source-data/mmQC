@@ -97,7 +97,6 @@ from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
 )
 from soda_mmqc.agentic.runner import (  # noqa: F401  (compatibility surface)
     _as_prediction,
-    _expand_example_selectors,
     _mock_trace,
     _write_prediction,
     DEFAULT_RUN_LABEL,
@@ -107,7 +106,6 @@ from soda_mmqc.agentic.runner import (  # noqa: F401  (compatibility surface)
     resolve_model,
     run_check_live,
     run_check_mock,
-    run_checklist_live,
 )
 from soda_mmqc.agentic.runtime import (  # noqa: F401  (compatibility surface)
     EXAMPLE_GOLD_SUBDIR,
@@ -581,12 +579,8 @@ def _build_parser() -> argparse.ArgumentParser:
         "run", help="Run a check over its benchmark examples"
     )
     run.add_argument("checklist", type=str, help="Name of the checklist")
-    run_target = run.add_mutually_exclusive_group(required=True)
-    run_target.add_argument("--check", type=str, help="Check to run")
-    run_target.add_argument(
-        "--all-checks",
-        action="store_true",
-        help="Run all checks in the checklist (agentic mode)",
+    run.add_argument(
+        "--check", type=str, required=True, help="Check to run"
     )
     run.add_argument(
         "--mock",
@@ -707,9 +701,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "run":
         try:
             if args.mock:
-                if args.all_checks:
-                    logger.error("--all-checks is not supported with --mock")
-                    return 2
                 path = run_check_mock(
                     args.checklist,
                     args.check,
@@ -736,36 +727,18 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "which versions to try, --unpin says of what."
                     )
                     return 2
-                if args.all_checks:
-                    if args.unpin:
-                        logger.error(
-                            "--all-checks does not support --unpin yet"
-                        )
-                        return 2
-                    path, report = run_checklist_live(
-                        args.checklist,
-                        output=args.output,
-                        model=args.model,
-                        examples=args.examples,
-                        limit=args.limit,
-                        keep_runtime=args.keep_runtime,
-                        approve_tools=args.approve_tools,
-                        provider=args.provider,
-                        unpin={name: versions for name in (args.unpin or [])},
-                    )
-                else:
-                    path, report = run_check_live(
-                        args.checklist,
-                        args.check,
-                        output=args.output,
-                        model=args.model,
-                        examples=args.examples,
-                        limit=args.limit,
-                        keep_runtime=args.keep_runtime,
-                        approve_tools=args.approve_tools,
-                        provider=args.provider,
-                        unpin={name: versions for name in (args.unpin or [])},
-                    )
+                path, report = run_check_live(
+                    args.checklist,
+                    args.check,
+                    output=args.output,
+                    model=args.model,
+                    examples=args.examples,
+                    limit=args.limit,
+                    keep_runtime=args.keep_runtime,
+                    approve_tools=args.approve_tools,
+                    provider=args.provider,
+                    unpin={name: versions for name in (args.unpin or [])},
+                )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)
             return 1
