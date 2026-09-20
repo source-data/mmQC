@@ -141,6 +141,30 @@ Gold needs no copying. It resolves as
 not by checklist — so every arm reads the same gold as the baseline
 ([examples.py](../../soda_mmqc/core/examples.py)).
 
+**A replicate is a resample, not a reproduction.** There is no seed to fix:
+two replicates of one configuration differ because the model is
+non-deterministic, and that variance is the thing they exist to measure. A
+replicate that disagrees with its siblings is data, not a defect.
+
+The harness produces them. Every run writes
+
+```
+<predictions root>/<arm>/rep-NN/<example>/prediction.json
+```
+
+with no exception for a single arm or a single replicate, and each
+prediction's sidecar records its arm and index — so a notebook reads what
+produced a prediction rather than parsing the path it happens to sit in.
+`--replicates N` chooses how many; `--unpin` chooses the arms. Scoring is
+pointed at one leaf at a time; pointing it at a run root is refused with a
+message naming the leaves.
+
+How many replicates an experiment needs, and how they are combined, is the
+experiment's to decide and to preregister. Note that a non-response scores as
+a fully missing row set rather than being excluded, so an arm that fails more
+often is correctly penalised — state that in the note rather than leaving a
+reader to infer it from layer S.
+
 **The checklist copy is built by a script, never by hand.** A copied
 directory arrives in git as ~88 brand-new files, so the thing that actually
 changed is invisible in the diff. The builder is the only readable statement
