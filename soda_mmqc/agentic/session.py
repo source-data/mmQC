@@ -55,6 +55,18 @@ INTERMEDIATES_DIRNAME = "intermediates"
 #: Name of the file holding one example's final leaf JSON.
 PREDICTION_FILENAME = "prediction.json"
 
+#: Tool inputs longer than this are recorded by shape rather than in full.
+#:
+#: The one that matters is the structured answer: the session passes it back
+#: as a tool input, so the audit was storing a verbatim second copy of the
+#: file sitting next to it. That was 3.9 KB of a 7 KB audit -- more than half
+#: of every committed run -- against a 0.25 KB skill trace that is the thing
+#: the experiments actually measure.
+#:
+#: A size rule rather than a check on the tool's name, because the name comes
+#: from the SDK and a rename would silently restore the duplication.
+AUDIT_INPUT_MAX_BYTES = 1024
+
 #: Sidecars written beside every prediction.
 SKILL_TRACE_FILENAME = "skill_trace.json"
 TOOL_AUDIT_FILENAME = "tool_audit.json"
@@ -448,6 +460,28 @@ async def _run_agent_session(
 
 
 
+def _audit_input(tool_input: Any) -> Any:
+    """One tool call's input, by shape when it is too big to keep whole.
+
+    What the audit is for is *what was attempted* -- which tool, with what
+    intent, allowed or denied. The full payload of a large input serves none
+    of that, and for the structured answer it is a second copy of
+    `prediction.json`. Shape is enough to tell the calls apart.
+    """
+    try:
+        encoded = json.dumps(tool_input, ensure_ascii=False, default=str)
+    except (TypeError, ValueError):
+        return {"elided": {"bytes": None, "keys": None}}
+    if len(encoded) <= AUDIT_INPUT_MAX_BYTES:
+        return tool_input
+    return {
+        "elided": {
+            "bytes": len(encoded),
+            "keys": sorted(tool_input) if isinstance(tool_input, Mapping) else None,
+        }
+    }
+
+
 class ToolAuditLog:
     """Every tool call the session attempted, and what happened to it.
 
@@ -488,7 +522,7 @@ class ToolAuditLog:
         self.entries.append(
             {
                 "tool": tool_name,
-                "input": tool_input,
+                "input": _audit_input(tool_input),
                 "tool_use_id": tool_use_id,
                 "decision": decision,
                 "reason": reason,

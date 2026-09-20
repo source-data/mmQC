@@ -4904,3 +4904,35 @@ class TestTheRunRecordsWhatItCost:
 
     def test_a_message_without_cost_yields_nothing(self):
         assert cli._extract_usage({"subtype": "init", "tools": []}) is None
+
+
+class TestTheAuditDoesNotDuplicateTheAnswer:
+    """The structured answer reaches the audit as a tool input.
+
+    It already sits beside it in prediction.json, and copying it doubled the
+    size of every committed run -- 3.9 KB of a 7 KB audit, against a 0.25 KB
+    skill trace that is the thing the experiments actually measure.
+    """
+
+    def test_a_large_input_is_recorded_by_shape(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        answer = {"outputs": [{"panel_label": c, "explanation": "x" * 200}
+                              for c in "ABCDEFGH"]}
+        audit.record("StructuredOutput", answer, "t1", "allow")
+        entry = json.loads(audit.path.read_text())["calls"][0]
+        assert entry["tool"] == "StructuredOutput"
+        assert entry["input"]["elided"]["bytes"] > cli.AUDIT_INPUT_MAX_BYTES
+        assert entry["input"]["elided"]["keys"] == ["outputs"]
+        assert "panel_label" not in json.dumps(entry)
+
+    def test_a_small_input_is_kept_whole(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.record("Skill", {"skill": SHARED_SKILL}, "t1", "allow")
+        entry = json.loads(audit.path.read_text())["calls"][0]
+        assert entry["input"] == {"skill": SHARED_SKILL}
+
+    def test_the_summary_still_counts_the_call(self, tmp_path: Path):
+        """Eliding the payload must not lose that the call happened."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.record("StructuredOutput", {"outputs": [{"x": "y" * 2000}]}, "t1", "allow")
+        assert "StructuredOutput" in audit.summary()

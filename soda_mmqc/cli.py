@@ -83,6 +83,7 @@ from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
     _openai_session_client,
     _run_agent_session,
     _session_message,
+    AUDIT_INPUT_MAX_BYTES,
     SKILL_SET_FILENAME,
     SKILL_TRACE_FILENAME,
     TOOL_AUDIT_FILENAME,
