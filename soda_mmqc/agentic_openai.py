@@ -201,7 +201,8 @@ def _system_prompt(
         for name, description in sorted(descriptions.items())
     )
     return (
-        "You are running one quality-control check on one scientific figure.\n\n"
+        "You are running one quality-control check on one example from a "
+        "scientific manuscript.\n\n"
         f"{orientation}\n\n"
         "## Skills available to you\n\n"
         "Invoke any of these with the `Skill` tool when the instructions you "
@@ -209,8 +210,8 @@ def _system_prompt(
         f"{catalogue}\n\n"
         "## Files in this run\n\n"
         f"{listing}\n\n"
-        "Begin by invoking the entry-point skill named in the orientation "
-        "above, then follow its instructions exactly."
+        "Begin by invoking the entry-point skill named in the request, then "
+        "follow its instructions exactly."
     )
 
 
