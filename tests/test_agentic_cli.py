@@ -2334,12 +2334,6 @@ class TestRuntimeOrientation:
                 assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
-        figure = assembled.root / manifest["figure"]
-        assert figure.is_file()
-        assert figure.suffix.lower() in cli.AGENTIC_IMAGE_EXTENSIONS
-        assert manifest["caption"] is None or (
-            assembled.root / manifest["caption"]
-        ).is_file()
         for entry in manifest["source_data"]:
             assert (assembled.root / entry).is_file()
 
@@ -2710,20 +2704,17 @@ def _tool_use(name: str, payload: dict, use_id: str = "t1"):
 def _fake_client(messages, *, writes=None, layout=None, captured=None):
     """Build a client that emits `messages` and optionally writes an output."""
 
-    async def client(prompt, options):
+    async def client(parts, options):
         if captured is not None:
-            captured["prompt"] = prompt
+            captured["parts"] = list(parts)
             captured["options"] = dict(options)
         for message in messages:
             yield message
-        if writes is not None and layout is not None:
-            # A session that produces a prediction must have opened the
-            # figure: the runner rejects one that did not, because a
-            # schema-valid answer written without looking scores as though
-            # the work was done. Model that here so the doubles stay
-            # faithful to what a real session has to do.
-            image = cli._resolve_staged_inputs(layout.input_root)["image"]
-            yield _tool_use("Read", {"file_path": str(image)}, "t-figure")
+        if writes is not None:
+            # No figure read is modelled any more: the content arrives with
+            # the request, so there is no fetch a session could skip and no
+            # gate for the double to satisfy.
+            #
             # The answer arrives as the session's structured result, not as a
             # file the session wrote: `output_format` constrains it to the
             # leaf schema and the runner serialises it.
@@ -2765,7 +2756,7 @@ class TestAgentSession:
         _run(assembled, client=client)
 
         assert captured["options"]["cwd"] == str(assembled.root)
-        assert PILOT_LEAF in captured["prompt"]
+        assert PILOT_LEAF in captured["parts"][0]["text"]
 
     def test_no_closure_is_supplied_to_the_session(self, assembled):
         """Naming the dependency would make the trace measure this string."""
@@ -2774,7 +2765,10 @@ class TestAgentSession:
             [], writes=_valid_prediction(), layout=assembled, captured=captured
         )
         _run(assembled, client=client)
-        assert SHARED_SKILL not in captured["prompt"]
+        assert not any(
+            SHARED_SKILL in part.get("text", "")
+            for part in captured["parts"]
+        )
 
     def test_every_skill_description_is_available_to_the_session(
         self, assembled
@@ -2872,7 +2866,7 @@ class TestSkillTrace:
         trace_path = tmp_path / "t.json"
         seen = {}
 
-        async def dying_client(prompt, options):
+        async def dying_client(parts, options):
             yield _tool_use("Skill", {"name": SHARED_SKILL})
             seen["on_disk"] = json.loads(trace_path.read_text())
             raise RuntimeError("session died")
@@ -3216,16 +3210,12 @@ class TestToolAudit:
         tool use, which is the contract the SDK implements.
         """
         audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        image = cli._resolve_staged_inputs(assembled.input_root)["image"]
         messages = [
             _tool_use("Read", {"file_path": "input/caption.txt"}, "r1"),
-            # A real session opens the figure, and the runner now refuses a
-            # prediction from one that did not.
-            _tool_use("Read", {"file_path": str(image)}, "r2"),
             _tool_use("Skill", {"name": SHARED_SKILL}, "s1"),
         ]
 
-        async def hook_calling_client(prompt, options):
+        async def hook_calling_client(parts, options):
             hook = options["hooks"]["PreToolUse"][0]
             for message in messages:
                 for name, payload, use_id in cli._extract_tool_calls(message):
@@ -3243,7 +3233,7 @@ class TestToolAudit:
 
         _run(assembled, client=hook_calling_client, audit_log=audit)
 
-        assert [e["tool"] for e in audit.entries] == ["Read", "Read", "Skill"]
+        assert [e["tool"] for e in audit.entries] == ["Read", "Skill"]
         assert all(e["decision"] == "allow" for e in audit.entries)
 
     def test_the_audit_records_tools_the_trace_does_not(
@@ -4366,7 +4356,7 @@ class TestTheTurnCeilingActuallyGoverns:
         client = make_openai_client(
             {"a": "body"}, {"a": "desc"}, tools, "orientation", model="m"
         )
-        asyncio.run(_drain(client("go", {"max_turns": 3})))
+        asyncio.run(_drain(client([{"kind": "text", "text": "go"}], {"max_turns": 3})))
         assert len(calls) == 3, (
             f"ran {len(calls)} turns; the ceiling from model-defaults.yaml "
             "was ignored"
@@ -4388,7 +4378,7 @@ class TestTheTurnCeilingActuallyGoverns:
             {"a": "body"}, {"a": "desc"}, tools, "orientation",
             model="m", max_turns=2,
         )
-        asyncio.run(_drain(client("go", {})))
+        asyncio.run(_drain(client([{"kind": "text", "text": "go"}], {})))
         assert len(calls) == 2
 
     def test_the_real_checklist_ceiling_reaches_the_session_options(
@@ -4752,3 +4742,46 @@ class TestRunAllAgenticChecks:
             ["run", "fig-checklist", "--all-checks", "--limit", "1"]
         )
         assert code == 0
+
+
+@requires_subpanel_figure
+class TestTheContentIsPushedNotPulled:
+    """The example's content travels with the request, not behind a Read.
+
+    Everything figure-shaped in the harness followed from pull: the harness
+    had to discover which staged file was the figure, name it, and then
+    refuse a prediction from a session that never fetched it. Pushing the
+    content deletes the discovery, the naming and the refusal together.
+    """
+
+    def test_the_layout_carries_the_examples_parts(self, assembled):
+        kinds = [part["kind"] for part in assembled.input_parts]
+        assert kinds == ["text", "image"]
+
+    def test_image_parts_are_rebased_onto_the_runtime(self, assembled):
+        image = next(p for p in assembled.input_parts if p["kind"] == "image")
+        assert image["path"].startswith(f"{cli.AGENTIC_INPUT_SUBDIR}/")
+        assert (assembled.root / image["path"]).is_file()
+
+    def test_the_session_message_leads_with_the_instruction(self, assembled):
+        message = cli._session_message(assembled)
+        assert message[0]["kind"] == "text"
+        assert PILOT_LEAF in message[0]["text"]
+        assert "figure" not in message[0]["text"].lower()
+        assert message[1:] == list(assembled.input_parts)
+
+    def test_the_manifest_names_supporting_files_only(self, assembled):
+        manifest = json.loads(
+            (
+                assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            ).read_text(encoding="utf-8")
+        )
+        assert set(manifest) == {"source_data"}
+        for entry in manifest["source_data"]:
+            assert (assembled.root / entry).is_file()
+
+    def test_the_read_gate_is_gone(self):
+        """An input in the opening message cannot go unread."""
+        assert not hasattr(cli, "_assert_the_session_read_the_figure")
+        assert not hasattr(cli, "_resolve_staged_inputs")
+        assert not hasattr(cli, "AGENTIC_IMAGE_EXTENSIONS")

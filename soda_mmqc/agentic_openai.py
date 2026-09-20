@@ -43,7 +43,7 @@ import base64
 import json
 import mimetypes
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 from soda_mmqc import logger
 
@@ -270,7 +270,11 @@ def make_openai_client(
     """
     from openai import OpenAI
 
-    async def client(prompt: str, options: Mapping[str, Any]):
+    from soda_mmqc.agentic_render import render_openai
+
+    async def client(
+        parts: Sequence[Mapping[str, Any]], options: Mapping[str, Any]
+    ):
         openai_client = OpenAI()
         hook = (options.get("hooks") or {}).get("PreToolUse", [None])[0]
 
@@ -289,7 +293,7 @@ def make_openai_client(
                     orientation, descriptions, tools.listing()
                 ),
             },
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": render_openai(parts, tools.root)},
         ]
         schemas = _tool_schemas(sorted(skill_bodies))
         nudged = False

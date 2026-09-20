@@ -59,7 +59,6 @@ from soda_mmqc.config import (
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
     AGENTIC_FORBIDDEN_TOOLS,
-    AGENTIC_IMAGE_EXTENSIONS,
     AGENTIC_MAX_BUFFER_BYTES,
     AGENTIC_CLAUDE_TEMPLATE,
     AGENTIC_INPUT_MANIFEST_FILENAME,
@@ -77,7 +76,7 @@ from soda_mmqc.config import (
     EXAMPLES_DIR,
     resolve_agentic_runtime_root,
 )
-from soda_mmqc.core.examples import EXAMPLE_FACTORY
+from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
 from soda_mmqc.scripts.run import (
     EVALUATION_CONTRACT_FILES,
     ModelResult,
@@ -1400,6 +1399,12 @@ class RuntimeLayout:
     agent_home: Path
     example: str
 
+    #: The example's content, as provider-neutral parts, with `path`
+    #: values rebased onto this runtime. Resolved at assembly because the
+    #: layout deliberately keeps no link back to the benchmark that names
+    #: the example class.
+    input_parts: Tuple[Mapping[str, Any], ...] = ()
+
 
 def select_versions(
     skills: Mapping[str, Mapping[str, Skill]],
@@ -1470,75 +1475,69 @@ def _copy_skill(skill: Skill, destination: Path) -> None:
         shutil.copy2(schema, destination / "schema.json")
 
 
-def _resolve_staged_inputs(input_root: Path) -> Dict[str, Any]:
-    """Pick which staged files are the figure, the caption and the source data.
-
-    Choosing the files to put in front of the model is the harness's job, not
-    the agent's. The session has no `Glob`, no `LS` and no `Bash` -- by
-    design -- so an unnamed input is one it can only guess at, and it does:
-    a run on 2026-09-19 spent 32 of its 24 turns reading `figure.png`,
-    `image.png`, `fig.png`, `a.png`, `figure.xyz` and finally `*`, never
-    reaching `44318_2026_715_Fig1_HTML.webp`. An earlier run guessed ten
-    times, gave up, and wrote a prediction from the caption alone that
-    scored 8/8 against all-negative gold. Silent, and wrong.
-
-    Nothing is renamed or converted: the runtime is a copy, not a processed
-    copy. Only the *names* are resolved, and `_render_orientation` states
-    them.
+def _resolve_example(checklist: str, check: str, example: str) -> Example:
+    """Build the `Example` for one benchmark entry.
 
     Raises:
-        FileNotFoundError: If no file with a known image extension is
-            staged. The legacy path raises for the same reason
-            (`core/examples.py`, "No image found"); a session that cannot
-            see the figure must not be allowed to score one.
+        ValueError: If the check's benchmark declares no ``example_class``.
     """
-    files = sorted(p for p in input_root.iterdir() if p.is_file())
-
-    image = None
-    for extension in AGENTIC_IMAGE_EXTENSIONS:
-        for candidate in files:
-            if candidate.suffix.lower() == extension:
-                image = candidate
-                break
-        if image:
-            break
-    if image is None:
-        raise FileNotFoundError(
-            f"No figure image in {input_root}: nothing with an extension in "
-            f"{', '.join(AGENTIC_IMAGE_EXTENSIONS)}. The agent cannot list "
-            f"the directory, so a run without a named image would score the "
-            f"caption alone."
-        )
-
-    caption = next((p for p in files if p.suffix.lower() == ".txt"), None)
-
-    source_root = input_root / "source_data"
-    source_data = (
-        sorted(p for p in source_root.rglob("*") if p.is_file())
-        if source_root.is_dir() else []
+    benchmark = _read_json(
+        resolve_check_dir(checklist, check) / "benchmark.json"
     )
-    return {"image": image, "caption": caption, "source_data": source_data}
+    example_class = benchmark.get("example_class")
+    if not example_class:
+        raise ValueError(
+            f"No example_class in {checklist}/{check}/benchmark.json. The "
+            "harness cannot state this example's input without knowing what "
+            "kind of example it is, and it must not guess from extensions."
+        )
+    return EXAMPLE_FACTORY.create(example, example_class)
 
 
-def _write_input_manifest(source_root: Path) -> None:
-    """Write `input/inputs.json`, naming what the harness staged.
+def _rebase_into_input(value: Any) -> Any:
+    """Move one content-relative path onto the runtime's `input/`."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return f"{AGENTIC_INPUT_SUBDIR}/{value}"
+    if isinstance(value, list):
+        return [_rebase_into_input(item) for item in value]
+    raise TypeError(
+        f"paths must be str, None or list of str; got {type(value).__name__}"
+    )
 
-    Per-run facts belong in data the agent can parse, not in prose it has to
-    interpret. The session has no shell, no glob and no directory listing, so
-    a file this does not name is a file it can only guess at -- and it does
-    guess, badly: before the harness named them, one run spent 32 turns on
-    `figure.png`, `a.png`, `figure.xyz` and finally `*`, and another answered
-    from the caption alone and scored 8/8 against all-negative gold.
 
-    Filenames are left exactly as curated. The runtime is a copy, not a
-    processed copy; only the *names* are stated.
+def _rebase_parts(
+    parts: Sequence[Mapping[str, Any]]
+) -> Tuple[Mapping[str, Any], ...]:
+    """Rebase image parts onto the runtime; text parts pass through."""
+    rebased: List[Mapping[str, Any]] = []
+    for part in parts:
+        if part["kind"] == "image":
+            rebased.append({**part, "path": _rebase_into_input(part["path"])})
+        else:
+            rebased.append(dict(part))
+    return tuple(rebased)
+
+
+def _write_input_manifest(source_root: Path, staged: Example) -> None:
+    """Write `input/inputs.json`, naming the files the session may open.
+
+    The example's *content* is not here -- it is in the opening message, so
+    it cannot be missed. What remains are files the session may want and
+    usually does not: a figure example may carry several spreadsheets, and
+    most checks open none of them. That is the whole argument for leaving
+    them as files. It is not an argument about *when* something enters
+    context -- a file that is read stays in the history exactly as a pushed
+    part does -- but about the ones that are never read at all, which cost
+    nothing.
+
+    The session has no shell, no glob and no directory listing, so a file
+    this does not name is one it can only guess at.
     """
-    staged = _resolve_staged_inputs(source_root / AGENTIC_INPUT_SUBDIR)
-    rel = lambda path: str(path.relative_to(source_root))      # noqa: E731
     manifest = {
-        "figure": rel(staged["image"]),
-        "caption": rel(staged["caption"]) if staged["caption"] else None,
-        "source_data": [rel(p) for p in staged["source_data"]],
+        role: _rebase_into_input(value)
+        for role, value in staged.supporting_files().items()
     }
     path = source_root / AGENTIC_INPUT_SUBDIR / AGENTIC_INPUT_MANIFEST_FILENAME
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
@@ -1596,6 +1595,7 @@ def assemble_runtime(
             validate_version_manifest(skills, pins, checklist_dir)
     selected = select_versions(skills, pins)
     input_dir = _resolve_example_input_dir(example)
+    staged_example = _resolve_example(checklist, check, example)
 
     if root is None:
         root = Path(
@@ -1631,8 +1631,9 @@ def assemble_runtime(
             entry_point=check,
             schema_path=root / AGENTIC_SKILLS_SUBDIR / check / "schema.json",
             example=example,
+            input_parts=_rebase_parts(staged_example.input_parts()),
         )
-        _write_input_manifest(staging)
+        _write_input_manifest(staging, staged_example)
         shutil.copy2(
             AGENTIC_CLAUDE_TEMPLATE, staging / AGENTIC_ORIENTATION_FILENAME
         )
@@ -2128,15 +2129,23 @@ def compare_declared_and_observed(
     }
 
 
-async def _default_client(prompt: str, options: Mapping[str, Any]):
+async def _default_client(
+    parts: Sequence[Mapping[str, Any]], options: Mapping[str, Any]
+):
     """Adapter over the Agent SDK's ``query()``.
 
     Isolated behind one function so every test can substitute a fake and the
     SDK import stays lazy -- importing it costs a ~200 MB bundled binary's
     worth of path resolution, and a credential-free ``--mock`` run must not
     need it at all.
+
+    ``query`` accepts ``str | AsyncIterable[dict]``. Streaming mode is used
+    because the example's content travels with the request, and content
+    blocks are how an image gets into an opening message.
     """
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
+
+    from soda_mmqc.agentic_render import render_anthropic
 
     payload = dict(options)
     # `hooks` travels through session_options() as plain callables so the
@@ -2149,25 +2158,45 @@ async def _default_client(prompt: str, options: Mapping[str, Any]):
             for event, callbacks in raw_hooks.items()
         }
 
+    root = Path(payload["cwd"])
+
+    async def message_stream():
+        yield {
+            "type": "user",
+            "message": {
+                "role": "user",
+                "content": render_anthropic(parts, root),
+            },
+        }
+
     async for message in query(
-        prompt=prompt, options=ClaudeAgentOptions(**payload)
+        prompt=message_stream(), options=ClaudeAgentOptions(**payload)
     ):
         yield message
 
 
-def _session_prompt(layout: RuntimeLayout) -> str:
-    """The request handed to the session.
+def _session_message(layout: RuntimeLayout) -> List[Dict[str, Any]]:
+    """The request handed to the session: an instruction, then the content.
 
-    It names the entry point and points at the orientation file. It does
-    **not** name the entry point's dependencies or order them: reaching them
-    is the agent's job, and supplying a closure here would make the trace a
-    measurement of this string rather than of the skills' prose.
+    It names the entry point and does **not** name the entry point's
+    dependencies or order them: reaching them is the agent's job, and
+    supplying a closure here would make the trace a measurement of this
+    string rather than of the skills' prose.
+
+    The example's content follows the instruction rather than waiting in a
+    file. A session cannot fail to fetch what it was already given, which is
+    why this commit deletes the gate that used to check.
     """
-    return (
-        f"Apply the `{layout.entry_point}` check to the figure staged in "
-        f"{AGENTIC_INPUT_SUBDIR}/, and answer with the structured output "
-        f"you were given a schema for."
-    )
+    instruction = {
+        "kind": "text",
+        "text": (
+            f"Apply the `{layout.entry_point}` check to the example below, "
+            f"and answer with the structured output you were given a schema "
+            f"for. Supporting files, if any, are named in "
+            f"{AGENTIC_INPUT_SUBDIR}/{AGENTIC_INPUT_MANIFEST_FILENAME}."
+        ),
+    }
+    return [instruction, *(dict(part) for part in layout.input_parts)]
 
 
 def _extract_result_text(message: Any) -> Optional[str]:
@@ -2233,39 +2262,6 @@ def _extract_tool_calls(message: Any) -> Iterator[Tuple[str, Any, Any]]:
             yield name, payload, use_id
 
 
-def _assert_the_session_read_the_figure(
-    layout: RuntimeLayout, read_paths: Set[str]
-) -> None:
-    """Refuse a prediction produced without opening the figure.
-
-    A schema-valid answer is not evidence that the work happened. On
-    2026-09-18 a session failed to guess the image filename, gave up, and
-    wrote an answer from the caption alone; every panel said `micrograph:
-    "no"`, the gold for that figure is all-negative, and it scored 8/8. The
-    run was recorded as `ok`. Nothing in the pipeline could tell that
-    apart from a real result, which is the failure mode the Milestone 2
-    spike warned about: "a benchmark that quietly scores a run which never
-    did the work".
-
-    The harness now names the image in the orientation, so not reading it is
-    a deliberate act rather than an accident -- but this check is what makes
-    the guarantee hold regardless of what any future skill's prose says.
-
-    Raises:
-        ValueError: If no tool call in the trace read the staged image.
-    """
-    image = _resolve_staged_inputs(layout.input_root)["image"]
-    targets = {str(image), str(image.resolve())}
-    if read_paths & targets:
-        return
-    raise ValueError(
-        f"The session wrote a prediction without reading the figure "
-        f"({image.name}). A schema-valid answer produced from the caption "
-        f"alone scores as though the work was done; it is an error, not a "
-        f"result."
-    )
-
-
 async def _run_agent_session(
     layout: RuntimeLayout,
     *,
@@ -2306,7 +2302,7 @@ async def _run_agent_session(
 
     read_paths: Set[str] = set()
     result_text: Optional[str] = None
-    async for message in run(_session_prompt(layout), options):
+    async for message in run(_session_message(layout), options):
         info = _extract_session_info(message)
         if info:
             audit.note_session(info)
@@ -2341,7 +2337,6 @@ async def _run_agent_session(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(prediction, indent=2) + "\n", encoding="utf-8")
     validate_against_schema(prediction, _leaf_schema(layout))
-    _assert_the_session_read_the_figure(layout, read_paths)
     return prediction, recorder, audit
 
 

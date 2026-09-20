@@ -253,13 +253,6 @@ AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
 #: smaller surface.
 AGENTIC_BASE_TOOLS = ("Read", "Skill")
 
-#: Extensions the harness will accept as *the* figure image, in priority
-#: order. Deliberately the same list the legacy path uses in
-#: `core/examples.py`, so both routes present the same file to the model.
-#: Picking the image is mechanical harness work: the agent has no directory
-#: listing tool and must never be left to guess a filename.
-AGENTIC_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".tiff", ".webp")
-
 #: Ceiling for the SDK's newline-delimited JSON reader.
 #:
 #: The SDK reads the CLI's stream with a 1 MB default buffer, and a figure the
