@@ -121,7 +121,8 @@ stay listed: a method section is more honest when the dead ends are visible.
 
 | id | kind | question | status | headline result | note | notebook |
 |----|------|----------|--------|-----------------|------|----------|
-| — | — | *none yet* | — | — | — | — |
+| — | exploration | How much does a check's score move between identical runs, and how many replicates does it take to see past that? | planned | — | [note](exploration-replicate-variability.md) | [nb](../../notebooks/experiments/exploration-replicate-variability.ipynb) |
+| exp-01 | experiment | Do detailed skill instructions outperform minimal ones? | planned | — | *unwritten* | [nb](../../notebooks/experiments/exp-01-skill-verbosity.ipynb) |
 
 `kind` is `exploration` or `experiment`; `status` is `planned`, `running`,
 `done` or `abandoned`.
