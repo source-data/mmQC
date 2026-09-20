@@ -104,9 +104,8 @@ what is relevant; dropping a panel here silently removes it from that decision.
 Return the panel inventory as JSON conforming to the `schema.json` file that
 sits next to this skill.
 
-Then **immediately write that exact JSON** to `artifacts/panels.json` using the
-`Write` tool (path exactly `artifacts/panels.json`, not `panels.json`), so that
-another skill can re-read the inventory instead of deriving it again.
-
-Only after writing `artifacts/panels.json`, report the same inventory back to
-the skill that called you.
+You are not a separate agent and there is nothing to return to: invoking this
+skill loaded these instructions into the session that is already running. So
+"return" means state the inventory in your own reply, where the rest of the
+work can use it. Nothing is written to disk -- the session has no write tool,
+and the final answer is delivered as structured output.

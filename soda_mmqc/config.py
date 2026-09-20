@@ -205,8 +205,89 @@ AGENTIC_ARTIFACTS_SUBDIR = Path("artifacts")
 #: Where the current example's inputs are copied, relative to the runtime root.
 AGENTIC_INPUT_SUBDIR = Path("input")
 
+#: `CLAUDE_CONFIG_DIR` for the session, inside the runtime.
+#:
+#: Without it the session writes its transcript to
+#: `~/.claude/projects/<slugified-cwd>/` -- outside the runtime, surviving
+#: teardown, and holding the gold-derived reasoning the containment exists to
+#: keep in. Redirecting it also folds the transcript into the same artifact as
+#: the skills and the staged example, so `--keep-runtime` preserves what the
+#: session actually thought.
+AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
+
+#: The base set of built-in tools the session *has*, as opposed to the ones it
+#: may use without prompting.
+#:
+#: `tools` and `allowed_tools` are different mechanisms and the distinction
+#: cost this project real containment. The SDK: `tools` is "the base set of
+#: available built-in tools"; `allowed_tools` is "tool names that are
+#: auto-allowed without prompting". Naming three tools in `allowed_tools`
+#: left roughly twenty in the model's context, and the profile then had to
+#: enumerate every dangerous one by name -- a list that grew on 2026-09-14
+#: after a live session reported what it actually had, missed
+#: `ShareOnboardingGuide` until 2026-09-19, and left `Write` reachable but
+#: unscoped, so a skill told to write `artifacts/panels.json` could equally
+#: have overwritten its own `SKILL.md`.
+#:
+#: Naming what the session may have turns "enumerate everything dangerous"
+#: into "enumerate what is needed", which is a list the checks can justify:
+#: Read for the staged inputs and Skill to reach the DAG. That is all.
+#:
+#: **The session writes nothing.** A check observes an example; it does not
+#: change one. The final answer is a structured result the runner serialises,
+#: so no file needs writing to deliver it, and the only remaining reason to
+#: write was to hand an intermediate to a later check -- which is a channel
+#: between runs that nothing bounds. "Only `panels.json`" is a convention,
+#: not a constraint: a session with a write tool can put anything anywhere it
+#: is allowed to write, and a later check picking that up would be an
+#: interaction nobody declared.
+#:
+#: Not a permanent position. Whether skills should exchange artefacts on disk
+#: is a real design question and deserves an experiment of its own, comparing
+#: arms that do and do not. Starting without means the comparison has a
+#: baseline; starting with means every arm already contains the thing under
+#: test.
+#:
+#: No Glob either: the manifest names every staged file, and searching is not
+#: the agent's job. The deny list below stays as defence in depth over a much
+#: smaller surface.
+AGENTIC_BASE_TOOLS = ("Read", "Skill")
+
+#: Extensions the harness will accept as *the* figure image, in priority
+#: order. Deliberately the same list the legacy path uses in
+#: `core/examples.py`, so both routes present the same file to the model.
+#: Picking the image is mechanical harness work: the agent has no directory
+#: listing tool and must never be left to guess a filename.
+AGENTIC_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".tiff", ".webp")
+
+#: Ceiling for the SDK's newline-delimited JSON reader.
+#:
+#: The SDK reads the CLI's stream with a 1 MB default buffer, and a figure the
+#: session opens arrives base64-encoded inside a single JSON message. Reading
+#: one overflows that buffer and kills the session with a decode error rather
+#: than anything that names an image. Nothing hit this until the harness began
+#: naming the staged figure: before that the agent guessed filenames, never
+#: opened one, and answered from the caption alone.
+#:
+#: A ceiling, not an allocation -- nothing is reserved.
+AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
+
 #: The generated per-run orientation file, relative to the runtime root.
-AGENTIC_ORIENTATION_FILENAME = "ORIENTATION.md"
+#: The runtime's project instructions. `CLAUDE.md` rather than a bespoke
+#: orientation file: the SDK loads it automatically when `setting_sources`
+#: includes "project" (which it does), so the session starts with the layout
+#: already in context instead of spending its first turn reading a file. It is
+#: static -- identical for every run -- and everything per-run lives in the
+#: manifest below.
+AGENTIC_ORIENTATION_FILENAME = "CLAUDE.md"
+
+#: Template copied verbatim into each runtime as `CLAUDE.md`.
+AGENTIC_CLAUDE_TEMPLATE = DATA_DIR / "agentic" / "CLAUDE.md"
+
+#: Per-run manifest naming exactly what the harness staged. Machine-readable
+#: on purpose: which files exist is data, not prose, and the agent has no way
+#: to discover them otherwise.
+AGENTIC_INPUT_MANIFEST_FILENAME = "inputs.json"
 
 #: Setting sources passed to the SDK session.
 #:
@@ -258,7 +339,7 @@ AGENTIC_SETTING_SOURCES = ("project",)
 #: "Edit(path) rules govern all built-in tools that write files, including
 #: Write and NotebookEdit; a Write(path) rule is never matched by the file
 #: permission checks." A scoped `Write(...)` rule would silently match nothing.
-AGENTIC_ALLOWED_TOOL_NAMES = ("Read", "Edit", "Skill")
+AGENTIC_ALLOWED_TOOL_NAMES = ("Read", "Skill")
 
 #: Tools removed from the model's context entirely, each for a specific
 #: reason. Bare names are required: a scoped rule leaves the tool available.
@@ -294,6 +375,10 @@ AGENTIC_FORBIDDEN_TOOLS = {
     # message, notify or schedule can move gold-derived content out of the
     # runtime and can act after the run is over.
     "SendMessage": "egress path out of the sealed runtime",
+    # Observed in the reported tool set on 2026-09-19 and missing from this
+    # list: it uploads a local file and returns a shareable link, which is an
+    # exfiltration path for gold-derived content exactly like the three below.
+    "ShareOnboardingGuide": "egress path out of the sealed runtime",
     "PushNotification": "egress path out of the sealed runtime",
     "ScheduleWakeup": "would let the session act after the run ends",
     "CronCreate": "would let the session act after the run ends",
