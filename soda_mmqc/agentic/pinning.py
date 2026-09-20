@@ -60,10 +60,6 @@ VERSION_MANIFEST_FILENAME = "version-manifest.yaml"
 MODEL_DEFAULTS_FILENAME = "model-defaults.yaml"
 
 #: Generated. The machine-readable picture of the graph.
-DAG_FILENAME = "dag.yaml"
-
-#: Generated. The same picture, for a person.
-GENERATED_README_FILENAME = "README.md"
 
 #: Session option keys `model-defaults.yaml` may not set. These are the
 #: containment boundary, which is a property of the runtime rather than of a
