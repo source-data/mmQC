@@ -156,3 +156,15 @@ experiments/results/
 soda_mmqc/data/evaluation/*
 !soda_mmqc/data/evaluation/.gitkeep
 
+# `experiments/runs/` is tracked on purpose, but only for what cannot be
+# regenerated. Predictions are committed because they cost money and come
+# from a non-deterministic model: run the check again and you get
+# different ones. An analysis is neither -- it is a pure function of the
+# committed predictions, the committed gold and the committed
+# eval-manifest.json, so the repo already pins it by pinning those three,
+# and `mmqc score` reproduces it for free.
+#
+# It is also bulky: about 70% the size of the predictions it scores,
+# because each record embeds a copy of expected_output and model_output
+# that both already exist elsewhere in the tree.
+experiments/runs/**/analysis.json
