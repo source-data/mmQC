@@ -252,3 +252,74 @@ overnight-plus job, and replicates are independent by construction, so
 parallelism — left out of scope in
 [`plans/2026-09-20-replicates-in-the-harness.md`](../plans/2026-09-20-replicates-in-the-harness.md)
 — is the obvious next lever if exp-01 needs to be repeated.
+
+---
+
+## Addendum, 2026-09-21: the same data, read per property
+
+Everything above reduces each replicate to one instance-weighted mean
+**across** the check's eight leaf properties. That was a deliberate
+shortcut: the probe needed a replicate count, not a per-property result,
+and the weighting was there to stop `mean_score` contributing a false
+`0.0` for properties with nothing applicable.
+
+That false zero is now fixed at the source — `mean_score` is `None` when
+nothing was applicable and carries its denominator — and
+`soda_mmqc.reporting` can compute the same decomposition per property. Re-run
+against the same ten replicates, the pooled figure reproduces (0.0265
+against the 0.0254 recorded above, the difference being the weighting), so
+this is the same data read two ways rather than a correction.
+
+| | per-example SD | SE of a paired difference, n=3 |
+|---|---|---|
+| pooled across properties *(above)* | 0.0265 | 0.0035 |
+| `outputs[].replicate_statements` | 0.1499 | **0.0199** |
+| `outputs[].n_reported` | 0.0609 | 0.0081 |
+| `outputs[].decision` | 0.0451 | 0.0060 |
+| `outputs[].replicate_type_reported` | 0.0306 | 0.0040 |
+| `outputs[].replicate_type` | 0.0237 | 0.0031 |
+| `outputs[].explanation` | 0.0225 | 0.0030 |
+| `outputs[].involves_replicates` | 0.0135 | 0.0018 |
+| `outputs[].panel_label` | 0.0000 | 0.0000 |
+
+**The noise is not a property of the check.** It sits almost entirely in
+one field. `panel_label` is perfectly reproducible across ten runs;
+`replicate_statements` moves by 5.7x more than the pooled figure suggests.
+A single number for "this check" describes none of them.
+
+### Does the decision change?
+
+**No, but it needs a caveat.** Six of the eight properties have an SE below
+0.0040 at n=3 and comfortably resolve the 0.01 effect this note's criterion
+names. Two do not:
+
+- `n_reported` at 0.0081 is marginal.
+- `replicate_statements` at 0.0199 does not resolve 0.01 — **and no
+  feasible replicate count does.** n=5 gives 0.0154, n=7 gives 0.0130,
+  n=10 gives 0.0109. The curve flattens because it falls as 1/sqrt(n).
+
+So the argument for three replicates gets *stronger*, not weaker: more
+sampling was never going to rescue the noisiest field, and it buys little
+for the seven others that are already resolved. What changes is the claim.
+Not "three replicates resolve this check", but:
+
+> Three replicates resolve a 0.01 effect on every leaf property of this
+> check except `replicate_statements`, where no replicate count does. A
+> difference on that property has to be large to be readable, and a null
+> there is not evidence of no effect.
+
+### What this means for exp-01
+
+Read `replicate_statements` against its own standard error rather than
+against the others. If exp-01's finding turns on that field, the finding is
+weak whatever the replicate count — that is a property of the measurement,
+not of the run.
+
+This is also the second time the pooled reading hid something material.
+The first was the false zero. Both are why
+`thinking/plans/2026-09-21-reporting-measures-one-property.md` makes the
+leaf property the unit of measurement and forbids averaging across
+properties anywhere in `soda_mmqc`.
+
+Reproduced by `notebooks/experiments/exploration-replicate-variability.ipynb`,
+which now computes all of the above per property.
