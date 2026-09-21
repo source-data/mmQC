@@ -8,6 +8,7 @@ import pandas as pd
 
 from soda_mmqc.core.eval_manifest import MatchingMetric
 from soda_mmqc.core.evaluation import format_ancestor_context
+from soda_mmqc.core.property_rollup import rollup_by_property
 
 from soda_mmqc.reporting.aggregate import (
     RunSummary,
@@ -242,23 +243,33 @@ def instance_culprits_table(summary: RunSummary) -> pd.DataFrame:
 
 
 def per_doc_property_table(summary: RunSummary) -> pd.DataFrame:
-    """Per (doc, leaf property) mean scores from per-doc ``by_property``."""
+    """Per (doc, leaf property) rollups, derived per document.
+
+    This used to read the ``by_property`` block stored in each record's
+    analysis, while :func:`aggregate_run` recomputed its own from
+    ``instances`` -- two live paths to the same number, which agreed only
+    until a manifest threshold moved. Both now derive, here and there,
+    from the same :func:`rollup_by_property`.
+    """
     rows: list[dict[str, Any]] = []
     for record in summary.records:
-        by_property = record.analysis.get("by_property", {})
-        if not isinstance(by_property, dict):
+        instances = record.analysis.get("instances", ())
+        if not isinstance(instances, list):
             continue
-        for leaf_property, payload in by_property.items():
-            if not isinstance(payload, dict):
-                continue
+        rollups = rollup_by_property(
+            (inst for inst in instances if isinstance(inst, dict)),
+            summary.manifest,
+        )
+        for leaf_property, rollup in rollups.items():
             rows.append(
                 {
                     "doc_id": record.doc_id,
                     "leaf_property": leaf_property,
                     "field": leaf_property_tail(leaf_property),
-                    "mean_score": payload.get("mean_score"),
-                    "layer1_counts": payload.get("layer1_counts", {}),
-                    "layer2_counts": payload.get("layer2_counts", {}),
+                    "mean_score": rollup.mean_score,
+                    "n_scored": rollup.n_scored,
+                    "layer1_counts": rollup.layer1_counts,
+                    "layer2_counts": rollup.layer2_counts,
                 }
             )
     return pd.DataFrame(rows)

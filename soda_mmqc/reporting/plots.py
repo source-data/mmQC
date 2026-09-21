@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from soda_mmqc.core.property_rollup import instance_eligible_for_mean_score
+from soda_mmqc.core.property_rollup import instance_is_scored
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, field_order, leaf_property_tail
 from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
@@ -116,7 +116,7 @@ def applicable_instance_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 continue
             profile = summary.manifest.profile_for(leaf_property)
             profiled = profile is not None and profile.is_profiled
-            if not instance_eligible_for_mean_score(instance, profiled=profiled):
+            if not instance_is_scored(instance, profiled=profiled):
                 continue
             score = instance.get("score")
             if not isinstance(score, (int, float)):

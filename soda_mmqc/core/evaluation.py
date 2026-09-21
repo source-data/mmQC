@@ -36,10 +36,6 @@ from soda_mmqc.core.leaves import (
 )
 from soda_mmqc.core.object_list_pairing import align_object_rows, mapping_rows_only
 from soda_mmqc.core.schema_discovery import LeafKind
-from soda_mmqc.core.property_rollup import (
-    eligible_instance_count,
-    property_mean_score,
-)
 from soda_mmqc.core.structural_reporting import ByListResult, build_by_list
 
 
@@ -87,60 +83,50 @@ class LeafInstanceResult:
 
 
 @dataclass
-class PropertySummary:
-    """Aggregated reporting for one leaf property.
-
-    ``mean_score`` is ``None`` when ``eligible`` is 0 -- the property had
-    nothing to score on this example. That is not ``0.0``, which is a score
-    a model can earn, and the distinction has to survive into
-    ``analysis.json``: everything downstream averages this number, and a
-    false zero is invisible once it is pooled.
-    """
-
-    mean_score: float | None
-    eligible: int = 0
-    layer1_counts: dict[str, int] = field(default_factory=dict)
-    layer2_counts: dict[str, int] = field(default_factory=dict)
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "mean_score": self.mean_score,
-            "eligible": self.eligible,
-            "layer1_counts": dict(self.layer1_counts),
-            "layer2_counts": dict(self.layer2_counts),
-        }
-
-
-@dataclass
 class EvaluationResult:
-    """Full comparator output for one gold/pred pair."""
+    """Comparator output for one gold/pred pair: measurements only.
+
+    What this carries is what was *measured* -- one record per leaf
+    instance with its score and its layer-1/layer-2 labels, plus the
+    layer-S structural outcome per list. It deliberately carries no
+    per-property rollup.
+
+    Rolling instances up needs the manifest's profiles, and the manifest
+    holds thresholds we tune. Storing a rollup beside the measurements
+    makes a cache with no invalidation: adjust a threshold, re-report
+    without re-scoring, and the stored number silently disagrees with a
+    fresh one. Aggregation therefore happens at read time, in
+    :mod:`soda_mmqc.core.property_rollup`.
+    """
 
     instances: tuple[LeafInstanceResult, ...]
     by_list: dict[str, dict[str, Any]]
-    by_property: dict[str, PropertySummary]
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "instances": [instance.to_dict() for instance in self.instances],
             "by_list": self.by_list,
-            "by_property": {
-                key: summary.to_dict() for key, summary in self.by_property.items()
-            },
         }
 
     def aggregate_layer1_counts(self) -> dict[str, int]:
-        """Sum layer-1 counts across all profiled leaf properties."""
-        total: Counter[str] = Counter()
-        for summary in self.by_property.values():
-            total.update(summary.layer1_counts)
-        return dict(total)
+        """Layer-1 labels across every instance."""
+        return dict(
+            Counter(
+                instance.layer1
+                for instance in self.instances
+                if instance.layer1
+            )
+        )
 
     def aggregate_layer2_counts(self) -> dict[str, int]:
-        """Sum layer-2 counts across all profiled leaf properties."""
-        total: Counter[str] = Counter()
-        for summary in self.by_property.values():
-            total.update(summary.layer2_counts)
-        return dict(total)
+        """Layer-2 labels across every instance."""
+        return dict(
+            Counter(
+                instance.layer2
+                for instance in self.instances
+                if instance.layer2
+            )
+        )
 
     def layer_s_issues(self, by_list_key: str) -> dict[str, list[dict[str, Any]]]:
         """Missing and spurious row records for one predictive ``by_list`` key."""
@@ -207,11 +193,9 @@ class FlatEvaluator:
                     self._evaluate_row_leaves(exp, pred, leaf_spec, pairings)
                 )
 
-        by_property = _summarize_by_property(instances, leaf_specs, self.manifest)
         return EvaluationResult(
             instances=tuple(instances),
             by_list=by_list,
-            by_property=by_property,
         )
 
     def _align_eval_lists(
@@ -457,51 +441,6 @@ def score_leaf_pair(
     if isinstance(exp_value, str) or isinstance(pred_value, str):
         return compare_exact_strings(pred_value, exp_value).score
     return exact_primitive_similarity(pred_value, exp_value)
-
-
-def _summarize_by_property(
-    instances: Sequence[LeafInstanceResult],
-    leaf_specs: Sequence[EvalLeafSpec],
-    manifest: EvalManifest,
-) -> dict[str, PropertySummary]:
-    grouped: dict[str, list[LeafInstanceResult]] = defaultdict(list)
-    for instance in instances:
-        grouped[instance.leaf_property].append(instance)
-
-    summaries: dict[str, PropertySummary] = {}
-    for leaf_spec in leaf_specs:
-        property_instances = grouped.get(leaf_spec.eval_pattern, ())
-        profile = manifest.profile_for(leaf_spec.eval_pattern)
-        profiled = profile is not None and profile.is_profiled
-        if property_instances:
-            mean_score = property_mean_score(
-                property_instances, profiled=profiled
-            )
-            eligible = eligible_instance_count(
-                property_instances, profiled=profiled
-            )
-            layer1_counts = Counter(
-                item.layer1 for item in property_instances if item.layer1
-            )
-            layer2_counts = Counter(
-                item.layer2 for item in property_instances if item.layer2
-            )
-        else:
-            # No instances at all, so nothing was scored. Previously 0.0,
-            # which reads as "scored zero" and is indistinguishable from a
-            # genuine failure once averaged.
-            mean_score = None
-            eligible = 0
-            layer1_counts = Counter()
-            layer2_counts = Counter()
-
-        summaries[leaf_spec.eval_pattern] = PropertySummary(
-            mean_score=mean_score,
-            eligible=eligible,
-            layer1_counts=dict(layer1_counts),
-            layer2_counts=dict(layer2_counts),
-        )
-    return summaries
 
 
 def _iter_eval_list_contexts(

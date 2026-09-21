@@ -70,7 +70,7 @@ def macro_mean(summary: RunSummary) -> float:
     plan that owns this package removes it in favour of a per-property
     table with no summary column.
 
-    Until then it skips properties with nothing eligible rather than
+    Until then it skips properties with nothing applicable rather than
     summing a ``None``. That keeps it from raising, but does not make the
     number meaningful -- do not build anything new on it.
     """
