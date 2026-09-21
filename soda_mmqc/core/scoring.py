@@ -14,7 +14,6 @@ them is reporting's job, never this module's.
 from __future__ import annotations
 
 import json
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -22,11 +21,7 @@ from typing import Any, Dict, List, Optional
 from tqdm import tqdm
 
 from soda_mmqc import logger
-from soda_mmqc.config import (
-    DEFAULT_MODEL,
-    DEFAULT_SENTENCE_TRANSFORMER_MODEL,
-    EVALUATION_DIR,
-)
+from soda_mmqc.config import DEFAULT_SENTENCE_TRANSFORMER_MODEL
 from soda_mmqc.core.eval_manifest import load_eval_manifest
 from soda_mmqc.core.evaluation import FlatEvaluator
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
@@ -35,12 +30,18 @@ from soda_mmqc.agentic.runner import DEFAULT_RUN_LABEL, PREDICTION_FILENAME
 from soda_mmqc.agentic.skills import _read_json, resolve_check_dir
 
 __all__ = [
+    "ANALYSIS_FILENAME",
     "ModelResult",
     "analyze_results",
     "save_analysis",
     "load_predictions",
     "score_check",
 ]
+
+#: The scored result of one run leaf, written beside the ``<example>/``
+#: directories it describes. One per leaf, because an arm is not a
+#: replicate and each is scored on its own.
+ANALYSIS_FILENAME = "analysis.json"
 
 
 @dataclass
@@ -131,41 +132,29 @@ def analyze_results(
 
 
 def save_analysis(
-    analyzed_results: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    checklist_name: str,
-    check_name: str,
-    model: str
-):
-    """Save the analysis results to a file.
-    
-    Args:
-        analyzed_results: Dictionary mapping prompt names to their results,
-            where each result contains string metric results
-        checklist_name: Name of the checklist
-        check_name: Name of the check
-        model: Model name
-    """
-    
-    # Save analysis results
-    try:
-        analysis_path = EVALUATION_DIR / checklist_name / check_name / model
-        os.makedirs(analysis_path, exist_ok=True)
-        
-        # Save a comprehensive file with all prompts and all string metrics
-        analysis_file = analysis_path / "analysis.json"
-        with open(analysis_file, "w", encoding="utf-8") as f:
-            json.dump(analyzed_results, f, indent=4, ensure_ascii=False)
+    analyzed_results: Dict[str, List[Dict[str, Any]]],
+    root: Path,
+) -> Path:
+    """Write one run leaf's analysis beside the predictions it describes.
 
-        logger.info(
-            f"Saved analysis for {check_name} to {analysis_file}"
-        )
-        
-    except Exception as e:
-        logger.error(
-            f"Error saving analysis results for {check_name}: {str(e)}"
-        )
-        logger.debug("Save exception details:", exc_info=True)
-        raise
+    ``root`` is a run leaf -- ``<root>/<arm>/rep-NN/`` -- so each arm and
+    each replicate keeps its own score. The previous signature took
+    ``(checklist, check, model)`` and resolved one path per model, which
+    every arm and every replicate then shared and overwrote in turn:
+    scoring a second leaf destroyed the first, silently and plausibly.
+
+    Exceptions propagate. The previous body caught, logged and re-raised,
+    which told the caller nothing it would not already see.
+    """
+    root = Path(root)
+    root.mkdir(parents=True, exist_ok=True)
+    analysis_file = root / ANALYSIS_FILENAME
+    analysis_file.write_text(
+        json.dumps(analyzed_results, indent=4, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    logger.info("Saved analysis to %s", analysis_file)
+    return analysis_file
 
 
 
@@ -245,13 +234,11 @@ def score_check(
     check: str,
     predictions_path: Path,
     *,
-    model: str = DEFAULT_MODEL,
-    run_label: str = DEFAULT_RUN_LABEL,
     sentence_transformer_model: str = DEFAULT_SENTENCE_TRANSFORMER_MODEL,
     embedder: Optional[Any] = None,
     save: bool = True,
-) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
-    """Score stored predictions for one check against its gold outputs.
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Score one run leaf's predictions against its gold outputs.
 
     Only the examples that have a prediction are scored; examples listed in
     ``benchmark.json`` without one are reported and skipped, so a partial run
@@ -260,18 +247,18 @@ def score_check(
     Args:
         checklist: Checklist name, e.g. ``fig-checklist``.
         check: Check name, e.g. ``micrograph-scale-bar``.
-        predictions_path: Directory or JSON file of stored predictions.
-        model: Model label the predictions came from. Only used to place the
-            output under ``EVALUATION_DIR/<checklist>/<check>/<model>``.
-        run_label: Top-level key for the scored records in ``analysis.json``.
+        predictions_path: One run leaf -- ``<root>/<arm>/rep-NN/`` -- or a
+            JSON file mapping example path to leaf output. When ``save`` is
+            true the analysis is written here, beside what it describes.
         sentence_transformer_model: Embedding model for semantic comparisons.
         embedder: Optional embedder override, mainly for tests.
-        save: If True, write ``analysis.json`` via ``save_analysis``.
+        save: If True, write ``analysis.json`` into ``predictions_path``.
 
     Returns:
-        ``{run_label: {"flat": [...]}}`` -- the same shape the legacy
-        ``evaluate`` path produces, keyed by ``run_label`` instead of by
-        prompt name.
+        ``{"flat": [...]}``. There is no outer run-label key: it held one
+        entry per prompt, and with prompts gone it was always the literal
+        ``"agentic"`` -- while each leaf now has an ``analysis.json`` of its
+        own, which is what actually distinguishes two scored runs.
     """
     check_dir = resolve_check_dir(checklist, check)
     schema = _read_json(check_dir / "schema.json")
@@ -375,8 +362,12 @@ def score_check(
         embedder=embedder,
     )
 
-    all_results = {run_label: analyzed_results}
     if save:
-        save_analysis(all_results, checklist, check_name, model)
-    return all_results
+        # A leaf directory holds its own analysis; a hand-assembled JSON
+        # file gets one beside it, since a file has no inside.
+        destination = Path(predictions_path)
+        if not destination.is_dir():
+            destination = destination.parent
+        save_analysis(analyzed_results, destination)
+    return analyzed_results
 

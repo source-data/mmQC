@@ -69,7 +69,6 @@ from soda_mmqc.agentic.pinning import (
     validate_version_manifest,
 )
 from soda_mmqc.agentic.runner import (
-    DEFAULT_RUN_LABEL,
     _as_prediction,
     run_check_live,
     run_check_mock,
@@ -444,8 +443,8 @@ class TestScoreCheck:
             embedder=_mock_embedder,
         )
 
-        assert set(scored) == {DEFAULT_RUN_LABEL}
-        assert scored[DEFAULT_RUN_LABEL] == expected
+        assert set(scored) == {"flat"}
+        assert scored == expected
 
     def test_flat_records_carry_gold_and_prediction(self, pilot):
         predictions = {"doc-a/content/1": _gold("A")}
@@ -458,7 +457,7 @@ class TestScoreCheck:
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[DEFAULT_RUN_LABEL]["flat"]
+        records = scored["flat"]
         assert len(records) == 1
         record = records[0]
         assert record["doc_id"] == "doc-a"
@@ -484,7 +483,7 @@ class TestScoreCheck:
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[DEFAULT_RUN_LABEL]["flat"]
+        records = scored["flat"]
         assert [record["metadata"]["source"] for record in records] == [
             "doc-b/content/1"
         ]
@@ -503,7 +502,7 @@ class TestScoreCheck:
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[DEFAULT_RUN_LABEL]["flat"]
+        records = scored["flat"]
         assert [record["metadata"]["source"] for record in records] == [
             "doc-a/content/1"
         ]
@@ -522,53 +521,82 @@ class TestScoreCheck:
                 save=False,
             )
 
-    def test_saves_analysis_where_the_legacy_path_does(
-        self, pilot, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        evaluation_dir = tmp_path / "evaluation"
-        monkeypatch.setattr(
-            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
-        )
-        root = _write_predictions_dir(
-            pilot["examples_root"].parent / "preds",
+    def test_the_analysis_lands_beside_the_predictions(self, pilot):
+        """A run leaf holds its own score.
+
+        save_analysis used to write EVALUATION_DIR/<checklist>/<check>/
+        <model>/analysis.json -- one path for every arm and every
+        replicate, so the second leaf scored overwrote the first, silently.
+        """
+        leaf = _write_predictions_dir(
+            pilot["examples_root"].parent / "preds" / "pinned" / "rep-00",
             {"doc-a/content/1": _gold("A")},
         )
 
+        result = score_check(
+            "fig-checklist",
+            "micrograph-scale-bar",
+            leaf,
+            embedder=_mock_embedder,
+            save=True,
+        )
+
+        assert (leaf / "analysis.json").is_file()
+        assert set(result) == {"flat"}, (
+            "the run_label wrapper existed to hold one entry per prompt; "
+            "with prompts gone it was always the literal 'agentic'"
+        )
+        on_disk = json.loads(
+            (leaf / "analysis.json").read_text(encoding="utf-8")
+        )
+        assert set(on_disk) == {"flat"}
+        assert on_disk == result
+
+    def test_two_replicates_do_not_overwrite_each_other(self, pilot):
+        """The defect that motivated the layout, asserted directly."""
+        root = pilot["examples_root"].parent / "preds" / "pinned"
+        written = []
+        for replicate in ("rep-00", "rep-01"):
+            leaf = _write_predictions_dir(
+                root / replicate, {"doc-a/content/1": _gold("A")}
+            )
+            score_check(
+                "fig-checklist",
+                "micrograph-scale-bar",
+                leaf,
+                embedder=_mock_embedder,
+                save=True,
+            )
+            written.append(leaf / "analysis.json")
+
+        assert all(path.is_file() for path in written)
+        assert written[0] != written[1]
+
+    def test_scoring_without_saving_writes_nothing(self, pilot):
+        leaf = _write_predictions_dir(
+            pilot["examples_root"].parent / "preds" / "pinned" / "rep-00",
+            {"doc-a/content/1": _gold("A")},
+        )
         score_check(
             "fig-checklist",
             "micrograph-scale-bar",
-            root,
-            model="test-model",
+            leaf,
             embedder=_mock_embedder,
+            save=False,
         )
-
-        analysis_path = (
-            evaluation_dir
-            / "fig-checklist"
-            / "micrograph-scale-bar"
-            / "test-model"
-            / "analysis.json"
-        )
-        assert analysis_path.is_file()
-        saved = json.loads(analysis_path.read_text(encoding="utf-8"))
-        assert set(saved) == {DEFAULT_RUN_LABEL}
-        assert len(saved[DEFAULT_RUN_LABEL]["flat"]) == 1
+        assert not (leaf / "analysis.json").exists()
 
 
 class TestCli:
     def test_score_command_end_to_end(
-        self, pilot, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, pilot, monkeypatch: pytest.MonkeyPatch
     ):
-        evaluation_dir = tmp_path / "evaluation"
-        monkeypatch.setattr(
-            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
-        )
         monkeypatch.setattr(
             "soda_mmqc.core.scoring._default_semantic_embedder",
             lambda _model: _mock_embedder,
         )
-        root = _write_predictions_dir(
-            pilot["examples_root"].parent / "preds",
+        leaf = _write_predictions_dir(
+            pilot["examples_root"].parent / "preds" / "pinned" / "rep-00",
             {"doc-a/content/1": _gold("A")},
         )
 
@@ -579,24 +607,15 @@ class TestCli:
                 "--check",
                 "micrograph-scale-bar",
                 "--predictions",
-                str(root),
-                "--model",
-                "test-model",
-                "--run-label",
-                "skillset.v1",
+                str(leaf),
             ]
         )
 
         assert exit_code == 0
-        analysis_path = (
-            evaluation_dir
-            / "fig-checklist"
-            / "micrograph-scale-bar"
-            / "test-model"
-            / "analysis.json"
+        saved = json.loads(
+            (leaf / "analysis.json").read_text(encoding="utf-8")
         )
-        saved = json.loads(analysis_path.read_text(encoding="utf-8"))
-        assert set(saved) == {"skillset.v1"}
+        assert set(saved) == {"flat"}
 
     def test_score_command_reports_a_bad_check(self, pilot):
         assert (
@@ -813,7 +832,7 @@ class TestScoreCheckOnRealExamples:
         self, real_pilot, tmp_path: Path
     ):
         scored = _score_real(dict(real_pilot["golds"]), tmp_path)
-        records = scored[DEFAULT_RUN_LABEL]["flat"]
+        records = scored["flat"]
 
         assert [record["metadata"]["source"] for record in records] == (
             REAL_EXAMPLES
@@ -838,7 +857,7 @@ class TestScoreCheckOnRealExamples:
         self, real_pilot, tmp_path: Path
     ):
         scored = _score_real(dict(real_pilot["golds"]), tmp_path)
-        records = scored[DEFAULT_RUN_LABEL]["flat"]
+        records = scored["flat"]
 
         assert len(records) == 5
         for figure, record in zip(REAL_EXAMPLES, records):
@@ -885,8 +904,8 @@ class TestScoreCheckOnRealExamples:
             check_dir=real_pilot["check_dir"],
         )
 
-        assert set(scored) == {DEFAULT_RUN_LABEL}
-        assert scored[DEFAULT_RUN_LABEL] == expected
+        assert set(scored) == {"flat"}
+        assert scored == expected
 
     def test_a_misclassified_real_panel_is_penalised(
         self, real_pilot, tmp_path: Path
@@ -901,7 +920,7 @@ class TestScoreCheckOnRealExamples:
         )
         predictions[REAL_EXAMPLES[0]]["outputs"][0]["is_a_micrograph"] = "no"
 
-        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[
             "flat"
         ]
 
@@ -940,7 +959,7 @@ class TestScoreCheckOnRealExamples:
         predictions = copy.deepcopy(real_pilot["golds"])
         dropped = predictions[REAL_EXAMPLES[0]]["outputs"].pop()
 
-        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[
             "flat"
         ]
         analysis = records[0]["analysis"]
@@ -978,7 +997,7 @@ class TestScoreCheckOnRealExamples:
         subset = [REAL_EXAMPLES[0], REAL_EXAMPLES[3]]
         predictions = {figure: _real_gold(figure) for figure in subset}
 
-        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[
             "flat"
         ]
         assert [record["metadata"]["source"] for record in records] == subset
@@ -992,7 +1011,7 @@ class TestScoreCheckOnRealExamples:
                 REAL_EXAMPLES[0]
             ),
         }
-        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[
             "flat"
         ]
         assert [record["metadata"]["source"] for record in records] == [
@@ -1000,14 +1019,11 @@ class TestScoreCheckOnRealExamples:
         ]
 
     def test_score_command_saves_analysis_for_the_real_document(
-        self, real_pilot, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+        self, real_pilot, tmp_path: Path
     ):
-        evaluation_dir = tmp_path / "evaluation"
-        monkeypatch.setattr(
-            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
-        )
-        root = _write_predictions_dir(
-            tmp_path / "real-preds", dict(real_pilot["golds"])
+        leaf = _write_predictions_dir(
+            tmp_path / "real-preds" / "pinned" / "rep-00",
+            dict(real_pilot["golds"]),
         )
 
         exit_code = cli.main(
@@ -1017,27 +1033,17 @@ class TestScoreCheckOnRealExamples:
                 "--check",
                 REAL_CHECK,
                 "--predictions",
-                str(root),
-                "--model",
-                "test-model",
-                "--run-label",
-                "skillset.v1",
+                str(leaf),
             ]
         )
 
         assert exit_code == 0
-        analysis_path = (
-            evaluation_dir
-            / "Retired-checklist"
-            / REAL_CHECK
-            / "test-model"
-            / "analysis.json"
+        saved = json.loads(
+            (leaf / "analysis.json").read_text(encoding="utf-8")
         )
-        saved = json.loads(analysis_path.read_text(encoding="utf-8"))
-        assert set(saved) == {"skillset.v1"}
+        assert set(saved) == {"flat"}
         assert [
-            record["metadata"]["source"]
-            for record in saved["skillset.v1"]["flat"]
+            record["metadata"]["source"] for record in saved["flat"]
         ] == REAL_EXAMPLES
 
 
@@ -4859,7 +4865,7 @@ class TestPointingAtARunRoot:
 
         with pytest.raises(ValueError) as exc:
             score_check(
-                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+                "fig-checklist", PILOT_LEAF, root, save=False,
             )
         message = str(exc.value)
         assert "pinned/rep-00" in message
@@ -4876,7 +4882,7 @@ class TestPointingAtARunRoot:
         )
         with pytest.raises(ValueError, match="match an example"):
             score_check(
-                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+                "fig-checklist", PILOT_LEAF, root, save=False,
             )
 
 

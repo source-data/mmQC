@@ -28,15 +28,10 @@ from typing import List, Optional
 from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_DEFAULT_MODEL,
-    DEFAULT_MODEL,
     DEFAULT_SENTENCE_TRANSFORMER_MODEL,
 )
 from soda_mmqc.agentic.pinning import MODEL_DEFAULTS_FILENAME
-from soda_mmqc.agentic.runner import (
-    DEFAULT_RUN_LABEL,
-    run_check_live,
-    run_check_mock,
-)
+from soda_mmqc.agentic.runner import run_check_live, run_check_mock
 from soda_mmqc.agentic.runtime import describe_permission_profile
 from soda_mmqc.agentic.session import runtime_session
 from soda_mmqc.agentic.views import graph_checklist
@@ -63,21 +58,10 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         required=True,
         help=(
-            "Directory of per-example prediction.json files, or a JSON file "
-            "mapping example path to leaf output"
+            "One run leaf -- <root>/<arm>/rep-NN/ -- or a JSON file "
+            "mapping example path to leaf output. The analysis is written "
+            "beside it."
         ),
-    )
-    score.add_argument(
-        "--model",
-        type=str,
-        default=DEFAULT_MODEL,
-        help="Model label the predictions came from (used in the output path)",
-    )
-    score.add_argument(
-        "--run-label",
-        type=str,
-        default=DEFAULT_RUN_LABEL,
-        help="Top-level key for the scored records in analysis.json",
     )
     score.add_argument(
         "--sentence-transformer-model",
@@ -247,8 +231,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                 args.checklist,
                 args.check,
                 args.predictions,
-                model=args.model,
-                run_label=args.run_label,
                 sentence_transformer_model=args.sentence_transformer_model,
                 save=not args.no_save,
             )
