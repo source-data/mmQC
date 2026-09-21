@@ -25,57 +25,44 @@ from typing import Dict, List, Mapping, Optional, Sequence
 from soda_mmqc import logger
 from soda_mmqc.config import CHECKLIST_DIR, list_checks
 from soda_mmqc.agentic.runner import run_check_live
+from soda_mmqc.core.run_layout import (
+    BASELINE_ARM,
+    leaf,
+    replicate_dirname,
+    resolve_check_root,
+)
 from soda_mmqc.agentic.skills import _read_json, resolve_check_dir
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.core.scoring import load_predictions
 
 __all__ = [
-    "BASELINE_ARM",
     "DRAFT_REPLICATE",
+    "DRAFT_REPLICATE_INDEX",
     "init_expected_outputs",
 ]
-
-#: The arm every run writes, whether or not anything was unpinned.
-BASELINE_ARM = "pinned"
 
 #: The replicate a draft is taken from. Not a consensus across replicates:
 #: a curator corrects one answer, and averaging would hide precisely the
 #: examples where the replicates disagreed -- which are the ones worth
 #: looking at closely.
-DRAFT_REPLICATE = "rep-00"
+#:
+#: This is a fact about curation, not about the layout, which is why it
+#: lives here rather than in :mod:`soda_mmqc.core.run_layout`.
+DRAFT_REPLICATE_INDEX = 0
+DRAFT_REPLICATE = replicate_dirname(DRAFT_REPLICATE_INDEX)
 
 
 def _draft_leaf(root: Path, check: str) -> Path:
     """The ``<arm>/rep-NN/`` directory a run root's drafts come from.
 
-    A root may hold one check (``experiments/runs/<exp>/<check>/``) or
-    several (``experiments/runs/<exp>/``), so try the per-check level
-    first.
+    Drafts come from the baseline arm: an unpinned variant is a
+    comparison, not a candidate for gold.
     """
-    root = Path(root)
-    if not root.is_dir():
-        raise FileNotFoundError(f"No run root at {root}")
-
-    base = root / check if (root / check).is_dir() else root
-    arm = base / BASELINE_ARM
-    if not arm.is_dir():
-        present = sorted(p.name for p in base.iterdir() if p.is_dir())
-        raise ValueError(
-            f"{base} holds no {BASELINE_ARM!r} arm to draft from; it has "
-            f"{present or 'nothing'}. Drafts come from the baseline arm, "
-            "since an unpinned variant is a comparison and not a candidate "
-            "for gold."
-        )
-
-    leaf = arm / DRAFT_REPLICATE
-    if not leaf.is_dir():
-        present = sorted(p.name for p in arm.iterdir() if p.is_dir())
-        raise ValueError(
-            f"{arm} has no {DRAFT_REPLICATE}; it has {present or 'nothing'}. "
-            "A draft is one answer a curator corrects, so it is taken from "
-            "a named replicate rather than pooled across whichever ones ran."
-        )
-    return leaf
+    return leaf(
+        resolve_check_root(Path(root), check),
+        arm=BASELINE_ARM,
+        replicate=DRAFT_REPLICATE_INDEX,
+    )
 
 
 def _example_class(check_dir: Path) -> str:

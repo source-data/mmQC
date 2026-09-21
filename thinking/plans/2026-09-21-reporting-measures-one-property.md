@@ -288,6 +288,36 @@ in Task 4, the first task that needs them.
 
 ## Task 1: `mean_score` tells the truth when nothing was eligible
 
+> **Done, and it grew.** Two questions from review turned this from a
+> one-field change into the measure/aggregate split the rest of the plan
+> now assumes. Recorded here because the tasks below were written against
+> the smaller version.
+>
+> - **`eligible` was deleted again.** It duplicated
+>   `layer1_counts["correct_applicable"]` exactly for profiled properties
+>   -- 10 of 10 across the snapshots, and structurally, since
+>   `LeafInstanceResult.score` is never `None`. The denominator is
+>   `PropertyRollup.n_scored`, derived from the layer-1 count. There is no
+>   second word for an outcome layer 1 already names: use
+>   `Layer1Label.CORRECT_APPLICABLE`, not "eligible".
+> - **`by_property` left the serialization.** It was computed at scoring
+>   time and stored, while `reporting/aggregate.py` recomputed its own
+>   from `instances` and `reporting/tables.py` read the stored copy --
+>   two live paths to one number. Manifest thresholds are tunable, so a
+>   stored rollup is a cache nothing invalidates. `analysis.json` now
+>   holds `instances` and `by_list` only, and
+>   `core/property_rollup.py::rollup_by_property` is the single
+>   instances-to-statistics step, run when a report is built.
+>
+> **Consequence for Task 4:** `scores_frame` has one source. Group a
+> record's `instances`, call `rollup_by_property` per example with the
+> manifest. Do not look for a stored `by_property`; there isn't one.
+>
+> **Consequence for Task 7:** `PropertyRollup` gained `n_scored` and
+> `n_instances`, so "never show a layer-2 mean without its denominator"
+> has something concrete to show.
+
+
 **Files:**
 - Modify: `soda_mmqc/core/property_rollup.py:22-37`
 - Modify: `soda_mmqc/reporting/aggregate.py:16-23, 99-137`
