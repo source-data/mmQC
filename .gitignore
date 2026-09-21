@@ -148,5 +148,11 @@ experiments/results/
 # `mmqc score` writes analysis.json in the same leaf. Committed runs that a
 # paper figure depends on live under `experiments/runs/`, which stays
 # tracked on purpose -- see experiments/runs/README.md.
-soda_mmqc/data/evaluation/
+#
+# The directory itself is part of the layout -- it is where a production
+# benchmark writes -- so ignore its contents and keep the directory. The
+# rule has to name the contents rather than the directory: a negation
+# cannot rescue a file whose parent directory is excluded.
+soda_mmqc/data/evaluation/*
+!soda_mmqc/data/evaluation/.gitkeep
 

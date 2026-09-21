@@ -107,7 +107,12 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertTrue(DATA_DIR.exists())
         self.assertTrue(CHECKLIST_DIR.exists())
         self.assertTrue(EXAMPLES_DIR.exists())
-        self.assertTrue(EVALUATION_DIR.exists())
+        self.assertTrue(
+            EVALUATION_DIR.exists(),
+            "data/evaluation/ is where a production benchmark writes; it is "
+            "kept by .gitkeep so the layout does not depend on a run having "
+            "happened",
+        )
         
         # CACHE_DIR might not exist initially, but should be creatable
         CACHE_DIR.mkdir(exist_ok=True)
@@ -183,7 +188,12 @@ class TestProjectArchitecture(unittest.TestCase):
         # Check that key data subdirectories exist
         self.assertTrue((DATA_DIR / "checklist").exists())
         self.assertTrue((DATA_DIR / "examples").exists())
-        self.assertTrue((DATA_DIR / "evaluation").exists())
+        self.assertTrue(
+            (DATA_DIR / "evaluation").exists(),
+            "data/evaluation/ is where a production benchmark writes; it is "
+            "kept by .gitkeep so the layout does not depend on a run having "
+            "happened",
+        )
         
         # Check that there are some checklists
         checklist_dir = DATA_DIR / "checklist"
