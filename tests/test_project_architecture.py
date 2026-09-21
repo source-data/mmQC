@@ -34,7 +34,7 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertTrue((PACKAGE_ROOT / "scripts").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "run.py").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "curate.py").exists())
-        self.assertTrue((PACKAGE_ROOT / "scripts" / "visualize.py").exists())
+        self.assertTrue((PACKAGE_ROOT / "scripts" / "report.py").exists())
         
         # Check that utils exist
         self.assertTrue((PACKAGE_ROOT / "utils").exists())
@@ -68,16 +68,26 @@ class TestProjectArchitecture(unittest.TestCase):
         except ImportError as e:
             self.fail(f"Failed to import lib modules: {e}")
     
-    def test_scripts_imports(self):
-        """Test that script modules can be imported."""
-        try:
-            from soda_mmqc.scripts import run, curate, visualize
-            self.assertTrue(hasattr(run, 'main'))
-            self.assertTrue(hasattr(curate, 'main'))
-            self.assertTrue(hasattr(visualize, 'checklist_visualization'))
-            logger.info("Scripts imports successful")
-        except ImportError as e:
-            self.fail(f"Failed to import script modules: {e}")
+    def test_scripts_are_launchers_only(self):
+        """scripts/ launches things; it holds no library code.
+
+        The rule that makes this checkable: nothing imports from
+        soda_mmqc.scripts except cli.py, which calls the two Streamlit
+        launchers. Library code that grew here (visualize.py) was dead and
+        duplicated soda_mmqc/reporting/.
+        """
+        from soda_mmqc.scripts import curate, report
+        self.assertTrue(callable(curate.main))
+        self.assertTrue(callable(report.main))
+
+        scripts_dir = PACKAGE_ROOT / "scripts"
+        for retired in ("visualize.py", "check_data.py",
+                        "analysis_json_to_html.py"):
+            self.assertFalse(
+                (scripts_dir / retired).exists(),
+                f"{retired} was deleted as dead code; do not restore it "
+                "without a caller",
+            )
     
     def test_utils_imports(self):
         """Test that utils modules can be imported."""
