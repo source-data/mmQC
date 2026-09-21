@@ -5056,3 +5056,25 @@ class TestTheCliIsAParser:
             "cli.py grew domain logic: "
             f"{sorted(names - {'main', '_build_parser'})}"
         )
+
+
+def test_a_run_root_has_the_same_shape_everywhere():
+    """Production and experiment roots differ only in prefix.
+
+    A root is a directory whose children are arms. One walker serves
+    data/evaluation/<checklist>/<check>/<model>/ and
+    experiments/runs/<exp>/<check>/ alike -- which is what lets reporting
+    take a single `root` argument.
+    """
+    from soda_mmqc.agentic.runner import default_predictions_dir
+    from soda_mmqc.config import EVALUATION_DIR
+
+    root = default_predictions_dir(
+        "fig-checklist", "micrograph-scale-bar", "gpt-5"
+    )
+    assert root == (
+        EVALUATION_DIR / "fig-checklist" / "micrograph-scale-bar" / "gpt-5"
+    )
+    assert root.name != "predictions", (
+        "the segment named 'predictions' now holds analyses too"
+    )

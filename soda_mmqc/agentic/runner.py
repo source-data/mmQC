@@ -76,8 +76,15 @@ __all__ = [
 
 
 def default_predictions_dir(checklist: str, check: str, model: str) -> Path:
-    """Where a run writes its predictions, mirroring the analysis layout."""
-    return EVALUATION_DIR / checklist / check / model / "predictions"
+    """The root a run writes under, when no ``--output`` is given.
+
+    A root is a directory whose children are arms: the harness appends
+    ``<arm>/rep-NN/<example>/`` beneath this. There is no ``predictions``
+    segment, because the leaf holds its ``analysis.json`` too -- and
+    without it a production root has the same shape as an experiment's
+    ``experiments/runs/<exp>/<check>/``, so one walker serves both.
+    """
+    return EVALUATION_DIR / checklist / check / model
 
 
 def _write_prediction(

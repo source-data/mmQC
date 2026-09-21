@@ -143,10 +143,10 @@ soda_mmqc/data/cache/*
 # otherwise a tracked tree: builders and committed runs live alongside it.
 experiments/results/
 
-# Run output, regenerable and per-machine: `cli run` writes predictions here
-# by default and `cli score` writes analysis beside them. Committed runs that
-# a paper figure depends on live under `experiments/runs/`, which stays
+# Run output, regenerable and per-machine: `mmqc run` writes predictions
+# under data/evaluation/<checklist>/<check>/<model>/<arm>/rep-NN/ and
+# `mmqc score` writes analysis.json in the same leaf. Committed runs that a
+# paper figure depends on live under `experiments/runs/`, which stays
 # tracked on purpose -- see experiments/runs/README.md.
-soda_mmqc/data/predictions/
 soda_mmqc/data/evaluation/
 
