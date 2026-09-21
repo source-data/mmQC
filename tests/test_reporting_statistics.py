@@ -8,6 +8,7 @@ here ever pools two properties together.
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from soda_mmqc.core.applicability_and_matching import Layer1Label
 from soda_mmqc.core.eval_manifest import (
@@ -15,7 +16,12 @@ from soda_mmqc.core.eval_manifest import (
     FieldProfile,
     MatchingMetric,
 )
-from soda_mmqc.reporting.aggregate import SCORES_FRAME_COLUMNS, scores_frame
+from soda_mmqc.reporting.aggregate import (
+    SCORES_FRAME_COLUMNS,
+    arm_contrast,
+    replicate_spread,
+    scores_frame,
+)
 from soda_mmqc.reporting.load import FlatRecord, FlatRun, FlatRuns, RunRef
 
 CHECK = "replication-reporting"
@@ -206,3 +212,192 @@ class TestScoresFrame:
         frame = scores_frame(FlatRuns([]))
         assert list(frame.columns) == list(SCORES_FRAME_COLUMNS)
         assert frame.empty
+
+
+def _frame(rows) -> pd.DataFrame:
+    """A scores_frame-shaped table from (arm, rep, example, prop, mean, n)."""
+    return pd.DataFrame(
+        [
+            {
+                "check": CHECK,
+                "model": MODEL,
+                "arm": arm,
+                "replicate": replicate,
+                "example": example,
+                "property": leaf_property,
+                "mean_score": mean_score,
+                "n_scored": n_scored,
+                "n_instances": max(n_scored, 1),
+            }
+            for arm, replicate, example, leaf_property, mean_score, n_scored
+            in rows
+        ],
+        columns=list(SCORES_FRAME_COLUMNS),
+    ).astype({"mean_score": "Float64"})
+
+
+class TestReplicateSpread:
+    def test_spread_is_computed_within_a_property_never_across(self):
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 2),
+            ("pinned", 1, "doc-a", "p1", 0.0, 2),
+            ("pinned", 0, "doc-a", "p2", 0.5, 2),
+            ("pinned", 1, "doc-a", "p2", 0.5, 2),
+        ])
+        spread = replicate_spread(frame).set_index("property")
+
+        assert spread.loc["p1", "mean"] == 0.5
+        assert spread.loc["p1", "sd"] == pytest.approx(0.7071, rel=1e-3)
+        assert spread.loc["p2", "sd"] == 0.0
+        assert len(spread) == 2, "one row per property; never a pooled row"
+
+    def test_a_replicate_with_nothing_applicable_is_not_a_zero(self):
+        """The Task 1 defect, on the replicate axis.
+
+        rep-01 scored nothing for this property. Treating that as 0.0
+        would halve the mean and manufacture a spread out of nothing.
+        """
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 3),
+            ("pinned", 1, "doc-a", "p1", None, 0),
+        ])
+        spread = replicate_spread(frame).iloc[0]
+
+        assert spread["mean"] == 1.0
+        assert spread["n_replicates"] == 1
+        assert pd.isna(spread["sd"]), "one replicate has no spread"
+
+    def test_sd_is_na_with_a_single_replicate(self):
+        frame = _frame([("pinned", 0, "doc-a", "p1", 1.0, 1)])
+        assert pd.isna(replicate_spread(frame).iloc[0]["sd"])
+
+    def test_spread_reports_the_denominator_it_used(self):
+        """A layer-2 mean without its scored count is not reportable."""
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 4),
+            ("pinned", 1, "doc-a", "p1", 1.0, 2),
+            ("pinned", 2, "doc-a", "p1", None, 0),
+        ])
+        row = replicate_spread(frame).iloc[0]
+        assert row["n_replicates"] == 2
+        assert row["n_scored_total"] == 6
+
+    def test_examples_are_collapsed_before_replicates(self):
+        """The SD is over replicates, not over examples.
+
+        Two examples per replicate, each replicate internally consistent:
+        the spread across replicates is zero even though examples differ.
+        """
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 0, "doc-b", "p1", 0.0, 1),
+            ("pinned", 1, "doc-a", "p1", 1.0, 1),
+            ("pinned", 1, "doc-b", "p1", 0.0, 1),
+        ])
+        row = replicate_spread(frame).iloc[0]
+        assert row["mean"] == 0.5
+        assert row["sd"] == 0.0
+
+    def test_arms_are_never_pooled_with_each_other(self):
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("v2", 0, "doc-a", "p1", 0.0, 1),
+        ])
+        spread = replicate_spread(frame).set_index("arm")
+        assert len(spread) == 2
+        assert spread.loc["pinned", "mean"] == 1.0
+        assert spread.loc["v2", "mean"] == 0.0
+
+
+class TestArmContrast:
+    def test_it_pairs_by_example_within_a_property(self):
+        """Pairing cancels whatever is common to both arms."""
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 0, "doc-b", "p1", 0.0, 1),
+            ("v2", 0, "doc-a", "p1", 0.5, 1),
+            ("v2", 0, "doc-b", "p1", 0.0, 1),
+        ])
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+
+        assert contrast["property"] == "p1"
+        assert contrast["difference"] == pytest.approx(-0.25)
+        assert contrast["n_examples"] == 2
+
+    def test_it_drops_an_example_only_one_arm_scored(self):
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 0, "doc-b", "p1", 1.0, 1),
+            ("v2", 0, "doc-a", "p1", 0.0, 1),
+        ])
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+        assert contrast["n_examples"] == 1
+        assert contrast["difference"] == pytest.approx(-1.0)
+
+    def test_a_shrunken_pairing_announces_itself(self):
+        """The conditioning confound, made visible.
+
+        Each arm's layer-2 mean is over its own applicable set. An arm
+        that judges a property inapplicable more often is scored on a
+        subset it selected -- plausibly the easy cases -- so a difference
+        computed on a shrunken paired set must say how shrunken it is.
+        """
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 0, "doc-b", "p1", 1.0, 1),
+            ("pinned", 0, "doc-c", "p1", 1.0, 1),
+            ("v2", 0, "doc-a", "p1", 1.0, 1),
+            ("v2", 0, "doc-b", "p1", None, 0),
+            ("v2", 0, "doc-c", "p1", None, 0),
+        ])
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+
+        assert contrast["difference"] == 0.0, (
+            "on the one example both arms scored they agree -- which is "
+            "exactly the misleading reading this row must qualify"
+        )
+        assert contrast["n_examples"] == 1
+        assert contrast["n_baseline_only"] == 2
+        assert contrast["n_variant_only"] == 0
+        assert contrast["paired_fraction"] == pytest.approx(1 / 3)
+
+    def test_replicates_are_averaged_before_pairing(self):
+        """Replicates are resamples: they reduce noise, not add rows."""
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 1, "doc-a", "p1", 0.0, 1),
+            ("v2", 0, "doc-a", "p1", 1.0, 1),
+            ("v2", 1, "doc-a", "p1", 1.0, 1),
+        ])
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+        assert contrast["n_examples"] == 1, "one example, not four rows"
+        assert contrast["difference"] == pytest.approx(0.5)
+
+    def test_se_needs_two_examples(self):
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("v2", 0, "doc-a", "p1", 0.0, 1),
+        ])
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+        assert contrast["n_examples"] == 1
+        assert pd.isna(contrast["se"])
+
+    def test_it_never_pools_properties(self):
+        frame = _frame([
+            ("pinned", 0, "doc-a", "p1", 1.0, 1),
+            ("pinned", 0, "doc-a", "p2", 0.0, 1),
+            ("v2", 0, "doc-a", "p1", 0.0, 1),
+            ("v2", 0, "doc-a", "p2", 1.0, 1),
+        ])
+        contrast = arm_contrast(
+            frame, baseline="pinned", variant="v2"
+        ).set_index("property")
+
+        assert len(contrast) == 2
+        assert contrast.loc["p1", "difference"] == pytest.approx(-1.0)
+        assert contrast.loc["p2", "difference"] == pytest.approx(1.0)
+
+    def test_an_unknown_arm_is_named(self):
+        frame = _frame([("pinned", 0, "doc-a", "p1", 1.0, 1)])
+        with pytest.raises(ValueError, match="no-such-arm"):
+            arm_contrast(frame, baseline="pinned", variant="no-such-arm")

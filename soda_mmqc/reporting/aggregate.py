@@ -31,6 +31,8 @@ __all__ = [
     "aggregate_run",
     "summarize_runs",
     "scores_frame",
+    "replicate_spread",
+    "arm_contrast",
     "field_order",
     "leaf_property_tail",
 ]
@@ -290,3 +292,209 @@ def scores_frame(runs: FlatRuns) -> pd.DataFrame:
     # a genuine zero after any groupby.
     frame["mean_score"] = frame["mean_score"].astype("Float64")
     return frame
+
+
+#: Columns of :func:`replicate_spread`, in order.
+REPLICATE_SPREAD_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "property",
+    "mean",
+    "sd",
+    "n_replicates",
+    "n_scored_total",
+)
+
+#: Columns of :func:`arm_contrast`, in order.
+ARM_CONTRAST_COLUMNS = (
+    "check",
+    "property",
+    "difference",
+    "se",
+    "n_examples",
+    "n_baseline_only",
+    "n_variant_only",
+    "paired_fraction",
+)
+
+
+def replicate_spread(frame: pd.DataFrame) -> pd.DataFrame:
+    """Spread over **replicates**, for one arm and one property.
+
+    The SD answers "how much would this number move if we ran it again",
+    not "how much do examples differ": examples are collapsed within a
+    replicate first, then the SD is taken over the per-replicate values.
+    Saying which axis a spread is over is not optional -- there are two,
+    and they mean different things.
+
+    A replicate that scored nothing applicable for this property is
+    excluded rather than counted as zero. That is the same rule layer 2
+    follows everywhere: it is conditional on layer 1, and a replicate
+    that judged the property inapplicable has nothing to say about
+    matching quality.
+
+    ``mean`` travels with ``n_replicates`` and ``n_scored_total``
+    deliberately. An arm scored on fewer instances is scored on a subset
+    it selected, so a layer-2 mean without its denominator is not a
+    reportable number.
+
+    One row per ``(check, model, arm, property)``. Arms are never pooled
+    with each other -- they are different configurations, and the
+    difference between them is the result, not noise.
+    """
+    if frame.empty:
+        return pd.DataFrame(columns=list(REPLICATE_SPREAD_COLUMNS))
+
+    # Collapse examples within a replicate, skipping the ones with
+    # nothing applicable: mean() on a Float64 column ignores NA.
+    per_replicate = (
+        frame.groupby(
+            ["check", "model", "arm", "property", "replicate"],
+            dropna=False,
+            observed=True,
+        )
+        .agg(
+            replicate_mean=("mean_score", "mean"),
+            n_scored=("n_scored", "sum"),
+        )
+        .reset_index()
+    )
+    # A replicate that scored nothing is not a zero; it is absent.
+    scored = per_replicate[per_replicate["n_scored"] > 0]
+
+    rows: list[dict[str, Any]] = []
+    for key, group in frame.groupby(
+        ["check", "model", "arm", "property"], dropna=False, observed=True
+    ):
+        check, model, arm, leaf_property = key
+        live = scored[
+            (scored["check"] == check)
+            & (scored["model"] == model)
+            & (scored["arm"] == arm)
+            & (scored["property"] == leaf_property)
+        ]
+        values = live["replicate_mean"].astype("Float64").dropna()
+        n_replicates = int(len(values))
+        rows.append(
+            {
+                "check": check,
+                "model": model,
+                "arm": arm,
+                "property": leaf_property,
+                "mean": float(values.mean()) if n_replicates else pd.NA,
+                # ddof=1: the SD of a single observation is undefined,
+                # not zero. Reporting 0.0 there would claim perfect
+                # reproducibility from one measurement.
+                "sd": (
+                    float(values.astype(float).std(ddof=1))
+                    if n_replicates > 1
+                    else pd.NA
+                ),
+                "n_replicates": n_replicates,
+                "n_scored_total": int(live["n_scored"].sum()),
+            }
+        )
+
+    result = pd.DataFrame(rows, columns=list(REPLICATE_SPREAD_COLUMNS))
+    return result.astype({"mean": "Float64", "sd": "Float64"})
+
+
+def arm_contrast(
+    frame: pd.DataFrame,
+    *,
+    baseline: str,
+    variant: str,
+) -> pd.DataFrame:
+    """Paired difference between two arms, for one property.
+
+    Pairing is by example: the arms differ in one thing, so the
+    comparison is within an example and whatever makes an example hard
+    cancels. Replicates are averaged per ``(arm, example)`` first --
+    they are resamples of the same measurement, so they reduce its noise
+    rather than adding rows to the pairing.
+
+    One row per ``(check, property)``. It never pools properties, and it
+    does not test significance: what counts as a real difference is the
+    experiment's claim, not this function's.
+
+    ``difference`` is conditional on *both* arms having judged the
+    property applicable on the same example, so it is computed on the
+    paired set alone. ``paired_fraction`` says how much of the benchmark
+    that was, and ``n_baseline_only`` / ``n_variant_only`` say which side
+    lost the rest. Read those first: an arm that answers less is scored
+    on fewer, self-selected cases, and a difference of zero over one of
+    forty examples is not the same finding as a difference of zero over
+    forty. In exp-01 a minimal skill returning ``outputs: []`` can earn
+    the better layer-2 mean precisely by answering less.
+
+    Unpaired examples are dropped from the difference but counted, never
+    dropped silently -- silent dropping is what makes the confound
+    invisible.
+    """
+    present = set(frame["arm"].unique()) if not frame.empty else set()
+    for name in (baseline, variant):
+        if name not in present:
+            raise ValueError(
+                f"No arm {name!r} in this frame; it has "
+                f"{sorted(present) or 'nothing'}"
+            )
+
+    # Average replicates within (arm, example): a resample reduces the
+    # noise on one measurement, it does not create another example.
+    per_example = (
+        frame.groupby(
+            ["check", "property", "arm", "example"],
+            dropna=False,
+            observed=True,
+        )["mean_score"]
+        .mean()
+        .reset_index()
+    )
+
+    rows: list[dict[str, Any]] = []
+    for key, group in per_example.groupby(
+        ["check", "property"], dropna=False, observed=True
+    ):
+        check, leaf_property = key
+        base = group[group["arm"] == baseline].set_index("example")[
+            "mean_score"
+        ].dropna()
+        var = group[group["arm"] == variant].set_index("example")[
+            "mean_score"
+        ].dropna()
+
+        paired = base.index.intersection(var.index)
+        differences = (
+            var.loc[paired].astype(float) - base.loc[paired].astype(float)
+        )
+        n_examples = int(len(differences))
+        n_baseline_only = int(len(base.index.difference(var.index)))
+        n_variant_only = int(len(var.index.difference(base.index)))
+        considered = n_examples + n_baseline_only + n_variant_only
+
+        rows.append(
+            {
+                "check": check,
+                "property": leaf_property,
+                "difference": (
+                    float(differences.mean()) if n_examples else pd.NA
+                ),
+                "se": (
+                    float(differences.std(ddof=1) / (n_examples ** 0.5))
+                    if n_examples > 1
+                    else pd.NA
+                ),
+                "n_examples": n_examples,
+                "n_baseline_only": n_baseline_only,
+                "n_variant_only": n_variant_only,
+                "paired_fraction": (
+                    n_examples / considered if considered else pd.NA
+                ),
+            }
+        )
+
+    result = pd.DataFrame(rows, columns=list(ARM_CONTRAST_COLUMNS))
+    return result.astype(
+        {"difference": "Float64", "se": "Float64", "paired_fraction": "Float64"}
+    )
