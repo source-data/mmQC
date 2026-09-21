@@ -35,6 +35,7 @@ from soda_mmqc.agentic.runner import run_check_live, run_check_mock
 from soda_mmqc.agentic.runtime import describe_permission_profile
 from soda_mmqc.agentic.session import runtime_session
 from soda_mmqc.agentic.views import graph_checklist
+from soda_mmqc.core.gold_drafts import init_expected_outputs
 from soda_mmqc.core.scoring import score_check
 
 
@@ -205,6 +206,63 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    init = subparsers.add_parser(
+        "init",
+        help=(
+            "Draft expected_output.json for a check's benchmark examples, "
+            "so curation is correction rather than typing"
+        ),
+    )
+    init.add_argument("checklist", type=str, help="Name of the checklist")
+    init.add_argument(
+        "--check",
+        type=str,
+        action="append",
+        dest="checks",
+        default=None,
+        help="Check to initialize; repeatable. Default: every check.",
+    )
+    init.add_argument(
+        "--from-run",
+        type=Path,
+        default=None,
+        help=(
+            "Take drafts from an existing run root instead of running the "
+            "check. Uses rep-00 of the pinned arm -- a curator corrects one "
+            "answer, not an average. Costs nothing."
+        ),
+    )
+    init.add_argument(
+        "--model",
+        type=str,
+        default=None,
+        help="Model for a live run (ignored with --from-run)",
+    )
+    init.add_argument(
+        "--provider",
+        choices=("openai", "claude-sdk"),
+        default="openai",
+        help="Agent runtime for a live run (default: %(default)s)",
+    )
+    init.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Run at most this many examples (ignored with --from-run)",
+    )
+    init.add_argument(
+        "--example",
+        action="append",
+        dest="examples",
+        default=None,
+        help="Limit a live run to this example; repeatable",
+    )
+    init.add_argument(
+        "--no-overwrite",
+        action="store_true",
+        help="Keep any expected_output.json that already exists",
+    )
+
     graph = subparsers.add_parser(
         "graph",
         help=(
@@ -312,6 +370,32 @@ def main(argv: Optional[List[str]] = None) -> int:
                     )
                     + (f"  [{entry['error']}]" if entry.get("error") else "")
                 )
+        return 0
+
+    if args.command == "init":
+        if args.from_run is None and args.limit is None and not args.examples:
+            logger.error(
+                "A live init costs money: it runs the check once per "
+                "example. Scope it with --limit or --example, or take the "
+                "drafts from a run you already have with --from-run."
+            )
+            return 2
+        try:
+            written = init_expected_outputs(
+                args.checklist,
+                args.checks,
+                from_run=args.from_run,
+                model=args.model,
+                provider=args.provider,
+                overwrite=not args.no_overwrite,
+                examples=args.examples,
+                limit=args.limit,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            logger.error("%s", exc)
+            return 1
+        for check, examples in sorted(written.items()):
+            print(f"{check}: {len(examples)} draft(s)")
         return 0
 
     if args.command == "graph":
