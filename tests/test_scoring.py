@@ -1,4 +1,4 @@
-"""Tests for FlatEvaluator wiring in run.py."""
+"""Tests for the run-level evaluator in core/scoring.py."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from soda_mmqc.scripts.run import ModelResult, analyze_results
+from soda_mmqc.core.scoring import ModelResult, analyze_results
 
 CHECK_DIR = (
     Path(__file__).resolve().parents[1]
@@ -75,3 +75,25 @@ class TestAnalyzeResults:
                 check_dir=tmp_path,
                 embedder=_mock_embedder,
             )
+
+
+def _scoring_source() -> str:
+    return (
+        Path(__file__).resolve().parents[1]
+        / "soda_mmqc" / "core" / "scoring.py"
+    ).read_text(encoding="utf-8")
+
+
+def test_scoring_does_not_import_the_cli():
+    """core/ is below cli: the CLI calls scoring, never the reverse.
+
+    A cycle here would be invisible until someone imports core.scoring in a
+    notebook and pulls argparse and the whole agentic surface with it.
+    """
+    source = _scoring_source()
+    assert "from soda_mmqc.cli" not in source
+    assert "import soda_mmqc.cli" not in source
+
+
+def test_scoring_does_not_import_the_legacy_runner():
+    assert "scripts.run" not in _scoring_source()

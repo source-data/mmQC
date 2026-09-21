@@ -455,7 +455,7 @@ class TestScoreCheck:
     ):
         evaluation_dir = tmp_path / "evaluation"
         monkeypatch.setattr(
-            "soda_mmqc.scripts.run.EVALUATION_DIR", evaluation_dir
+            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
         )
         root = _write_predictions_dir(
             pilot["examples_root"].parent / "preds",
@@ -489,10 +489,10 @@ class TestCli:
     ):
         evaluation_dir = tmp_path / "evaluation"
         monkeypatch.setattr(
-            "soda_mmqc.scripts.run.EVALUATION_DIR", evaluation_dir
+            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
         )
         monkeypatch.setattr(
-            "soda_mmqc.scripts.run._default_semantic_embedder",
+            "soda_mmqc.core.scoring._default_semantic_embedder",
             lambda _model: _mock_embedder,
         )
         root = _write_predictions_dir(
@@ -932,7 +932,7 @@ class TestScoreCheckOnRealExamples:
     ):
         evaluation_dir = tmp_path / "evaluation"
         monkeypatch.setattr(
-            "soda_mmqc.scripts.run.EVALUATION_DIR", evaluation_dir
+            "soda_mmqc.core.scoring.EVALUATION_DIR", evaluation_dir
         )
         root = _write_predictions_dir(
             tmp_path / "real-preds", dict(real_pilot["golds"])

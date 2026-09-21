@@ -24,6 +24,11 @@ from soda_mmqc.core.eval_manifest import load_eval_manifest
 from soda_mmqc.core.evaluation import FlatEvaluator
 from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
 from soda_mmqc.core.leaves import _default_semantic_embedder
+from soda_mmqc.core.scoring import (
+    ModelResult,
+    analyze_results,
+    save_analysis,
+)
 # Load env vars and initialize Langfuse client for prompt fetching
 try:
     from dotenv import load_dotenv
@@ -96,20 +101,6 @@ class ModelInput:
     # Prompt object returned by Langfuse SDK (if available). Keep separate
     # from `prompt_name` so we don't attempt to JSON-serialize it.
     prompt_obj: Optional[object] = None
-
-
-@dataclass
-class ModelResult:
-    """Container for a single model evaluation result.
-    
-    Attributes:
-        doc_id: The document identifier for the example (e.g., 
-            "10.1038/emboj.2009.312")
-        model_output: The raw structured output from the model API
-    """
-    doc_id: str | None
-    model_output: Dict[str, Any]
-    metadata: Dict[str, Any]
 
 
 def load_json(file_path):
@@ -300,113 +291,6 @@ def run_model(
             continue
     return results
 
-
-def _model_schema(schema_wrapper: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract the inner model schema from an OpenAI-style wrapper."""
-    if "format" in schema_wrapper and "schema" in schema_wrapper["format"]:
-        return schema_wrapper["format"]["schema"]
-    return schema_wrapper
-
-
-def analyze_results(
-    results: List[ModelResult],
-    schema: Dict[str, Any],
-    expected_outputs: List[Dict[str, Any]],
-    *,
-    check_dir: Path,
-    match_threshold: float = 1.0,
-    sentence_transformer_model: str = (
-        DEFAULT_SENTENCE_TRANSFORMER_MODEL
-    ),
-    embedder: Optional[Any] = None,
-) -> Dict[str, List[Dict[str, Any]]]:
-    """Analyze model outputs against expected outputs with ``FlatEvaluator``.
-
-    Per-field ``string_compare`` and ``match_threshold`` live in
-    ``eval-manifest.json`` beside the check schema.
-
-    Returns a dict with a single ``"flat"`` key mapping to per-example
-    analysis records (compatible with ``save_analysis`` nesting).
-    """
-    manifest_path = check_dir / "eval-manifest.json"
-    if not manifest_path.exists():
-        raise FileNotFoundError(
-            f"Missing eval manifest for check {check_dir.name}: {manifest_path}"
-        )
-
-    if match_threshold != 1.0:
-        logger.warning(
-            "match_threshold=%s is ignored; per-field thresholds are set in "
-            "eval-manifest.json",
-            match_threshold,
-        )
-
-    manifest = load_eval_manifest(manifest_path)
-    model_schema = _model_schema(schema)
-    if embedder is None:
-        embedder = _default_semantic_embedder(sentence_transformer_model)
-    evaluator = FlatEvaluator(model_schema, manifest, embedder=embedder)
-
-    logger.info("Analyzing results with FlatEvaluator (%s)", manifest.checklist)
-
-    analyzed_results: List[Dict[str, Any]] = []
-    for result, expected_output in tqdm(
-        zip(results, expected_outputs),
-        desc="Analyzing",
-        unit=" example",
-    ):
-        logger.debug(
-            "========= Analyzing: %s =========",
-            result.doc_id,
-        )
-        evaluation = evaluator.evaluate(expected_output, result.model_output)
-        analyzed_results.append({
-            "doc_id": result.doc_id,
-            "expected_output": expected_output,
-            "model_output": result.model_output,
-            "metadata": result.metadata,
-            "analysis": evaluation.to_dict(),
-        })
-
-    return {"flat": analyzed_results}
-
-
-def save_analysis(
-    analyzed_results: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    checklist_name: str,
-    check_name: str,
-    model: str
-):
-    """Save the analysis results to a file.
-    
-    Args:
-        analyzed_results: Dictionary mapping prompt names to their results,
-            where each result contains string metric results
-        checklist_name: Name of the checklist
-        check_name: Name of the check
-        model: Model name
-    """
-    
-    # Save analysis results
-    try:
-        analysis_path = EVALUATION_DIR / checklist_name / check_name / model
-        os.makedirs(analysis_path, exist_ok=True)
-        
-        # Save a comprehensive file with all prompts and all string metrics
-        analysis_file = analysis_path / "analysis.json"
-        with open(analysis_file, "w", encoding="utf-8") as f:
-            json.dump(analyzed_results, f, indent=4, ensure_ascii=False)
-
-        logger.info(
-            f"Saved analysis for {check_name} to {analysis_file}"
-        )
-        
-    except Exception as e:
-        logger.error(
-            f"Error saving analysis results for {check_name}: {str(e)}"
-        )
-        logger.debug("Save exception details:", exc_info=True)
-        raise
 
 
 def _load_local_config(check_dir: Path) -> Dict[str, Any]:
