@@ -36,7 +36,10 @@ from soda_mmqc.core.leaves import (
 )
 from soda_mmqc.core.object_list_pairing import align_object_rows, mapping_rows_only
 from soda_mmqc.core.schema_discovery import LeafKind
-from soda_mmqc.core.property_rollup import property_mean_score
+from soda_mmqc.core.property_rollup import (
+    eligible_instance_count,
+    property_mean_score,
+)
 from soda_mmqc.core.structural_reporting import ByListResult, build_by_list
 
 
@@ -85,15 +88,24 @@ class LeafInstanceResult:
 
 @dataclass
 class PropertySummary:
-    """Aggregated reporting for one leaf property."""
+    """Aggregated reporting for one leaf property.
 
-    mean_score: float
+    ``mean_score`` is ``None`` when ``eligible`` is 0 -- the property had
+    nothing to score on this example. That is not ``0.0``, which is a score
+    a model can earn, and the distinction has to survive into
+    ``analysis.json``: everything downstream averages this number, and a
+    false zero is invisible once it is pooled.
+    """
+
+    mean_score: float | None
+    eligible: int = 0
     layer1_counts: dict[str, int] = field(default_factory=dict)
     layer2_counts: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "mean_score": self.mean_score,
+            "eligible": self.eligible,
             "layer1_counts": dict(self.layer1_counts),
             "layer2_counts": dict(self.layer2_counts),
         }
@@ -462,7 +474,12 @@ def _summarize_by_property(
         profile = manifest.profile_for(leaf_spec.eval_pattern)
         profiled = profile is not None and profile.is_profiled
         if property_instances:
-            mean_score = property_mean_score(property_instances, profiled=profiled)
+            mean_score = property_mean_score(
+                property_instances, profiled=profiled
+            )
+            eligible = eligible_instance_count(
+                property_instances, profiled=profiled
+            )
             layer1_counts = Counter(
                 item.layer1 for item in property_instances if item.layer1
             )
@@ -470,12 +487,17 @@ def _summarize_by_property(
                 item.layer2 for item in property_instances if item.layer2
             )
         else:
-            mean_score = 0.0
+            # No instances at all, so nothing was scored. Previously 0.0,
+            # which reads as "scored zero" and is indistinguishable from a
+            # genuine failure once averaged.
+            mean_score = None
+            eligible = 0
             layer1_counts = Counter()
             layer2_counts = Counter()
 
         summaries[leaf_spec.eval_pattern] = PropertySummary(
             mean_score=mean_score,
+            eligible=eligible,
             layer1_counts=dict(layer1_counts),
             layer2_counts=dict(layer2_counts),
         )

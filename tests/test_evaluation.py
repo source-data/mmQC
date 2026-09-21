@@ -72,16 +72,23 @@ class TestExampleA:
 
         assert _property_summary(result, "item.label") == {
             "mean_score": 1.0,
+            "eligible": 1,
             "layer1_counts": {"correct_applicable": 1},
             "layer2_counts": {"match": 1},
         }
+        # Correctly not applicable, so nothing was eligible to score. This
+        # asserted `mean_score: 0.0` before -- indistinguishable from a
+        # model that answered and got it wrong, and a false zero in every
+        # mean taken over this property.
         assert _property_summary(result, "item.status") == {
-            "mean_score": 0.0,
+            "mean_score": None,
+            "eligible": 0,
             "layer1_counts": {"correct_NA": 1},
             "layer2_counts": {},
         }
         assert _property_summary(result, "panels[].status") == {
             "mean_score": 1.0,
+            "eligible": 1,
             "layer1_counts": {"correct_applicable": 1, "correct_NA": 1},
             "layer2_counts": {"TP": 1},
         }

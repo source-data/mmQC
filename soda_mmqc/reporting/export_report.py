@@ -62,12 +62,24 @@ class SchemaFieldRow:
 
 
 def macro_mean(summary: RunSummary) -> float:
-    """Unweighted mean of profiled leaf-property mean scores."""
+    """Unweighted mean of profiled leaf-property mean scores.
+
+    **Scheduled for deletion.** This averages across leaf properties, which
+    mixes measurements of different things: an arm that improves
+    ``panel_label`` and degrades ``micrograph`` looks unchanged here. The
+    plan that owns this package removes it in favour of a per-property
+    table with no summary column.
+
+    Until then it skips properties with nothing eligible rather than
+    summing a ``None``. That keeps it from raising, but does not make the
+    number meaningful -- do not build anything new on it.
+    """
     order = field_order(summary.manifest, summary.by_property.keys())
     scores = [
         summary.by_property[key].mean_score
         for key in order
         if key in summary.by_property
+        and summary.by_property[key].mean_score is not None
     ]
     if not scores:
         return 0.0

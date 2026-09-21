@@ -8,15 +8,26 @@ from typing import Any, Iterator, Mapping, Sequence
 
 from soda_mmqc.core.eval_manifest import EvalManifest
 
-from soda_mmqc.core.property_rollup import property_mean_score
+from soda_mmqc.core.property_rollup import (
+    eligible_instance_count,
+    property_mean_score,
+)
 from soda_mmqc.reporting.load import FlatRun, FlatRuns
 
 
 @dataclass(frozen=True)
 class PropertyRollup:
-    """Pooled summary for one leaf property across a run."""
+    """Pooled summary for one leaf property across a run.
 
-    mean_score: float
+    ``mean_score`` is ``None`` when ``eligible`` is 0: the property had no
+    instance to score here, which is not the same as scoring zero. The two
+    travel together -- a layer-2 mean without its denominator is not a
+    reportable number, because an arm that judges a property inapplicable
+    more often is scored on fewer, self-selected cases.
+    """
+
+    mean_score: float | None
+    eligible: int
     layer1_counts: dict[str, int]
     layer2_counts: dict[str, int]
 
@@ -105,6 +116,7 @@ def aggregate_run(run: FlatRun) -> RunSummary:
         profile = run.manifest.profile_for(leaf_property)
         profiled = profile is not None and profile.is_profiled
         mean_score = property_mean_score(instances, profiled=profiled)
+        eligible = eligible_instance_count(instances, profiled=profiled)
         layer1 = Counter(
             inst["layer1"]
             for inst in instances
@@ -117,6 +129,7 @@ def aggregate_run(run: FlatRun) -> RunSummary:
         )
         by_property[leaf_property] = PropertyRollup(
             mean_score=mean_score,
+            eligible=eligible,
             layer1_counts=dict(layer1),
             layer2_counts=dict(layer2),
         )
