@@ -10,39 +10,41 @@ from soda_mmqc.reporting.export_report import (
     panel_item_properties,
     schema_field_rows,
     scores_table,
-    winner_lines,
+    best_arm_per_property,
 )
 
 
-def test_winner_lines_picks_highest_macro_per_model():
+def test_best_arm_is_reported_per_property():
+    """No overall winner: the old line ranked arms by a mean across
+    properties, which hides an arm that improves one and degrades
+    another. Here that trade is visible."""
     rows = [
-        ArmScoreRow("m1", "pinned", 10, 0.80, {"a": 0.8}),
-        ArmScoreRow("m1", "micrograph-scale-bar@v2", 10, 0.91, {"a": 0.91}),
-        ArmScoreRow("m2", "pinned", 10, 0.70, {"a": 0.7}),
-        ArmScoreRow("m2", "micrograph-scale-bar@v3", 10, 0.88, {"a": 0.88}),
+        ArmScoreRow("m1", "pinned", 10, {"a": 0.80, "b": 0.95}),
+        ArmScoreRow("m1", "micrograph-scale-bar@v2", 10, {"a": 0.91, "b": 0.10}),
     ]
-    lines = winner_lines(rows)
-    assert lines == [
-        "Best arm on m1: micrograph-scale-bar@v2 (macro 0.910)",
-        "Best arm on m2: micrograph-scale-bar@v3 (macro 0.880)",
+    assert best_arm_per_property(rows) == [
+        "m1 / a: micrograph-scale-bar@v2 (0.910)",
+        "m1 / b: pinned (0.950)",
     ]
 
 
-def test_scores_table_includes_macro_and_fields():
+def test_scores_table_is_one_column_per_property():
+    """No macro column: a mean across properties is not reported."""
     rows = [
-        ArmScoreRow("m1", "pinned", 5, 0.5, {"decision": 1.0, "is_a_plot": 0.0}),
-        ArmScoreRow("m1", "micrograph-scale-bar@v2", 5, 0.75, {"decision": 0.5, "is_a_plot": 1.0}),
+        ArmScoreRow("m1", "pinned", 5, {"decision": 1.0, "is_a_plot": 0.0}),
+        ArmScoreRow(
+            "m1", "micrograph-scale-bar@v2", 5,
+            {"decision": 0.5, "is_a_plot": 1.0},
+        ),
     ]
     frame = scores_table(rows)
     assert list(frame.columns) == [
         "model",
         "arm",
         "docs",
-        "macro",
         "decision",
         "is_a_plot",
     ]
-    assert frame.loc[0, "macro"] == 0.5
     assert frame.loc[1, "decision"] == 0.5
 
 

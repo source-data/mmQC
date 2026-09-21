@@ -85,7 +85,16 @@ def _apply_plot_template(fig: go.Figure) -> go.Figure:
 
 
 def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
-    """Per-property mean scores for supplementary bar charts."""
+    """Per-property mean scores, with the denominator each was taken over.
+
+    ``mean_score`` stays ``None`` where nothing was applicable. Plotly
+    renders ``None`` in a ``y`` array as a gap, which is what we want: a
+    gap says "nothing to score here", a zero bar says "scored zero", and
+    those are different findings.
+
+    ``n_scored`` rides along so a chart can put the denominator in its
+    hover text. A layer-2 mean without it is not a reportable number.
+    """
     rows: list[dict[str, Any]] = []
     for leaf_property in field_order(summary.manifest, summary.by_property.keys()):
         rollup = summary.by_property[leaf_property]
@@ -94,6 +103,7 @@ def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 "leaf_property": leaf_property,
                 "field": leaf_property_tail(leaf_property),
                 "mean_score": rollup.mean_score,
+                "n_scored": rollup.n_scored,
             }
         )
     return pd.DataFrame(rows)
@@ -513,21 +523,75 @@ def plot_mean_score_bars(
     frame: pd.DataFrame,
     *,
     title: str = "Mean score by leaf field",
+    spread: pd.DataFrame | None = None,
+    arm: str | None = None,
 ) -> go.Figure:
-    """Supplementary per-property mean score bars."""
+    """Per-property mean score bars, with replicate spread when given.
+
+    ``spread`` is a :func:`~soda_mmqc.reporting.aggregate.replicate_spread`
+    frame. Once a run has replicates, plotting two arms as bare bars is
+    actively misleading -- the reader cannot tell a real difference from
+    resampling noise -- so the error bars are the point of passing it.
+    Where a property has fewer than two replicates its ``sd`` is NA and
+    that bar simply gets no error bar, rather than a zero-length one
+    implying perfect reproducibility.
+
+    A property with nothing applicable is a gap, never a zero bar.
+    """
     if frame.empty:
         fig = go.Figure()
         fig.update_layout(title=title)
         return _apply_plot_template(fig)
-    fig = px.bar(
-        frame,
-        x="field",
-        y="mean_score",
-        category_orders={"field": frame["field"].tolist()},
-        title=title,
-        labels={"field": "leaf field", "mean_score": "mean score"},
+
+    # None -> a gap in the bar chart. object dtype keeps None as None;
+    # a float column would coerce it to NaN, which plots the same but
+    # reads as a number in the data.
+    values = [
+        None if pd.isna(value) else float(value)
+        for value in frame["mean_score"]
+    ]
+    denominators = (
+        list(frame["n_scored"]) if "n_scored" in frame else [None] * len(frame)
     )
-    fig.update_layout(yaxis=dict(range=[0, 1]))
+
+    error_y = None
+    if spread is not None and not spread.empty:
+        by_property = spread
+        if arm is not None:
+            by_property = by_property[by_property["arm"] == arm]
+        sd_by_property = (
+            by_property.set_index("property")["sd"].to_dict()
+            if not by_property.empty
+            else {}
+        )
+        sds = [
+            None
+            if pd.isna(sd_by_property.get(key, pd.NA))
+            else float(sd_by_property[key])
+            for key in frame["leaf_property"]
+        ]
+        if any(sd is not None for sd in sds):
+            error_y = dict(type="data", array=sds, visible=True)
+
+    fig = go.Figure(
+        go.Bar(
+            x=list(frame["field"]),
+            y=values,
+            error_y=error_y,
+            customdata=denominators,
+            hovertemplate=(
+                "%{x}<br>mean %{y:.3f}"
+                "<br>over %{customdata} scored instance(s)"
+                "<extra></extra>"
+            ),
+        )
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="leaf field",
+        yaxis_title="mean score",
+        yaxis=dict(range=[0, 1]),
+    )
     return _apply_plot_template(fig)
 
 

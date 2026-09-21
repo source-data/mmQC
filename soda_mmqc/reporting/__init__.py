@@ -31,10 +31,9 @@ from soda_mmqc.reporting.export_report import (
     CheckReportSummary,
     ArmScoreRow,
     export_fig_checklist_report,
-    macro_mean,
     score_rows_for_summaries,
     scores_table,
-    winner_lines,
+    best_arm_per_property,
 )
 from soda_mmqc.reporting.context import (
     ExampleContext,
@@ -138,7 +137,6 @@ __all__ = [
     "load_evaluation_dir",
     "load_run_root",
     "load_record_payloads",
-    "macro_mean",
     "mean_scores_frame",
     "parent_row_steps",
     "path_string_to_steps",
@@ -166,6 +164,6 @@ __all__ = [
     "sort_frame",
     "split_layer2_by_metric",
     "summarize_runs",
-    "winner_lines",
+    "best_arm_per_property",
     "worst_docs_table",
 ]

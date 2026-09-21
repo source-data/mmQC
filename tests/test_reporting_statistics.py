@@ -503,3 +503,147 @@ class TestNonResponse:
         counts = non_response_counts(FlatRuns([]))
         assert list(counts.columns) == list(NON_RESPONSE_COLUMNS)
         assert counts.empty
+
+
+class TestNoCrossPropertySummary:
+    """The constraint, asserted against the module that broke it."""
+
+    def test_macro_mean_is_gone(self):
+        """It averaged mean_score over properties and ranked arms by it.
+
+        panel_label and micrograph measure different things; a number
+        mixing them hides an arm that improves one and degrades the
+        other.
+        """
+        from soda_mmqc.reporting import export_report
+
+        assert not hasattr(export_report, "macro_mean")
+        assert not hasattr(export_report, "winner_lines")
+
+    def test_the_scores_table_has_no_summary_column(self):
+        from soda_mmqc.reporting.export_report import ArmScoreRow, scores_table
+
+        rows = [
+            ArmScoreRow("m1", "pinned", 10, {"a": 0.8, "b": 0.2}),
+            ArmScoreRow("m1", "c@v2", 10, {"a": 0.9, "b": 0.1}),
+        ]
+        table = scores_table(rows)
+
+        assert "macro" not in table.columns
+        assert {"model", "arm", "docs", "a", "b"} <= set(table.columns)
+
+    def test_the_winner_is_reported_per_property(self):
+        """An arm that improves one property and degrades another.
+
+        The old single line called this a winner. Per property it is
+        visibly a trade, which is the finding.
+        """
+        from soda_mmqc.reporting.export_report import (
+            ArmScoreRow,
+            best_arm_per_property,
+        )
+
+        rows = [
+            ArmScoreRow("m1", "pinned", 10, {"a": 0.8, "b": 0.9}),
+            ArmScoreRow("m1", "c@v2", 10, {"a": 0.9, "b": 0.1}),
+        ]
+        lines = best_arm_per_property(rows)
+
+        assert lines == [
+            "m1 / a: c@v2 (0.900)",
+            "m1 / b: pinned (0.900)",
+        ]
+
+    def test_a_property_nothing_scored_says_so(self):
+        from soda_mmqc.reporting.export_report import (
+            ArmScoreRow,
+            best_arm_per_property,
+        )
+
+        rows = [ArmScoreRow("m1", "pinned", 10, {"a": None})]
+        assert best_arm_per_property(rows) == [
+            "m1 / a: nothing applicable in any arm"
+        ]
+
+
+class TestMeanScoreBars:
+    def _summary_frame(self):
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {
+                    "leaf_property": "p1",
+                    "field": "p1",
+                    "mean_score": 0.5,
+                    "n_scored": 4,
+                },
+                {
+                    "leaf_property": "p2",
+                    "field": "p2",
+                    "mean_score": None,
+                    "n_scored": 0,
+                },
+            ]
+        )
+
+    def test_a_bar_with_nothing_applicable_is_a_gap_not_a_zero(self):
+        from soda_mmqc.reporting.plots import plot_mean_score_bars
+
+        fig = plot_mean_score_bars(self._summary_frame())
+        values = list(fig.data[0].y)
+
+        assert values[0] == 0.5
+        assert values[1] is None, (
+            "a gap says 'nothing to score here'; a zero bar says "
+            "'scored zero'"
+        )
+
+    def test_the_denominator_is_in_the_hover(self):
+        from soda_mmqc.reporting.plots import plot_mean_score_bars
+
+        fig = plot_mean_score_bars(self._summary_frame())
+        assert list(fig.data[0].customdata) == [4, 0]
+        assert "scored instance" in fig.data[0].hovertemplate
+
+    def test_error_bars_come_from_replicate_spread(self):
+        import pandas as pd
+
+        from soda_mmqc.reporting.plots import plot_mean_score_bars
+
+        spread = pd.DataFrame(
+            [
+                {"arm": "pinned", "property": "p1", "sd": 0.25},
+                {"arm": "pinned", "property": "p2", "sd": pd.NA},
+            ]
+        )
+        fig = plot_mean_score_bars(
+            self._summary_frame(), spread=spread, arm="pinned"
+        )
+
+        assert fig.data[0].error_y.array is not None, (
+            "two arms plotted without spread, once replicates exist, is "
+            "actively misleading"
+        )
+        assert list(fig.data[0].error_y.array) == [0.25, None]
+
+    def test_no_spread_means_no_error_bars(self):
+        from soda_mmqc.reporting.plots import plot_mean_score_bars
+
+        fig = plot_mean_score_bars(self._summary_frame())
+        assert fig.data[0].error_y.array is None
+
+    def test_a_single_replicate_gets_no_error_bar(self):
+        """sd is NA below two replicates; a zero bar would claim
+        perfect reproducibility from one measurement."""
+        import pandas as pd
+
+        from soda_mmqc.reporting.plots import plot_mean_score_bars
+
+        spread = pd.DataFrame(
+            [{"arm": "pinned", "property": "p1", "sd": pd.NA}]
+        )
+        fig = plot_mean_score_bars(
+            self._summary_frame(), spread=spread, arm="pinned"
+        )
+        assert fig.data[0].error_y.array is None

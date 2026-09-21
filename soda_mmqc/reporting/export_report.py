@@ -35,8 +35,7 @@ class ArmScoreRow:
     model: str
     arm: str
     n_docs: int
-    macro: float
-    field_scores: dict[str, float]
+    field_scores: dict[str, float | None]
 
 
 @dataclass(frozen=True)
@@ -61,31 +60,6 @@ class SchemaFieldRow:
     description: str
 
 
-def macro_mean(summary: RunSummary) -> float:
-    """Unweighted mean of profiled leaf-property mean scores.
-
-    **Scheduled for deletion.** This averages across leaf properties, which
-    mixes measurements of different things: an arm that improves
-    ``panel_label`` and degrades ``micrograph`` looks unchanged here. The
-    plan that owns this package removes it in favour of a per-property
-    table with no summary column.
-
-    Until then it skips properties with nothing applicable rather than
-    summing a ``None``. That keeps it from raising, but does not make the
-    number meaningful -- do not build anything new on it.
-    """
-    order = field_order(summary.manifest, summary.by_property.keys())
-    scores = [
-        summary.by_property[key].mean_score
-        for key in order
-        if key in summary.by_property
-        and summary.by_property[key].mean_score is not None
-    ]
-    if not scores:
-        return 0.0
-    return sum(scores) / len(scores)
-
-
 def score_rows_for_summaries(summaries: RunSummaries) -> list[ArmScoreRow]:
     """Build sorted model/arm score rows from run summaries."""
     rows: list[ArmScoreRow] = []
@@ -104,7 +78,6 @@ def score_rows_for_summaries(summaries: RunSummaries) -> list[ArmScoreRow]:
                 model=summary.model,
                 arm=summary.arm,
                 n_docs=len(summary.records),
-                macro=macro_mean(summary),
                 field_scores=field_scores,
             )
         )
@@ -112,23 +85,50 @@ def score_rows_for_summaries(summaries: RunSummaries) -> list[ArmScoreRow]:
     return rows
 
 
-def winner_lines(rows: Sequence[ArmScoreRow]) -> list[str]:
-    """Best-arm line per model from score rows."""
+def best_arm_per_property(
+    rows: Sequence[ArmScoreRow],
+) -> list[str]:
+    """Which arm scored highest on each property, per model.
+
+    This replaces `winner_lines`, which ranked arms by a mean across
+    properties. That number mixed measurements of different things: an
+    arm that improved `panel_label` and degraded `micrograph` came out
+    looking unchanged, and the one line hid both movements.
+
+    There is deliberately no overall winner. Whether a set of
+    per-property movements adds up to a better arm is the experiment's
+    claim, and it belongs in the experiment's note where the reasoning
+    is visible -- not in a library default that picks for you.
+    """
     lines: list[str] = []
-    models = sorted({row.model for row in rows})
-    for model in models:
+    for model in sorted({row.model for row in rows}):
         model_rows = [row for row in rows if row.model == model]
-        if not model_rows:
-            continue
-        best = max(model_rows, key=lambda row: row.macro)
-        lines.append(
-            f"Best arm on {model}: {best.arm} (macro {best.macro:.3f})"
+        properties = sorted(
+            {name for row in model_rows for name in row.field_scores}
         )
+        for name in properties:
+            scored = [
+                (row.arm, row.field_scores[name])
+                for row in model_rows
+                if row.field_scores.get(name) is not None
+            ]
+            if not scored:
+                lines.append(
+                    f"{model} / {name}: nothing applicable in any arm"
+                )
+                continue
+            arm, value = max(scored, key=lambda pair: pair[1])
+            lines.append(f"{model} / {name}: {arm} ({value:.3f})")
     return lines
 
 
 def scores_table(rows: Sequence[ArmScoreRow]) -> pd.DataFrame:
-    """Wide table: model, arm, docs, macro, then per-field means."""
+    """Wide table: model, arm, docs, then one column per property.
+
+    No summary column. A mean across properties mixes measurements of
+    different things, so the table reports each property and leaves the
+    judgement to the reader.
+    """
     field_names: list[str] = []
     seen: set[str] = set()
     for row in rows:
@@ -143,7 +143,6 @@ def scores_table(rows: Sequence[ArmScoreRow]) -> pd.DataFrame:
             "model": row.model,
             "arm": row.arm,
             "docs": row.n_docs,
-            "macro": round(row.macro, 3),
         }
         for field in field_names:
             value = row.field_scores.get(field)
@@ -316,7 +315,7 @@ def render_check_html(
 ) -> str:
     """Render one check report page (HTML string)."""
     rows = score_rows_for_summaries(summaries)
-    winners = winner_lines(rows)
+    winners = best_arm_per_property(rows)
     table = scores_table(rows)
     if schema is None:
         schema = load_check_schema(checklist, check)
@@ -542,7 +541,7 @@ def export_fig_checklist_report(
 
         rows = score_rows_for_summaries(summaries)
         rows = [row for row in rows if row.model in set(model_list)]
-        winners = winner_lines(rows)
+        winners = best_arm_per_property(rows)
         table = scores_table(rows)
         if not table.empty:
             table = table.copy()
