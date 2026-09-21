@@ -110,6 +110,47 @@ So `PropertyRollup.mean_score` becomes `float | None` and gains
 `eligible: int`. Every consumer must then decide explicitly what to do with
 `None`, which is the point.
 
+### Why a layer-2 number is never shown without its denominator
+
+The policy for `mean_score` is unchanged and deliberate: **the mean is taken
+over instances the model judged applicable and judged so correctly**
+(`layer1 == correct_applicable`). Layer 2 asks "when the model correctly saw
+that this property applied, how well did it match?" Whether the model gets
+applicability right is layer 1's question, and mixing the two would make
+neither answerable.
+
+Excluding an ineligible replicate follows from the same policy rather than
+extending it. A replicate that judged the property not-applicable has
+nothing to say about matching quality, so it contributes nothing to the
+layer-2 mean — and the variation in *that* judgement is a layer-1 result,
+analysed there.
+
+The cost is a conditioning confound, and it must be stated rather than
+designed away. Each arm's layer-2 mean is computed over **its own** eligible
+set. If `pinned` finds a property applicable in 5 of 5 replicates and
+`<check>@v2` in 1 of 5, the two means describe different populations, and
+`@v2`'s is over a subset it selected — plausibly the easy cases.
+
+exp-01 is exactly where this bites. A minimal skill that returns
+`outputs: []` produces non-response at layer S *and* an empty eligible set
+at layer 2, so **the failing arm can show the better layer-2 mean by
+answering less.** Layer 2 read alone would call the minimal skill fine.
+
+Hence two rules, enforced by Tasks 5, 6 and 7:
+
+1. **Every layer-2 figure carries its denominator.** `mean` never appears
+   without `n_replicates` and `eligible_total` beside it, in a table or in
+   hover text. A bare layer-2 mean is not a reportable number.
+2. **A contrast says how much of the benchmark it used.**
+   `arm_contrast` pairs on examples both arms scored, and reports
+   `n_baseline_only`, `n_variant_only` and `eligibility_agreement` so a
+   difference computed on a shrunken set announces it.
+
+Neither rule tries to correct the confound — there is no honest way to
+impute a score for an instance the model never judged applicable. They make
+it visible, and pair it with `non_response_counts` (Task 6), which is the
+layer-S half of the same story.
+
 ### Why the library stops at `ArmContrast`
 
 `ArmContrast` pairs by example within a property and reports a mean
@@ -182,6 +223,14 @@ in Task 4, the first task that needs them.
 - **`mean_score is None` means "nothing eligible to score".** It is never
   coerced to `0.0`, never filled, never dropped silently. A consumer that
   skips `None` rows says so in a comment.
+- **Layer 2 is conditional on layer 1, on every axis.** The mean is over
+  instances with `layer1 == correct_applicable`; a replicate with none is
+  excluded, not zeroed. Variation in applicability is a **layer-1** result
+  and is reported there, never allowed to move a layer-2 mean.
+- **No layer-2 number is presented without its denominator.** `mean`
+  travels with `n_replicates` and `eligible_total`; a contrast travels with
+  `eligibility_agreement`. An arm can earn a better layer-2 mean by
+  answering less, so a bare one is not a reportable number.
 - **A replicate is a resample, not a reproduction.** Replicates of one arm
   may be pooled. Arms may never be pooled with each other.
 - **Reporting reads; it does not run.** No task calls `run_check_live`.
@@ -858,7 +907,14 @@ consumer plots or tabulates them. The row shapes are:
 | `check`, `property` | the group; one row per combination |
 | `difference` | mean over examples of `variant - baseline` |
 | `se` | `sd(differences, ddof=1) / sqrt(n_examples)`, NA when `n < 2` |
-| `n_examples` | examples scored by **both** arms |
+| `n_examples` | examples scored by **both** arms — the paired set |
+| `n_baseline_only` | examples the baseline scored and the variant did not |
+| `n_variant_only` | examples the variant scored and the baseline did not |
+| `eligibility_agreement` | `n_examples / (n_examples + n_baseline_only + n_variant_only)` |
+
+The last three exist because of the conditioning confound described under
+*Why a layer-2 number is never shown without its denominator*. A contrast
+computed on a shrunken paired set must announce that it was shrunk.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -925,6 +981,48 @@ def test_arm_contrast_drops_an_example_only_one_arm_scored():
     contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
     assert contrast["n_examples"] == 1
     assert contrast["difference"] == pytest.approx(-1.0)
+
+
+def test_a_shrunken_pairing_announces_itself():
+    """The conditioning confound, made visible.
+
+    Each arm's layer-2 mean is over its own eligible set. An arm that
+    judges a property inapplicable more often is scored on a subset it
+    selected -- plausibly the easy cases -- so a difference computed on a
+    shrunken paired set must say how shrunken it is. In exp-01 a minimal
+    skill returning outputs: [] can earn a *better* layer-2 mean by
+    answering less.
+    """
+    frame = _frame([
+        ("pinned", 0, "doc-a", "p1", 1.0, 1),
+        ("pinned", 0, "doc-b", "p1", 1.0, 1),
+        ("pinned", 0, "doc-c", "p1", 1.0, 1),
+        ("v2", 0, "doc-a", "p1", 1.0, 1),
+        ("v2", 0, "doc-b", "p1", None, 0),
+        ("v2", 0, "doc-c", "p1", None, 0),
+    ])
+    contrast = arm_contrast(frame, baseline="pinned", variant="v2").iloc[0]
+
+    assert contrast["difference"] == 0.0, (
+        "on the one example both arms scored, they agree -- which is "
+        "exactly the misleading reading this row must qualify"
+    )
+    assert contrast["n_examples"] == 1
+    assert contrast["n_baseline_only"] == 2
+    assert contrast["n_variant_only"] == 0
+    assert contrast["eligibility_agreement"] == pytest.approx(1 / 3)
+
+
+def test_spread_reports_the_denominator_it_used():
+    """A layer-2 mean without its eligible count is not reportable."""
+    frame = _frame([
+        ("pinned", 0, "doc-a", "p1", 1.0, 4),
+        ("pinned", 1, "doc-a", "p1", 1.0, 2),
+        ("pinned", 2, "doc-a", "p1", None, 0),
+    ])
+    row = replicate_spread(frame).iloc[0]
+    assert row["n_replicates"] == 2
+    assert row["eligible_total"] == 6
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -954,10 +1052,15 @@ Docstring must state which axis the SD is over:
 - [ ] **Step 4: Implement `arm_contrast`**
 
 Group by `property`. Within a group, average over replicates per
-`(arm, example)`, inner-join the two arms on `example`, take
+`(arm, example)` skipping NA, inner-join the two arms on `example`, take
 `variant - baseline` per example, then report `difference` as the mean of
-those and `se` as `sd(differences, ddof=1) / sqrt(n)`. Drop unpaired
-examples.
+those and `se` as `sd(differences, ddof=1) / sqrt(n)`.
+
+Unpaired examples are dropped from the difference but **counted**:
+`n_baseline_only` and `n_variant_only` are the examples one arm scored and
+the other did not, and `eligibility_agreement` is the paired fraction.
+Dropping silently is the dangerous version of this — an arm that judges a
+property inapplicable more often gets scored on a subset it selected.
 
 ```python
     """Paired difference between two arms, for one property.
@@ -971,6 +1074,13 @@ examples.
     Returns one row per property. It never pools properties, and it does
     not test significance: what counts as a real difference is the
     experiment's claim, not this function's.
+
+    ``difference`` is conditional on both arms having judged the property
+    applicable on the same example, so it is computed on the paired set
+    alone. ``eligibility_agreement`` says how much of the benchmark that
+    was. Read it first: an arm that answers less is scored on fewer, easier
+    cases, and a difference of zero over one of forty examples is not the
+    same finding as a difference of zero over forty.
     """
 ```
 
@@ -1291,6 +1401,21 @@ add a markdown cell saying plainly what changed and why:
 > properties. That number mixes `panel_label` with `micrograph`, so an arm
 > that improves one and degrades the other looks unchanged. The comparison
 > below is per property; there is no headline number, deliberately.
+
+**Order the notebook so layer 2 cannot be read alone.** Layer 2 is
+conditional on layer 1, so a minimal skill that answers less is scored on
+fewer, easier cases and can show the *better* mean. The reading order is:
+
+1. `non_response_counts` — how often each arm answered nothing.
+2. Layer-1 applicability per property — how often each arm judged the
+   property applicable, and how that varied across replicates. This is
+   where the applicability difference between arms is a *result*, not a
+   nuisance.
+3. Only then `arm_contrast`, with `eligibility_agreement` displayed in the
+   same table as `difference` — not in a later cell.
+
+Add a markdown cell before step 3 stating the confound in one sentence, so
+a reader who skips to the contrast table still meets it.
 
 Note the arm naming: the harness writes `pinned` and `<check>@v2`, and the
 notebook's `arm_name()` mapped those to `detailed`/`minimal`. Keep that
