@@ -10,10 +10,39 @@ from tenacity import (
     wait_exponential,
     retry_if_exception_type
 )
+from dataclasses import dataclass
 from typing import Dict, Any, Tuple, Optional
 from soda_mmqc import logger
 from soda_mmqc.config import API_PROVIDER, DEFAULT_MODEL, DEFAULT_MODELS
 from mmqc_utils.images import compress_to_bounded_jpeg
+
+
+@dataclass
+class ModelInput:
+    """Container for one model call's inputs.
+
+    Holds everything needed to generate a response: the example, the
+    prompt, and the schema the structured output must satisfy.
+
+    It lives here, beside ``generate_response``, which is its only
+    consumer. It used to live in the prompt-scanning pipeline, which is
+    gone -- but this is the route by which prompts still reach a provider,
+    so the container is not legacy even though that pipeline was.
+
+    Attributes:
+        example: The Example instance containing image and caption data
+        prompt: The prompt template to send to the model
+        schema: JSON schema defining the expected structured output format
+    """
+    example: Any
+    prompt: str
+    schema: Dict[str, Any]
+    # Full prompt key/name used for tracing and disambiguation, e.g.
+    # "checklists/fig-checklist/panel-data-replication-validation".
+    prompt_name: Optional[str] = None
+    # Prompt object returned by Langfuse SDK (if available). Keep separate
+    # from `prompt_name` so we don't attempt to JSON-serialize it.
+    prompt_obj: Optional[object] = None
 
 # API clients will be imported dynamically when needed
 

@@ -87,7 +87,7 @@ Use a reasoning-capable OpenAI model (e.g. `gpt-5`, `gpt-5-mini`, o-series) when
 `generate_response` routes to the configured provider:
 
 ```python
-from soda_mmqc.scripts.run import ModelInput
+from soda_mmqc.lib.api import ModelInput
 from soda_mmqc.lib.api import generate_response
 
 model_input = ModelInput(

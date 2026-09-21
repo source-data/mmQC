@@ -13,7 +13,7 @@ from soda_mmqc.lib.api import (
 )
 from soda_mmqc.lib.cache import ModelCache
 from soda_mmqc.core.examples import FigureExample
-from soda_mmqc.scripts.run import ModelInput
+from soda_mmqc.lib.api import ModelInput
 
 
 class TestModelApi(unittest.TestCase):

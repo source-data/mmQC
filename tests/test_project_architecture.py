@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Test project architecture and imports after reorganization."""
 
+import argparse
 import unittest
 
 from soda_mmqc import logger
@@ -32,7 +33,7 @@ class TestProjectArchitecture(unittest.TestCase):
         
         # Check that scripts exist (CLI entry points)
         self.assertTrue((PACKAGE_ROOT / "scripts").exists())
-        self.assertTrue((PACKAGE_ROOT / "scripts" / "run.py").exists())
+        self.assertTrue((PACKAGE_ROOT / "cli.py").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "curate.py").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "report.py").exists())
         
@@ -134,20 +135,32 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertEqual(duplicates, set(), 
                         f"Found duplicate modules between core and scripts: {duplicates}")
     
-    def test_cli_entry_points(self):
-        """Test that CLI entry points are properly configured."""
-        # Check that the main CLI functions exist
-        try:
-            from soda_mmqc.scripts.run import main as run_main
-            from soda_mmqc.scripts.run import initialize_main
-            from soda_mmqc.scripts.curate import main as curate_main
-            
-            self.assertTrue(callable(run_main))
-            self.assertTrue(callable(initialize_main))
-            self.assertTrue(callable(curate_main))
-            logger.info("CLI entry points exist and are callable")
-        except ImportError as e:
-            self.fail(f"Failed to import CLI entry points: {e}")
+    def test_one_cli_declares_every_command(self):
+        """Commands are declared in cli.py and nowhere else.
+
+        `evaluate` and `init` used to be separate console scripts pointing
+        into scripts/run.py, so a reader looking for a command had two
+        places to look and the prompt pipeline stayed alive to host them.
+        """
+        from soda_mmqc.cli import _build_parser
+
+        parser = _build_parser()
+        actions = [
+            a for a in parser._actions
+            if isinstance(a, argparse._SubParsersAction)
+        ]
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(
+            set(actions[0].choices),
+            {"run", "score", "assemble", "graph", "init", "curate", "report"},
+        )
+
+    def test_the_prompt_pipeline_is_gone(self):
+        self.assertFalse(
+            (PACKAGE_ROOT / "scripts" / "run.py").exists(),
+            "scripts/run.py held the prompt-scanning pipeline; its live "
+            "symbols moved to core/scoring.py, config.py and lib/api.py",
+        )
     
     def test_data_structure(self):
         """Test that the data directory structure is correct."""
