@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
 from soda_mmqc.core.eval_manifest import EvalManifest
 
 from soda_mmqc.core.property_rollup import PropertyRollup, rollup_by_property
-from soda_mmqc.reporting.load import FlatRun, FlatRuns
+from soda_mmqc.core.run_layout import BASELINE_ARM
+from soda_mmqc.reporting.load import FlatRun, FlatRuns, RunRef
 
 # `PropertyRollup` is defined in core/property_rollup.py, which owns every
 # instances-to-statistics step. It is re-exported here because this module
@@ -28,16 +30,37 @@ __all__ = [
 
 @dataclass
 class RunSummary:
-    """Aggregated reporting for one (model, prompt) flat run."""
+    """Aggregated reporting for one scored run leaf."""
 
-    checklist: str
-    check: str
-    model: str
-    prompt: str
+    ref: RunRef
     manifest: EvalManifest
     records: tuple[Any, ...]
     by_list_row_counts: dict[str, dict[str, int]]
     by_property: dict[str, PropertyRollup]
+    #: The leaf this run was read from, for lazily loading gold/pred
+    #: payloads. ``None`` for a summary built in memory.
+    path: Path | None = None
+
+    # Flat accessors, so consumers read `summary.check` as before.
+    @property
+    def checklist(self) -> str:
+        return self.ref.checklist
+
+    @property
+    def check(self) -> str:
+        return self.ref.check
+
+    @property
+    def model(self) -> str:
+        return self.ref.model
+
+    @property
+    def arm(self) -> str:
+        return self.ref.arm
+
+    @property
+    def replicate(self) -> int:
+        return self.ref.replicate
 
     @property
     def by_list_keys(self) -> tuple[str, ...]:
@@ -111,48 +134,84 @@ def aggregate_run(run: FlatRun) -> RunSummary:
     by_property = rollup_by_property(instances, run.manifest)
 
     return RunSummary(
-        checklist=run.checklist,
-        check=run.check,
-        model=run.model,
-        prompt=run.prompt,
+        ref=run.ref,
         manifest=run.manifest,
         records=run.records,
         by_list_row_counts={
             key: dict(counts) for key, counts in by_list_counts.items()
         },
         by_property=by_property,
+        path=run.path,
     )
 
 
-class RunSummaries(Mapping[tuple[str, str], RunSummary]):
-    """Summaries keyed by ``(model, prompt)``."""
+class RunSummaries(Mapping[RunRef, RunSummary]):
+    """Summaries keyed by :class:`RunRef`.
+
+    The key carries the arm and the replicate, because those are what
+    distinguish two runs of one check. Replicates of one arm may be
+    pooled -- a replicate is a resample. Arms may never be pooled with
+    each other: they are different configurations, and the difference
+    between them is the result.
+    """
 
     def __init__(self, summaries: Sequence[RunSummary]) -> None:
-        self._by_key = {(s.model, s.prompt): s for s in summaries}
+        self._by_key = {s.ref: s for s in summaries}
         self._summaries = tuple(summaries)
 
     def __len__(self) -> int:
         return len(self._by_key)
 
-    def __iter__(self) -> Iterator[tuple[str, str]]:
+    def __iter__(self) -> Iterator[RunRef]:
         return iter(self._by_key)
 
-    def __getitem__(self, key: tuple[str, str]) -> RunSummary:
+    def __getitem__(self, key: RunRef) -> RunSummary:
         return self._by_key[key]
 
     def for_model(self, model: str) -> tuple[RunSummary, ...]:
-        return tuple(s for s in self._summaries if s.model == model)
+        """Every arm of one model, baseline first then alphabetical.
 
-    def for_prompt(self, prompt: str) -> tuple[RunSummary, ...]:
-        return tuple(s for s in self._summaries if s.prompt == prompt)
+        Ordered rather than left in load order, so a comparison plot
+        puts the control in the first series position every time.
+        """
+        order = {arm: index for index, arm in enumerate(self.arms)}
+        return tuple(
+            sorted(
+                (s for s in self._summaries if s.model == model),
+                key=lambda s: (order.get(s.arm, len(order)), s.replicate),
+            )
+        )
+
+    def for_arm(self, arm: str) -> tuple[RunSummary, ...]:
+        """Every replicate of one arm, in replicate order."""
+        return tuple(
+            sorted(
+                (s for s in self._summaries if s.arm == arm),
+                key=lambda s: s.replicate,
+            )
+        )
 
     @property
     def models(self) -> tuple[str, ...]:
         return tuple(sorted({s.model for s in self._summaries}))
 
     @property
-    def prompts(self) -> tuple[str, ...]:
-        return tuple(sorted({s.prompt for s in self._summaries}))
+    def arms(self) -> tuple[str, ...]:
+        """Arms with the baseline first, then the rest alphabetically.
+
+        The baseline is the control every variant is read against, so it
+        leads rather than landing wherever its name sorts -- `pinned`
+        would otherwise come after `<check>@v2`.
+        """
+        names = {s.arm for s in self._summaries}
+        rest = sorted(names - {BASELINE_ARM})
+        return tuple(
+            ([BASELINE_ARM] if BASELINE_ARM in names else []) + rest
+        )
+
+    @property
+    def replicates(self) -> tuple[int, ...]:
+        return tuple(sorted({s.replicate for s in self._summaries}))
 
 
 def summarize_runs(runs: FlatRuns) -> RunSummaries:

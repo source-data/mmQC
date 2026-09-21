@@ -15,8 +15,8 @@ from soda_mmqc.reporting.display import _display_figure_image, show_instance_con
 from soda_mmqc.reporting.load import (
     FlatRecord,
     FlatRun,
-    load_flat_runs,
-    load_prompt_text,
+    RunRef,
+    load_evaluation_dir,
     load_record_payloads,
     record_source,
 )
@@ -106,39 +106,32 @@ class TestNavigate:
 
 
 class TestLoadRecordPayloads:
-    def test_load_prompt_text_for_check(self):
-        text = load_prompt_text("fig-checklist", MICROGRAPH, "prompt.2")
-        assert text is not None
-        assert len(text) > 0
-
     def test_lazy_load_micrograph_payloads(self):
-        expected, model = load_record_payloads(
-            "fig-checklist",
-            MICROGRAPH,
-            MODEL_A,
-            "prompt.2",
-            FIGURE1_SOURCE,
+        leaf = (
+            FIXTURES / "fig-checklist" / MICROGRAPH / MODEL_A
+            / "micrograph-scale-bar@v2" / "rep-00"
         )
+        expected, model = load_record_payloads(leaf, FIGURE1_SOURCE)
         assert "outputs" in expected
         assert "outputs" in model
 
     def test_load_flat_runs_without_payloads_by_default(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             MICROGRAPH,
             models=MODEL_A,
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         record = runs[0].records[0]
         assert not record.has_payloads
         assert record_source(record)
 
     def test_load_flat_runs_with_payloads(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             MICROGRAPH,
             models=MODEL_A,
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
             include_payloads=True,
         )
         assert runs[0].records[0].has_payloads
@@ -161,10 +154,13 @@ def demo_summary():
         model_output=pred,
     )
     run = FlatRun(
-        checklist="fig-checklist",
-        check="demo",
-        model="test-model",
-        prompt="prompt.1",
+        ref=RunRef(
+            checklist="fig-checklist",
+            check="demo",
+            model="test-model",
+            arm="pinned",
+            replicate=0,
+        ),
         records=(record,),
         manifest=evaluator.manifest,
     )
@@ -174,11 +170,11 @@ def demo_summary():
 class TestInspectInstance:
     @pytest.fixture
     def summary_p2(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             MICROGRAPH,
             models=MODEL_A,
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         return aggregate_run(runs[0])
 
@@ -256,34 +252,17 @@ class TestInspectInstance:
 class TestShowInstanceContext:
     @pytest.fixture
     def summary_p2(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             MICROGRAPH,
             models=MODEL_A,
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         return aggregate_run(runs[0])
 
     def test_requires_source_with_summary(self, summary_p2):
         with pytest.raises(ValueError, match="source is required"):
             show_instance_context(summary_p2)
-
-    def test_show_prompt_appended_by_default(self, summary_p2):
-        with patch(
-            "soda_mmqc.reporting.display._display_prompt"
-        ) as mock_prompt, patch(
-            "soda_mmqc.reporting.display._display_markdown"
-        ), patch(
-            "soda_mmqc.reporting.display._display_side_by_side"
-        ):
-            show_instance_context(
-                summary_p2,
-                source=FIGURE1_SOURCE,
-                object_path="outputs[0]",
-                leaf="scale_bar_on_image",
-                include_example_assets=False,
-            )
-        mock_prompt.assert_called_once()
 
     def test_zoomable_figure_preview(self, summary_p2):
         with patch(
@@ -292,8 +271,6 @@ class TestShowInstanceContext:
             "soda_mmqc.reporting.display._display_markdown"
         ), patch(
             "soda_mmqc.reporting.display._display_side_by_side"
-        ), patch(
-            "soda_mmqc.reporting.display._display_prompt"
         ):
             show_instance_context(
                 summary_p2,

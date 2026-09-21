@@ -25,7 +25,7 @@ LAYER_S_COLORS = {
     "spurious_row": "#dc2626",
 }
 
-# Opacity ladder for prompt comparison series on outcome-colored bars.
+# Opacity ladder for arm comparison series on outcome-colored bars.
 COMPARISON_SERIES_OPACITIES = (1.0, 0.6, 0.35)
 
 # Hatch patterns for model comparison series (first entry = solid fill).

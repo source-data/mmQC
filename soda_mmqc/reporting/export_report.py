@@ -23,17 +23,17 @@ from soda_mmqc.reporting.aggregate import (
 from soda_mmqc.reporting.compare import build_comparison_report
 from soda_mmqc.reporting.load import (
     discover_evaluation_checks,
-    load_flat_runs,
+    load_evaluation_dir,
 )
 from soda_mmqc.reporting.plots import plot_comparison_mean_scores
 
 
 @dataclass(frozen=True)
-class PromptScoreRow:
-    """One model × prompt score row for tables and winners."""
+class ArmScoreRow:
+    """One model x arm score row for tables and winners."""
 
     model: str
-    prompt: str
+    arm: str
     n_docs: int
     macro: float
     field_scores: dict[str, float]
@@ -46,7 +46,7 @@ class CheckReportSummary:
     check: str
     models: tuple[str, ...]
     winners: tuple[str, ...]
-    score_rows: tuple[PromptScoreRow, ...]
+    score_rows: tuple[ArmScoreRow, ...]
     relative_page: str
     skipped_reason: str | None = None
 
@@ -86,35 +86,34 @@ def macro_mean(summary: RunSummary) -> float:
     return sum(scores) / len(scores)
 
 
-def score_rows_for_summaries(summaries: RunSummaries) -> list[PromptScoreRow]:
-    """Build sorted model/prompt score rows from run summaries."""
-    rows: list[PromptScoreRow] = []
-    for model in summaries.models:
-        for prompt in summaries.prompts:
-            if (model, prompt) not in summaries:
-                continue
-            summary = summaries[model, prompt]
-            order = field_order(summary.manifest, summary.by_property.keys())
-            field_scores = {
-                leaf_property_tail(key): summary.by_property[key].mean_score
-                for key in order
-                if key in summary.by_property
-            }
-            rows.append(
-                PromptScoreRow(
-                    model=model,
-                    prompt=prompt,
-                    n_docs=len(summary.records),
-                    macro=macro_mean(summary),
-                    field_scores=field_scores,
-                )
+def score_rows_for_summaries(summaries: RunSummaries) -> list[ArmScoreRow]:
+    """Build sorted model/arm score rows from run summaries."""
+    rows: list[ArmScoreRow] = []
+    # Iterate the summaries rather than the cross product of models and
+    # arms: a RunRef also carries a replicate, so there is no key to
+    # build from (model, arm) alone.
+    for summary in summaries.values():
+        order = field_order(summary.manifest, summary.by_property.keys())
+        field_scores = {
+            leaf_property_tail(key): summary.by_property[key].mean_score
+            for key in order
+            if key in summary.by_property
+        }
+        rows.append(
+            ArmScoreRow(
+                model=summary.model,
+                arm=summary.arm,
+                n_docs=len(summary.records),
+                macro=macro_mean(summary),
+                field_scores=field_scores,
             )
-    rows.sort(key=lambda row: (row.model, row.prompt))
+        )
+    rows.sort(key=lambda row: (row.model, row.arm))
     return rows
 
 
-def winner_lines(rows: Sequence[PromptScoreRow]) -> list[str]:
-    """Best-prompt line per model from score rows."""
+def winner_lines(rows: Sequence[ArmScoreRow]) -> list[str]:
+    """Best-arm line per model from score rows."""
     lines: list[str] = []
     models = sorted({row.model for row in rows})
     for model in models:
@@ -123,13 +122,13 @@ def winner_lines(rows: Sequence[PromptScoreRow]) -> list[str]:
             continue
         best = max(model_rows, key=lambda row: row.macro)
         lines.append(
-            f"Best prompt on {model}: {best.prompt} (macro {best.macro:.3f})"
+            f"Best arm on {model}: {best.arm} (macro {best.macro:.3f})"
         )
     return lines
 
 
-def scores_table(rows: Sequence[PromptScoreRow]) -> pd.DataFrame:
-    """Wide table: model, prompt, docs, macro, then per-field means."""
+def scores_table(rows: Sequence[ArmScoreRow]) -> pd.DataFrame:
+    """Wide table: model, arm, docs, macro, then per-field means."""
     field_names: list[str] = []
     seen: set[str] = set()
     for row in rows:
@@ -142,7 +141,7 @@ def scores_table(rows: Sequence[PromptScoreRow]) -> pd.DataFrame:
     for row in rows:
         record: dict[str, object] = {
             "model": row.model,
-            "prompt": row.prompt,
+            "arm": row.arm,
             "docs": row.n_docs,
             "macro": round(row.macro, 3),
         }
@@ -353,10 +352,10 @@ def render_check_html(
         for line in winners:
             parts.append(f"<li>{html.escape(line)}</li>")
     else:
-        parts.append("<li><em>No prompt scores available.</em></li>")
+        parts.append("<li><em>No arm scores available.</em></li>")
     parts.append("</ul>")
 
-    parts.append("<h2>Scores by prompt</h2>")
+    parts.append("<h2>Scores by arm</h2>")
     parts.append(_df_html(table))
 
     include_js = True
@@ -365,10 +364,10 @@ def render_check_html(
         if not model_summaries:
             continue
         parts.append(f"<h2>Model: {html.escape(model)}</h2>")
-        parts.append("<h3>Mean scores per field (prompts compared)</h3>")
+        parts.append("<h3>Mean scores per field (arms compared)</h3>")
         mean_fig = plot_comparison_mean_scores(
             summaries,
-            compare="prompt",
+            compare="arm",
             model=model,
             title=f"Mean scores by field — {check} / {model}",
         )
@@ -378,7 +377,7 @@ def render_check_html(
         if include_comparison and len(model_summaries) >= 2:
             report = build_comparison_report(
                 summaries,
-                compare="prompt",
+                compare="arm",
                 model=model,
             )
             parts.append("<h3>Layer comparison overlays</h3>")
@@ -394,7 +393,7 @@ def render_check_html(
                 )
         elif include_comparison:
             parts.append(
-                "<p><em>Layer overlays skipped (need at least two prompts).</em></p>"
+                "<p><em>Layer overlays skipped (need at least two arms).</em></p>"
             )
 
     parts.append("</body></html>")
@@ -492,7 +491,7 @@ def export_fig_checklist_report(
             continue
 
         try:
-            runs = load_flat_runs(
+            runs = load_evaluation_dir(
                 ref.checklist,
                 ref.check,
                 models=list(models) if models else None,
