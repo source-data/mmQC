@@ -59,7 +59,7 @@ from soda_mmqc.agentic.skills import (
     select_versions,
     validate_skills,
 )
-from soda_mmqc.scripts.run import list_checks
+from soda_mmqc.config import list_checks
 
 #: Top-level key under which scored records are stored in `analysis.json`.
 DEFAULT_RUN_LABEL = "agentic"

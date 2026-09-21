@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 import logging
-from typing import Optional
+from typing import Dict, Optional
 
 from dotenv import load_dotenv
 
@@ -117,6 +117,23 @@ def owns_evaluation_contracts(candidate_dir: Path) -> bool:
         (candidate_dir / name).is_file()
         for name in EVALUATION_CONTRACT_FILES
     )
+
+
+def list_checks(checklist_dir: Path) -> Dict[str, Path]:
+    """Every check in a checklist, keyed by directory name.
+
+    Only directories owning the evaluation contracts are returned, so a
+    shared skill sitting beside the checks cannot become a phantom check.
+
+    This lives beside ``owns_evaluation_contracts`` rather than in a runner,
+    because enumerating checks and deciding what a check *is* are one
+    question, and two answers to it drift.
+    """
+    return {
+        check_dir.name: check_dir
+        for check_dir in sorted(checklist_dir.iterdir())
+        if owns_evaluation_contracts(check_dir)
+    }
 
 
 # Default model/API options when a check has no model_config.json

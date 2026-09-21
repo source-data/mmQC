@@ -173,5 +173,41 @@ class TestProjectArchitecture(unittest.TestCase):
             self.fail(f"Logging failed: {e}")
 
 
+class TestNoLegacyDependency(unittest.TestCase):
+    """The agentic package must not reach through scripts.run for config.
+
+    `EVALUATION_CONTRACT_FILES` and `owns_evaluation_contracts` are defined
+    in config.py; scripts.run only re-exported them. Importing them from
+    there made three live modules depend on a module we are deleting.
+    """
+
+    def test_list_checks_lives_in_config(self):
+        from soda_mmqc.config import list_checks, CHECKLIST_DIR
+        checks = list_checks(CHECKLIST_DIR / "fig-checklist")
+        self.assertIn("micrograph-scale-bar", checks)
+        self.assertTrue(checks["micrograph-scale-bar"].is_dir())
+
+    def test_a_shared_skill_is_not_a_check(self):
+        """owns_evaluation_contracts is the discriminator; list_checks must
+        use it, or a shared skill beside the checks becomes a phantom."""
+        from soda_mmqc.config import list_checks, CHECKLIST_DIR
+        root = CHECKLIST_DIR / "fig-checklist"
+        for name in list_checks(root):
+            self.assertTrue(
+                (root / name / "schema.json").is_file(),
+                f"{name} was listed as a check but owns no schema.json",
+            )
+
+    def test_agentic_does_not_import_scripts_run(self):
+        import pathlib
+        pkg = pathlib.Path(__file__).resolve().parents[1] / "soda_mmqc"
+        offenders = [
+            path.name
+            for path in (pkg / "agentic").glob("*.py")
+            if "scripts.run" in path.read_text(encoding="utf-8")
+        ]
+        self.assertEqual(offenders, [])
+
+
 if __name__ == "__main__":
     unittest.main() 

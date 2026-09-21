@@ -159,12 +159,14 @@ from soda_mmqc.agentic.skills import (  # noqa: F401  (compatibility surface)
     _prose_blocks,
 )
 from soda_mmqc.scripts.run import (
-    EVALUATION_CONTRACT_FILES,
     ModelResult,
     analyze_results,
+    save_analysis,
+)
+from soda_mmqc.config import (
+    EVALUATION_CONTRACT_FILES,
     list_checks,
     owns_evaluation_contracts,
-    save_analysis,
 )
 
 __all__ = [
