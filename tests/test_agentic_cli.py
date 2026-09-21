@@ -53,6 +53,78 @@ from soda_mmqc.scripts.run import (
 import soda_mmqc.cli as cli
 import soda_mmqc.config as config
 import soda_mmqc.agentic.runner as runner
+import soda_mmqc.agentic.runtime as agentic_runtime
+
+# Imported from the module that defines each name, rather than
+# through a re-export surface on cli: patching and reading must
+# reach the one definition.
+from soda_mmqc.agentic.pinning import (
+    MODEL_DEFAULTS_FILENAME,
+    VERSION_MANIFEST_FILENAME,
+    checklist_pins,
+    expand_skill_sets,
+    load_model_defaults,
+    load_version_manifest,
+    resolve_skill_set,
+    validate_version_manifest,
+)
+from soda_mmqc.agentic.runner import (
+    DEFAULT_RUN_LABEL,
+    _as_prediction,
+    run_check_live,
+    run_check_mock,
+)
+from soda_mmqc.agentic.runtime import (
+    EXAMPLE_GOLD_SUBDIR,
+    assemble_runtime,
+    describe_permission_profile,
+    session_cache_key,
+    session_options,
+)
+from soda_mmqc.agentic.session import (
+    AUDIT_INPUT_MAX_BYTES,
+    INTERMEDIATES_DIRNAME,
+    PREDICTION_FILENAME,
+    SKILL_SET_FILENAME,
+    SKILL_TRACE_FILENAME,
+    TOOL_AUDIT_FILENAME,
+    ToolAuditLog,
+    _extract_tool_calls,
+    _extract_usage,
+    _run_agent_session,
+    _session_message,
+    compare_declared_and_observed,
+    interactive_approver,
+    make_pretooluse_hook,
+    runtime_session,
+    validate_against_schema,
+)
+from soda_mmqc.agentic.skills import (
+    SKILL_FILENAME,
+    SKILL_TOOL,
+    _prose_blocks,
+    build_graph,
+    find_cycle,
+    invoked_skills,
+    load_skill,
+    load_skills,
+    resolve_check_dir,
+    validate_skills,
+)
+from soda_mmqc.agentic.views import (
+    DAG_FILENAME,
+    GENERATED_README_FILENAME,
+    render_dag,
+    render_readme,
+)
+from soda_mmqc.config import (
+    AGENTIC_INPUT_MANIFEST_FILENAME,
+    AGENTIC_INPUT_SUBDIR,
+)
+from soda_mmqc.core.scoring import (
+    load_predictions,
+    score_check,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PILOT_CHECK_DIR = (
@@ -249,7 +321,7 @@ def _write_predictions_dir(
     for relative_path, output in predictions.items():
         target = root / relative_path
         target.mkdir(parents=True, exist_ok=True)
-        (target / cli.PREDICTION_FILENAME).write_text(
+        (target / PREDICTION_FILENAME).write_text(
             json.dumps(output), encoding="utf-8"
         )
     return root
@@ -259,7 +331,7 @@ class TestLoadPredictions:
     def test_loads_directory_layout(self, tmp_path: Path):
         payload = {"a/content/1": _gold("A"), "b/content/2": _gold("B")}
         root = _write_predictions_dir(tmp_path / "predictions", payload)
-        assert cli.load_predictions(root) == payload
+        assert load_predictions(root) == payload
 
     def test_ignores_debug_sidecars(self, tmp_path: Path):
         payload = {"a/content/1": _gold("A")}
@@ -267,58 +339,58 @@ class TestLoadPredictions:
         intermediates = root / "a/content/1" / "intermediates"
         intermediates.mkdir()
         (intermediates / "skill_trace.json").write_text("[]", encoding="utf-8")
-        assert cli.load_predictions(root) == payload
+        assert load_predictions(root) == payload
 
     def test_loads_json_file_mapping(self, tmp_path: Path):
         payload = {"a/content/1": _gold("A")}
         path = tmp_path / "predictions.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
-        assert cli.load_predictions(path) == payload
+        assert load_predictions(path) == payload
 
     def test_missing_path_raises(self, tmp_path: Path):
         with pytest.raises(FileNotFoundError, match="Predictions not found"):
-            cli.load_predictions(tmp_path / "nope")
+            load_predictions(tmp_path / "nope")
 
     def test_empty_directory_raises(self, tmp_path: Path):
         (tmp_path / "predictions").mkdir()
         with pytest.raises(ValueError, match="No prediction.json files"):
-            cli.load_predictions(tmp_path / "predictions")
+            load_predictions(tmp_path / "predictions")
 
     def test_prediction_at_root_raises(self, tmp_path: Path):
         root = tmp_path / "predictions"
         root.mkdir()
-        (root / cli.PREDICTION_FILENAME).write_text("{}", encoding="utf-8")
+        (root / PREDICTION_FILENAME).write_text("{}", encoding="utf-8")
         with pytest.raises(ValueError, match="sits at the root"):
-            cli.load_predictions(root)
+            load_predictions(root)
 
     def test_non_object_prediction_raises(self, tmp_path: Path):
         path = tmp_path / "predictions.json"
         path.write_text(json.dumps({"a": []}), encoding="utf-8")
         with pytest.raises(ValueError, match="is not an object"):
-            cli.load_predictions(path)
+            load_predictions(path)
 
 
 class TestResolveCheckDir:
     def test_resolves_a_check(self, pilot):
         assert (
-            cli.resolve_check_dir("fig-checklist", "micrograph-scale-bar")
+            resolve_check_dir("fig-checklist", "micrograph-scale-bar")
             == pilot["check_dir"]
         )
 
     def test_unknown_checklist_raises(self, pilot):
         with pytest.raises(FileNotFoundError, match="Checklist not found"):
-            cli.resolve_check_dir("no-such-checklist", "whatever")
+            resolve_check_dir("no-such-checklist", "whatever")
 
     def test_unknown_check_raises(self, pilot):
         with pytest.raises(FileNotFoundError, match="Check not found"):
-            cli.resolve_check_dir("fig-checklist", "no-such-check")
+            resolve_check_dir("fig-checklist", "no-such-check")
 
     def test_shared_skill_is_not_scoreable(self, pilot):
         shared = pilot["checklist_root"] / "fig-checklist" / "identify-panels"
         (shared / "v1").mkdir(parents=True)
         (shared / "schema.json").write_text("{}", encoding="utf-8")
         with pytest.raises(ValueError, match="is not a check"):
-            cli.resolve_check_dir("fig-checklist", "identify-panels")
+            resolve_check_dir("fig-checklist", "identify-panels")
 
 
 class TestScoreCheck:
@@ -337,7 +409,7 @@ class TestScoreCheck:
         }
         root = _write_predictions_dir(pilot["examples_root"].parent / "preds", predictions)
 
-        scored = cli.score_check(
+        scored = score_check(
             "fig-checklist",
             "micrograph-scale-bar",
             root,
@@ -372,21 +444,21 @@ class TestScoreCheck:
             embedder=_mock_embedder,
         )
 
-        assert set(scored) == {cli.DEFAULT_RUN_LABEL}
-        assert scored[cli.DEFAULT_RUN_LABEL] == expected
+        assert set(scored) == {DEFAULT_RUN_LABEL}
+        assert scored[DEFAULT_RUN_LABEL] == expected
 
     def test_flat_records_carry_gold_and_prediction(self, pilot):
         predictions = {"doc-a/content/1": _gold("A")}
         root = _write_predictions_dir(pilot["examples_root"].parent / "preds", predictions)
 
-        scored = cli.score_check(
+        scored = score_check(
             "fig-checklist",
             "micrograph-scale-bar",
             root,
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[cli.DEFAULT_RUN_LABEL]["flat"]
+        records = scored[DEFAULT_RUN_LABEL]["flat"]
         assert len(records) == 1
         record = records[0]
         assert record["doc_id"] == "doc-a"
@@ -405,14 +477,14 @@ class TestScoreCheck:
         predictions = {"doc-b/content/1": _gold("B", micrograph="no")}
         root = _write_predictions_dir(pilot["examples_root"].parent / "preds", predictions)
 
-        scored = cli.score_check(
+        scored = score_check(
             "fig-checklist",
             "micrograph-scale-bar",
             root,
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[cli.DEFAULT_RUN_LABEL]["flat"]
+        records = scored[DEFAULT_RUN_LABEL]["flat"]
         assert [record["metadata"]["source"] for record in records] == [
             "doc-b/content/1"
         ]
@@ -424,14 +496,14 @@ class TestScoreCheck:
         }
         root = _write_predictions_dir(pilot["examples_root"].parent / "preds", predictions)
 
-        scored = cli.score_check(
+        scored = score_check(
             "fig-checklist",
             "micrograph-scale-bar",
             root,
             embedder=_mock_embedder,
             save=False,
         )
-        records = scored[cli.DEFAULT_RUN_LABEL]["flat"]
+        records = scored[DEFAULT_RUN_LABEL]["flat"]
         assert [record["metadata"]["source"] for record in records] == [
             "doc-a/content/1"
         ]
@@ -442,7 +514,7 @@ class TestScoreCheck:
             {"doc-z/content/9": _gold("Z")},
         )
         with pytest.raises(ValueError, match="None of the predictions"):
-            cli.score_check(
+            score_check(
                 "fig-checklist",
                 "micrograph-scale-bar",
                 root,
@@ -462,7 +534,7 @@ class TestScoreCheck:
             {"doc-a/content/1": _gold("A")},
         )
 
-        cli.score_check(
+        score_check(
             "fig-checklist",
             "micrograph-scale-bar",
             root,
@@ -479,8 +551,8 @@ class TestScoreCheck:
         )
         assert analysis_path.is_file()
         saved = json.loads(analysis_path.read_text(encoding="utf-8"))
-        assert set(saved) == {cli.DEFAULT_RUN_LABEL}
-        assert len(saved[cli.DEFAULT_RUN_LABEL]["flat"]) == 1
+        assert set(saved) == {DEFAULT_RUN_LABEL}
+        assert len(saved[DEFAULT_RUN_LABEL]["flat"]) == 1
 
 
 class TestCli:
@@ -660,7 +732,7 @@ def real_pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 def _score_real(predictions: Dict[str, Dict[str, Any]], tmp_path: Path, **kwargs):
     root = _write_predictions_dir(tmp_path / "real-preds", predictions)
-    return cli.score_check(
+    return score_check(
         "Retired-checklist", REAL_CHECK, root, save=False, **kwargs
     )
 
@@ -728,7 +800,7 @@ class TestRealExampleWiring:
         trace.mkdir()
         (trace / "skill_trace.json").write_text("[]", encoding="utf-8")
 
-        loaded = cli.load_predictions(root)
+        loaded = load_predictions(root)
         assert sorted(loaded) == sorted(REAL_EXAMPLES)
         assert loaded == payload
 
@@ -741,7 +813,7 @@ class TestScoreCheckOnRealExamples:
         self, real_pilot, tmp_path: Path
     ):
         scored = _score_real(dict(real_pilot["golds"]), tmp_path)
-        records = scored[cli.DEFAULT_RUN_LABEL]["flat"]
+        records = scored[DEFAULT_RUN_LABEL]["flat"]
 
         assert [record["metadata"]["source"] for record in records] == (
             REAL_EXAMPLES
@@ -766,7 +838,7 @@ class TestScoreCheckOnRealExamples:
         self, real_pilot, tmp_path: Path
     ):
         scored = _score_real(dict(real_pilot["golds"]), tmp_path)
-        records = scored[cli.DEFAULT_RUN_LABEL]["flat"]
+        records = scored[DEFAULT_RUN_LABEL]["flat"]
 
         assert len(records) == 5
         for figure, record in zip(REAL_EXAMPLES, records):
@@ -813,8 +885,8 @@ class TestScoreCheckOnRealExamples:
             check_dir=real_pilot["check_dir"],
         )
 
-        assert set(scored) == {cli.DEFAULT_RUN_LABEL}
-        assert scored[cli.DEFAULT_RUN_LABEL] == expected
+        assert set(scored) == {DEFAULT_RUN_LABEL}
+        assert scored[DEFAULT_RUN_LABEL] == expected
 
     def test_a_misclassified_real_panel_is_penalised(
         self, real_pilot, tmp_path: Path
@@ -829,7 +901,7 @@ class TestScoreCheckOnRealExamples:
         )
         predictions[REAL_EXAMPLES[0]]["outputs"][0]["is_a_micrograph"] = "no"
 
-        records = _score_real(predictions, tmp_path)[cli.DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
             "flat"
         ]
 
@@ -868,7 +940,7 @@ class TestScoreCheckOnRealExamples:
         predictions = copy.deepcopy(real_pilot["golds"])
         dropped = predictions[REAL_EXAMPLES[0]]["outputs"].pop()
 
-        records = _score_real(predictions, tmp_path)[cli.DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
             "flat"
         ]
         analysis = records[0]["analysis"]
@@ -906,7 +978,7 @@ class TestScoreCheckOnRealExamples:
         subset = [REAL_EXAMPLES[0], REAL_EXAMPLES[3]]
         predictions = {figure: _real_gold(figure) for figure in subset}
 
-        records = _score_real(predictions, tmp_path)[cli.DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
             "flat"
         ]
         assert [record["metadata"]["source"] for record in records] == subset
@@ -920,7 +992,7 @@ class TestScoreCheckOnRealExamples:
                 REAL_EXAMPLES[0]
             ),
         }
-        records = _score_real(predictions, tmp_path)[cli.DEFAULT_RUN_LABEL][
+        records = _score_real(predictions, tmp_path)[DEFAULT_RUN_LABEL][
             "flat"
         ]
         assert [record["metadata"]["source"] for record in records] == [
@@ -992,7 +1064,7 @@ class TestRealChecksWithoutAnEvalManifest:
         check_dir = CHECKLIST_DIR / checklist / check
         assert check in list_checks(CHECKLIST_DIR / checklist)
         assert owns_evaluation_contracts(check_dir) is True
-        assert cli.resolve_check_dir(checklist, check) == check_dir
+        assert resolve_check_dir(checklist, check) == check_dir
         # ...and yet it cannot be scored:
         assert not (check_dir / "eval-manifest.json").exists()
 
@@ -1005,7 +1077,7 @@ class TestRealChecksWithoutAnEvalManifest:
             {figure: _real_gold(figure, check) for figure in REAL_EXAMPLES},
         )
         with pytest.raises(FileNotFoundError, match="Missing eval manifest"):
-            cli.score_check(checklist, check, root, save=False)
+            score_check(checklist, check, root, save=False)
 
     def test_the_cli_reports_it_as_exit_1(self, tmp_path: Path):
         root = _write_predictions_dir(
@@ -1048,7 +1120,7 @@ class TestRealChecksWithoutAnEvalManifest:
             {figure: _real_gold(figure) for figure in REAL_EXAMPLES},
         )
         with pytest.raises(ValueError, match="No expected outputs found"):
-            cli.score_check(checklist, check, root, save=False)
+            score_check(checklist, check, root, save=False)
 
 
 # ---------------------------------------------------------------------------
@@ -1200,7 +1272,7 @@ def _skill_md(
 
 
 def _write_skill(checklist_dir: Path, directory: str, version: str, text: str) -> Path:
-    path = checklist_dir / directory / version / cli.SKILL_FILENAME
+    path = checklist_dir / directory / version / SKILL_FILENAME
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
@@ -1209,7 +1281,7 @@ def _write_skill(checklist_dir: Path, directory: str, version: str, text: str) -
 def _copy_pilot_skills(dest: Path) -> Path:
     """Copy the real SKILL.md files into an empty checklist directory."""
     dest.mkdir(parents=True, exist_ok=True)
-    for src in sorted(FIG_CHECKLIST_DIR.rglob(cli.SKILL_FILENAME)):
+    for src in sorted(FIG_CHECKLIST_DIR.rglob(SKILL_FILENAME)):
         target = dest / src.relative_to(FIG_CHECKLIST_DIR)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, target)
@@ -1217,7 +1289,7 @@ def _copy_pilot_skills(dest: Path) -> Path:
 
 
 def _graph(checklist_dir: Path) -> Dict[str, set]:
-    return cli.build_graph(cli.load_skills(checklist_dir))
+    return build_graph(load_skills(checklist_dir))
 
 
 class TestLoadSkill:
@@ -1233,7 +1305,7 @@ class TestLoadSkill:
                 needs=("WebSearch",),
             ),
         )
-        skill = cli.load_skill(path)
+        skill = load_skill(path)
 
         assert skill.name == "some-skill"
         assert skill.version == "v1"
@@ -1250,7 +1322,7 @@ class TestLoadSkill:
         path = _write_skill(
             tmp_path, "a-directory-named-anything", "v2", _skill_md("real-name")
         )
-        skill = cli.load_skill(path)
+        skill = load_skill(path)
 
         assert skill.name == "real-name"
         assert skill.version == "v2"
@@ -1263,12 +1335,12 @@ class TestLoadSkill:
             "---\nname: some-skill\ndescription: >-\n  First line\n  second"
             " line.\nrequires: []\n---\n\n# Body\n\nText.\n",
         )
-        assert cli.load_skill(path).description == "First line second line."
+        assert load_skill(path).description == "First line second line."
 
     def test_missing_frontmatter_names_the_file(self, tmp_path: Path):
         path = _write_skill(tmp_path, "some-skill", "v1", "# No frontmatter\n")
         with pytest.raises(ValueError, match=r"no YAML frontmatter") as excinfo:
-            cli.load_skill(path)
+            load_skill(path)
         assert str(path) in str(excinfo.value)
 
     def test_invalid_yaml_names_the_file(self, tmp_path: Path):
@@ -1276,7 +1348,7 @@ class TestLoadSkill:
             tmp_path, "some-skill", "v1", "---\nname: [unclosed\n---\n\nBody\n"
         )
         with pytest.raises(ValueError, match=r"not valid YAML") as excinfo:
-            cli.load_skill(path)
+            load_skill(path)
         assert str(path) in str(excinfo.value)
 
     @pytest.mark.parametrize("key", ("name", "description"))
@@ -1290,7 +1362,7 @@ class TestLoadSkill:
         )
         path = _write_skill(tmp_path, "some-skill", "v1", text)
         with pytest.raises(ValueError, match=rf"{key}.*non-empty string"):
-            cli.load_skill(path)
+            load_skill(path)
 
     def test_requires_must_be_a_list_of_names(self, tmp_path: Path):
         path = _write_skill(
@@ -1301,7 +1373,7 @@ class TestLoadSkill:
             "requires: {a: b}\n---\n\nBody\n",
         )
         with pytest.raises(ValueError, match=r"'requires' must be a list"):
-            cli.load_skill(path)
+            load_skill(path)
 
     def test_a_repeated_requirement_is_rejected(self, tmp_path: Path):
         path = _write_skill(
@@ -1311,7 +1383,7 @@ class TestLoadSkill:
             _skill_md("some-skill", requires=("other", "other")),
         )
         with pytest.raises(ValueError, match=r"lists other more than once"):
-            cli.load_skill(path)
+            load_skill(path)
 
     def test_an_empty_body_is_rejected(self, tmp_path: Path):
         path = _write_skill(
@@ -1321,42 +1393,42 @@ class TestLoadSkill:
             "---\nname: some-skill\ndescription: Does one thing.\n---\n\n \n",
         )
         with pytest.raises(ValueError, match=r"body is empty"):
-            cli.load_skill(path)
+            load_skill(path)
 
     def test_a_version_directory_must_be_named_vn(self, tmp_path: Path):
         path = _write_skill(
             tmp_path, "some-skill", "latest", _skill_md("some-skill")
         )
         with pytest.raises(ValueError, match=r"must be named 'v' followed by"):
-            cli.load_skill(path)
+            load_skill(path)
 
     def test_a_missing_file_raises(self, tmp_path: Path):
         with pytest.raises(FileNotFoundError):
-            cli.load_skill(tmp_path / "nope" / "v1" / cli.SKILL_FILENAME)
+            load_skill(tmp_path / "nope" / "v1" / SKILL_FILENAME)
 
 
 class TestLoadSkillsOnTheRealChecklist:
     def test_both_pilot_skills_are_found(self):
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
         assert SHARED_SKILL in skills
         assert PILOT_LEAF in skills
         assert sorted(skills[SHARED_SKILL]) == ["v1"]
         assert sorted(skills[PILOT_LEAF]) == ["v1"]
 
     def test_the_leaf_declares_and_invokes_the_shared_skill(self):
-        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
         assert leaf.requires == (SHARED_SKILL,)
         assert SHARED_SKILL in leaf.body
-        assert cli.SKILL_TOOL in leaf.body
+        assert SKILL_TOOL in leaf.body
 
     def test_the_shared_skill_requires_nothing_and_produces_panels(self):
-        shared = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"]
+        shared = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"]
         assert shared.requires == ()
         assert shared.produces == ("panels",)
 
     def test_descriptions_claim_their_own_job(self):
         """The description is what the agent matches on; it is load-bearing."""
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
         shared = skills[SHARED_SKILL]["v1"].description.lower()
         leaf = skills[PILOT_LEAF]["v1"].description.lower()
 
@@ -1366,13 +1438,13 @@ class TestLoadSkillsOnTheRealChecklist:
 
     def test_an_unknown_checklist_raises(self, tmp_path: Path):
         with pytest.raises(FileNotFoundError):
-            cli.load_skills(tmp_path / "no-such-checklist")
+            load_skills(tmp_path / "no-such-checklist")
 
     def test_a_duplicate_name_and_version_is_rejected(self, tmp_path: Path):
         first = _write_skill(tmp_path, "here", "v1", _skill_md("same-name"))
         second = _write_skill(tmp_path, "there", "v1", _skill_md("same-name"))
         with pytest.raises(ValueError, match=r"same-name") as excinfo:
-            cli.load_skills(tmp_path)
+            load_skills(tmp_path)
         # Both files are named: which one is "the duplicate" depends on walk
         # order, and blaming the wrong one sends a reader to the wrong file.
         assert str(first) in str(excinfo.value)
@@ -1381,7 +1453,7 @@ class TestLoadSkillsOnTheRealChecklist:
     def test_two_versions_of_one_skill_coexist(self, tmp_path: Path):
         _write_skill(tmp_path, "here", "v1", _skill_md("same-name"))
         _write_skill(tmp_path, "here", "v2", _skill_md("same-name"))
-        assert sorted(cli.load_skills(tmp_path)["same-name"]) == ["v1", "v2"]
+        assert sorted(load_skills(tmp_path)["same-name"]) == ["v1", "v2"]
 
 
 class TestSkillGraph:
@@ -1408,13 +1480,13 @@ class TestSkillGraph:
             assert reaches(name), f"{name} never reaches {SHARED_SKILL}"
 
     def test_the_real_graph_is_acyclic(self):
-        assert cli.find_cycle(_graph(FIG_CHECKLIST_DIR)) is None
+        assert find_cycle(_graph(FIG_CHECKLIST_DIR)) is None
 
     def test_a_cycle_is_found_and_reported_as_a_loop(self, tmp_path: Path):
         _write_skill(tmp_path, "a", "v1", _skill_md("a", requires=("b",)))
         _write_skill(tmp_path, "b", "v1", _skill_md("b", requires=("a",)))
 
-        cycle = cli.find_cycle(_graph(tmp_path))
+        cycle = find_cycle(_graph(tmp_path))
         assert cycle is not None
         assert cycle[0] == cycle[-1]
         assert set(cycle) == {"a", "b"}
@@ -1424,7 +1496,7 @@ class TestSkillGraph:
         _write_skill(tmp_path, "b", "v1", _skill_md("b", requires=("c",)))
         _write_skill(tmp_path, "c", "v1", _skill_md("c", requires=("a",)))
 
-        assert set(cli.find_cycle(_graph(tmp_path))) == {"a", "b", "c"}
+        assert set(find_cycle(_graph(tmp_path))) == {"a", "b", "c"}
 
     def test_a_diamond_is_not_a_cycle(self, tmp_path: Path):
         _write_skill(tmp_path, "root", "v1", _skill_md("root"))
@@ -1432,7 +1504,7 @@ class TestSkillGraph:
         _write_skill(tmp_path, "r", "v1", _skill_md("r", requires=("root",)))
         _write_skill(tmp_path, "top", "v1", _skill_md("top", requires=("l", "r")))
 
-        assert cli.find_cycle(_graph(tmp_path)) is None
+        assert find_cycle(_graph(tmp_path)) is None
 
     def test_edges_are_unioned_across_versions(self, tmp_path: Path):
         _write_skill(tmp_path, "root", "v1", _skill_md("root"))
@@ -1447,7 +1519,7 @@ class TestSkillGraph:
 
 class TestProseAndFrontmatterAgree:
     def test_the_real_checklist_validates(self):
-        skills = cli.validate_skills(FIG_CHECKLIST_DIR)
+        skills = validate_skills(FIG_CHECKLIST_DIR)
         assert SHARED_SKILL in skills and PILOT_LEAF in skills
 
     def test_a_declared_requirement_missing_from_the_prose_fails(
@@ -1465,9 +1537,9 @@ class TestProseAndFrontmatterAgree:
             ),
         )
         with pytest.raises(ValueError, match=r"never asks for it in the prose"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
         with pytest.raises(ValueError, match=re.escape(str(offender))):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_a_skill_invoked_in_prose_but_not_declared_fails(
         self, tmp_path: Path
@@ -1483,7 +1555,7 @@ class TestProseAndFrontmatterAgree:
             ),
         )
         with pytest.raises(ValueError, match=r"missing from requires"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_a_requirement_without_a_skill_tool_instruction_fails(
         self, tmp_path: Path
@@ -1500,7 +1572,7 @@ class TestProseAndFrontmatterAgree:
             ),
         )
         with pytest.raises(ValueError, match=r"never\s+tells the agent to use"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_a_second_requirement_cannot_ride_on_the_first_ones_call(
         self, tmp_path: Path
@@ -1528,7 +1600,7 @@ class TestProseAndFrontmatterAgree:
             ),
         )
         with pytest.raises(ValueError, match=r"mentions 'other'") as excinfo:
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
         assert "mentions 'root'" not in str(excinfo.value)
 
     def test_each_requirement_may_be_called_in_its_own_bullet(
@@ -1550,7 +1622,7 @@ class TestProseAndFrontmatterAgree:
                 ),
             ),
         )
-        cli.validate_skills(tmp_path)  # must not raise
+        validate_skills(tmp_path)  # must not raise
 
     def test_a_call_wrapped_across_two_lines_is_still_one_block(
         self, tmp_path: Path
@@ -1570,34 +1642,34 @@ class TestProseAndFrontmatterAgree:
                 ),
             ),
         )
-        cli.validate_skills(tmp_path)  # must not raise
+        validate_skills(tmp_path)  # must not raise
 
     def test_an_unknown_requirement_fails(self, tmp_path: Path):
         _write_skill(
             tmp_path, "leaf", "v1", _skill_md("leaf", requires=("absent",))
         )
         with pytest.raises(ValueError, match=r"requires unknown skill 'absent'"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_a_self_requirement_fails(self, tmp_path: Path):
         _write_skill(
             tmp_path, "leaf", "v1", _skill_md("leaf", requires=("leaf",))
         )
         with pytest.raises(ValueError, match=r"requires itself"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_a_cycle_fails_validation(self, tmp_path: Path):
         _write_skill(tmp_path, "a", "v1", _skill_md("a", requires=("b",)))
         _write_skill(tmp_path, "b", "v1", _skill_md("b", requires=("a",)))
         with pytest.raises(ValueError, match=r"has a cycle"):
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
 
     def test_every_problem_is_reported_at_once(self, tmp_path: Path):
         _write_skill(
             tmp_path, "a", "v1", _skill_md("a", requires=("absent", "a"))
         )
         with pytest.raises(ValueError) as excinfo:
-            cli.validate_skills(tmp_path)
+            validate_skills(tmp_path)
         message = str(excinfo.value)
         assert "requires itself" in message
         assert "unknown skill 'absent'" in message
@@ -1613,7 +1685,7 @@ class TestProseAndFrontmatterAgree:
             "v1",
             _skill_md("lonely", body="# lonely\n\nThe `lonely` skill does X.\n"),
         )
-        cli.validate_skills(tmp_path)  # must not raise
+        validate_skills(tmp_path)  # must not raise
 
     def test_a_name_embedded_in_a_longer_word_is_not_an_invocation(
         self, tmp_path: Path
@@ -1625,17 +1697,17 @@ class TestProseAndFrontmatterAgree:
             "v1",
             _skill_md("leaf", body="# leaf\n\nSee root-cause analysis.\n"),
         )
-        cli.validate_skills(tmp_path)  # must not raise
+        validate_skills(tmp_path)  # must not raise
 
     def test_the_real_leaf_names_the_shared_skill_and_the_tool_together(self):
         """The hop is prose, not a template: one sentence, in the leaf's words."""
-        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
         sentences = [
             line for line in leaf.body.splitlines() if SHARED_SKILL in line
         ]
         assert sentences, "the leaf never mentions the shared skill"
         joined = "\n".join(leaf.body.splitlines())
-        assert f"`{SHARED_SKILL}` skill with the `{cli.SKILL_TOOL}` tool" in joined
+        assert f"`{SHARED_SKILL}` skill with the `{SKILL_TOOL}` tool" in joined
 
 
 class TestGraphIsPathIndependent:
@@ -1650,7 +1722,7 @@ class TestGraphIsPathIndependent:
         (checklist / SHARED_SKILL).rename(checklist / "zzz-renamed")
 
         assert _graph(checklist) == before
-        assert set(cli.validate_skills(checklist)) == set(before)
+        assert set(validate_skills(checklist)) == set(before)
 
     def test_moving_a_skill_under_another_leaves_the_graph_unchanged(
         self, tmp_path: Path
@@ -1665,7 +1737,7 @@ class TestGraphIsPathIndependent:
         )
 
         assert _graph(checklist) == before
-        skills = cli.validate_skills(checklist)
+        skills = validate_skills(checklist)
         assert skills[PILOT_LEAF]["v1"].requires == (SHARED_SKILL,)
 
     def test_a_skill_nested_arbitrarily_deep_is_still_found(
@@ -1686,7 +1758,7 @@ class TestEvaluationContractsStayAtSkillLevel:
 
     def test_no_version_directory_holds_a_copy_of_a_contract(self):
         offenders = []
-        for skill_file in CHECKLIST_DIR.rglob(cli.SKILL_FILENAME):
+        for skill_file in CHECKLIST_DIR.rglob(SKILL_FILENAME):
             for contract in VERSIONED_CONTRACTS:
                 if (skill_file.parent / contract).exists():
                     offenders.append(skill_file.parent / contract)
@@ -1713,7 +1785,7 @@ class TestEvaluationContractsStayAtSkillLevel:
 
     def test_the_shared_skill_cannot_be_scored(self):
         with pytest.raises(ValueError, match=r"is not a check"):
-            cli.resolve_check_dir("fig-checklist", SHARED_SKILL)
+            resolve_check_dir("fig-checklist", SHARED_SKILL)
 
     def test_the_panels_schema_is_a_usable_runtime_contract(self):
         schema = json.loads(
@@ -1749,7 +1821,7 @@ class TestTheLeafProseMatchesItsContracts:
 
     @pytest.fixture
     def leaf_body(self) -> str:
-        return cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
+        return load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
 
     def test_the_prose_names_every_field_of_the_schema(self, leaf_body: str):
         schema = json.loads(
@@ -1798,7 +1870,7 @@ class TestTheLeafProseMatchesItsContracts:
         """
         blanking = [
             block
-            for block in cli._prose_blocks(leaf_body)
+            for block in _prose_blocks(leaf_body)
             if "empty string" in block
         ]
         assert blanking, "the prose no longer says what an unused field holds"
@@ -1871,10 +1943,10 @@ class TestSharedSkillAgainstRealGold:
         ]
 
     def test_the_shared_skill_does_not_forbid_splitting_outright(self):
-        body = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
+        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
         forbidding = [
             block
-            for block in cli._prose_blocks(body)
+            for block in _prose_blocks(body)
             if "do not split" in block.lower()
         ]
         assert forbidding, "the unlabelled-composite rule disappeared entirely"
@@ -1885,7 +1957,7 @@ class TestSharedSkillAgainstRealGold:
             )
 
     def test_the_shared_skill_tells_the_agent_to_split_labelled_sub_panels(self):
-        body = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
+        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
         assert "sub-part" in body.lower() or "sub-panel" in body.lower()
         assert "one entry per labelled sub-part" in body.lower()
 
@@ -1968,7 +2040,7 @@ def gold_rows():
 class TestLeafProseAgainstPilotGold:
     @pytest.fixture
     def leaf_body(self) -> str:
-        return cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
+        return load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
 
     def test_gold_defines_scale_bars_in_both_places_at_once(self, gold_rows):
         """The evidence for the leaf's independence rule."""
@@ -2000,7 +2072,7 @@ class TestLeafProseAgainstPilotGold:
         """
         stating = [
             block
-            for block in cli._prose_blocks(leaf_body)
+            for block in _prose_blocks(leaf_body)
             if "both" in block.lower() and "neither" in block.lower()
         ]
         assert stating, (
@@ -2077,7 +2149,7 @@ PANEL_FINDING_PHRASES = (
 class TestNoLeafRestatesTheSharedSkill:
     def test_the_phrases_really_are_the_shared_skills_own(self):
         """Guard the guard: these must live in `identify-panels`."""
-        shared = cli.load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
+        shared = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
         missing = [p for p in PANEL_FINDING_PHRASES if p not in shared.lower()]
         assert missing == [], (
             f"{SHARED_SKILL} no longer contains {missing}, so this test would "
@@ -2085,7 +2157,7 @@ class TestNoLeafRestatesTheSharedSkill:
         )
 
     def test_no_leaf_restates_how_to_find_panels(self):
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
         offenders = {}
         for name, versions in skills.items():
             if name == SHARED_SKILL:
@@ -2103,7 +2175,7 @@ class TestNoLeafRestatesTheSharedSkill:
 
     def test_every_leaf_that_needs_panels_delegates_for_them(self):
         """A leaf may not silently stop asking for the shared inventory."""
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
         for name, versions in skills.items():
             if name == SHARED_SKILL:
                 continue
@@ -2113,12 +2185,12 @@ class TestNoLeafRestatesTheSharedSkill:
                 )
                 asking = [
                     block
-                    for block in cli._prose_blocks(skill.body)
-                    if SHARED_SKILL in block and cli.SKILL_TOOL in block
+                    for block in _prose_blocks(skill.body)
+                    if SHARED_SKILL in block and SKILL_TOOL in block
                 ]
                 assert asking, (
                     f"{name}/{version} declares {SHARED_SKILL} but no prose "
-                    f"block calls it with the {cli.SKILL_TOOL} tool"
+                    f"block calls it with the {SKILL_TOOL} tool"
                 )
 
     def test_no_skill_asks_the_session_to_write_a_file(self):
@@ -2133,7 +2205,7 @@ class TestNoLeafRestatesTheSharedSkill:
         channel nothing bounds: "only panels.json" is a convention, not a
         constraint.
         """
-        for name, versions in cli.load_skills(FIG_CHECKLIST_DIR).items():
+        for name, versions in load_skills(FIG_CHECKLIST_DIR).items():
             body = versions["v1"].body.lower()
             for forbidden in ("panels.json", "plot_panels.json", "`write`"):
                 assert forbidden not in body, (
@@ -2144,7 +2216,7 @@ class TestNoLeafRestatesTheSharedSkill:
     def test_the_leaf_takes_the_inventory_from_the_shared_skill(self):
         """It must still defer to `identify-panels` rather than deriving its
         own list -- that is what makes checks agree about what a panel is."""
-        leaf = cli.load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body.lower()
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body.lower()
         assert SHARED_SKILL in leaf
         assert "source of truth" in leaf
 
@@ -2189,7 +2261,7 @@ def _all_files(root: Path):
 @pytest.fixture
 def assembled(tmp_path: Path):
     """A runtime assembled for the pilot leaf and one real example."""
-    layout = cli.assemble_runtime(
+    layout = assemble_runtime(
         "fig-checklist",
         PILOT_LEAF,
         SUBPANEL_FIGURE,
@@ -2228,14 +2300,14 @@ class TestRuntimeSkillPlacement:
         assert assembled.skills_root == skills_root
         assert skills_root.is_dir()
         for name in ("identify-panels", PILOT_LEAF):
-            assert (skills_root / name / cli.SKILL_FILENAME).is_file()
+            assert (skills_root / name / SKILL_FILENAME).is_file()
 
     def test_every_skill_of_the_checklist_is_present(self, assembled):
         """The runner preselects nothing: all descriptions must compete."""
-        expected = set(cli.load_skills(FIG_CHECKLIST_DIR))
+        expected = set(load_skills(FIG_CHECKLIST_DIR))
         present = {
             p.parent.name
-            for p in assembled.skills_root.rglob(cli.SKILL_FILENAME)
+            for p in assembled.skills_root.rglob(SKILL_FILENAME)
         }
         assert present == expected
 
@@ -2243,13 +2315,13 @@ class TestRuntimeSkillPlacement:
         self, assembled
     ):
         assert (
-            assembled.skills_root / SHARED_SKILL / cli.SKILL_FILENAME
+            assembled.skills_root / SHARED_SKILL / SKILL_FILENAME
         ).is_file()
 
     def test_exactly_one_version_per_skill_name(self, assembled):
         names = [
             p.parent.name
-            for p in assembled.skills_root.rglob(cli.SKILL_FILENAME)
+            for p in assembled.skills_root.rglob(SKILL_FILENAME)
         ]
         assert len(names) == len(set(names))
 
@@ -2344,7 +2416,7 @@ class TestRuntimeOrientation:
         glob and no listing, so anything unnamed here is unreachable."""
         manifest = json.loads(
             (
-                assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+                assembled.input_root / AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
         for entry in manifest["source_data"]:
@@ -2364,7 +2436,7 @@ class TestRuntimeOrientation:
 @requires_subpanel_figure
 class TestRuntimeLifecycle:
     def test_the_session_removes_the_runtime_by_default(self, tmp_path: Path):
-        with cli.runtime_session(
+        with runtime_session(
             "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
             root=tmp_path / "rt",
         ) as layout:
@@ -2373,7 +2445,7 @@ class TestRuntimeLifecycle:
         assert not root.exists()
 
     def test_keep_runtime_preserves_it(self, tmp_path: Path):
-        with cli.runtime_session(
+        with runtime_session(
             "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
             root=tmp_path / "rt", keep=True,
         ) as layout:
@@ -2383,7 +2455,7 @@ class TestRuntimeLifecycle:
     def test_the_runtime_is_removed_after_an_exception(self, tmp_path: Path):
         captured = {}
         with pytest.raises(RuntimeError, match="boom"):
-            with cli.runtime_session(
+            with runtime_session(
                 "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
                 root=tmp_path / "rt",
             ) as layout:
@@ -2394,7 +2466,7 @@ class TestRuntimeLifecycle:
     def test_keep_runtime_survives_an_exception(self, tmp_path: Path):
         captured = {}
         with pytest.raises(RuntimeError):
-            with cli.runtime_session(
+            with runtime_session(
                 "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
                 root=tmp_path / "rt", keep=True,
             ) as layout:
@@ -2406,7 +2478,7 @@ class TestRuntimeLifecycle:
         """A failed assembly leaves no half-built runtime behind."""
         root = tmp_path / "rt"
         with pytest.raises((FileNotFoundError, ValueError)):
-            cli.assemble_runtime(
+            assemble_runtime(
                 "fig-checklist", PILOT_LEAF, "no/such/example", root=root
             )
         assert not root.exists()
@@ -2439,7 +2511,7 @@ NETWORK_TOOLS = ("WebFetch", "WebSearch")
 class TestPermissionProfile:
     def test_the_allowlist_is_exactly_the_two_things_allowed(self, assembled):
         """Read inside the runtime, and call a skill. Nothing else."""
-        rules = cli.session_options(assembled)["allowed_tools"]
+        rules = session_options(assembled)["allowed_tools"]
         assert len(rules) == 2
         named = {rule.split("(")[0] for rule in rules}
         assert named == set(AGENTIC_ALLOWED_TOOL_NAMES)
@@ -2449,7 +2521,7 @@ class TestPermissionProfile:
         including the repository and the gold. The rule must be path-scoped
         and must use the SDK's `//` absolute form, since a single leading
         slash anchors at the working directory instead."""
-        rules = cli.session_options(assembled)["allowed_tools"]
+        rules = session_options(assembled)["allowed_tools"]
         read = next(r for r in rules if r.startswith("Read("))
         assert read.startswith("Read(//")
         assert assembled.root.resolve().as_posix().lstrip("/") in read
@@ -2464,7 +2536,7 @@ class TestPermissionProfile:
         the session does needs the filesystem, and an unused capability is
         one an experiment could accidentally come to depend on.
         """
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert "Write" not in options["tools"]
         assert "Edit" not in options["tools"]
         assert not any(
@@ -2478,7 +2550,7 @@ class TestPermissionProfile:
         model's context, so the profile had to enumerate every dangerous one
         by name -- and missed `ShareOnboardingGuide` for months.
         """
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert set(options["tools"]) == set(AGENTIC_BASE_TOOLS)
         assert set(options["tools"]) >= {
             r.split("(")[0] for r in options["allowed_tools"]
@@ -2489,23 +2561,23 @@ class TestPermissionProfile:
         documents that unlisted tools remain reachable and fall through to the
         permission mode. `dontAsk` is what makes the allowlist total."""
         assert AGENTIC_PERMISSION_MODE == "dontAsk"
-        assert cli.session_options(assembled)["permission_mode"] == "dontAsk"
+        assert session_options(assembled)["permission_mode"] == "dontAsk"
 
     @pytest.mark.parametrize("tool", SHELL_TOOLS)
     def test_no_shell_or_code_execution(self, assembled, tool: str):
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert tool not in options["allowed_tools"]
         assert tool in options["disallowed_tools"]
 
     @pytest.mark.parametrize("tool", SUBAGENT_TOOLS)
     def test_no_subagent_creation(self, assembled, tool: str):
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert tool not in options["allowed_tools"]
         assert tool in options["disallowed_tools"]
 
     @pytest.mark.parametrize("tool", NETWORK_TOOLS)
     def test_no_network_access(self, assembled, tool: str):
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert tool not in options["allowed_tools"]
         assert tool in options["disallowed_tools"]
 
@@ -2513,7 +2585,7 @@ class TestPermissionProfile:
         """The network denial stands until a `needs` justifies it on record."""
         requested = {
             f"{name}/{version}": skill.needs
-            for name, versions in cli.load_skills(FIG_CHECKLIST_DIR).items()
+            for name, versions in load_skills(FIG_CHECKLIST_DIR).items()
             for version, skill in versions.items()
             if skill.needs
         }
@@ -2524,7 +2596,7 @@ class TestPermissionProfile:
         )
 
     def test_allowed_and_forbidden_never_overlap(self, assembled):
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert not set(options["allowed_tools"]) & set(
             options["disallowed_tools"]
         )
@@ -2532,7 +2604,7 @@ class TestPermissionProfile:
     def test_the_session_is_rooted_in_the_runtime_not_the_repo(
         self, assembled
     ):
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         cwd = Path(options["cwd"]).resolve()
         assert cwd == assembled.root.resolve()
         assert REPO_ROOT not in cwd.parents and cwd != REPO_ROOT
@@ -2540,7 +2612,7 @@ class TestPermissionProfile:
     def test_user_setting_source_is_excluded(self, assembled):
         """~/.claude/skills loads regardless of cwd; only omitting the user
         scope keeps an operator's personal skills out of a scored run."""
-        options = cli.session_options(assembled)
+        options = session_options(assembled)
         assert "user" not in options["setting_sources"]
         assert options["setting_sources"] == ["project"]
 
@@ -2548,8 +2620,8 @@ class TestPermissionProfile:
         """Delegated discovery is the premise; pruning ours would test our own
         control flow instead of the prose. So every assembled skill is listed
         -- but only ours."""
-        listed = cli.session_options(assembled)["skills"]
-        assert set(listed) == set(cli.load_skills(FIG_CHECKLIST_DIR))
+        listed = session_options(assembled)["skills"]
+        assert set(listed) == set(load_skills(FIG_CHECKLIST_DIR))
 
     def test_the_named_pool_names_only_ours(self, assembled):
         """The pool is named explicitly rather than left as "all".
@@ -2563,13 +2635,13 @@ class TestPermissionProfile:
         measured out-of-band and recorded at `session_options`. An equality
         assertion against `init` would fail on every machine.
         """
-        listed = cli.session_options(assembled)["skills"]
+        listed = session_options(assembled)["skills"]
         assert listed != "all"
         assert "code-review" not in listed and "deep-research" not in listed
 
     def test_the_egress_and_persistence_tools_are_denied(self, assembled):
         """Found by reading the SDK's reported tool set, not by design."""
-        denied = set(cli.session_options(assembled)["disallowed_tools"])
+        denied = set(session_options(assembled)["disallowed_tools"])
         for tool in (
             "SendMessage", "PushNotification", "ScheduleWakeup",
             "CronCreate", "EnterWorktree", "Workflow",
@@ -2581,12 +2653,12 @@ class TestPermissionProfile:
         prediction.json itself. It does not: `output_format` constrains the
         answer to the leaf schema and the runner serialises the result, so
         the last reason for a write tool went with it."""
-        source = inspect.getsource(cli._run_agent_session)
+        source = inspect.getsource(_run_agent_session)
         assert "output_path.write_text" in source
         assert "json.loads(result_text)" in source
 
     def test_the_profile_prints_what_was_approved(self, assembled):
-        text = cli.describe_permission_profile(assembled)
+        text = describe_permission_profile(assembled)
         for tool in AGENTIC_ALLOWED_TOOL_NAMES:
             assert tool in text
         assert AGENTIC_PERMISSION_MODE in text
@@ -2683,7 +2755,7 @@ class TestRuntimeContentIsOsNeutral:
         assert "\\" not in text
 
     def test_permission_rules_use_posix_separators(self, assembled):
-        for rule in cli.session_options(assembled)["allowed_tools"]:
+        for rule in session_options(assembled)["allowed_tools"]:
             assert "\\" not in rule
 
     def test_assembly_creates_no_platform_specific_entry(self, assembled):
@@ -2754,7 +2826,7 @@ def _valid_prediction():
 
 def _run(layout, **kwargs):
     """Returns (prediction, trace recorder, audit log)."""
-    return asyncio.run(cli._run_agent_session(layout, **kwargs))
+    return asyncio.run(_run_agent_session(layout, **kwargs))
 
 
 @requires_subpanel_figure
@@ -2794,9 +2866,9 @@ class TestAgentSession:
 
         present = {
             p.parent.name
-            for p in assembled.skills_root.rglob(cli.SKILL_FILENAME)
+            for p in assembled.skills_root.rglob(SKILL_FILENAME)
         }
-        assert present == set(cli.load_skills(FIG_CHECKLIST_DIR))
+        assert present == set(load_skills(FIG_CHECKLIST_DIR))
         # every assembled skill is invocable -- and nothing else is
         assert set(captured["options"]["skills"]) == present
 
@@ -2911,7 +2983,7 @@ class TestSkillTrace:
 
 class TestDeclaredVersusObserved:
     def test_a_fired_hop_is_reported_as_matching(self):
-        report = cli.compare_declared_and_observed(
+        report = compare_declared_and_observed(
             FIG_CHECKLIST_DIR, PILOT_LEAF, [SHARED_SKILL]
         )
         assert report["declared"] == [SHARED_SKILL]
@@ -2921,13 +2993,13 @@ class TestDeclaredVersusObserved:
 
     def test_a_missing_hop_is_reported_not_repaired(self):
         """The runner must never call the skill itself to paper over this."""
-        report = cli.compare_declared_and_observed(
+        report = compare_declared_and_observed(
             FIG_CHECKLIST_DIR, PILOT_LEAF, []
         )
         assert report["declared_not_observed"] == [SHARED_SKILL]
 
     def test_an_undeclared_hop_is_reported(self):
-        report = cli.compare_declared_and_observed(
+        report = compare_declared_and_observed(
             FIG_CHECKLIST_DIR, PILOT_LEAF, [SHARED_SKILL, "something-else"]
         )
         assert report["observed_not_declared"] == ["something-else"]
@@ -2936,39 +3008,39 @@ class TestDeclaredVersusObserved:
 @requires_subpanel_figure
 class TestMockRun:
     def test_mock_writes_a_prediction_and_a_trace(self, tmp_path: Path):
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
             examples=[SUBPANEL_FIGURE],
         )
         example_dir = out / SUBPANEL_FIGURE
-        assert (example_dir / cli.PREDICTION_FILENAME).is_file()
+        assert (example_dir / PREDICTION_FILENAME).is_file()
         assert (
-            example_dir / cli.INTERMEDIATES_DIRNAME / cli.SKILL_TRACE_FILENAME
+            example_dir / INTERMEDIATES_DIRNAME / SKILL_TRACE_FILENAME
         ).is_file()
 
     def test_the_mock_prediction_satisfies_the_leaf_schema(
         self, tmp_path: Path
     ):
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
             examples=[SUBPANEL_FIGURE],
         )
         payload = json.loads(
-            (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).read_text()
+            (out / SUBPANEL_FIGURE / PREDICTION_FILENAME).read_text()
         )
         schema = json.loads(
             (PILOT_CHECK_DIR / "schema.json").read_text()
         )["format"]["schema"]
-        cli.validate_against_schema(payload, schema)
+        validate_against_schema(payload, schema)
 
     def test_mock_trace_entries_are_marked_as_mock(self, tmp_path: Path):
         """Mock traces are generated from frontmatter, so comparing them to
         frontmatter is circular. The marker keeps them out of gate 4D."""
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
@@ -2976,31 +3048,31 @@ class TestMockRun:
         )
         trace = json.loads(
             (
-                out / SUBPANEL_FIGURE / cli.INTERMEDIATES_DIRNAME
-                / cli.SKILL_TRACE_FILENAME
+                out / SUBPANEL_FIGURE / INTERMEDIATES_DIRNAME
+                / SKILL_TRACE_FILENAME
             ).read_text()
         )
         assert trace and all(e["source"] == "mock" for e in trace)
 
     def test_mock_output_is_scoreable(self, tmp_path: Path):
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
             examples=[SUBPANEL_FIGURE],
         )
-        loaded = cli.load_predictions(out)
+        loaded = load_predictions(out)
         assert set(loaded) == {SUBPANEL_FIGURE}
 
     def test_the_trace_sidecar_is_ignored_when_scoring(self, tmp_path: Path):
         """Only leaf JSON is scored; sidecars must not be picked up."""
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
             examples=[SUBPANEL_FIGURE],
         )
-        assert len(cli.load_predictions(out)) == 1
+        assert len(load_predictions(out)) == 1
 
     def test_mock_needs_no_credentials(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -3009,13 +3081,13 @@ class TestMockRun:
         provider first and so aborts without a key. This one must not."""
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        out = cli.run_check_mock(
+        out = run_check_mock(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "p",
             examples=[SUBPANEL_FIGURE],
         )
-        assert (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).is_file()
+        assert (out / SUBPANEL_FIGURE / PREDICTION_FILENAME).is_file()
 
     def test_mock_imports_no_sdk(self, tmp_path: Path):
         """A credential-free path must not need the 200 MB bundled binary."""
@@ -3023,8 +3095,9 @@ class TestMockRun:
         import sys
 
         code = (
-            "import sys; import soda_mmqc.cli as cli; "
-            f"cli.run_check_mock('fig-checklist', '{PILOT_LEAF}', "
+            "import sys; "
+            "from soda_mmqc.agentic.runner import run_check_mock; "
+            f"run_check_mock('fig-checklist', '{PILOT_LEAF}', "
             f"output=r'{tmp_path / 'p'}', examples=['{SUBPANEL_FIGURE}']); "
             "print('claude_agent_sdk' in sys.modules)"
         )
@@ -3055,10 +3128,10 @@ class TestMockRun:
 
         assert "updated_at" in gold
         with pytest.raises(ValueError, match=r"updated_at"):
-            cli.validate_against_schema(gold, schema)
+            validate_against_schema(gold, schema)
 
-        projected = cli._as_prediction(gold, schema)
-        cli.validate_against_schema(projected, schema)
+        projected = _as_prediction(gold, schema)
+        validate_against_schema(projected, schema)
         assert projected["outputs"] == gold["outputs"]
 
 
@@ -3070,7 +3143,7 @@ class TestToolAudit:
         nothing, so the fake calls `options["hooks"]["PreToolUse"]` for each
         tool use, which is the contract the SDK implements.
         """
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         messages = [
             _tool_use("Read", {"file_path": "input/caption.txt"}, "r1"),
             _tool_use("Skill", {"name": SHARED_SKILL}, "s1"),
@@ -3079,7 +3152,7 @@ class TestToolAudit:
         async def hook_calling_client(parts, options):
             hook = options["hooks"]["PreToolUse"][0]
             for message in messages:
-                for name, payload, use_id in cli._extract_tool_calls(message):
+                for name, payload, use_id in _extract_tool_calls(message):
                     await hook(
                         {
                             "tool_name": name,
@@ -3106,8 +3179,8 @@ class TestToolAudit:
         did the session try to do". A `Read` outside the runtime would be
         invisible in the first and obvious in the second.
         """
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        hook = cli.make_pretooluse_hook(audit)
+        audit = ToolAuditLog(tmp_path / "audit.json")
+        hook = make_pretooluse_hook(audit)
         asyncio.run(
             hook(
                 {
@@ -3122,8 +3195,8 @@ class TestToolAudit:
         assert audit.entries[0]["input"]["file_path"] == "/etc/passwd"
 
     def test_the_hook_records_and_allows_by_default(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        hook = cli.make_pretooluse_hook(audit)
+        audit = ToolAuditLog(tmp_path / "audit.json")
+        hook = make_pretooluse_hook(audit)
         out = asyncio.run(
             hook(
                 {
@@ -3142,14 +3215,14 @@ class TestToolAudit:
 
     def test_the_audit_is_written_as_calls_occur(self, tmp_path: Path):
         path = tmp_path / "audit.json"
-        audit = cli.ToolAuditLog(path)
-        hook = cli.make_pretooluse_hook(audit)
+        audit = ToolAuditLog(path)
+        hook = make_pretooluse_hook(audit)
         asyncio.run(hook({"tool_name": "Read", "tool_input": {}}, "r1", None))
         assert json.loads(path.read_text())["calls"][0]["tool"] == "Read"
 
     def test_an_approver_can_deny_a_call(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        hook = cli.make_pretooluse_hook(
+        audit = ToolAuditLog(tmp_path / "audit.json")
+        hook = make_pretooluse_hook(
             audit, approver=lambda name, _: (False, "not this time")
         )
         out = asyncio.run(
@@ -3162,7 +3235,7 @@ class TestToolAudit:
         assert audit.denied and audit.denied[0]["reason"] == "not this time"
 
     def test_a_denial_is_visible_in_the_summary(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         audit.record("Read", {}, "r1", "allow")
         audit.record("Read", {}, "r2", "deny", "nope")
         assert "Read (allow) x1" in audit.summary()
@@ -3170,7 +3243,7 @@ class TestToolAudit:
 
     def test_the_audit_starts_as_an_empty_file(self, tmp_path: Path):
         path = tmp_path / "a.json"
-        cli.ToolAuditLog(path)
+        ToolAuditLog(path)
         assert json.loads(path.read_text()) == {
             "session": {}, "usage": {}, "calls": [],
         }
@@ -3210,15 +3283,15 @@ class TestToolAudit:
     def test_the_session_returns_its_audit(self, assembled):
         client = _fake_client([], writes=_valid_prediction())
         _, _, audit = _run(assembled, client=client)
-        assert isinstance(audit, cli.ToolAuditLog)
-        assert audit.path.name == cli.TOOL_AUDIT_FILENAME
+        assert isinstance(audit, ToolAuditLog)
+        assert audit.path.name == TOOL_AUDIT_FILENAME
 
 
 class TestInteractiveApprover:
     def test_yes_allows_and_no_denies(self):
         answers = iter(["y", "n"])
         out = io.StringIO()
-        approve = cli.interactive_approver(lambda _: next(answers), out=out)
+        approve = interactive_approver(lambda _: next(answers), out=out)
         assert approve("Read", {})[0] is True
         assert approve("Read", {})[0] is False
 
@@ -3231,7 +3304,7 @@ class TestInteractiveApprover:
             calls.append(prompt)
             return "a"
 
-        approve = cli.interactive_approver(ask, out=io.StringIO())
+        approve = interactive_approver(ask, out=io.StringIO())
         assert approve("Read", {})[0] is True
         assert approve("Read", {})[0] is True
         assert approve("Read", {})[0] is True
@@ -3239,7 +3312,7 @@ class TestInteractiveApprover:
 
     def test_always_does_not_leak_to_another_tool(self):
         answers = iter(["a", "n"])
-        approve = cli.interactive_approver(
+        approve = interactive_approver(
             lambda _: next(answers), out=io.StringIO()
         )
         assert approve("Read", {})[0] is True
@@ -3247,19 +3320,19 @@ class TestInteractiveApprover:
 
     def test_an_empty_answer_denies(self):
         """Silence is not consent."""
-        approve = cli.interactive_approver(lambda _: "", out=io.StringIO())
+        approve = interactive_approver(lambda _: "", out=io.StringIO())
         assert approve("Bash", {})[0] is False
 
     def test_the_prompt_shows_what_is_being_asked_for(self):
         out = io.StringIO()
-        approve = cli.interactive_approver(lambda _: "y", out=out)
+        approve = interactive_approver(lambda _: "y", out=out)
         approve("Read", {"file_path": "/etc/passwd"})
         assert "Read" in out.getvalue()
         assert "/etc/passwd" in out.getvalue()
 
     def test_a_huge_input_is_truncated(self):
         out = io.StringIO()
-        approve = cli.interactive_approver(lambda _: "y", out=out)
+        approve = interactive_approver(lambda _: "y", out=out)
         approve("Write", {"content": "x" * 5000})
         assert len(out.getvalue()) < 1000
 
@@ -3283,7 +3356,7 @@ class TestInteractiveApprover:
 def _write_agentic_check(check_dir: Path, name: str) -> None:
     _write_check(check_dir, name)
     (check_dir / "v1").mkdir(parents=True, exist_ok=True)
-    (check_dir / "v1" / cli.SKILL_FILENAME).write_text(
+    (check_dir / "v1" / SKILL_FILENAME).write_text(
         _skill_md(name), encoding="utf-8"
     )
 
@@ -3432,7 +3505,7 @@ class TestEvaluateDelegation:
         from soda_mmqc.scripts.run import is_agentic_check
 
         expected = {
-            name for name in cli.load_skills(FIG_CHECKLIST_DIR)
+            name for name in load_skills(FIG_CHECKLIST_DIR)
             if is_agentic_check(FIG_CHECKLIST_DIR / name)
         }
         dispatched = {argv[3] for argv in spy["agentic"]}
@@ -3563,7 +3636,7 @@ def pinned_checklist(tmp_path: Path) -> Path:
     (checklist / "leaf" / "schema.json").write_text("{}", encoding="utf-8")
     for contract in EVALUATION_CONTRACT_FILES:
         (checklist / "leaf" / contract).write_text("{}", encoding="utf-8")
-    (checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+    (checklist / VERSION_MANIFEST_FILENAME).write_text(
         _manifest("toy-checklist", {"leaf": "v1", "shared": "v1"}),
         encoding="utf-8",
     )
@@ -3572,10 +3645,10 @@ def pinned_checklist(tmp_path: Path) -> Path:
 
 class TestVersionManifest:
     def test_a_complete_manifest_resolves_to_a_skill_set(self, pinned_checklist):
-        skills = cli.load_skills(pinned_checklist)
-        pins = cli.load_version_manifest(pinned_checklist)
+        skills = load_skills(pinned_checklist)
+        pins = load_version_manifest(pinned_checklist)
         assert pins == {"leaf": "v1", "shared": "v1"}
-        assert cli.resolve_skill_set(skills, pins).pins == pins
+        assert resolve_skill_set(skills, pins).pins == pins
 
     def test_a_complete_manifest_validates_without_walking_a_closure(
         self, pinned_checklist
@@ -3587,75 +3660,75 @@ class TestVersionManifest:
         _write_skill(
             pinned_checklist, "orphan", "v1", _skill_md("orphan")
         )
-        skills = cli.load_skills(pinned_checklist)
-        pins = cli.load_version_manifest(pinned_checklist)
+        skills = load_skills(pinned_checklist)
+        pins = load_version_manifest(pinned_checklist)
         with pytest.raises(ValueError, match=r"orphan"):
-            cli.validate_version_manifest(skills, pins, pinned_checklist)
+            validate_version_manifest(skills, pins, pinned_checklist)
 
     def test_a_missing_pin_names_the_skill_and_the_file(self, pinned_checklist):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("toy-checklist", {"leaf": "v1"}), encoding="utf-8"
         )
-        skills = cli.load_skills(pinned_checklist)
-        pins = cli.load_version_manifest(pinned_checklist)
+        skills = load_skills(pinned_checklist)
+        pins = load_version_manifest(pinned_checklist)
         with pytest.raises(ValueError) as excinfo:
-            cli.validate_version_manifest(skills, pins, pinned_checklist)
+            validate_version_manifest(skills, pins, pinned_checklist)
         message = str(excinfo.value)
         assert "shared" in message
-        assert cli.VERSION_MANIFEST_FILENAME in message
+        assert VERSION_MANIFEST_FILENAME in message
 
     def test_an_orphan_pin_is_rejected(self, pinned_checklist):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest(
                 "toy-checklist",
                 {"leaf": "v1", "shared": "v1", "removed": "v1"},
             ),
             encoding="utf-8",
         )
-        skills = cli.load_skills(pinned_checklist)
-        pins = cli.load_version_manifest(pinned_checklist)
+        skills = load_skills(pinned_checklist)
+        pins = load_version_manifest(pinned_checklist)
         with pytest.raises(ValueError, match=r"removed"):
-            cli.validate_version_manifest(skills, pins, pinned_checklist)
+            validate_version_manifest(skills, pins, pinned_checklist)
 
     def test_a_non_existent_version_lists_what_is_available(
         self, pinned_checklist
     ):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("toy-checklist", {"leaf": "v7", "shared": "v1"}),
             encoding="utf-8",
         )
-        skills = cli.load_skills(pinned_checklist)
-        pins = cli.load_version_manifest(pinned_checklist)
+        skills = load_skills(pinned_checklist)
+        pins = load_version_manifest(pinned_checklist)
         with pytest.raises(ValueError) as excinfo:
-            cli.validate_version_manifest(skills, pins, pinned_checklist)
+            validate_version_manifest(skills, pins, pinned_checklist)
         message = str(excinfo.value)
         assert "v7" in message and "v1" in message
 
     def test_a_manifest_for_another_checklist_is_refused(self, pinned_checklist):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("other-checklist", {"leaf": "v1", "shared": "v1"}),
             encoding="utf-8",
         )
         with pytest.raises(ValueError, match=r"other-checklist"):
-            cli.load_version_manifest(pinned_checklist)
+            load_version_manifest(pinned_checklist)
 
     def test_unparseable_yaml_names_the_file(self, pinned_checklist):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             "skills:\n  leaf: [v1\n", encoding="utf-8"
         )
-        with pytest.raises(ValueError, match=cli.VERSION_MANIFEST_FILENAME):
-            cli.load_version_manifest(pinned_checklist)
+        with pytest.raises(ValueError, match=VERSION_MANIFEST_FILENAME):
+            load_version_manifest(pinned_checklist)
 
     def test_a_missing_manifest_is_reported_as_missing(self, tmp_path: Path):
         empty = tmp_path / "bare"
         empty.mkdir()
-        with pytest.raises(FileNotFoundError, match=cli.VERSION_MANIFEST_FILENAME):
-            cli.load_version_manifest(empty)
+        with pytest.raises(FileNotFoundError, match=VERSION_MANIFEST_FILENAME):
+            load_version_manifest(empty)
 
     def test_pins_are_used_by_assembly_when_a_manifest_exists(
         self, pinned_checklist
     ):
-        assert cli.checklist_pins(pinned_checklist) == {
+        assert checklist_pins(pinned_checklist) == {
             "leaf": "v1", "shared": "v1"
         }
 
@@ -3665,16 +3738,16 @@ class TestVersionManifest:
         bare = tmp_path / "bare"
         _write_skill(bare, "leaf", "v1", _skill_md("leaf"))
         with caplog.at_level("WARNING"):
-            assert cli.checklist_pins(bare) is None
+            assert checklist_pins(bare) is None
         assert any(
-            cli.VERSION_MANIFEST_FILENAME in r.getMessage()
+            VERSION_MANIFEST_FILENAME in r.getMessage()
             for r in caplog.records
         )
 
 
 class TestModelDefaults:
     def _write(self, checklist: Path, text: str) -> None:
-        (checklist / cli.MODEL_DEFAULTS_FILENAME).write_text(text, "utf-8")
+        (checklist / MODEL_DEFAULTS_FILENAME).write_text(text, "utf-8")
 
     def test_defaults_are_provider_neutral(self, pinned_checklist):
         self._write(
@@ -3682,17 +3755,17 @@ class TestModelDefaults:
             "models:\n  openai: gpt-5-mini\n  claude-sdk: sonnet\n"
             "session:\n  max_turns: 24\n",
         )
-        defaults = cli.load_model_defaults(pinned_checklist)
+        defaults = load_model_defaults(pinned_checklist)
         assert defaults.model_for("openai") == "gpt-5-mini"
         assert defaults.model_for("claude-sdk") == "sonnet"
         assert defaults.session == {"max_turns": 24}
 
     def test_an_unknown_provider_has_no_default(self, pinned_checklist):
         self._write(pinned_checklist, "models:\n  openai: gpt-5-mini\n")
-        assert cli.load_model_defaults(pinned_checklist).model_for("zeta") is None
+        assert load_model_defaults(pinned_checklist).model_for("zeta") is None
 
     def test_a_missing_file_is_empty_defaults(self, pinned_checklist):
-        defaults = cli.load_model_defaults(pinned_checklist)
+        defaults = load_model_defaults(pinned_checklist)
         assert defaults.session == {} and defaults.model_for("openai") is None
 
     def test_the_file_may_not_touch_the_permission_profile(
@@ -3705,30 +3778,30 @@ class TestModelDefaults:
             "session:\n  permission_mode: bypassPermissions\n",
         )
         with pytest.raises(ValueError) as excinfo:
-            cli.load_model_defaults(pinned_checklist)
+            load_model_defaults(pinned_checklist)
         assert "permission_mode" in str(excinfo.value)
-        assert cli.MODEL_DEFAULTS_FILENAME in str(excinfo.value)
+        assert MODEL_DEFAULTS_FILENAME in str(excinfo.value)
 
     def test_models_must_map_names_to_strings(self, pinned_checklist):
         self._write(pinned_checklist, "models:\n  openai:\n    - a\n    - b\n")
         with pytest.raises(ValueError, match=r"models"):
-            cli.load_model_defaults(pinned_checklist)
+            load_model_defaults(pinned_checklist)
 
 
 class TestSkillSet:
     def test_the_digest_is_stable_and_order_independent(self, pinned_checklist):
-        skills = cli.load_skills(pinned_checklist)
-        a = cli.resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
-        b = cli.resolve_skill_set(skills, {"shared": "v1", "leaf": "v1"})
+        skills = load_skills(pinned_checklist)
+        a = resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
+        b = resolve_skill_set(skills, {"shared": "v1", "leaf": "v1"})
         assert a.digest == b.digest
 
     def test_the_digest_changes_when_a_skill_body_changes(self, pinned_checklist):
-        skills = cli.load_skills(pinned_checklist)
-        before = cli.resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
-        path = pinned_checklist / "shared" / "v1" / cli.SKILL_FILENAME
+        skills = load_skills(pinned_checklist)
+        before = resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
+        path = pinned_checklist / "shared" / "v1" / SKILL_FILENAME
         path.write_text(path.read_text() + "\nOne more rule.\n", encoding="utf-8")
-        after = cli.resolve_skill_set(
-            cli.load_skills(pinned_checklist), {"leaf": "v1", "shared": "v1"}
+        after = resolve_skill_set(
+            load_skills(pinned_checklist), {"leaf": "v1", "shared": "v1"}
         )
         assert before.digest != after.digest
 
@@ -3737,14 +3810,14 @@ class TestSkillSet:
             pinned_checklist, "shared", "v2",
             _skill_md("shared", produces=("facts",), body="# shared\n\nDo it differently.\n"),
         )
-        skills = cli.load_skills(pinned_checklist)
-        one = cli.resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
-        two = cli.resolve_skill_set(skills, {"leaf": "v1", "shared": "v2"})
+        skills = load_skills(pinned_checklist)
+        one = resolve_skill_set(skills, {"leaf": "v1", "shared": "v1"})
+        two = resolve_skill_set(skills, {"leaf": "v1", "shared": "v2"})
         assert one.digest != two.digest
 
     def test_entries_carry_name_version_and_content_hash(self, pinned_checklist):
-        skills = cli.load_skills(pinned_checklist)
-        entries = cli.resolve_skill_set(
+        skills = load_skills(pinned_checklist)
+        entries = resolve_skill_set(
             skills, {"leaf": "v1", "shared": "v1"}
         ).entries
         assert [e.name for e in entries] == ["leaf", "shared"]
@@ -3758,10 +3831,10 @@ class TestSkillSet:
             pinned_checklist, "shared", "v2",
             _skill_md("shared", produces=("facts",), body="# shared\n\nDifferently.\n"),
         )
-        skills = cli.load_skills(pinned_checklist)
+        skills = load_skills(pinned_checklist)
         baseline = {"leaf": "v1", "shared": "v1"}
-        assert cli.resolve_skill_set(skills, baseline).label(baseline) == "pinned"
-        varied = cli.resolve_skill_set(skills, {"leaf": "v1", "shared": "v2"})
+        assert resolve_skill_set(skills, baseline).label(baseline) == "pinned"
+        varied = resolve_skill_set(skills, {"leaf": "v1", "shared": "v2"})
         assert varied.label(baseline) == "shared@v2"
 
 
@@ -3775,16 +3848,16 @@ class TestSkillSetExpansion:
         return pinned_checklist
 
     def test_unpinning_one_skill_yields_one_set_per_version(self, two_versions):
-        skills = cli.load_skills(two_versions)
-        sets = cli.expand_skill_sets(
+        skills = load_skills(two_versions)
+        sets = expand_skill_sets(
             skills, {"leaf": "v1", "shared": "v1"}, {"shared": None}
         )
         assert [s.pins["shared"] for s in sets] == ["v1", "v2"]
         assert all(s.pins["leaf"] == "v1" for s in sets)
 
     def test_a_version_subset_is_honoured(self, two_versions):
-        skills = cli.load_skills(two_versions)
-        sets = cli.expand_skill_sets(
+        skills = load_skills(two_versions)
+        sets = expand_skill_sets(
             skills, {"leaf": "v1", "shared": "v1"}, {"shared": ("v2",)}
         )
         assert [s.pins["shared"] for s in sets] == ["v2"]
@@ -3795,8 +3868,8 @@ class TestSkillSetExpansion:
             _skill_md("leaf", requires=("shared",), produces=("leaf",),
                       body="# leaf\n\nUse the `shared` skill with the `Skill` tool.\n"),
         )
-        skills = cli.load_skills(two_versions)
-        sets = cli.expand_skill_sets(
+        skills = load_skills(two_versions)
+        sets = expand_skill_sets(
             skills, {"leaf": "v1", "shared": "v1"},
             {"shared": None, "leaf": None},
         )
@@ -3804,16 +3877,16 @@ class TestSkillSetExpansion:
         assert len({s.digest for s in sets}) == 4
 
     def test_unpinning_an_unknown_skill_is_refused(self, two_versions):
-        skills = cli.load_skills(two_versions)
+        skills = load_skills(two_versions)
         with pytest.raises(ValueError, match=r"nosuch"):
-            cli.expand_skill_sets(
+            expand_skill_sets(
                 skills, {"leaf": "v1", "shared": "v1"}, {"nosuch": None}
             )
 
     def test_unpinning_to_a_non_existent_version_is_refused(self, two_versions):
-        skills = cli.load_skills(two_versions)
+        skills = load_skills(two_versions)
         with pytest.raises(ValueError, match=r"v9"):
-            cli.expand_skill_sets(
+            expand_skill_sets(
                 skills, {"leaf": "v1", "shared": "v1"}, {"shared": ("v9",)}
             )
 
@@ -3825,9 +3898,9 @@ class TestSkillSetExpansion:
             _skill_md("leaf", requires=("shared",), produces=("leaf",),
                       body="# leaf\n\nUse the `shared` skill with the `Skill` tool.\n"),
         )
-        skills = cli.load_skills(two_versions)
+        skills = load_skills(two_versions)
         with caplog.at_level("WARNING"):
-            sets = cli.expand_skill_sets(
+            sets = expand_skill_sets(
                 skills, {"leaf": "v1", "shared": "v1"},
                 {"shared": None, "leaf": None},
                 warn_above=2,
@@ -3836,8 +3909,8 @@ class TestSkillSetExpansion:
         assert any("4" in str(r.getMessage()) for r in caplog.records)
 
     def test_no_unpinning_is_the_manifest_alone(self, two_versions):
-        skills = cli.load_skills(two_versions)
-        sets = cli.expand_skill_sets(skills, {"leaf": "v1", "shared": "v1"}, {})
+        skills = load_skills(two_versions)
+        sets = expand_skill_sets(skills, {"leaf": "v1", "shared": "v1"}, {})
         assert len(sets) == 1 and sets[0].pins == {"leaf": "v1", "shared": "v1"}
 
 
@@ -3845,18 +3918,18 @@ class TestGeneratedGraphViews:
     def test_write_creates_both_views(self, pinned_checklist, monkeypatch):
         monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         assert cli.main(["graph", "toy-checklist", "--write"]) == 0
-        assert (pinned_checklist / cli.DAG_FILENAME).is_file()
-        assert (pinned_checklist / cli.GENERATED_README_FILENAME).is_file()
+        assert (pinned_checklist / DAG_FILENAME).is_file()
+        assert (pinned_checklist / GENERATED_README_FILENAME).is_file()
 
     def test_generation_is_deterministic(self, pinned_checklist, monkeypatch):
         monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
-        first = (pinned_checklist / cli.DAG_FILENAME).read_bytes()
-        readme = (pinned_checklist / cli.GENERATED_README_FILENAME).read_bytes()
+        first = (pinned_checklist / DAG_FILENAME).read_bytes()
+        readme = (pinned_checklist / GENERATED_README_FILENAME).read_bytes()
         cli.main(["graph", "toy-checklist", "--write"])
-        assert (pinned_checklist / cli.DAG_FILENAME).read_bytes() == first
+        assert (pinned_checklist / DAG_FILENAME).read_bytes() == first
         assert (
-            pinned_checklist / cli.GENERATED_README_FILENAME
+            pinned_checklist / GENERATED_README_FILENAME
         ).read_bytes() == readme
 
     def test_the_views_carry_nothing_environmental(self, pinned_checklist):
@@ -3868,8 +3941,8 @@ class TestGeneratedGraphViews:
 
         year = str(datetime.date.today().year)
         for text in (
-            cli.render_dag("toy-checklist", pinned_checklist),
-            cli.render_readme("toy-checklist", pinned_checklist),
+            render_dag("toy-checklist", pinned_checklist),
+            render_readme("toy-checklist", pinned_checklist),
         ):
             assert str(pinned_checklist) not in text
             assert str(pinned_checklist.parent) not in text
@@ -3887,7 +3960,7 @@ class TestGeneratedGraphViews:
     ):
         monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
-        path = pinned_checklist / "shared" / "v1" / cli.SKILL_FILENAME
+        path = pinned_checklist / "shared" / "v1" / SKILL_FILENAME
         path.write_text(
             path.read_text().replace(
                 "Does one thing, described unambiguously.",
@@ -3904,33 +3977,33 @@ class TestGeneratedGraphViews:
     ):
         monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
-        dag = pinned_checklist / cli.DAG_FILENAME
+        dag = pinned_checklist / DAG_FILENAME
         dag.write_text(dag.read_text() + "\nhand_edited: true\n", encoding="utf-8")
         assert cli.main(["graph", "toy-checklist"]) == 1
 
     def test_the_dag_renders_the_calls_the_prose_makes(self, pinned_checklist):
-        rendered = yaml.safe_load(cli.render_dag("toy-checklist", pinned_checklist))
+        rendered = yaml.safe_load(render_dag("toy-checklist", pinned_checklist))
         by_name = {s["name"]: s for s in rendered["skills"]}
         assert by_name["leaf"]["calls"] == ["shared"]
         assert by_name["shared"]["calls"] == []
 
     def test_the_dag_marks_which_skills_are_checks(self, pinned_checklist):
-        rendered = yaml.safe_load(cli.render_dag("toy-checklist", pinned_checklist))
+        rendered = yaml.safe_load(render_dag("toy-checklist", pinned_checklist))
         by_name = {s["name"]: s for s in rendered["skills"]}
         assert by_name["leaf"]["kind"] == "check"
         assert by_name["shared"]["kind"] == "shared"
 
     def test_the_dag_records_the_skill_set_it_describes(self, pinned_checklist):
-        rendered = yaml.safe_load(cli.render_dag("toy-checklist", pinned_checklist))
-        skills = cli.load_skills(pinned_checklist)
-        expected = cli.resolve_skill_set(
-            skills, cli.load_version_manifest(pinned_checklist)
+        rendered = yaml.safe_load(render_dag("toy-checklist", pinned_checklist))
+        skills = load_skills(pinned_checklist)
+        expected = resolve_skill_set(
+            skills, load_version_manifest(pinned_checklist)
         )
         assert rendered["skill_set"] == expected.digest
 
     def test_the_views_say_they_are_generated(self, pinned_checklist):
-        dag = cli.render_dag("toy-checklist", pinned_checklist)
-        readme = cli.render_readme("toy-checklist", pinned_checklist)
+        dag = render_dag("toy-checklist", pinned_checklist)
+        readme = render_readme("toy-checklist", pinned_checklist)
         for text in (dag, readme):
             assert "generated" in text.lower()
             assert "graph" in text
@@ -3940,12 +4013,15 @@ class TestGeneratedGraphViews:
     ):
         """It must stay fast enough to run in CI on every checklist."""
         monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
+        # Patched on the module that defines them, not on cli: cli no
+        # longer re-exports either, and `graph` reaching one through any
+        # other caller is just as much a failure.
         monkeypatch.setattr(
-            cli, "assemble_runtime",
+            agentic_runtime, "assemble_runtime",
             lambda *a, **k: pytest.fail("graph assembled a runtime"),
         )
         monkeypatch.setattr(
-            cli, "_resolve_example_input_dir",
+            agentic_runtime, "_resolve_example_input_dir",
             lambda *a, **k: pytest.fail("graph read an example"),
         )
         cli.main(["graph", "toy-checklist", "--write"])
@@ -3962,7 +4038,7 @@ class TestGraphFailureMessages:
         return code, captured.out + captured.err
 
     def test_invalid_frontmatter(self, pinned_checklist, monkeypatch, capsys, caplog):
-        path = pinned_checklist / "shared" / "v1" / cli.SKILL_FILENAME
+        path = pinned_checklist / "shared" / "v1" / SKILL_FILENAME
         path.write_text("no frontmatter at all\n", encoding="utf-8")
         with caplog.at_level("ERROR"):
             code, out = self._graph(pinned_checklist, monkeypatch, capsys)
@@ -4001,17 +4077,17 @@ class TestGraphFailureMessages:
         assert code == 1 and "cycle" in text.lower()
 
     def test_a_missing_pin(self, pinned_checklist, monkeypatch, capsys, caplog):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("toy-checklist", {"leaf": "v1"}), encoding="utf-8"
         )
         with caplog.at_level("ERROR"):
             code, out = self._graph(pinned_checklist, monkeypatch, capsys)
         text = out + caplog.text
         assert code == 1
-        assert "shared" in text and cli.VERSION_MANIFEST_FILENAME in text
+        assert "shared" in text and VERSION_MANIFEST_FILENAME in text
 
     def test_an_orphan_pin(self, pinned_checklist, monkeypatch, capsys, caplog):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("toy-checklist", {"leaf": "v1", "shared": "v1", "gone": "v1"}),
             encoding="utf-8",
         )
@@ -4021,7 +4097,7 @@ class TestGraphFailureMessages:
         assert code == 1 and "gone" in text
 
     def test_a_non_existent_version(self, pinned_checklist, monkeypatch, capsys, caplog):
-        (pinned_checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (pinned_checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest("toy-checklist", {"leaf": "v4", "shared": "v1"}),
             encoding="utf-8",
         )
@@ -4036,14 +4112,14 @@ class TestGraphFailureMessages:
         with caplog.at_level("ERROR"):
             code, out = self._graph(bare, monkeypatch, capsys)
         text = out + caplog.text
-        assert code == 1 and cli.VERSION_MANIFEST_FILENAME in text
+        assert code == 1 and VERSION_MANIFEST_FILENAME in text
 
 
 class TestTheRealChecklistIsPinned:
     def test_every_real_skill_is_pinned(self):
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
-        pins = cli.load_version_manifest(FIG_CHECKLIST_DIR)
-        cli.validate_version_manifest(skills, pins, FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
+        pins = load_version_manifest(FIG_CHECKLIST_DIR)
+        validate_version_manifest(skills, pins, FIG_CHECKLIST_DIR)
         assert set(pins) == set(skills)
 
     def test_the_committed_views_are_in_sync(self, capsys):
@@ -4053,41 +4129,41 @@ class TestTheRealChecklistIsPinned:
         )
 
     def test_the_real_model_defaults_load(self):
-        defaults = cli.load_model_defaults(FIG_CHECKLIST_DIR)
+        defaults = load_model_defaults(FIG_CHECKLIST_DIR)
         assert defaults.model_for("openai")
 
     def test_the_dag_edges_match_the_prose(self):
         """Gate 6B's property, as a test: every rendered edge is a call
         someone wrote, and no written call is missing."""
         rendered = yaml.safe_load(
-            (FIG_CHECKLIST_DIR / cli.DAG_FILENAME).read_text(encoding="utf-8")
+            (FIG_CHECKLIST_DIR / DAG_FILENAME).read_text(encoding="utf-8")
         )
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
+        skills = load_skills(FIG_CHECKLIST_DIR)
         known = sorted(skills)
-        pins = cli.load_version_manifest(FIG_CHECKLIST_DIR)
+        pins = load_version_manifest(FIG_CHECKLIST_DIR)
         for entry in rendered["skills"]:
             skill = skills[entry["name"]][pins[entry["name"]]]
-            assert entry["calls"] == sorted(cli.invoked_skills(skill, known))
+            assert entry["calls"] == sorted(invoked_skills(skill, known))
 
 
 @requires_subpanel_figure
 class TestCacheKeyIsTheSkillSet:
     def test_the_key_carries_the_skill_set_digest(self, assembled):
-        options = cli.session_options(assembled)
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
-        one = cli.resolve_skill_set(skills, cli.checklist_pins(FIG_CHECKLIST_DIR))
-        key = cli.session_cache_key(
+        options = session_options(assembled)
+        skills = load_skills(FIG_CHECKLIST_DIR)
+        one = resolve_skill_set(skills, checklist_pins(FIG_CHECKLIST_DIR))
+        key = session_cache_key(
             assembled, model="m", options=options, skill_set=one
         )
-        assert key == cli.session_cache_key(
+        assert key == session_cache_key(
             assembled, model="m", options=options, skill_set=one
         )
 
     def test_two_skill_sets_do_not_share_a_cache_entry(self, assembled):
-        options = cli.session_options(assembled)
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
-        pins = dict(cli.checklist_pins(FIG_CHECKLIST_DIR))
-        one = cli.resolve_skill_set(skills, pins)
+        options = session_options(assembled)
+        skills = load_skills(FIG_CHECKLIST_DIR)
+        pins = dict(checklist_pins(FIG_CHECKLIST_DIR))
+        one = resolve_skill_set(skills, pins)
         other = dataclasses.replace(
             one,
             entries=tuple(
@@ -4095,9 +4171,9 @@ class TestCacheKeyIsTheSkillSet:
                 for e in one.entries
             ),
         )
-        assert cli.session_cache_key(
+        assert session_cache_key(
             assembled, model="m", options=options, skill_set=one
-        ) != cli.session_cache_key(
+        ) != session_cache_key(
             assembled, model="m", options=options, skill_set=other
         )
 
@@ -4126,17 +4202,17 @@ class TestHopsAreComparedAgainstTheVersionThatRan:
             _skill_md(PILOT_LEAF, produces=(PILOT_LEAF,),
                       body=f"# {PILOT_LEAF}\n\nDo it all yourself.\n"),
         )
-        (checklist / cli.VERSION_MANIFEST_FILENAME).write_text(
+        (checklist / VERSION_MANIFEST_FILENAME).write_text(
             _manifest(
                 "fig-checklist",
-                {name: "v1" for name in cli.load_skills(checklist)},
+                {name: "v1" for name in load_skills(checklist)},
             ),
             encoding="utf-8",
         )
         return checklist
 
     def test_the_pinned_version_is_used_not_the_highest(self, two_versions):
-        hops = cli.compare_declared_and_observed(
+        hops = compare_declared_and_observed(
             two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: "v1"}
         )
         assert hops["declared"] == [SHARED_SKILL]
@@ -4144,7 +4220,7 @@ class TestHopsAreComparedAgainstTheVersionThatRan:
         assert hops["observed_not_declared"] == []
 
     def test_an_unpinned_variant_is_compared_against_itself(self, two_versions):
-        hops = cli.compare_declared_and_observed(
+        hops = compare_declared_and_observed(
             two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: "v2"}
         )
         assert hops["declared"] == []
@@ -4155,7 +4231,7 @@ class TestHopsAreComparedAgainstTheVersionThatRan:
     def test_without_pins_the_manifest_decides_not_the_highest_version(
         self, two_versions
     ):
-        hops = cli.compare_declared_and_observed(
+        hops = compare_declared_and_observed(
             two_versions, PILOT_LEAF, [SHARED_SKILL]
         )
         assert hops["declared"] == [SHARED_SKILL], (
@@ -4248,7 +4324,7 @@ class TestTheTurnCeilingActuallyGoverns:
         self, tmp_path: Path
     ):
         """End to end: the file says 24, the options carry 24."""
-        defaults = cli.load_model_defaults(FIG_CHECKLIST_DIR)
+        defaults = load_model_defaults(FIG_CHECKLIST_DIR)
         assert defaults.session["max_turns"] == 24
 
 
@@ -4267,7 +4343,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
     def stub_session(self, monkeypatch):
         """Run the real `run_check_live` loop with the provider faked out."""
         seen = []
-        real = cli._run_agent_session
+        real = _run_agent_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             seen.append(dict(versions))
@@ -4289,19 +4365,19 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
         checklist_dir = CHECKLIST_DIR / "fig-checklist"
         v2 = checklist_dir / PILOT_LEAF / "v2"
         v2.mkdir(parents=True)
-        (v2 / cli.SKILL_FILENAME).write_text(
-            (checklist_dir / PILOT_LEAF / "v1" / cli.SKILL_FILENAME).read_text(),
+        (v2 / SKILL_FILENAME).write_text(
+            (checklist_dir / PILOT_LEAF / "v1" / SKILL_FILENAME).read_text(),
             encoding="utf-8",
         )
         try:
             out = tmp_path / "preds"
-            cli.run_check_live(
+            run_check_live(
                 "fig-checklist", PILOT_LEAF,
                 output=out, examples=[SUBPANEL_FIGURE],
                 unpin={PILOT_LEAF: ("v2",)},
             )
             assert (out / f"{PILOT_LEAF}@v2" / "rep-00" / SUBPANEL_FIGURE
-                    / cli.PREDICTION_FILENAME).is_file()
+                    / PREDICTION_FILENAME).is_file()
             assert not (out / "pinned").exists(), (
                 "a variant-only run wrote into the baseline arm"
             )
@@ -4313,16 +4389,16 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
     ):
         """A directory name is not evidence."""
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE]
         )
         recorded = json.loads(
             (out / "pinned" / "rep-00" / SUBPANEL_FIGURE
-             / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME).read_text()
+             / INTERMEDIATES_DIRNAME / SKILL_SET_FILENAME).read_text()
         )
-        expected = cli.resolve_skill_set(
-            cli.load_skills(CHECKLIST_DIR / "fig-checklist"),
-            cli.checklist_pins(CHECKLIST_DIR / "fig-checklist"),
+        expected = resolve_skill_set(
+            load_skills(CHECKLIST_DIR / "fig-checklist"),
+            checklist_pins(CHECKLIST_DIR / "fig-checklist"),
         )
         assert recorded["digest"] == expected.digest
         assert {s["name"] for s in recorded["skills"]} == set(expected.pins)
@@ -4330,7 +4406,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
     def test_the_session_runs_the_pinned_version(
         self, tmp_path: Path, stub_session
     ):
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF,
             output=tmp_path / "p", examples=[SUBPANEL_FIGURE],
         )
@@ -4371,7 +4447,7 @@ class TestASessionNeedsNoFilesystem:
         monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
         monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
-        _, report = cli.run_check_live(
+        _, report = run_check_live(
             "fig-checklist",
             PILOT_LEAF,
             output=tmp_path / "preds",
@@ -4396,8 +4472,8 @@ class TestNoRunIsDeniedOrSeeded:
 
     def test_a_skill_call_can_never_be_denied_by_the_hook(self, tmp_path: Path):
         """One session per (example, check): nothing suppresses a hop."""
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        hook = cli.make_pretooluse_hook(audit)
+        audit = ToolAuditLog(tmp_path / "audit.json")
+        hook = make_pretooluse_hook(audit)
 
         async def call():
             return await hook(
@@ -4419,17 +4495,17 @@ class TestNoRunIsDeniedOrSeeded:
         """The parameter is the apparatus; without it there is nothing to pass."""
         import inspect
 
-        params = inspect.signature(cli.make_pretooluse_hook).parameters
+        params = inspect.signature(make_pretooluse_hook).parameters
         assert "denied_shared_skills" not in params
         assert "denied_shared_skills" not in inspect.signature(
-            cli._run_agent_session
+            _run_agent_session
         ).parameters
 
     def test_the_runner_cannot_seed_a_runtime(self):
         """No artifact reaches a session that the session did not produce."""
         import inspect
 
-        params = inspect.signature(cli.run_check_live).parameters
+        params = inspect.signature(run_check_live).parameters
         assert "seed_intermediates" not in params
         assert "shared_skill_denials" not in params
 
@@ -4458,11 +4534,11 @@ class TestTheContentIsPushedNotPulled:
 
     def test_image_parts_are_rebased_onto_the_runtime(self, assembled):
         image = next(p for p in assembled.input_parts if p["kind"] == "image")
-        assert image["path"].startswith(f"{cli.AGENTIC_INPUT_SUBDIR}/")
+        assert image["path"].startswith(f"{AGENTIC_INPUT_SUBDIR}/")
         assert (assembled.root / image["path"]).is_file()
 
     def test_the_session_message_leads_with_the_instruction(self, assembled):
-        message = cli._session_message(assembled)
+        message = _session_message(assembled)
         assert message[0]["kind"] == "text"
         assert PILOT_LEAF in message[0]["text"]
         assert "figure" not in message[0]["text"].lower()
@@ -4471,7 +4547,7 @@ class TestTheContentIsPushedNotPulled:
     def test_the_manifest_names_supporting_files_only(self, assembled):
         manifest = json.loads(
             (
-                assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+                assembled.input_root / AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
         assert set(manifest) == {"source_data"}
@@ -4545,7 +4621,7 @@ class TestANonFigureExampleAssembles:
         return root
 
     def _assemble(self, tmp_path):
-        return cli.assemble_runtime(
+        return assemble_runtime(
             "doc-pilot", "section-order", WORD_EXAMPLE,
             root=tmp_path / "runtime",
         )
@@ -4567,7 +4643,7 @@ class TestANonFigureExampleAssembles:
         layout = self._assemble(tmp_path)
         manifest = json.loads(
             (
-                layout.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+                layout.input_root / AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
         assert manifest == {}
@@ -4589,13 +4665,13 @@ class TestANonFigureExampleAssembles:
         staged = sorted(
             p.relative_to(layout.input_root)
             for p in layout.input_root.rglob("*")
-            if p.is_file() and p.name != cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            if p.is_file() and p.name != AGENTIC_INPUT_MANIFEST_FILENAME
         )
         original = sorted(
             p.relative_to(source)
             for p in source.rglob("*")
             if p.is_file()
-            and cli.EXAMPLE_GOLD_SUBDIR not in p.relative_to(source).parts
+            and EXAMPLE_GOLD_SUBDIR not in p.relative_to(source).parts
         )
         assert staged == original
         for entry in original:
@@ -4614,7 +4690,7 @@ class TestANonFigureExampleAssembles:
         assert not list(layout.input_root.rglob("expected_output.json"))
         assert not [
             p for p in layout.input_root.rglob("*")
-            if p.name == cli.EXAMPLE_GOLD_SUBDIR
+            if p.name == EXAMPLE_GOLD_SUBDIR
         ]
 
 
@@ -4631,7 +4707,7 @@ class TestEveryAxisIsADirectory:
     def stub_session(self, monkeypatch):
         """Run the real `run_check_live` loop with the provider faked out."""
         seen = []
-        real = cli._run_agent_session
+        real = _run_agent_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             seen.append(dict(versions))
@@ -4649,11 +4725,11 @@ class TestEveryAxisIsADirectory:
 
     def test_a_plain_run_still_has_both_levels(self, tmp_path: Path, stub_session):
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
         assert (
-            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / PREDICTION_FILENAME
         ).is_file()
         assert not (out / SUBPANEL_FIGURE).exists(), (
             "the baseline arm must not write flat: that is the special case "
@@ -4663,14 +4739,14 @@ class TestEveryAxisIsADirectory:
     def test_replicates_sit_under_the_arm(self, tmp_path: Path, stub_session):
         """An arm is not a replicate: arm outermost, samples within it."""
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out,
             examples=[SUBPANEL_FIGURE], replicates=3,
         )
         for i in range(3):
             assert (
                 out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
-                / cli.PREDICTION_FILENAME
+                / PREDICTION_FILENAME
             ).is_file()
 
     def test_the_sidecar_records_arm_and_replicate(
@@ -4682,7 +4758,7 @@ class TestEveryAxisIsADirectory:
         cannot change what a prediction claims about itself.
         """
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out,
             examples=[SUBPANEL_FIGURE], replicates=2,
         )
@@ -4690,7 +4766,7 @@ class TestEveryAxisIsADirectory:
             sidecar = json.loads(
                 (
                     out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
-                    / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME
+                    / INTERMEDIATES_DIRNAME / SKILL_SET_FILENAME
                 ).read_text(encoding="utf-8")
             )
             assert sidecar["arm"] == "pinned"
@@ -4700,16 +4776,16 @@ class TestEveryAxisIsADirectory:
     def test_mock_writes_the_same_shape(self, tmp_path: Path):
         """No exceptions: a mock run is scored by the same command."""
         out = tmp_path / "preds"
-        cli.run_check_mock(
+        run_check_mock(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
         assert (
-            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / PREDICTION_FILENAME
         ).is_file()
 
     def test_zero_replicates_is_refused(self, tmp_path: Path):
         with pytest.raises(ValueError, match="at least one"):
-            cli.run_check_live(
+            run_check_live(
                 "fig-checklist", PILOT_LEAF, output=tmp_path / "p",
                 examples=[SUBPANEL_FIGURE], replicates=0,
             )
@@ -4777,12 +4853,12 @@ class TestPointingAtARunRoot:
         for arm in ("pinned", f"{PILOT_LEAF}@v2"):
             d = root / arm / "rep-00" / example
             d.mkdir(parents=True)
-            (d / cli.PREDICTION_FILENAME).write_text(
+            (d / PREDICTION_FILENAME).write_text(
                 json.dumps(_valid_prediction()), encoding="utf-8"
             )
 
         with pytest.raises(ValueError) as exc:
-            cli.score_check(
+            score_check(
                 "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
             )
         message = str(exc.value)
@@ -4795,11 +4871,11 @@ class TestPointingAtARunRoot:
         root = tmp_path / "preds"
         d = root / "not" / "an" / "example"
         d.mkdir(parents=True)
-        (d / cli.PREDICTION_FILENAME).write_text(
+        (d / PREDICTION_FILENAME).write_text(
             json.dumps(_valid_prediction()), encoding="utf-8"
         )
         with pytest.raises(ValueError, match="match an example"):
-            cli.score_check(
+            score_check(
                 "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
             )
 
@@ -4811,7 +4887,7 @@ class TestAnInterruptedRunResumes:
     @pytest.fixture
     def stub_session(self, monkeypatch):
         calls = []
-        real = cli._run_agent_session
+        real = _run_agent_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             calls.append(layout.example)
@@ -4828,12 +4904,12 @@ class TestAnInterruptedRunResumes:
         self, tmp_path: Path, stub_session
     ):
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
         assert len(stub_session) == 1
 
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
         assert len(stub_session) == 1, "a completed example was run again"
@@ -4842,20 +4918,20 @@ class TestAnInterruptedRunResumes:
         self, tmp_path: Path, stub_session
     ):
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
-        _, report = cli.run_check_live(
+        _, report = run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
         assert [e["status"] for e in report] == ["skipped"]
 
     def test_force_runs_it_anyway(self, tmp_path: Path, stub_session):
         out = tmp_path / "preds"
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
         )
-        cli.run_check_live(
+        run_check_live(
             "fig-checklist", PILOT_LEAF, output=out,
             examples=[SUBPANEL_FIGURE], force=True,
         )
@@ -4870,7 +4946,7 @@ class TestTheRunRecordsWhatItCost:
     """
 
     def test_the_audit_captures_usage(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         audit.note_usage({
             "total_cost_usd": 0.0371,
             "num_turns": 3,
@@ -4883,12 +4959,12 @@ class TestTheRunRecordsWhatItCost:
 
     def test_usage_is_absent_rather_than_zero_when_unreported(self, tmp_path: Path):
         """A provider that reports no cost must not look like a free run."""
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         written = json.loads(audit.path.read_text(encoding="utf-8"))
         assert written["usage"] == {}
 
     def test_the_extractor_reads_a_result_message(self):
-        info = cli._extract_usage({
+        info = _extract_usage({
             "subtype": "success",
             "total_cost_usd": 0.12,
             "num_turns": 4,
@@ -4903,7 +4979,7 @@ class TestTheRunRecordsWhatItCost:
         }
 
     def test_a_message_without_cost_yields_nothing(self):
-        assert cli._extract_usage({"subtype": "init", "tools": []}) is None
+        assert _extract_usage({"subtype": "init", "tools": []}) is None
 
 
 class TestTheAuditDoesNotDuplicateTheAnswer:
@@ -4915,24 +4991,62 @@ class TestTheAuditDoesNotDuplicateTheAnswer:
     """
 
     def test_a_large_input_is_recorded_by_shape(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         answer = {"outputs": [{"panel_label": c, "explanation": "x" * 200}
                               for c in "ABCDEFGH"]}
         audit.record("StructuredOutput", answer, "t1", "allow")
         entry = json.loads(audit.path.read_text())["calls"][0]
         assert entry["tool"] == "StructuredOutput"
-        assert entry["input"]["elided"]["bytes"] > cli.AUDIT_INPUT_MAX_BYTES
+        assert entry["input"]["elided"]["bytes"] > AUDIT_INPUT_MAX_BYTES
         assert entry["input"]["elided"]["keys"] == ["outputs"]
         assert "panel_label" not in json.dumps(entry)
 
     def test_a_small_input_is_kept_whole(self, tmp_path: Path):
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         audit.record("Skill", {"skill": SHARED_SKILL}, "t1", "allow")
         entry = json.loads(audit.path.read_text())["calls"][0]
         assert entry["input"] == {"skill": SHARED_SKILL}
 
     def test_the_summary_still_counts_the_call(self, tmp_path: Path):
         """Eliding the payload must not lose that the call happened."""
-        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit = ToolAuditLog(tmp_path / "audit.json")
         audit.record("StructuredOutput", {"outputs": [{"x": "y" * 2000}]}, "t1", "allow")
         assert "StructuredOutput" in audit.summary()
+
+
+class TestTheCliIsAParser:
+    """cli.py declares commands. It is not a re-export surface.
+
+    It used to import five constants from agentic/ and then redefine all
+    five, so each had two definitions and nothing kept them in agreement.
+    Tests reached through `cli.X` for symbols owned elsewhere, which is what
+    made the surface load-bearing.
+    """
+
+    def test_no_constant_is_defined_twice(self):
+        from soda_mmqc.agentic import runner as _runner
+        from soda_mmqc.agentic import session as _session
+
+        assert "PREDICTION_FILENAME" not in vars(cli), (
+            "PREDICTION_FILENAME is owned by agentic.session; cli must not "
+            "define or re-export it"
+        )
+        assert _session.PREDICTION_FILENAME == "prediction.json"
+        assert _runner.DEFAULT_RUN_LABEL == "agentic"
+
+    def test_cli_defines_no_domain_logic(self):
+        """Every def in cli.py is parser or dispatch."""
+        import ast
+
+        source = (
+            Path(__file__).resolve().parents[1] / "soda_mmqc" / "cli.py"
+        ).read_text(encoding="utf-8")
+        names = {
+            node.name
+            for node in ast.parse(source).body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+        assert names <= {"main", "_build_parser"}, (
+            "cli.py grew domain logic: "
+            f"{sorted(names - {'main', '_build_parser'})}"
+        )

@@ -1,23 +1,16 @@
-"""CLI for agentic checklists.
+"""Command line interface for agentic checklists.
 
-This module owns the agentic side of the checklist workflow: *running* a check
-(assembling a sealed runtime directory and driving one agent session per
-example) and *scoring* the predictions that come out of it.
+Every command this project offers is declared here and dispatched from
+:func:`main`. The implementations live elsewhere -- the harness in
+:mod:`soda_mmqc.agentic`, scoring in :mod:`soda_mmqc.core.scoring`, the two
+Streamlit apps behind the launchers in :mod:`soda_mmqc.scripts` -- and this
+module holds no domain logic of its own.
 
-Milestone 1 delivered the scoring half. ``score`` is the seam that separates
-running from scoring: it takes predictions that were produced somewhere else,
-pairs them with the gold expected outputs of the same examples, and hands them
-to the unchanged ``FlatEvaluator`` wiring in :mod:`soda_mmqc.scripts.run`.
-Nothing about evaluator semantics, thresholds, or the shape of ``analysis.json``
-changes here -- ``analyze_results`` and ``save_analysis`` are reused verbatim.
-
-Milestone 2 adds *skill loading*: reading the ``SKILL.md`` files of a checklist,
-resolving the graph they describe, and validating that the graph is consistent.
-The graph is carried by the skills' **prose** -- a sentence telling the agent to
-call another skill with the ``Skill`` tool -- while the ``requires``/``produces``
-frontmatter is runner-owned documentation of the same edges. Nothing here turns
-frontmatter into a call sequence; :func:`validate_skills` only checks that the
-two descriptions of the graph agree.
+It also re-exports nothing. It used to carry about forty names from
+``agentic/`` under a "compatibility surface" comment so that tests could
+reach them as ``cli.X``, and it redefined five constants it had already
+imported, leaving two definitions of each with nothing keeping them equal.
+Import a name from the module that defines it.
 
 Usage::
 
@@ -29,292 +22,25 @@ Usage::
 from __future__ import annotations
 
 import argparse
-import asyncio
-import contextlib
-import dataclasses
-import difflib
-import hashlib
-import itertools
-import json
-import os
-import re
-import shutil
-import sys
-import tempfile
-from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import (
-    Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Set,
-    Tuple,
-)
+from typing import List, Optional
 
-import yaml
-
-from soda_mmqc import config, logger
+from soda_mmqc import logger
 from soda_mmqc.config import (
-    AGENTIC_AGENT_HOME_SUBDIR,
-    AGENTIC_BASE_TOOLS,
-    AGENTIC_ALLOWED_TOOL_NAMES,
-    AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_DEFAULT_MODEL,
-    AGENTIC_FORBIDDEN_TOOLS,
-    AGENTIC_MAX_BUFFER_BYTES,
-    AGENTIC_CLAUDE_TEMPLATE,
-    AGENTIC_INPUT_MANIFEST_FILENAME,
-    AGENTIC_INPUT_SUBDIR,
-    AGENTIC_ORIENTATION_FILENAME,
-    AGENTIC_PERMISSION_MODE,
-    AGENTIC_RUNTIME_PREFIX,
-    AGENTIC_SETTING_SOURCES,
-    AGENTIC_SKILLSET_WARN_THRESHOLD,
-    AGENTIC_SKILLS_SUBDIR,
     DEFAULT_MODEL,
     DEFAULT_SENTENCE_TRANSFORMER_MODEL,
-    EVALUATION_DIR,
-    EXAMPLES_DIR,
-    resolve_agentic_runtime_root,
 )
-from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
-from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
-    _default_client,
-    _extract_tool_calls,
-    _extract_usage,
-    _openai_session_client,
-    _run_agent_session,
-    _session_message,
-    AUDIT_INPUT_MAX_BYTES,
-    SKILL_SET_FILENAME,
-    SKILL_TRACE_FILENAME,
-    TOOL_AUDIT_FILENAME,
-    SkillTraceRecorder,
-    ToolAuditLog,
-    compare_declared_and_observed,
-    interactive_approver,
-    load_skill_file,
-    make_pretooluse_hook,
-    runtime_session,
-    validate_against_schema,
-)
-from soda_mmqc.agentic.runner import (  # noqa: F401  (compatibility surface)
-    _as_prediction,
-    _mock_trace,
-    _write_prediction,
+from soda_mmqc.agentic.pinning import MODEL_DEFAULTS_FILENAME
+from soda_mmqc.agentic.runner import (
     DEFAULT_RUN_LABEL,
-    INTERMEDIATES_DIRNAME,
-    PREDICTION_FILENAME,
-    default_predictions_dir,
-    resolve_model,
     run_check_live,
     run_check_mock,
 )
-from soda_mmqc.agentic.runtime import (  # noqa: F401  (compatibility surface)
-    EXAMPLE_GOLD_SUBDIR,
-    EXAMPLE_INPUT_SUBDIR,
-    WITHHELD_FROM_RUNTIME,
-    _leaf_schema,
-    _resolve_example_input_dir,
-    RuntimeLayout,
-    assemble_runtime,
-    describe_permission_profile,
-    effective_session_options,
-    runtime_skill_set,
-    session_cache_key,
-    session_options,
-)
-from soda_mmqc.agentic.views import (  # noqa: F401  (compatibility surface)
-    DAG_FILENAME,
-    GENERATED_README_FILENAME,
-    graph_checklist,
-    render_dag,
-    render_readme,
-)
-from soda_mmqc.agentic.pinning import (  # noqa: F401  (compatibility surface)
-    MODEL_DEFAULTS_FILENAME,
-    ModelDefaults,
-    SkillSet,
-    SkillSetEntry,
-    VERSION_MANIFEST_FILENAME,
-    checklist_pins,
-    expand_skill_sets,
-    load_model_defaults,
-    load_version_manifest,
-    resolve_skill_set,
-    skill_content_hash,
-    validate_version_manifest,
-)
-from soda_mmqc.agentic.skills import (  # noqa: F401  (compatibility surface)
-    _read_json,
-    SKILL_FILENAME,
-    SKILL_TOOL,
-    Skill,
-    build_graph,
-    find_cycle,
-    invoked_skills,
-    load_skill,
-    load_skills,
-    resolve_check_dir,
-    select_versions,
-    validate_skills,
-    _prose_blocks,
-)
-from soda_mmqc.core.scoring import (
-    ModelResult,
-    analyze_results,
-    load_predictions,
-    save_analysis,
-    score_check,
-)
-from soda_mmqc.config import (
-    EVALUATION_CONTRACT_FILES,
-    list_checks,
-    owns_evaluation_contracts,
-)
-
-__all__ = [
-    "PREDICTION_FILENAME",
-    "DEFAULT_RUN_LABEL",
-    "SKILL_FILENAME",
-    "SKILL_TOOL",
-    "Skill",
-    "RuntimeLayout",
-    "resolve_check_dir",
-    "load_predictions",
-    "score_check",
-    "load_skill",
-    "load_skills",
-    "build_graph",
-    "find_cycle",
-    "invoked_skills",
-    "validate_skills",
-    "select_versions",
-    "VERSION_MANIFEST_FILENAME",
-    "MODEL_DEFAULTS_FILENAME",
-    "DAG_FILENAME",
-    "GENERATED_README_FILENAME",
-    "SkillSet",
-    "SkillSetEntry",
-    "ModelDefaults",
-    "skill_content_hash",
-    "resolve_skill_set",
-    "load_version_manifest",
-    "validate_version_manifest",
-    "checklist_pins",
-    "load_model_defaults",
-    "expand_skill_sets",
-    "render_dag",
-    "render_readme",
-    "graph_checklist",
-    "assemble_runtime",
-    "runtime_session",
-    "session_options",
-    "describe_permission_profile",
-    "run_check_mock",
-    "run_check_live",
-    "run_checklist_live",
-    "SkillTraceRecorder",
-    "validate_against_schema",
-    "compare_declared_and_observed",
-    "effective_session_options",
-    "session_cache_key",
-    "runtime_skill_set",
-    "ToolAuditLog",
-    "make_pretooluse_hook",
-    "interactive_approver",
-    "TOOL_AUDIT_FILENAME",
-    "SKILL_SET_FILENAME",
-    "default_predictions_dir",
-    "INTERMEDIATES_DIRNAME",
-    "SKILL_TRACE_FILENAME",
-    "main",
-]
-
-#: Name of the file holding one example's final leaf JSON inside a
-#: predictions directory. The runner (Milestone 4) writes one per example.
-PREDICTION_FILENAME = "prediction.json"
-
-#: Top-level key under which scored records are stored in ``analysis.json``.
-#: The legacy path keys this by prompt name; the agentic path has no prompt.
-DEFAULT_RUN_LABEL = "agentic"
-
-
-
-
-
-
-
-
-
-#: Sidecar directory for debug artifacts beside a prediction. Scored output is
-#: `prediction.json` only; everything here is diagnostic.
-INTERMEDIATES_DIRNAME = "intermediates"
-
-#: Every tool call the session attempted, with the decision taken on it.
-TOOL_AUDIT_FILENAME = "tool_audit.json"
-
-#: The per-example record of which skills the session actually invoked. This
-#: is the instrument for whether delegated discovery worked, so it is written
-#: from a hook as calls occur -- never reconstructed from agent prose.
-SKILL_TRACE_FILENAME = "skill_trace.json"
-
-#: The SkillSet a prediction came from, written beside it. Without this the
-#: identity of a stored prediction lives only in the runner's in-memory
-#: report, which is printed once and discarded -- and a directory name is not
-#: evidence.
-SKILL_SET_FILENAME = "skill_set.json"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+from soda_mmqc.agentic.runtime import describe_permission_profile
+from soda_mmqc.agentic.session import runtime_session
+from soda_mmqc.agentic.views import graph_checklist
+from soda_mmqc.core.scoring import score_check
 
 
 def _build_parser() -> argparse.ArgumentParser:
