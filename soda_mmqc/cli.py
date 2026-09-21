@@ -276,6 +276,13 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Regenerate the views instead of checking them",
     )
+
+    subparsers.add_parser(
+        "curate", help="Launch the curation interface (Streamlit)",
+    )
+    subparsers.add_parser(
+        "report", help="Launch the evaluation reporting app (Streamlit)",
+    )
     return parser
 
 
@@ -404,6 +411,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         except (FileNotFoundError, ValueError) as exc:
             logger.error("%s", exc)
             return 1
+
+    if args.command == "curate":
+        # Imported in the branch, not at module scope: `mmqc score` in a
+        # notebook must not pay for Streamlit. Both launchers sys.exit
+        # internally, so the `or 0` is defensive rather than load-bearing.
+        from soda_mmqc.scripts.curate import main as curate_main
+
+        return curate_main() or 0
+
+    if args.command == "report":
+        from soda_mmqc.scripts.report import main as report_main
+
+        return report_main() or 0
 
     if args.command == "assemble":
         try:

@@ -155,6 +155,22 @@ class TestProjectArchitecture(unittest.TestCase):
             {"run", "score", "assemble", "graph", "init", "curate", "report"},
         )
 
+    def test_importing_the_cli_does_not_pull_streamlit(self):
+        """A subcommand's dependency is imported when it runs, not on import.
+
+        `mmqc score` in a notebook must not pay for Streamlit.
+        """
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import soda_mmqc.cli, sys; "
+             "print('streamlit' in sys.modules)"],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(result.stdout.strip().splitlines()[-1], "False")
+
     def test_the_prompt_pipeline_is_gone(self):
         self.assertFalse(
             (PACKAGE_ROOT / "scripts" / "run.py").exists(),
