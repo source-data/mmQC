@@ -7,11 +7,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
+import pandas as pd
+
 from soda_mmqc.core.eval_manifest import EvalManifest
 
 from soda_mmqc.core.property_rollup import PropertyRollup, rollup_by_property
 from soda_mmqc.core.run_layout import BASELINE_ARM
-from soda_mmqc.reporting.load import FlatRun, FlatRuns, RunRef
+from soda_mmqc.reporting.load import (
+    FlatRun,
+    FlatRuns,
+    RunRef,
+    record_source,
+)
 
 # `PropertyRollup` is defined in core/property_rollup.py, which owns every
 # instances-to-statistics step. It is re-exported here because this module
@@ -23,6 +30,7 @@ __all__ = [
     "RunSummaries",
     "aggregate_run",
     "summarize_runs",
+    "scores_frame",
     "field_order",
     "leaf_property_tail",
 ]
@@ -217,3 +225,68 @@ class RunSummaries(Mapping[RunRef, RunSummary]):
 def summarize_runs(runs: FlatRuns) -> RunSummaries:
     """Build one :class:`RunSummary` per :class:`FlatRun`."""
     return RunSummaries([aggregate_run(run) for run in runs])
+
+
+#: Columns of :func:`scores_frame`, in order.
+SCORES_FRAME_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "example",
+    "property",
+    "mean_score",
+    "n_scored",
+    "n_instances",
+)
+
+
+def scores_frame(runs: FlatRuns) -> pd.DataFrame:
+    """One row per (check, arm, replicate, example, property).
+
+    Both axes of variation stay on the frame -- ``example`` and
+    ``replicate`` -- and ``property`` is never collapsed into a row.
+    Every statistic downstream groups this frame, and none of them may
+    group across ``property``: ``panel_label`` and ``micrograph`` measure
+    different things, and a number mixing them hides an arm that improves
+    one while degrading the other.
+
+    Note this is *not* :func:`aggregate_run` per run. That pools examples
+    within a leaf, which throws away the example axis this frame exists
+    to keep. Each record is rolled up on its own instead.
+
+    ``mean_score`` is nullable: ``NA`` means the property had nothing
+    applicable on that example, which is not a score of zero. Read it
+    with ``n_scored``, which is the denominator it was taken over.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        for record in run.records:
+            instances = record.analysis.get("instances", ())
+            if not isinstance(instances, list):
+                continue
+            rollups = rollup_by_property(
+                (inst for inst in instances if isinstance(inst, dict)),
+                run.manifest,
+            )
+            example = record_source(record)
+            for leaf_property, rollup in rollups.items():
+                rows.append(
+                    {
+                        "check": run.check,
+                        "model": run.model,
+                        "arm": run.arm,
+                        "replicate": run.replicate,
+                        "example": example,
+                        "property": leaf_property,
+                        "mean_score": rollup.mean_score,
+                        "n_scored": rollup.n_scored,
+                        "n_instances": rollup.n_instances,
+                    }
+                )
+
+    frame = pd.DataFrame(rows, columns=list(SCORES_FRAME_COLUMNS))
+    # Nullable float, so "nothing applicable" stays distinguishable from
+    # a genuine zero after any groupby.
+    frame["mean_score"] = frame["mean_score"].astype("Float64")
+    return frame
