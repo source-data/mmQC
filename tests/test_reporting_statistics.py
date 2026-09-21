@@ -18,7 +18,9 @@ from soda_mmqc.core.eval_manifest import (
 )
 from soda_mmqc.reporting.aggregate import (
     SCORES_FRAME_COLUMNS,
+    NON_RESPONSE_COLUMNS,
     arm_contrast,
+    non_response_counts,
     replicate_spread,
     scores_frame,
 )
@@ -401,3 +403,103 @@ class TestArmContrast:
         frame = _frame([("pinned", 0, "doc-a", "p1", 1.0, 1)])
         with pytest.raises(ValueError, match="no-such-arm"):
             arm_contrast(frame, baseline="pinned", variant="no-such-arm")
+
+
+def _record_with_rows(
+    example: str, correct: int, missing: int, spurious: int
+) -> FlatRecord:
+    """A record whose layer-S row counts say what the session returned."""
+    return FlatRecord(
+        doc_id=example,
+        metadata={"source": example},
+        analysis={
+            "instances": [],
+            "by_list": {
+                "outputs": {
+                    "row_counts": {
+                        "correct_row": correct,
+                        "missing_row": missing,
+                        "spurious_row": spurious,
+                    },
+                    "rows": [],
+                }
+            },
+        },
+    )
+
+
+class TestNonResponse:
+    def test_an_empty_answer_is_counted_not_excluded(self):
+        """A skill so thin the model returns nothing is a result, not a gap.
+
+        Dropping these would make the failing arm look better.
+        """
+        runs = FlatRuns([
+            _run(arm="v2", replicate=0, records=[
+                _record_with_rows("doc-a", 0, 4, 0),
+                _record_with_rows("doc-b", 3, 1, 0),
+            ]),
+        ])
+        counts = non_response_counts(runs)
+
+        assert counts["empty"].sum() == 1
+        assert bool(
+            counts.loc[counts["example"] == "doc-a", "empty"].item()
+        ) is True
+        assert bool(
+            counts.loc[counts["example"] == "doc-b", "empty"].item()
+        ) is False
+
+    def test_it_is_reported_per_arm_and_replicate(self):
+        runs = FlatRuns([
+            _run(arm="pinned", replicate=0,
+                 records=[_record_with_rows("doc-a", 4, 0, 0)]),
+            _run(arm="v2", replicate=0,
+                 records=[_record_with_rows("doc-a", 0, 4, 0)]),
+        ])
+        counts = non_response_counts(runs)
+        by_arm = counts.groupby("arm")["empty"].sum()
+
+        assert by_arm["pinned"] == 0
+        assert by_arm["v2"] == 1
+        assert set(counts["replicate"]) == {0}
+
+    def test_a_genuinely_empty_benchmark_row_is_not_non_response(self):
+        """Nothing expected and nothing returned is not a failure.
+
+        correct_row 0 with missing_row 0 means the gold had no rows
+        either -- the session agreed there was nothing to report.
+        """
+        runs = FlatRuns([
+            _run(arm="pinned", replicate=0,
+                 records=[_record_with_rows("doc-a", 0, 0, 0)]),
+        ])
+        counts = non_response_counts(runs)
+        assert bool(counts.iloc[0]["empty"]) is False
+
+    def test_a_spurious_only_answer_is_not_non_response(self):
+        """The model answered, just wrongly. That is a layer-S error."""
+        runs = FlatRuns([
+            _run(arm="pinned", replicate=0,
+                 records=[_record_with_rows("doc-a", 0, 0, 3)]),
+        ])
+        counts = non_response_counts(runs)
+        row = counts.iloc[0]
+        assert bool(row["empty"]) is False
+        assert row["spurious_row"] == 3
+
+    def test_the_row_counts_travel_with_the_flag(self):
+        """So a reader can see how much was missed, not just that it was."""
+        runs = FlatRuns([
+            _run(arm="v2", replicate=0,
+                 records=[_record_with_rows("doc-a", 0, 7, 0)]),
+        ])
+        row = non_response_counts(runs).iloc[0]
+        assert row["correct_row"] == 0
+        assert row["missing_row"] == 7
+        assert row["list_key"] == "outputs"
+
+    def test_an_empty_run_set_still_has_the_columns(self):
+        counts = non_response_counts(FlatRuns([]))
+        assert list(counts.columns) == list(NON_RESPONSE_COLUMNS)
+        assert counts.empty

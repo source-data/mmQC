@@ -33,6 +33,7 @@ __all__ = [
     "scores_frame",
     "replicate_spread",
     "arm_contrast",
+    "non_response_counts",
     "field_order",
     "leaf_property_tail",
 ]
@@ -498,3 +499,74 @@ def arm_contrast(
     return result.astype(
         {"difference": "Float64", "se": "Float64", "paired_fraction": "Float64"}
     )
+
+
+#: Columns of :func:`non_response_counts`, in order.
+NON_RESPONSE_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "example",
+    "list_key",
+    "empty",
+    "correct_row",
+    "missing_row",
+    "spurious_row",
+)
+
+
+def non_response_counts(runs: FlatRuns) -> pd.DataFrame:
+    """Per example, whether the session returned an empty answer.
+
+    An empty ``outputs`` scores as a fully missing row set rather than
+    being excluded: a skill so thin that the model returns nothing is a
+    worse result, not an absent one, and dropping those examples would
+    flatter the arm that produced them.
+
+    Count these before reading any mean. Non-response is a layer-S fact
+    and it interacts with layer 2 in the direction that misleads: an arm
+    that answers nothing has no applicable instances either, so it
+    contributes nothing to the layer-2 mean and can appear to score
+    *better* by having said less.
+
+    ``empty`` is ``correct_row == 0 and missing_row > 0`` -- nothing
+    matched and something was expected. A row set with nothing expected
+    and nothing returned is agreement, not silence, and a spurious-only
+    answer is a wrong answer rather than no answer; neither counts here.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        for record in run.records:
+            by_list = record.analysis.get("by_list", {})
+            if not isinstance(by_list, dict):
+                continue
+            example = record_source(record)
+            for list_key, payload in sorted(by_list.items()):
+                if not isinstance(payload, dict):
+                    continue
+                counts = payload.get("row_counts")
+                if not isinstance(counts, dict):
+                    continue
+                correct = int(counts.get("correct_row", 0) or 0)
+                missing = int(counts.get("missing_row", 0) or 0)
+                spurious = int(counts.get("spurious_row", 0) or 0)
+                rows.append(
+                    {
+                        "check": run.check,
+                        "model": run.model,
+                        "arm": run.arm,
+                        "replicate": run.replicate,
+                        "example": example,
+                        "list_key": list_key,
+                        "empty": correct == 0 and missing > 0,
+                        "correct_row": correct,
+                        "missing_row": missing,
+                        "spurious_row": spurious,
+                    }
+                )
+
+    frame = pd.DataFrame(rows, columns=list(NON_RESPONSE_COLUMNS))
+    if not frame.empty:
+        frame["empty"] = frame["empty"].astype(bool)
+    return frame
