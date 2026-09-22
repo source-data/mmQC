@@ -19,6 +19,7 @@ from soda_mmqc.reporting import (
     plot_mean_score_bars,
     plot_arm_contrast_by_check,
     plot_arm_levels_by_check,
+    plot_check_layers,
     plot_grouped_counts,
     plot_mean_score_with_instances,
     split_layer2_by_metric,
@@ -795,3 +796,113 @@ class TestGroupedCountsLayout:
             self._counts(), group="check", category="layer1", series="arm"
         )
         assert [t.name for t in fig.data if t.showlegend] == ["detailed", "minimal"]
+
+
+class TestCheckLayers:
+    """One check, three layers, arms side by side in every panel.
+
+    Layer 2 is conditional on layer 1, which is conditional on there
+    being a row at all, so the three belong on one line. Plotly has no
+    `barmode="group+stack"`; distinct `offsetgroup` values under
+    `barmode="stack"` put one stack beside another.
+    """
+
+    @staticmethod
+    def _frames():
+        import pandas as pd
+
+        layer_s = pd.DataFrame(
+            [
+                {"arm": arm, "list_key": "outputs", "outcome": outcome, "count": n}
+                for arm, base in (("detailed", 100), ("minimal", 90))
+                for outcome, n in (
+                    ("correct_row", base), ("missing_row", 5), ("spurious_row", 2)
+                )
+            ]
+        )
+        layer1 = pd.DataFrame(
+            [
+                {"arm": arm, "property": f"outputs[].{prop}", "layer1": label, "count": n}
+                for arm, base in (("detailed", 50), ("minimal", 40))
+                for prop in ("panel_label", "micrograph")
+                for label, n in (
+                    ("correct_applicable", base), ("withheld_applicable", 3)
+                )
+            ]
+        )
+        layer2 = pd.DataFrame(
+            [
+                {"arm": arm, "property": f"outputs[].{prop}", "mean": m, "sd": 0.01}
+                for arm, m in (("detailed", 0.9), ("minimal", 0.7))
+                for prop in ("panel_label", "micrograph")
+            ]
+        )
+        return layer_s, layer1, layer2
+
+    def _fig(self, **kwargs):
+        layer_s, layer1, layer2 = self._frames()
+        return plot_check_layers(
+            layer_s=layer_s, layer1=layer1, layer2=layer2,
+            series_order=("detailed", "minimal"), **kwargs
+        )
+
+    def test_three_panels_left_to_right(self):
+        titles = [a.text for a in self._fig().layout.annotations]
+        assert titles[:3] == ["Layer S", "Layer 1", "Layer 2"]
+
+    def test_the_arms_sit_beside_each_other_not_on_top(self):
+        """offsetgroup is what makes a grouped stack a grouped stack."""
+        fig = self._fig()
+        assert fig.layout.barmode == "stack"
+        assert {t.offsetgroup for t in fig.data if t.offsetgroup} == {
+            "detailed", "minimal"
+        }
+
+    def test_layer_s_stacks_its_three_outcomes(self):
+        fig = self._fig()
+        # The arm legend swatches are empty traces parked on this panel;
+        # they carry no data and are not what is being stacked.
+        first = [
+            t for t in fig.data
+            if (t.xaxis or "x") == "x" and any(v is not None for v in t.x)
+        ]
+        assert {t.name for t in first} == {
+            "correct_row", "missing_row", "spurious_row"
+        }
+
+    def test_layer_2_is_one_bar_per_arm_not_a_stack(self):
+        """A mean_score has nothing to stack; stacking two would read as
+        their sum, which is not a number."""
+        fig = self._fig()
+        third = [t for t in fig.data if t.xaxis == "x3"]
+        assert len(third) == 2
+        assert {t.offsetgroup for t in third} == {"detailed", "minimal"}
+
+    def test_the_legend_names_both_arms(self):
+        """Arms are told apart by opacity, which needs saying somewhere."""
+        fig = self._fig()
+        assert {"detailed", "minimal"} <= {t.name for t in fig.data if t.showlegend}
+
+    def test_ticks_drop_the_shared_root(self):
+        fig = self._fig()
+        labels = {y for t in fig.data if t.xaxis == "x3" for y in (t.x or ())}
+        assert labels == {"panel_label", "micrograph"}
+
+    def test_layer_2_tells_the_arms_apart_by_colour(self):
+        """In the stacked panels colour is taken by the outcome, so an arm
+        can only be opacity. Layer 2 has no outcome, so colour is free --
+        and 1.0 against 0.6 of one hue is not a difference a reader sees.
+        """
+        fig = self._fig()
+        third = [t for t in fig.data if t.xaxis == "x3"]
+        assert len({t.marker.color for t in third}) == 2
+
+    def test_the_arm_legend_matches_the_layer_2_colours(self):
+        fig = self._fig()
+        third = {t.name: t.marker.color for t in fig.data if t.xaxis == "x3"}
+        legend = {
+            t.name: t.marker.color
+            for t in fig.data
+            if t.showlegend and t.name in third
+        }
+        assert legend == third

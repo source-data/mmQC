@@ -854,6 +854,23 @@ class TestLayerCounts:
     EvaluationResult.aggregate_layer1_counts already sums exactly this.
     """
 
+    def test_layer1_counts_keep_the_property(self):
+        """Tidy at the finest grain; callers sum. A per-check figure sums
+        them, a per-property panel does not, and only one of those can be
+        recovered from the other."""
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[_record("doc-a", {"p1": 1.0, "p2": 0.5})],
+                )
+            ]
+        )
+        frame = layer1_counts(runs)
+        assert set(frame["property"]) == {"p1", "p2"}
+        assert frame.set_index("property")["count"].to_dict() == {"p1": 1, "p2": 1}
+
     def test_layer1_counts_are_tidy_per_replicate(self):
         runs = FlatRuns(
             [
@@ -866,7 +883,7 @@ class TestLayerCounts:
         )
         frame = layer1_counts(runs)
         assert list(frame.columns) == list(LAYER1_COUNTS_COLUMNS)
-        by_label = frame.set_index("layer1")["count"]
+        by_label = frame.groupby("layer1")["count"].sum()
         assert by_label["correct_applicable"] == 1
         assert by_label["correct_NA"] == 1
         assert set(frame["replicate"]) == {0}
@@ -884,7 +901,7 @@ class TestLayerCounts:
                 )
             ]
         )
-        frame = layer1_counts(runs).set_index("layer1")["count"]
+        frame = layer1_counts(runs).groupby("layer1")["count"].sum()
         assert frame["correct_applicable"] == 4
 
     def test_layer_s_counts_keep_the_list_they_came_from(self):

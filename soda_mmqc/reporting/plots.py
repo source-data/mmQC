@@ -1434,3 +1434,170 @@ def plot_grouped_counts(
         span=None,
         showlegend=True,
     )
+
+
+def plot_check_layers(
+    *,
+    layer_s: pd.DataFrame,
+    layer1: pd.DataFrame,
+    layer2: pd.DataFrame,
+    series: str = "arm",
+    series_order: Sequence[Any] | None = None,
+    title: str = "Three layers, one check",
+) -> go.Figure:
+    """One check across all three layers, arms side by side in each panel.
+
+    Layer 2 is conditional on layer 1, which is conditional on there
+    being a row at all, so the three read together: an arm that returns
+    fewer rows has fewer applicability calls to make, and an arm that
+    withholds more has fewer instances left for layer 2 to score. Put
+    them on separate pages and the reader has to hold three figures in
+    mind to notice that.
+
+    Layer S and layer 1 stack their outcomes, because those partition
+    everything that happened. Layer 2 does not: ``mean_score`` has
+    nothing to stack, and two arms' means stacked would read as their
+    sum, which is not a quantity.
+
+    Plotly has no ``barmode="group+stack"``. Distinct ``offsetgroup``
+    values under ``barmode="stack"`` put one arm's stack beside the
+    other's, which is what makes a grouped stack possible at all.
+
+    In the stacked panels colour belongs to the outcome, so an arm can
+    only be opacity -- the convention the other comparison plots use. In
+    layer 2 there is no outcome and colour is free, so the arm takes it:
+    1.0 against 0.6 of one hue is not a difference a reader sees. The
+    legend swatches use those colours.
+    """
+    names = _series_names(
+        pd.concat([layer_s[[series]], layer1[[series]], layer2[[series]]]),
+        series,
+        series_order,
+    )
+    fig = make_subplots(
+        rows=1,
+        cols=3,
+        subplot_titles=("Layer S", "Layer 1", "Layer 2"),
+        horizontal_spacing=0.07,
+    )
+
+    _stacked_layer_panel(
+        fig, layer_s, col=1, x="list_key", stack="outcome",
+        order=LAYER_S_ORDER, colors=LAYER_S_COLORS,
+        series=series, names=names, strip_root=False,
+    )
+    _stacked_layer_panel(
+        fig, layer1, col=2, x="property", stack="layer1",
+        order=LAYER1_ORDER, colors=LAYER1_COLORS,
+        series=series, names=names, strip_root=True,
+    )
+    _mean_layer_panel(fig, layer2, col=3, series=series, names=names)
+
+    # Which arm is which needs saying: in the stacked panels it is only
+    # opacity, which no legend can show well. The swatch carries the
+    # layer-2 colour instead, where the arm *is* the colour.
+    for index, name in enumerate(names):
+        fig.add_trace(
+            go.Bar(
+                x=[None], y=[None], name=str(name),
+                marker={"color": _arm_color(index)},
+                showlegend=True, legendgroup=f"arm::{name}",
+            ),
+            row=1, col=1,
+        )
+
+    fig.update_layout(barmode="stack", title_text=title, height=520)
+    fig.update_yaxes(title_text="rows", row=1, col=1)
+    fig.update_yaxes(title_text="instances", row=1, col=2)
+    fig.update_yaxes(title_text="mean_score", range=[0, 1], row=1, col=3)
+    return _apply_plot_template(fig)
+
+
+def _arm_color(index: int) -> str:
+    return ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+
+
+def _series_names(
+    frame: pd.DataFrame, series: str, series_order: Sequence[Any] | None
+) -> list[Any]:
+    present = set(frame[series])
+    if series_order is None:
+        return sorted(present)
+    return [name for name in series_order if name in present]
+
+
+def _stacked_layer_panel(
+    fig: go.Figure,
+    frame: pd.DataFrame,
+    *,
+    col: int,
+    x: str,
+    stack: str,
+    order: Sequence[str],
+    colors: Mapping[str, str],
+    series: str,
+    names: Sequence[Any],
+    strip_root: bool,
+) -> None:
+    totals = frame.groupby([x, stack, series], observed=True)["count"].sum()
+    categories = sorted({value for value, _, _ in totals.index})
+    labels = (
+        _strip_shared_list_root(categories) if strip_root else list(categories)
+    )
+    outcomes = [o for o in order if o in {value for _, value, _ in totals.index}]
+
+    for index, name in enumerate(names):
+        opacity = _comparison_series_opacity(index, len(names))
+        for outcome in outcomes:
+            fig.add_trace(
+                go.Bar(
+                    x=labels,
+                    y=[
+                        float(totals.get((category, outcome, name), 0))
+                        for category in categories
+                    ],
+                    name=outcome,
+                    legendgroup=outcome,
+                    showlegend=index == 0,
+                    offsetgroup=str(name),
+                    marker={"color": colors[outcome], "opacity": opacity},
+                    hovertemplate=(
+                        f"{name}<br>%{{x}}<br>{outcome}: %{{y:,}}<extra></extra>"
+                    ),
+                ),
+                row=1,
+                col=col,
+            )
+
+
+def _mean_layer_panel(
+    fig: go.Figure,
+    frame: pd.DataFrame,
+    *,
+    col: int,
+    series: str,
+    names: Sequence[Any],
+) -> None:
+    categories = sorted(frame["property"].unique())
+    labels = _strip_shared_list_root(categories)
+    for index, name in enumerate(names):
+        rows = frame[frame[series] == name].set_index("property").reindex(categories)
+        fig.add_trace(
+            go.Bar(
+                x=labels,
+                y=rows["mean"].astype(float).tolist(),
+                name=str(name),
+                legendgroup=f"arm::{name}",
+                showlegend=False,
+                offsetgroup=str(name),
+                marker={"color": _arm_color(index)},
+                error_y={
+                    "type": "data",
+                    "array": rows["sd"].astype(float).fillna(0.0).tolist(),
+                    "visible": True,
+                },
+                hovertemplate=f"{name}<br>%{{x}}<br>%{{y:.4f}}<extra></extra>",
+            ),
+            row=1,
+            col=col,
+        )

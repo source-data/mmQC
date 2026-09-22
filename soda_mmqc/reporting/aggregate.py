@@ -754,6 +754,7 @@ LAYER1_COUNTS_COLUMNS = (
     "model",
     "arm",
     "replicate",
+    "property",
     "layer1",
     "count",
 )
@@ -779,28 +780,30 @@ def layer1_counts(runs: FlatRuns) -> pd.DataFrame:
     different things, and ``EvaluationResult.aggregate_layer1_counts``
     already sums these the same way.
 
-    One row per ``(check, model, arm, replicate, layer1)``, so both
-    variance axes survive and the caller decides what to pool. A label
-    nothing was judged as is absent rather than zero -- three of the four
-    are genuinely missing from ``image-annotation-defined``.
+    One row per ``(check, model, arm, replicate, property, layer1)``,
+    the finest grain there is, so both variance axes survive and the
+    caller decides what to pool. A per-check figure sums the properties
+    away and a per-property panel does not, and only one of those is
+    recoverable from the other. A label nothing was judged as is absent
+    rather than zero -- three of the four are genuinely missing from
+    ``image-annotation-defined``.
     """
     rows: list[dict[str, Any]] = []
     for run in runs:
         summary = aggregate_run(run)
-        totals: Counter[str] = Counter()
-        for rollup in summary.by_property.values():
-            totals.update(rollup.layer1_counts)
-        for label, count in sorted(totals.items()):
-            rows.append(
-                {
-                    "check": run.check,
-                    "model": run.model,
-                    "arm": run.arm,
-                    "replicate": run.replicate,
-                    "layer1": label,
-                    "count": int(count),
-                }
-            )
+        for leaf_property, rollup in summary.by_property.items():
+            for label, count in sorted(rollup.layer1_counts.items()):
+                rows.append(
+                    {
+                        "check": run.check,
+                        "model": run.model,
+                        "arm": run.arm,
+                        "replicate": run.replicate,
+                        "property": leaf_property,
+                        "layer1": label,
+                        "count": int(count),
+                    }
+                )
     return pd.DataFrame(rows, columns=list(LAYER1_COUNTS_COLUMNS))
 
 
