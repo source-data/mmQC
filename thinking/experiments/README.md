@@ -99,9 +99,20 @@ takes only what its probe needs — often just the note.
 |----------|------|
 | Note | `thinking/experiments/exp-NN-<slug>.md` |
 | Analysis | `notebooks/experiments/exp-NN-<slug>.ipynb` |
-| Builder | `experiments/build_expNN_checklist.py` |
+| Scripts | `experiments/exp-NN-<slug>/` |
 | Runs | `experiments/runs/exp-NN-<slug>/` |
 | Checklist | `soda_mmqc/data/checklist/fig-checklist-expNN/` |
+
+Scripts group per experiment because there is more than one: at least a
+`run.py`, and a builder when the checklist is derived rather than authored.
+The notebook stays under `notebooks/` for the reason recorded there — a
+reviewer should be able to read what an experiment claims without opening a
+`.ipynb`.
+
+**The run is a script; the notebook is the analysis.** A full experiment is
+thousands of sessions and hours long, so a notebook that triggers one is a
+notebook nobody can re-execute. The script writes runs; the notebook reads
+them and can be rerun by anyone, for nothing.
 
 ## The catalog
 
@@ -110,7 +121,8 @@ stay listed: a method section is more honest when the dead ends are visible.
 
 | id | kind | question | status | headline result | note | notebook |
 |----|------|----------|--------|-----------------|------|----------|
-| — | — | *none yet* | — | — | — | — |
+| — | exploration | How much does a check's score move between identical runs, and how many replicates does it take to see past that? | done | **3 replicates.** Per-example SD 0.025 on the noisiest check; SE of a paired difference bounded at 0.0034 for n=3 against 0.0026 for n=5 — 1,700 extra sessions for nothing. | [note](exploration-replicate-variability.md) | [nb](../../notebooks/experiments/exploration-replicate-variability.ipynb) |
+| exp-01 | experiment | Do detailed skill instructions outperform minimal ones? | planned | — | *unwritten* | [nb](../../notebooks/experiments/exp-01-skill-verbosity.ipynb) |
 
 `kind` is `exploration` or `experiment`; `status` is `planned`, `running`,
 `done` or `abandoned`.
@@ -141,12 +153,47 @@ Gold needs no copying. It resolves as
 not by checklist — so every arm reads the same gold as the baseline
 ([examples.py](../../soda_mmqc/core/examples.py)).
 
-**The checklist copy is built by a script, never by hand.** A copied
+**A replicate is a resample, not a reproduction.** There is no seed to fix:
+two replicates of one configuration differ because the model is
+non-deterministic, and that variance is the thing they exist to measure. A
+replicate that disagrees with its siblings is data, not a defect.
+
+The harness produces them. Every run writes
+
+```
+<predictions root>/<arm>/rep-NN/<example>/prediction.json
+```
+
+with no exception for a single arm or a single replicate, and each
+prediction's sidecar records its arm and index — so a notebook reads what
+produced a prediction rather than parsing the path it happens to sit in.
+`--replicates N` chooses how many; `--unpin` chooses the arms. Scoring is
+pointed at one leaf at a time; pointing it at a run root is refused with a
+message naming the leaves.
+
+How many replicates an experiment needs, and how they are combined, is the
+experiment's to decide and to preregister. Note that a non-response scores as
+a fully missing row set rather than being excluded, so an arm that fails more
+often is correctly penalised — state that in the note rather than leaving a
+reader to infer it from layer S.
+
+**However the checklist is produced, the note says what varies.** A copied
 directory arrives in git as ~88 brand-new files, so the thing that actually
-changed is invisible in the diff. The builder is the only readable statement
-of the independent variable, and the only way to re-run an arm after the
-baseline `fig-checklist` improves — re-run the script rather than redoing
-edits from memory.
+changed is invisible in the diff, and something has to state it.
+
+A builder script is the best statement when the checklist is *derived* —
+skills generated, concatenated or transformed from a baseline — because it is
+then the only readable account of the transformation and the only way to redo
+it. When the skills are *authored*, as in exp-01 where two versions of each
+check were written by hand, they are the statement: committing them directly
+is clearer than a script that copies files from somewhere else.
+
+What must not be assumed is that an experiment's contracts stay identical to
+`fig-checklist`. That baseline will change, and pinning an experiment to it
+would make every experiment break when it does. **The control is that the
+arms of one experiment are scored identically to each other**, which for a
+version comparison is structural: contracts sit above the version
+directories, so two versions of one skill cannot be scored differently.
 
 **Runs are committed.** One example's agentic output is ~20 KB of JSON, so a
 38-example three-arm experiment is around 2 MB. Cheap enough that every

@@ -55,6 +55,18 @@ INTERMEDIATES_DIRNAME = "intermediates"
 #: Name of the file holding one example's final leaf JSON.
 PREDICTION_FILENAME = "prediction.json"
 
+#: Tool inputs longer than this are recorded by shape rather than in full.
+#:
+#: The one that matters is the structured answer: the session passes it back
+#: as a tool input, so the audit was storing a verbatim second copy of the
+#: file sitting next to it. That was 3.9 KB of a 7 KB audit -- more than half
+#: of every committed run -- against a 0.25 KB skill trace that is the thing
+#: the experiments actually measure.
+#:
+#: A size rule rather than a check on the tool's name, because the name comes
+#: from the SDK and a rename would silently restore the duplication.
+AUDIT_INPUT_MAX_BYTES = 1024
+
 #: Sidecars written beside every prediction.
 SKILL_TRACE_FILENAME = "skill_trace.json"
 TOOL_AUDIT_FILENAME = "tool_audit.json"
@@ -321,6 +333,25 @@ def _extract_session_info(message: Any) -> Optional[Dict[str, Any]]:
     }
 
 
+def _extract_usage(message: Any) -> Optional[Dict[str, Any]]:
+    """Pull cost, turns and token usage out of the SDK's result message.
+
+    The SDK reports all of it and the harness was keeping only `result`. It
+    is the only place the numbers exist: a provider bills per call, and
+    nothing downstream can reconstruct what a session spent.
+    """
+    def get(obj, key):
+        if isinstance(obj, Mapping):
+            return obj.get(key)
+        return getattr(obj, key, None)
+
+    fields = ("total_cost_usd", "num_turns", "duration_ms", "usage")
+    captured = {key: get(message, key) for key in fields}
+    if all(value is None for value in captured.values()):
+        return None
+    return {key: value for key, value in captured.items() if value is not None}
+
+
 def _extract_tool_calls(message: Any) -> Iterator[Tuple[str, Any, Any]]:
     """Yield ``(tool_name, tool_input, tool_use_id)`` from an SDK message.
 
@@ -390,6 +421,9 @@ async def _run_agent_session(
         info = _extract_session_info(message)
         if info:
             audit.note_session(info)
+        spent = _extract_usage(message)
+        if spent:
+            audit.note_usage(spent)
         result_text = _extract_result_text(message) or result_text
         for tool_name, tool_input, tool_use_id in _extract_tool_calls(message):
             recorder.record(tool_name, tool_input, tool_use_id)
@@ -426,6 +460,28 @@ async def _run_agent_session(
 
 
 
+def _audit_input(tool_input: Any) -> Any:
+    """One tool call's input, by shape when it is too big to keep whole.
+
+    What the audit is for is *what was attempted* -- which tool, with what
+    intent, allowed or denied. The full payload of a large input serves none
+    of that, and for the structured answer it is a second copy of
+    `prediction.json`. Shape is enough to tell the calls apart.
+    """
+    try:
+        encoded = json.dumps(tool_input, ensure_ascii=False, default=str)
+    except (TypeError, ValueError):
+        return {"elided": {"bytes": None, "keys": None}}
+    if len(encoded) <= AUDIT_INPUT_MAX_BYTES:
+        return tool_input
+    return {
+        "elided": {
+            "bytes": len(encoded),
+            "keys": sorted(tool_input) if isinstance(tool_input, Mapping) else None,
+        }
+    }
+
+
 class ToolAuditLog:
     """Every tool call the session attempted, and what happened to it.
 
@@ -445,6 +501,13 @@ class ToolAuditLog:
         #: diffed against our allowlist, and it is only available from a live
         #: session -- so it is captured here rather than inferred.
         self.session_info: Dict[str, Any] = {}
+        #: What the session cost, from the SDK's result message: dollars,
+        #: turns, wall time and token usage. Deciding how many replicates an
+        #: experiment can afford is a question about cost, and a run that
+        #: does not record it cannot answer it. Empty rather than zero when
+        #: the provider reports nothing, so a free-looking run is
+        #: distinguishable from an unreported one.
+        self.usage: Dict[str, Any] = {}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._flush()
 
@@ -459,7 +522,7 @@ class ToolAuditLog:
         self.entries.append(
             {
                 "tool": tool_name,
-                "input": tool_input,
+                "input": _audit_input(tool_input),
                 "tool_use_id": tool_use_id,
                 "decision": decision,
                 "reason": reason,
@@ -471,7 +534,11 @@ class ToolAuditLog:
     def _flush(self) -> None:
         self.path.write_text(
             json.dumps(
-                {"session": self.session_info, "calls": self.entries},
+                {
+                    "session": self.session_info,
+                    "usage": self.usage,
+                    "calls": self.entries,
+                },
                 indent=2,
                 ensure_ascii=False,
             )
@@ -481,6 +548,10 @@ class ToolAuditLog:
 
     def note_session(self, info: Mapping[str, Any]) -> None:
         self.session_info = dict(info)
+        self._flush()
+
+    def note_usage(self, info: Mapping[str, Any]) -> None:
+        self.usage = dict(info)
         self._flush()
 
     @property

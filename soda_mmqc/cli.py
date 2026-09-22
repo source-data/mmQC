@@ -79,9 +79,11 @@ from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
 from soda_mmqc.agentic.session import (  # noqa: F401  (compatibility surface)
     _default_client,
     _extract_tool_calls,
+    _extract_usage,
     _openai_session_client,
     _run_agent_session,
     _session_message,
+    AUDIT_INPUT_MAX_BYTES,
     SKILL_SET_FILENAME,
     SKILL_TRACE_FILENAME,
     TOOL_AUDIT_FILENAME,
@@ -377,6 +379,25 @@ def score_check(
             len(scored_examples),
         )
     if not scored_examples:
+        known = set(benchmark_examples)
+        # Every key having the form `<something>/<known example>` means this
+        # is a run root, not a predictions directory: a run writes one leaf
+        # per arm per replicate, and each is scored on its own. Saying so
+        # beats reporting that nothing matched.
+        leaves = set()
+        for key in predictions:
+            for example in known:
+                if key.endswith("/" + example):
+                    leaves.add(key[: -len(example) - 1])
+                    break
+        if leaves:
+            raise ValueError(
+                f"{predictions_path} looks like a run root, not a predictions "
+                f"directory: it holds {len(leaves)} of them "
+                f"({', '.join(sorted(leaves))}). A run writes one per arm per "
+                f"replicate, and each is scored on its own -- point "
+                f"--predictions at one of them."
+            )
         raise ValueError(
             f"None of the predictions in {predictions_path} match an example "
             f"in the benchmark of {check_name}"
@@ -613,6 +634,26 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     run.add_argument(
+        "--force",
+        action="store_true",
+        help=(
+            "Re-run examples that already have a prediction. Without it a run "
+            "skips them, so an interrupted run resumes where it stopped"
+        ),
+    )
+    run.add_argument(
+        "--replicates",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "Run each configuration N times (default: %(default)s). There is "
+            "no seed to fix, so replicates are resamples of a "
+            "non-deterministic system rather than reproductions: they are how "
+            "its variance is measured, and they are not expected to agree"
+        ),
+    )
+    run.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -725,6 +766,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                         "which versions to try, --unpin says of what."
                     )
                     return 2
+                if args.replicates < 1:
+                    logger.error("--replicates must be at least one")
+                    return 2
+                logger.info(
+                    "Live run: %d replicate(s) of %s/%s, one session per "
+                    "example per replicate per skill set",
+                    args.replicates, args.checklist, args.check,
+                )
                 path, report = run_check_live(
                     args.checklist,
                     args.check,
@@ -736,6 +785,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     approve_tools=args.approve_tools,
                     provider=args.provider,
                     unpin={name: versions for name in (args.unpin or [])},
+                    replicates=args.replicates,
+                    force=args.force,
                 )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)

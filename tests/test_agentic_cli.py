@@ -3171,7 +3171,9 @@ class TestToolAudit:
     def test_the_audit_starts_as_an_empty_file(self, tmp_path: Path):
         path = tmp_path / "a.json"
         cli.ToolAuditLog(path)
-        assert json.loads(path.read_text()) == {"session": {}, "calls": []}
+        assert json.loads(path.read_text()) == {
+            "session": {}, "usage": {}, "calls": [],
+        }
 
     def test_the_audit_records_what_the_sdk_reported_at_startup(
         self, assembled
@@ -4298,22 +4300,13 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 output=out, examples=[SUBPANEL_FIGURE],
                 unpin={PILOT_LEAF: ("v2",)},
             )
-            assert (out / f"{PILOT_LEAF}@v2" / SUBPANEL_FIGURE
+            assert (out / f"{PILOT_LEAF}@v2" / "rep-00" / SUBPANEL_FIGURE
                     / cli.PREDICTION_FILENAME).is_file()
-            assert not (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).is_file(), (
-                "a variant was written into the baseline directory"
+            assert not (out / "pinned").exists(), (
+                "a variant-only run wrote into the baseline arm"
             )
         finally:
             shutil.rmtree(v2)
-
-    def test_the_pinned_run_keeps_the_flat_layout(
-        self, tmp_path: Path, stub_session
-    ):
-        out = tmp_path / "preds"
-        cli.run_check_live(
-            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE]
-        )
-        assert (out / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME).is_file()
 
     def test_each_prediction_records_the_skill_set_that_made_it(
         self, tmp_path: Path, stub_session
@@ -4324,8 +4317,8 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
             "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE]
         )
         recorded = json.loads(
-            (out / SUBPANEL_FIGURE / cli.INTERMEDIATES_DIRNAME
-             / cli.SKILL_SET_FILENAME).read_text()
+            (out / "pinned" / "rep-00" / SUBPANEL_FIGURE
+             / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME).read_text()
         )
         expected = cli.resolve_skill_set(
             cli.load_skills(CHECKLIST_DIR / "fig-checklist"),
@@ -4365,6 +4358,7 @@ class TestASessionNeedsNoFilesystem:
         class _Audit:
             path = tmp_path / "missing-audit.json"
             session_info = {}
+            usage = {}
 
             def summary(self):
                 return "Skill (allow) x1"
@@ -4622,3 +4616,323 @@ class TestANonFigureExampleAssembles:
             p for p in layout.input_root.rglob("*")
             if p.name == cli.EXAMPLE_GOLD_SUBDIR
         ]
+
+
+@requires_subpanel_figure
+class TestEveryAxisIsADirectory:
+    """One shape for every run: <root>/<arm>/rep-NN/<example>/.
+
+    The baseline arm used to write flat while variants wrote into their own
+    directory, so one run's output had two shapes and pointing `score` at the
+    root scored the baseline alone -- plausibly, and silently.
+    """
+
+    @pytest.fixture
+    def stub_session(self, monkeypatch):
+        """Run the real `run_check_live` loop with the provider faked out."""
+        seen = []
+        real = cli._run_agent_session
+
+        async def fake_session(layout, *, versions, approver, options, client):
+            seen.append(dict(versions))
+            return await real(
+                layout,
+                versions=versions,
+                approver=approver,
+                options=options,
+                client=_fake_client([], writes=_valid_prediction()),
+            )
+
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
+        return seen
+
+    def test_a_plain_run_still_has_both_levels(self, tmp_path: Path, stub_session):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert (
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+        ).is_file()
+        assert not (out / SUBPANEL_FIGURE).exists(), (
+            "the baseline arm must not write flat: that is the special case "
+            "this layout removes"
+        )
+
+    def test_replicates_sit_under_the_arm(self, tmp_path: Path, stub_session):
+        """An arm is not a replicate: arm outermost, samples within it."""
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], replicates=3,
+        )
+        for i in range(3):
+            assert (
+                out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
+                / cli.PREDICTION_FILENAME
+            ).is_file()
+
+    def test_the_sidecar_records_arm_and_replicate(
+        self, tmp_path: Path, stub_session
+    ):
+        """A directory name is not evidence -- the reason skill_set.json exists.
+
+        A notebook reads this rather than parsing paths, so moving a tree
+        cannot change what a prediction claims about itself.
+        """
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], replicates=2,
+        )
+        for i in range(2):
+            sidecar = json.loads(
+                (
+                    out / "pinned" / f"rep-{i:02d}" / SUBPANEL_FIGURE
+                    / cli.INTERMEDIATES_DIRNAME / cli.SKILL_SET_FILENAME
+                ).read_text(encoding="utf-8")
+            )
+            assert sidecar["arm"] == "pinned"
+            assert sidecar["replicate"] == i
+            assert sidecar["digest"]
+
+    def test_mock_writes_the_same_shape(self, tmp_path: Path):
+        """No exceptions: a mock run is scored by the same command."""
+        out = tmp_path / "preds"
+        cli.run_check_mock(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert (
+            out / "pinned" / "rep-00" / SUBPANEL_FIGURE / cli.PREDICTION_FILENAME
+        ).is_file()
+
+    def test_zero_replicates_is_refused(self, tmp_path: Path):
+        with pytest.raises(ValueError, match="at least one"):
+            cli.run_check_live(
+                "fig-checklist", PILOT_LEAF, output=tmp_path / "p",
+                examples=[SUBPANEL_FIGURE], replicates=0,
+            )
+
+
+class TestReplicatesOnTheCommandLine:
+    def _capture(self, monkeypatch):
+        """Patch where `main` looks it up.
+
+        `cli` imports `run_check_live` by name, so `main` calls its own
+        binding: redirecting `runner.run_check_live` would not reach it.
+        """
+        seen = {}
+
+        def fake_run_check_live(checklist, check, **kwargs):
+            seen.update(kwargs)
+            return Path("/tmp/x"), []
+
+        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
+        return seen
+
+    def test_the_flag_reaches_the_runner(self, monkeypatch: pytest.MonkeyPatch):
+        seen = self._capture(monkeypatch)
+        cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE, "--replicates", "4",
+        ])
+        assert seen["replicates"] == 4
+
+    def test_the_default_is_one(self, monkeypatch: pytest.MonkeyPatch):
+        seen = self._capture(monkeypatch)
+        cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE,
+        ])
+        assert seen["replicates"] == 1
+
+    def test_the_session_count_is_announced(
+        self, monkeypatch: pytest.MonkeyPatch, caplog
+    ):
+        """380 sessions from one command should not be a surprise."""
+        self._capture(monkeypatch)
+        with caplog.at_level("INFO"):
+            cli.main([
+                "run", "fig-checklist", "--check", PILOT_LEAF,
+                "--example", SUBPANEL_FIGURE, "--replicates", "5",
+            ])
+        assert "5 replicate(s)" in caplog.text
+
+    def test_zero_replicates_is_refused_at_the_cli(
+        self, monkeypatch: pytest.MonkeyPatch
+    ):
+        self._capture(monkeypatch)
+        assert cli.main([
+            "run", "fig-checklist", "--check", PILOT_LEAF,
+            "--example", SUBPANEL_FIGURE, "--replicates", "0",
+        ]) == 2
+
+
+class TestPointingAtARunRoot:
+    def test_the_error_names_the_leaves_it_found(self, tmp_path: Path):
+        """Scoring a run root is the one mistake worth diagnosing."""
+        root = tmp_path / "preds"
+        example = SUBPANEL_FIGURE
+        for arm in ("pinned", f"{PILOT_LEAF}@v2"):
+            d = root / arm / "rep-00" / example
+            d.mkdir(parents=True)
+            (d / cli.PREDICTION_FILENAME).write_text(
+                json.dumps(_valid_prediction()), encoding="utf-8"
+            )
+
+        with pytest.raises(ValueError) as exc:
+            cli.score_check(
+                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+            )
+        message = str(exc.value)
+        assert "pinned/rep-00" in message
+        assert f"{PILOT_LEAF}@v2/rep-00" in message
+        assert "--predictions" in message
+
+    def test_a_genuinely_unrelated_directory_says_so_plainly(self, tmp_path: Path):
+        """Not every mismatch is a run root; do not claim it is."""
+        root = tmp_path / "preds"
+        d = root / "not" / "an" / "example"
+        d.mkdir(parents=True)
+        (d / cli.PREDICTION_FILENAME).write_text(
+            json.dumps(_valid_prediction()), encoding="utf-8"
+        )
+        with pytest.raises(ValueError, match="match an example"):
+            cli.score_check(
+                "fig-checklist", PILOT_LEAF, root, model="sonnet", save=False,
+            )
+
+
+@requires_subpanel_figure
+class TestAnInterruptedRunResumes:
+    """A 4,360-session run will be interrupted; re-running must not redo it."""
+
+    @pytest.fixture
+    def stub_session(self, monkeypatch):
+        calls = []
+        real = cli._run_agent_session
+
+        async def fake_session(layout, *, versions, approver, options, client):
+            calls.append(layout.example)
+            return await real(
+                layout, versions=versions, approver=approver, options=options,
+                client=_fake_client([], writes=_valid_prediction()),
+            )
+
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
+        return calls
+
+    def test_an_existing_prediction_is_not_run_again(
+        self, tmp_path: Path, stub_session
+    ):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert len(stub_session) == 1
+
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert len(stub_session) == 1, "a completed example was run again"
+
+    def test_a_skipped_example_is_reported_as_such(
+        self, tmp_path: Path, stub_session
+    ):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        _, report = cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        assert [e["status"] for e in report] == ["skipped"]
+
+    def test_force_runs_it_anyway(self, tmp_path: Path, stub_session):
+        out = tmp_path / "preds"
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out, examples=[SUBPANEL_FIGURE],
+        )
+        cli.run_check_live(
+            "fig-checklist", PILOT_LEAF, output=out,
+            examples=[SUBPANEL_FIGURE], force=True,
+        )
+        assert len(stub_session) == 2
+
+
+class TestTheRunRecordsWhatItCost:
+    """Cost and turns are on the SDK's result message and were being discarded.
+
+    Deciding how many replicates an experiment can afford is a question about
+    cost, so a run that does not record it cannot answer it.
+    """
+
+    def test_the_audit_captures_usage(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.note_usage({
+            "total_cost_usd": 0.0371,
+            "num_turns": 3,
+            "duration_ms": 14210,
+            "usage": {"input_tokens": 12000, "output_tokens": 900},
+        })
+        written = json.loads(audit.path.read_text(encoding="utf-8"))
+        assert written["usage"]["total_cost_usd"] == 0.0371
+        assert written["usage"]["num_turns"] == 3
+
+    def test_usage_is_absent_rather_than_zero_when_unreported(self, tmp_path: Path):
+        """A provider that reports no cost must not look like a free run."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        written = json.loads(audit.path.read_text(encoding="utf-8"))
+        assert written["usage"] == {}
+
+    def test_the_extractor_reads_a_result_message(self):
+        info = cli._extract_usage({
+            "subtype": "success",
+            "total_cost_usd": 0.12,
+            "num_turns": 4,
+            "duration_ms": 9000,
+            "usage": {"input_tokens": 1},
+        })
+        assert info == {
+            "total_cost_usd": 0.12,
+            "num_turns": 4,
+            "duration_ms": 9000,
+            "usage": {"input_tokens": 1},
+        }
+
+    def test_a_message_without_cost_yields_nothing(self):
+        assert cli._extract_usage({"subtype": "init", "tools": []}) is None
+
+
+class TestTheAuditDoesNotDuplicateTheAnswer:
+    """The structured answer reaches the audit as a tool input.
+
+    It already sits beside it in prediction.json, and copying it doubled the
+    size of every committed run -- 3.9 KB of a 7 KB audit, against a 0.25 KB
+    skill trace that is the thing the experiments actually measure.
+    """
+
+    def test_a_large_input_is_recorded_by_shape(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        answer = {"outputs": [{"panel_label": c, "explanation": "x" * 200}
+                              for c in "ABCDEFGH"]}
+        audit.record("StructuredOutput", answer, "t1", "allow")
+        entry = json.loads(audit.path.read_text())["calls"][0]
+        assert entry["tool"] == "StructuredOutput"
+        assert entry["input"]["elided"]["bytes"] > cli.AUDIT_INPUT_MAX_BYTES
+        assert entry["input"]["elided"]["keys"] == ["outputs"]
+        assert "panel_label" not in json.dumps(entry)
+
+    def test_a_small_input_is_kept_whole(self, tmp_path: Path):
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.record("Skill", {"skill": SHARED_SKILL}, "t1", "allow")
+        entry = json.loads(audit.path.read_text())["calls"][0]
+        assert entry["input"] == {"skill": SHARED_SKILL}
+
+    def test_the_summary_still_counts_the_call(self, tmp_path: Path):
+        """Eliding the payload must not lose that the call happened."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        audit.record("StructuredOutput", {"outputs": [{"x": "y" * 2000}]}, "t1", "allow")
+        assert "StructuredOutput" in audit.summary()
