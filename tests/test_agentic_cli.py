@@ -51,6 +51,8 @@ from soda_mmqc.scripts.run import (
 )
 
 import soda_mmqc.cli as cli
+import soda_mmqc.config as config
+import soda_mmqc.agentic.runner as runner
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PILOT_CHECK_DIR = (
@@ -224,7 +226,7 @@ def pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             json.dumps(golds[relative_path]), encoding="utf-8"
         )
 
-    monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist_root)
+    monkeypatch.setattr(config, "CHECKLIST_DIR", checklist_root)
     monkeypatch.setattr(
         "soda_mmqc.core.examples.EXAMPLES_DIR", examples_root
     )
@@ -643,7 +645,7 @@ def real_pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist_root)
+    monkeypatch.setattr(config, "CHECKLIST_DIR", checklist_root)
 
     return {
         "checklist_root": checklist_root,
@@ -2314,17 +2316,28 @@ class TestRuntimeOrientation:
         assert assembled.orientation_path == path
         assert path.is_file()
 
-    def test_it_names_the_roots(self, assembled):
-        """The instructions are static now, so they describe the layout only.
+    def test_the_instructions_name_no_example_class(self, assembled):
+        """One file serves every checklist, so it may assume none of them.
 
-        The entry point is per-run and travels in the session prompt; the
-        staged files are per-run and travel in the manifest. Neither belongs
-        in a file that is byte-identical for every run.
+        A figure vocabulary here is how `doc-checklist` would silently get
+        instructions about images it does not have.
         """
+        text = assembled.orientation_path.read_text(encoding="utf-8").lower()
+        for forbidden in ("figure", "caption", "micrograph", "image"):
+            assert forbidden not in text
+
+    def test_the_instructions_describe_supporting_files(self, assembled):
+        """The entry point is per-run and travels in the request; the
+        supporting files are per-run and travel in the manifest. Neither
+        belongs in a file that is byte-identical for every run."""
         text = assembled.orientation_path.read_text(encoding="utf-8")
-        for token in ("artifacts", "input", "inputs.json"):
-            assert token in text.lower()
+        assert "inputs.json" in text
         assert PILOT_LEAF not in text
+
+    def test_the_instructions_promise_no_writable_directory(self, assembled):
+        """The profile grants Read and Skill only; promising more wastes turns."""
+        text = assembled.orientation_path.read_text(encoding="utf-8").lower()
+        assert "artifacts" not in text
 
     def test_the_manifest_names_what_was_staged(self, assembled):
         """Which files exist is data, not prose: the session has no shell, no
@@ -2334,12 +2347,6 @@ class TestRuntimeOrientation:
                 assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
             ).read_text(encoding="utf-8")
         )
-        figure = assembled.root / manifest["figure"]
-        assert figure.is_file()
-        assert figure.suffix.lower() in cli.AGENTIC_IMAGE_EXTENSIONS
-        assert manifest["caption"] is None or (
-            assembled.root / manifest["caption"]
-        ).is_file()
         for entry in manifest["source_data"]:
             assert (assembled.root / entry).is_file()
 
@@ -2707,23 +2714,20 @@ def _tool_use(name: str, payload: dict, use_id: str = "t1"):
     return {"content": [{"name": name, "input": payload, "id": use_id}]}
 
 
-def _fake_client(messages, *, writes=None, layout=None, captured=None):
+def _fake_client(messages, *, writes=None, captured=None):
     """Build a client that emits `messages` and optionally writes an output."""
 
-    async def client(prompt, options):
+    async def client(parts, options):
         if captured is not None:
-            captured["prompt"] = prompt
+            captured["parts"] = list(parts)
             captured["options"] = dict(options)
         for message in messages:
             yield message
-        if writes is not None and layout is not None:
-            # A session that produces a prediction must have opened the
-            # figure: the runner rejects one that did not, because a
-            # schema-valid answer written without looking scores as though
-            # the work was done. Model that here so the doubles stay
-            # faithful to what a real session has to do.
-            image = cli._resolve_staged_inputs(layout.input_root)["image"]
-            yield _tool_use("Read", {"file_path": str(image)}, "t-figure")
+        if writes is not None:
+            # No figure read is modelled any more: the content arrives with
+            # the request, so there is no fetch a session could skip and no
+            # gate for the double to satisfy.
+            #
             # The answer arrives as the session's structured result, not as a
             # file the session wrote: `output_format` constrains it to the
             # leaf schema and the runner serialises it.
@@ -2760,28 +2764,31 @@ class TestAgentSession:
     ):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
 
         assert captured["options"]["cwd"] == str(assembled.root)
-        assert PILOT_LEAF in captured["prompt"]
+        assert PILOT_LEAF in captured["parts"][0]["text"]
 
     def test_no_closure_is_supplied_to_the_session(self, assembled):
         """Naming the dependency would make the trace measure this string."""
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
-        assert SHARED_SKILL not in captured["prompt"]
+        assert not any(
+            SHARED_SKILL in part.get("text", "")
+            for part in captured["parts"]
+        )
 
     def test_every_skill_description_is_available_to_the_session(
         self, assembled
     ):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
 
@@ -2794,7 +2801,7 @@ class TestAgentSession:
         assert set(captured["options"]["skills"]) == present
 
     def test_a_valid_prediction_is_returned(self, assembled):
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         prediction, _, _ = _run(assembled, client=client)
         assert prediction == _valid_prediction()
 
@@ -2802,7 +2809,7 @@ class TestAgentSession:
         self, assembled, tmp_path: Path
     ):
         bad = {"outputs": [{"panel_label": "A", "micrograph": "maybe"}]}
-        client = _fake_client([], writes=bad, layout=assembled)
+        client = _fake_client([], writes=bad)
         with pytest.raises(ValueError, match=r"does not match the schema"):
             _run(assembled, client=client)
 
@@ -2821,7 +2828,7 @@ class TestAgentSession:
                 {"panel_label": "B", "micrograph": "perhaps"},
             ]
         }
-        client = _fake_client([], writes=bad, layout=assembled)
+        client = _fake_client([], writes=bad)
         with pytest.raises(ValueError) as excinfo:
             _run(assembled, client=client)
         assert str(excinfo.value).count("maybe") >= 1
@@ -2835,7 +2842,6 @@ class TestSkillTrace:
         client = _fake_client(
             [_tool_use("Skill", {"name": SHARED_SKILL}, "abc")],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled,
@@ -2857,7 +2863,6 @@ class TestSkillTrace:
                 _tool_use("Skill", {"name": SHARED_SKILL}),
             ],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled, client=client, trace_path=tmp_path / "t.json"
@@ -2872,7 +2877,7 @@ class TestSkillTrace:
         trace_path = tmp_path / "t.json"
         seen = {}
 
-        async def dying_client(prompt, options):
+        async def dying_client(parts, options):
             yield _tool_use("Skill", {"name": SHARED_SKILL})
             seen["on_disk"] = json.loads(trace_path.read_text())
             raise RuntimeError("session died")
@@ -2887,7 +2892,7 @@ class TestSkillTrace:
         self, assembled, tmp_path: Path
     ):
         trace_path = tmp_path / "t.json"
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         _run(assembled, client=client, trace_path=trace_path)
         assert json.loads(trace_path.read_text()) == []
 
@@ -2897,7 +2902,6 @@ class TestSkillTrace:
         client = _fake_client(
             [_tool_use("Skill", {"command": f"/{SHARED_SKILL}"})],
             writes=_valid_prediction(),
-            layout=assembled,
         )
         _, recorder, _ = _run(
             assembled, client=client, trace_path=tmp_path / "t.json"
@@ -3058,155 +3062,6 @@ class TestMockRun:
         assert projected["outputs"] == gold["outputs"]
 
 
-@requires_subpanel_figure
-class TestIntermediatesAndCaching:
-    def test_a_valid_intermediate_is_found_and_kept(self, assembled):
-        panels = {
-            "panels": [
-                {
-                    "panel_label": "Ai",
-                    "location_in_figure": "top left",
-                    "panel_content": "phase contrast image",
-                    "caption_excerpt": "(Ai-ii) Phase contrast images",
-                    "caption_covers_panels": ["Ai", "Aii"],
-                }
-            ]
-        }
-        assembled.artifacts_root.mkdir(parents=True, exist_ok=True)
-        (assembled.artifacts_root / "panels.json").write_text(
-            json.dumps(panels), encoding="utf-8"
-        )
-        found, problems = cli.validate_intermediates(
-            assembled, cli.load_skills(FIG_CHECKLIST_DIR)
-        )
-        assert set(found) == {"panels"} and problems == []
-
-    def test_an_invalid_intermediate_is_rejected_with_its_producer(
-        self, assembled
-    ):
-        assembled.artifacts_root.mkdir(parents=True, exist_ok=True)
-        (assembled.artifacts_root / "panels.json").write_text(
-            json.dumps({"panels": [{"panel_label": "Ai"}]}), encoding="utf-8"
-        )
-        with pytest.raises(ValueError, match=r"identify-panels"):
-            cli.validate_intermediates(
-                assembled, cli.load_skills(FIG_CHECKLIST_DIR)
-            )
-
-    def test_an_invalid_intermediate_does_not_discard_the_prediction(
-        self, assembled
-    ):
-        """Observed in the gate 6C comparison: a session produced a valid
-        leaf answer and an intermediate carrying one invented field, and the
-        whole example was recorded as failed. This runs after the session has
-        closed, so raising cannot protect a downstream skill from anything --
-        every downstream skill already consumed the artifact. Its only effect
-        was to throw the answer away."""
-        assembled.artifacts_root.mkdir(parents=True, exist_ok=True)
-        (assembled.artifacts_root / "panels.json").write_text(
-            json.dumps(
-                {"panels": [{"panel_label": "Ai", "invented_field": "x"}]}
-            ),
-            encoding="utf-8",
-        )
-        found, problems = cli.validate_intermediates(
-            assembled, cli.load_skills(FIG_CHECKLIST_DIR), strict=False
-        )
-        assert found == {}
-        assert len(problems) == 1
-        assert "identify-panels" in problems[0]
-        assert "invented_field" in problems[0]
-
-    def test_a_missing_intermediate_is_not_an_error(self, assembled):
-        """Whether a shared skill ran is gate 4D's question. Crashing here
-        would convert the observation into a failure and lose the evidence."""
-        assert cli.validate_intermediates(
-            assembled, cli.load_skills(FIG_CHECKLIST_DIR)
-        ) == ({}, [])
-
-    def test_needs_may_not_widen_the_permission_profile(self, assembled):
-        skills = cli.load_skills(FIG_CHECKLIST_DIR)
-        greedy = copy.deepcopy(skills)
-        name, version = SHARED_SKILL, "v1"
-        greedy[name][version] = dataclasses.replace(
-            skills[name][version], needs=("WebFetch",)
-        )
-        options = cli.effective_session_options(assembled, greedy)
-        assert "WebFetch" not in " ".join(options["allowed_tools"])
-        assert "WebFetch" in options["disallowed_tools"]
-
-    def test_checklist_defaults_cannot_touch_the_profile(self, assembled):
-        options = cli.effective_session_options(
-            assembled,
-            cli.load_skills(FIG_CHECKLIST_DIR),
-            defaults={"permission_mode": "bypassPermissions",
-                      "allowed_tools": ["Bash"],
-                      "max_turns": 12},
-        )
-        assert options["permission_mode"] == "dontAsk"
-        assert not any("Bash" in r for r in options["allowed_tools"])
-        assert options["max_turns"] == 12
-
-    def test_the_cache_key_is_stable_for_the_same_inputs(self, assembled):
-        options = cli.session_options(assembled)
-        a = cli.session_cache_key(assembled, model="m", options=options)
-        b = cli.session_cache_key(assembled, model="m", options=options)
-        assert a == b
-
-    def test_the_cache_key_changes_with_the_example(self, assembled):
-        options = cli.session_options(assembled)
-        before = cli.session_cache_key(assembled, model="m", options=options)
-        (assembled.input_root / "caption.txt").write_text(
-            "different caption", encoding="utf-8"
-        )
-        after = cli.session_cache_key(assembled, model="m", options=options)
-        assert before != after
-
-    def test_the_cache_key_changes_with_the_skills(self, assembled):
-        options = cli.session_options(assembled)
-        before = cli.session_cache_key(assembled, model="m", options=options)
-        skill = assembled.skills_root / SHARED_SKILL / cli.SKILL_FILENAME
-        skill.write_text(skill.read_text() + "\nAn extra rule.\n", "utf-8")
-        after = cli.session_cache_key(assembled, model="m", options=options)
-        assert before != after
-
-    def test_the_cache_key_changes_with_the_model(self, assembled):
-        options = cli.session_options(assembled)
-        assert cli.session_cache_key(
-            assembled, model="a", options=options
-        ) != cli.session_cache_key(assembled, model="b", options=options)
-
-    def test_the_cache_key_ignores_the_runtime_path(self, assembled, tmp_path):
-        """Two runtimes for the same inputs must share a cache entry; the
-        temp directory name is not an input to the answer."""
-        options = cli.session_options(assembled)
-        other = cli.assemble_runtime(
-            "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
-            root=tmp_path / "second",
-        )
-        assert cli.session_cache_key(
-            assembled, model="m", options=options
-        ) == cli.session_cache_key(
-            other, model="m", options=cli.session_options(other)
-        )
-
-
-# ---------------------------------------------------------------------------
-# Tool audit and interactive approval
-# ---------------------------------------------------------------------------
-#
-# Gate 3B asked "what can we do to have more human input here?". The answer
-# could not be `canUseTool`: the SDK never calls it under `dontAsk` and skips
-# it for auto-approved tools in every mode, so the calls most worth reviewing
-# are exactly the ones it would never receive. A `PreToolUse` hook runs before
-# every other step in every mode, so that is what this is.
-#
-# The audit is always on -- it is what makes a completed unattended run
-# reviewable after the fact. Approval is opt-in, for the supervised examples
-# gate 4C would authorise.
-
-
-@requires_subpanel_figure
 class TestToolAudit:
     def test_every_tool_call_is_recorded(self, assembled, tmp_path: Path):
         """Driven through a client that invokes the hook the way the SDK does.
@@ -3216,16 +3071,12 @@ class TestToolAudit:
         tool use, which is the contract the SDK implements.
         """
         audit = cli.ToolAuditLog(tmp_path / "audit.json")
-        image = cli._resolve_staged_inputs(assembled.input_root)["image"]
         messages = [
             _tool_use("Read", {"file_path": "input/caption.txt"}, "r1"),
-            # A real session opens the figure, and the runner now refuses a
-            # prediction from one that did not.
-            _tool_use("Read", {"file_path": str(image)}, "r2"),
             _tool_use("Skill", {"name": SHARED_SKILL}, "s1"),
         ]
 
-        async def hook_calling_client(prompt, options):
+        async def hook_calling_client(parts, options):
             hook = options["hooks"]["PreToolUse"][0]
             for message in messages:
                 for name, payload, use_id in cli._extract_tool_calls(message):
@@ -3243,7 +3094,7 @@ class TestToolAudit:
 
         _run(assembled, client=hook_calling_client, audit_log=audit)
 
-        assert [e["tool"] for e in audit.entries] == ["Read", "Read", "Skill"]
+        assert [e["tool"] for e in audit.entries] == ["Read", "Skill"]
         assert all(e["decision"] == "allow" for e in audit.entries)
 
     def test_the_audit_records_tools_the_trace_does_not(
@@ -3335,7 +3186,7 @@ class TestToolAudit:
             "permissionMode": "dontAsk",
         }
         client = _fake_client(
-            [init], writes=_valid_prediction(), layout=assembled
+            [init], writes=_valid_prediction()
         )
         _, _, audit = _run(assembled, client=client)
         assert audit.session_info["tools"] == [
@@ -3348,14 +3199,14 @@ class TestToolAudit:
     def test_the_session_wires_the_hook_into_its_options(self, assembled):
         captured = {}
         client = _fake_client(
-            [], writes=_valid_prediction(), layout=assembled, captured=captured
+            [], writes=_valid_prediction(), captured=captured
         )
         _run(assembled, client=client)
         hooks = captured["options"]["hooks"]
         assert "PreToolUse" in hooks and callable(hooks["PreToolUse"][0])
 
     def test_the_session_returns_its_audit(self, assembled):
-        client = _fake_client([], writes=_valid_prediction(), layout=assembled)
+        client = _fake_client([], writes=_valid_prediction())
         _, _, audit = _run(assembled, client=client)
         assert isinstance(audit, cli.ToolAuditLog)
         assert audit.path.name == cli.TOOL_AUDIT_FILENAME
@@ -3990,13 +3841,13 @@ class TestSkillSetExpansion:
 
 class TestGeneratedGraphViews:
     def test_write_creates_both_views(self, pinned_checklist, monkeypatch):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         assert cli.main(["graph", "toy-checklist", "--write"]) == 0
         assert (pinned_checklist / cli.DAG_FILENAME).is_file()
         assert (pinned_checklist / cli.GENERATED_README_FILENAME).is_file()
 
     def test_generation_is_deterministic(self, pinned_checklist, monkeypatch):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         first = (pinned_checklist / cli.DAG_FILENAME).read_bytes()
         readme = (pinned_checklist / cli.GENERATED_README_FILENAME).read_bytes()
@@ -4025,14 +3876,14 @@ class TestGeneratedGraphViews:
     def test_the_drift_check_passes_right_after_writing(
         self, pinned_checklist, monkeypatch
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         assert cli.main(["graph", "toy-checklist"]) == 0
 
     def test_the_drift_check_fails_when_a_skill_changes(
         self, pinned_checklist, monkeypatch, capsys
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         path = pinned_checklist / "shared" / "v1" / cli.SKILL_FILENAME
         path.write_text(
@@ -4049,7 +3900,7 @@ class TestGeneratedGraphViews:
     def test_the_drift_check_fails_when_the_views_are_hand_edited(
         self, pinned_checklist, monkeypatch
     ):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         cli.main(["graph", "toy-checklist", "--write"])
         dag = pinned_checklist / cli.DAG_FILENAME
         dag.write_text(dag.read_text() + "\nhand_edited: true\n", encoding="utf-8")
@@ -4086,7 +3937,7 @@ class TestGeneratedGraphViews:
         self, pinned_checklist, monkeypatch
     ):
         """It must stay fast enough to run in CI on every checklist."""
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", pinned_checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", pinned_checklist.parent)
         monkeypatch.setattr(
             cli, "assemble_runtime",
             lambda *a, **k: pytest.fail("graph assembled a runtime"),
@@ -4103,7 +3954,7 @@ class TestGraphFailureMessages:
     """Gate 6C: a stranger hitting each failure must learn what to fix."""
 
     def _graph(self, checklist: Path, monkeypatch, capsys):
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", checklist.parent)
+        monkeypatch.setattr(config, "CHECKLIST_DIR", checklist.parent)
         code = cli.main(["graph", checklist.name])
         captured = capsys.readouterr()
         return code, captured.out + captured.err
@@ -4317,7 +4168,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def _client(self, calls):
         """A model that calls one harmless tool every turn, so the loop is
         bounded only by the ceiling and never by the answer-in-chat nudge."""
-        from soda_mmqc.agentic_openai import make_openai_client
+        from soda_mmqc.agentic.openai_driver import make_openai_client
 
         class _Call:
             id = "c1"
@@ -4354,7 +4205,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def test_the_session_option_overrides_the_module_ceiling(
         self, tmp_path: Path, monkeypatch
     ):
-        import soda_mmqc.agentic_openai as ao
+        import soda_mmqc.agentic.openai_driver as ao
 
         calls = []
         make_openai_client, _Client = self._client(calls)
@@ -4366,7 +4217,7 @@ class TestTheTurnCeilingActuallyGoverns:
         client = make_openai_client(
             {"a": "body"}, {"a": "desc"}, tools, "orientation", model="m"
         )
-        asyncio.run(_drain(client("go", {"max_turns": 3})))
+        asyncio.run(_drain(client([{"kind": "text", "text": "go"}], {"max_turns": 3})))
         assert len(calls) == 3, (
             f"ran {len(calls)} turns; the ceiling from model-defaults.yaml "
             "was ignored"
@@ -4375,7 +4226,7 @@ class TestTheTurnCeilingActuallyGoverns:
     def test_the_module_ceiling_is_the_fallback(
         self, tmp_path: Path, monkeypatch
     ):
-        import soda_mmqc.agentic_openai as ao
+        import soda_mmqc.agentic.openai_driver as ao
 
         calls = []
         make_openai_client, _Client = self._client(calls)
@@ -4388,7 +4239,7 @@ class TestTheTurnCeilingActuallyGoverns:
             {"a": "body"}, {"a": "desc"}, tools, "orientation",
             model="m", max_turns=2,
         )
-        asyncio.run(_drain(client("go", {})))
+        asyncio.run(_drain(client([{"kind": "text", "text": "go"}], {})))
         assert len(calls) == 2
 
     def test_the_real_checklist_ceiling_reaches_the_session_options(
@@ -4423,13 +4274,11 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 versions=versions,
                 approver=approver,
                 options=options,
-                client=_fake_client(
-                    [], writes=_valid_prediction(), layout=layout
-                ),
+                client=_fake_client([], writes=_valid_prediction()),
             )
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
         return seen
 
     def test_a_single_variant_gets_its_own_directory(
@@ -4496,7 +4345,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
 
 
 @requires_subpanel_figure
-class TestRunCheckLiveIntermediateContracts:
+class TestASessionNeedsNoFilesystem:
     def test_an_invoked_skill_needs_no_artifact_on_disk(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
@@ -4525,8 +4374,8 @@ class TestRunCheckLiveIntermediateContracts:
         ):
             return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
         _, report = cli.run_check_live(
             "fig-checklist",
@@ -4537,218 +4386,239 @@ class TestRunCheckLiveIntermediateContracts:
         assert report[0]["status"] == "ok"
         assert SHARED_SKILL in (report[0].get("hops") or {}).get("observed", [])
 
-    def test_valid_intermediates_are_copied_beside_sidecars(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        class _Recorder:
-            invoked = [SHARED_SKILL]
-            entries = []
+class TestNoRunIsDeniedOrSeeded:
+    """What `--all-checks` used to do, asserted as something that cannot return.
 
-        class _Audit:
-            path = tmp_path / "copy-audit.json"
-            session_info = {}
+    The cross-check cache ran a shared skill once per example, planted its
+    output into later runtimes, and denied those sessions the `Skill` tool so
+    they could not rerun it. That made one check's behaviour depend on whether
+    a different check had succeeded, and it erased the signal the experiments
+    exist to detect: whether a shared skill is reached, and how it is used,
+    may differ depending on which leaf is the entry point.
 
-            def summary(self):
-                return "Skill (allow) x1"
+    Deleting the apparatus without a test would leave nothing to notice it
+    coming back.
+    """
 
-        panels = {
-            "panels": [
+    def test_a_skill_call_can_never_be_denied_by_the_hook(self, tmp_path: Path):
+        """One session per (example, check): nothing suppresses a hop."""
+        audit = cli.ToolAuditLog(tmp_path / "audit.json")
+        hook = cli.make_pretooluse_hook(audit)
+
+        async def call():
+            return await hook(
                 {
-                    "panel_label": "A",
-                    "location_in_figure": "top left",
-                    "panel_content": "schematic",
-                    "caption_excerpt": "(A) Schematic",
-                    "caption_covers_panels": ["A"],
-                }
-            ]
-        }
-
-        async def fake_run_agent_session(
-            layout, *, versions, approver, options, client
-        ):
-            layout.artifacts_root.mkdir(parents=True, exist_ok=True)
-            (layout.artifacts_root / "panels.json").write_text(
-                json.dumps(panels), encoding="utf-8"
+                    "tool_name": "Skill",
+                    "tool_input": {"name": SHARED_SKILL},
+                    "tool_use_id": "s1",
+                },
+                "s1",
+                None,
             )
-            return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
+        result = asyncio.run(call())
+        decision = result["hookSpecificOutput"]["permissionDecision"]
+        assert decision == "allow"
+        assert audit.entries[0]["decision"] == "allow"
 
-        out = tmp_path / "preds"
-        _, report = cli.run_check_live(
-            "fig-checklist",
-            PILOT_LEAF,
-            output=out,
-            examples=[SUBPANEL_FIGURE],
+    def test_the_hook_takes_no_denial_set(self):
+        """The parameter is the apparatus; without it there is nothing to pass."""
+        import inspect
+
+        params = inspect.signature(cli.make_pretooluse_hook).parameters
+        assert "denied_shared_skills" not in params
+        assert "denied_shared_skills" not in inspect.signature(
+            cli._run_agent_session
+        ).parameters
+
+    def test_the_runner_cannot_seed_a_runtime(self):
+        """No artifact reaches a session that the session did not produce."""
+        import inspect
+
+        params = inspect.signature(cli.run_check_live).parameters
+        assert "seed_intermediates" not in params
+        assert "shared_skill_denials" not in params
+
+    def test_there_is_no_whole_checklist_run(self):
+        """Running every check is a loop the caller writes, not a harness feature."""
+        assert not hasattr(cli, "run_checklist_live")
+        # argparse rejects the flag outright, which is the clearest possible
+        # statement that the feature is gone.
+        with pytest.raises(SystemExit) as exc:
+            cli.main(["run", "fig-checklist", "--all-checks", "--mock"])
+        assert exc.value.code != 0
+
+
+class TestTheContentIsPushedNotPulled:
+    """The example's content travels with the request, not behind a Read.
+
+    Everything figure-shaped in the harness followed from pull: the harness
+    had to discover which staged file was the figure, name it, and then
+    refuse a prediction from a session that never fetched it. Pushing the
+    content deletes the discovery, the naming and the refusal together.
+    """
+
+    def test_the_layout_carries_the_examples_parts(self, assembled):
+        kinds = [part["kind"] for part in assembled.input_parts]
+        assert kinds == ["text", "image"]
+
+    def test_image_parts_are_rebased_onto_the_runtime(self, assembled):
+        image = next(p for p in assembled.input_parts if p["kind"] == "image")
+        assert image["path"].startswith(f"{cli.AGENTIC_INPUT_SUBDIR}/")
+        assert (assembled.root / image["path"]).is_file()
+
+    def test_the_session_message_leads_with_the_instruction(self, assembled):
+        message = cli._session_message(assembled)
+        assert message[0]["kind"] == "text"
+        assert PILOT_LEAF in message[0]["text"]
+        assert "figure" not in message[0]["text"].lower()
+        assert message[1:] == list(assembled.input_parts)
+
+    def test_the_manifest_names_supporting_files_only(self, assembled):
+        manifest = json.loads(
+            (
+                assembled.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            ).read_text(encoding="utf-8")
         )
+        assert set(manifest) == {"source_data"}
+        for entry in manifest["source_data"]:
+            assert (assembled.root / entry).is_file()
 
-        assert report[0]["status"] == "ok"
-        copied = (
-            out
-            / SUBPANEL_FIGURE
-            / cli.INTERMEDIATES_DIRNAME
-            / "panels.json"
+    def test_the_read_gate_is_gone(self):
+        """An input in the opening message cannot go unread."""
+        assert not hasattr(cli, "_assert_the_session_read_the_figure")
+        assert not hasattr(cli, "_resolve_staged_inputs")
+        assert not hasattr(cli, "AGENTIC_IMAGE_EXTENSIONS")
+
+
+WORD_EXAMPLE = "10.1038_embor.2009.217"
+
+requires_word_example = pytest.mark.skipif(
+    not (EXAMPLES_DIR / WORD_EXAMPLE).is_dir(),
+    reason=f"example store has no {WORD_EXAMPLE}",
+)
+
+
+@requires_word_example
+class TestANonFigureExampleAssembles:
+    """The staging path must work for an example class with no image at all.
+
+    Before this change `_resolve_staged_inputs` raised FileNotFoundError on
+    any example without a known image extension, so `doc-checklist` could
+    never have run agentically whatever its skills said.
+    """
+
+    @pytest.fixture
+    def word_checklist(self, tmp_path, monkeypatch):
+        """A minimal one-leaf checklist over a `word` benchmark."""
+        root = tmp_path / "checklists"
+        check_dir = root / "doc-pilot" / "section-order"
+        (check_dir / "v1").mkdir(parents=True)
+        (check_dir / "v1" / "SKILL.md").write_text(
+            _skill_md("section-order"), encoding="utf-8"
         )
-        assert copied.is_file()
-        assert json.loads(copied.read_text(encoding="utf-8")) == panels
-
-    def test_an_invalid_intermediate_for_an_invoked_skill_fails_the_example(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        class _Recorder:
-            invoked = [SHARED_SKILL]
-            entries = []
-
-        class _Audit:
-            path = tmp_path / "invalid-audit.json"
-            session_info = {}
-
-            def summary(self):
-                return "Skill (allow) x1"
-
-        bad_panels = {
-            "panels": [
+        (check_dir / "benchmark.json").write_text(
+            json.dumps(
                 {
-                    "panel_label": "A",
-                    "location_in_figure": "top left",
-                    "panel_content": "schematic",
-                    "caption_excerpt": "(A) Schematic",
-                    "caption_covers_panels": ["A"],
-                    "panel_type": "unexpected-extra-field",
+                    "name": "section-order",
+                    "example_class": "word",
+                    "examples": [WORD_EXAMPLE],
                 }
-            ]
-        }
-
-        async def fake_run_agent_session(
-            layout, *, versions, approver, options, client
-        ):
-            layout.artifacts_root.mkdir(parents=True, exist_ok=True)
-            (layout.artifacts_root / "panels.json").write_text(
-                json.dumps(bad_panels), encoding="utf-8"
-            )
-            return _valid_prediction(), _Recorder(), _Audit()
-
-        monkeypatch.setattr(cli, "_run_agent_session", fake_run_agent_session)
-        monkeypatch.setattr(cli, "_openai_session_client", lambda l, m: None)
-
-        _, report = cli.run_check_live(
-            "fig-checklist",
-            PILOT_LEAF,
-            output=tmp_path / "preds",
-            examples=[SUBPANEL_FIGURE],
-        )
-        assert report[0]["status"] == "failed"
-        assert "does not match its schema" in report[0]["error"]
-        assert "panel_type" in report[0]["error"]
-
-
-class TestRunAllAgenticChecks:
-    def test_document_example_selector_expands_to_matching_figures(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        checklist_dir = tmp_path / "toy-checklist"
-        _write_check(checklist_dir / "check-a", "check-a")
-        _write_check(checklist_dir / "check-b", "check-b")
-        for check_name in ("check-a", "check-b"):
-            (checklist_dir / check_name / "benchmark.json").write_text(
-                json.dumps(
-                    {
-                        "name": check_name,
-                        "example_class": "figure",
-                        "examples": [
-                            "doc-x/content/1",
-                            "doc-x/content/2",
-                            "doc-y/content/1",
-                        ],
-                    }
-                ),
-                encoding="utf-8",
-            )
-        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a"))
-        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b"))
-
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
-        calls = []
-
-        def fake_run_check_live(checklist, check, **kwargs):
-            calls.append((check, kwargs))
-            return Path(kwargs["output"]), []
-
-        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
-
-        cli.run_checklist_live(
-            "toy-checklist",
-            output=tmp_path / "all-out",
-            examples=["doc-x"],
-        )
-
-        assert len(calls) == 2
-        for _, kwargs in calls:
-            assert kwargs["examples"] == ["doc-x/content/1", "doc-x/content/2"]
-
-    def test_second_check_reuses_shared_artifact_and_denies_rerun(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ):
-        checklist_dir = tmp_path / "toy-checklist"
-        _write_check(checklist_dir / "check-a", "check-a")
-        _write_check(checklist_dir / "check-b", "check-b")
-        (checklist_dir / "identify-panels").mkdir(parents=True, exist_ok=True)
-        (checklist_dir / "identify-panels" / "schema.json").write_text(
-            json.dumps({"format": {"schema": {"type": "object"}}}),
+            ),
             encoding="utf-8",
         )
-        _write_skill(
-            checklist_dir,
-            "identify-panels",
-            "v1",
-            _skill_md("identify-panels", produces=("panels",)),
+        (check_dir / "schema.json").write_text(
+            json.dumps(
+                {
+                    "format": {
+                        "type": "json_schema",
+                        "name": "section-order",
+                        "schema": {"type": "object", "properties": {}},
+                    }
+                }
+            ),
+            encoding="utf-8",
         )
-        _write_skill(checklist_dir, "check-a", "v1", _skill_md("check-a", requires=("identify-panels",)))
-        _write_skill(checklist_dir, "check-b", "v1", _skill_md("check-b", requires=("identify-panels",)))
+        (check_dir / "eval-manifest.json").write_text(
+            json.dumps({"checklist": "section-order", "fields": {}}),
+            encoding="utf-8",
+        )
+        (root / "doc-pilot" / "version-manifest.yaml").write_text(
+            "checklist: doc-pilot\nskills:\n  section-order: v1\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(config, "CHECKLIST_DIR", root)
+        return root
 
-        monkeypatch.setattr(cli, "CHECKLIST_DIR", tmp_path)
-        ex = "doc-x/content/1"
-        calls = []
-
-        def fake_run_check_live(checklist, check, **kwargs):
-            calls.append((check, kwargs))
-            out = Path(kwargs["output"])
-            if check == "check-a":
-                sidecar = out / ex / cli.INTERMEDIATES_DIRNAME
-                sidecar.mkdir(parents=True, exist_ok=True)
-                (sidecar / "panels.json").write_text(
-                    json.dumps({"panels": [{"panel_label": "A"}]}),
-                    encoding="utf-8",
-                )
-                report = [{"example": ex, "status": "ok", "intermediates": ["panels"]}]
-            else:
-                report = [{"example": ex, "status": "ok", "intermediates": []}]
-            return out, report
-
-        monkeypatch.setattr(cli, "run_check_live", fake_run_check_live)
-
-        out = tmp_path / "all-out"
-        _, report = cli.run_checklist_live(
-            "toy-checklist",
-            output=out,
-            examples=[ex],
-            limit=1,
+    def _assemble(self, tmp_path):
+        return cli.assemble_runtime(
+            "doc-pilot", "section-order", WORD_EXAMPLE,
+            root=tmp_path / "runtime",
         )
 
-        assert [name for name, _ in calls] == ["check-a", "check-b"]
-        second = calls[1][1]
-        assert second["seed_intermediates"][ex]["panels"] == {"panels": [{"panel_label": "A"}]}
-        assert "identify-panels" in second["shared_skill_denials"][ex]
-        assert {row["check"] for row in report} == {"check-a", "check-b"}
+    def test_a_word_example_assembles(self, word_checklist, tmp_path):
+        layout = self._assemble(tmp_path)
+        assert [p["kind"] for p in layout.input_parts] == ["text"]
+        assert "<" in layout.input_parts[0]["text"]  # the HTML conversion
 
-    def test_main_accepts_run_all_checks(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setattr(
-            cli,
-            "run_checklist_live",
-            lambda *args, **kwargs: (tmp_path / "out", []),
+    def test_the_document_is_staged_but_not_offered_to_fetch(
+        self, word_checklist, tmp_path
+    ):
+        """inputs.json lists what can be pulled and was not pushed.
+
+        The .docx is staged like every other file of the example, but its
+        content already arrived as a part, so nothing invites the session to
+        open a document it cannot read.
+        """
+        layout = self._assemble(tmp_path)
+        manifest = json.loads(
+            (
+                layout.input_root / cli.AGENTIC_INPUT_MANIFEST_FILENAME
+            ).read_text(encoding="utf-8")
         )
-        code = cli.main(
-            ["run", "fig-checklist", "--all-checks", "--limit", "1"]
+        assert manifest == {}
+        assert list(layout.input_root.glob("*.docx"))
+
+    def test_the_staged_copy_is_the_source_minus_its_gold(
+        self, word_checklist, tmp_path
+    ):
+        """A copy, not a processed copy: the HTML conversion travels in the
+        message and is never written here, and every file that is staged is
+        staged byte for byte.
+
+        The one exclusion is the answer key. This layout is recursive, so a
+        document-level example's `content/` contains its figure
+        sub-examples, each with its own `checks/`.
+        """
+        layout = self._assemble(tmp_path)
+        source = EXAMPLES_DIR / WORD_EXAMPLE / "content"
+        staged = sorted(
+            p.relative_to(layout.input_root)
+            for p in layout.input_root.rglob("*")
+            if p.is_file() and p.name != cli.AGENTIC_INPUT_MANIFEST_FILENAME
         )
-        assert code == 0
+        original = sorted(
+            p.relative_to(source)
+            for p in source.rglob("*")
+            if p.is_file()
+            and cli.EXAMPLE_GOLD_SUBDIR not in p.relative_to(source).parts
+        )
+        assert staged == original
+        for entry in original:
+            assert (layout.input_root / entry).read_bytes() == (
+                source / entry
+            ).read_bytes()
+
+    def test_no_gold_reaches_the_runtime(self, word_checklist, tmp_path):
+        """18 expected_output.json files sit under this example's content/.
+
+        Staging them would be a scored run that saw the answer key -- the
+        exact failure `_assert_sealed` exists to refuse. It is asserted here
+        directly rather than trusted to the alarm downstream.
+        """
+        layout = self._assemble(tmp_path)
+        assert not list(layout.input_root.rglob("expected_output.json"))
+        assert not [
+            p for p in layout.input_root.rglob("*")
+            if p.name == cli.EXAMPLE_GOLD_SUBDIR
+        ]

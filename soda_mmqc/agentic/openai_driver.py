@@ -31,10 +31,12 @@ Containment
 -----------
 Better than the SDK path rather than worse, because the tools are implemented
 here instead of negotiated with someone else's permission model. ``Read`` is
-confined to the runtime directory and ``Write`` to its artifacts directory, by
-resolving the path and refusing anything outside -- no rule syntax, no
-evaluation order, no surprise defaults. There is no shell, no subagent, and no
-network tool, because none is implemented.
+confined to the runtime directory by resolving the path and refusing anything
+outside -- no rule syntax, no evaluation order, no surprise defaults. There is
+no shell, no subagent and no network tool, because none is implemented, and no
+writable location: `218fe013` took the write tool off the SDK path and this
+one had kept offering it, so the two providers were not running the same
+session.
 """
 
 from __future__ import annotations
@@ -43,7 +45,7 @@ import base64
 import json
 import mimetypes
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 from soda_mmqc import logger
 
@@ -65,9 +67,12 @@ class RuntimeTools:
     a configuration someone else interprets.
     """
 
-    def __init__(self, root: Path, artifacts: Path):
+    def __init__(self, root: Path, artifacts: Optional[Path] = None):
         self.root = Path(root).resolve()
-        self.artifacts = Path(artifacts).resolve()
+        #: Accepted and ignored: nothing in the runtime is writable. The
+        #: parameter stays until the artifacts apparatus comes out with
+        #: `--all-checks` (2026-09-20-dismantle-cross-check-cache.md).
+        self.artifacts = Path(artifacts).resolve() if artifacts else None
 
     def _resolve(self, raw: str, *, inside: Path) -> Path:
         """Resolve a model-supplied path, refusing anything outside ``inside``.
@@ -114,12 +119,6 @@ class RuntimeTools:
                 },
             )
         return resolved.read_text(encoding="utf-8", errors="replace"), None
-
-    def write(self, path: str, content: str) -> str:
-        resolved = self._resolve(path, inside=self.artifacts)
-        resolved.parent.mkdir(parents=True, exist_ok=True)
-        resolved.write_text(content, encoding="utf-8")
-        return f"wrote {len(content)} characters to {resolved.name}"
 
     def listing(self) -> str:
         """Files the session should know about.
@@ -186,24 +185,6 @@ def _tool_schemas(skill_names: List[str]) -> List[Dict[str, Any]]:
                 },
             },
         },
-        {
-            "type": "function",
-            "function": {
-                "name": "Write",
-                "description": (
-                    "Write a file into the artifacts directory. This is the "
-                    "only writable location."
-                ),
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string"},
-                        "content": {"type": "string"},
-                    },
-                    "required": ["path", "content"],
-                },
-            },
-        },
     ]
 
 
@@ -220,7 +201,8 @@ def _system_prompt(
         for name, description in sorted(descriptions.items())
     )
     return (
-        "You are running one quality-control check on one scientific figure.\n\n"
+        "You are running one quality-control check on one example from a "
+        "scientific manuscript.\n\n"
         f"{orientation}\n\n"
         "## Skills available to you\n\n"
         "Invoke any of these with the `Skill` tool when the instructions you "
@@ -228,8 +210,8 @@ def _system_prompt(
         f"{catalogue}\n\n"
         "## Files in this run\n\n"
         f"{listing}\n\n"
-        "Begin by invoking the entry-point skill named in the orientation "
-        "above, then follow its instructions exactly."
+        "Begin by invoking the entry-point skill named in the request, then "
+        "follow its instructions exactly."
     )
 
 
@@ -270,7 +252,11 @@ def make_openai_client(
     """
     from openai import OpenAI
 
-    async def client(prompt: str, options: Mapping[str, Any]):
+    from soda_mmqc.agentic.render import render_openai
+
+    async def client(
+        parts: Sequence[Mapping[str, Any]], options: Mapping[str, Any]
+    ):
         openai_client = OpenAI()
         hook = (options.get("hooks") or {}).get("PreToolUse", [None])[0]
 
@@ -289,7 +275,7 @@ def make_openai_client(
                     orientation, descriptions, tools.listing()
                 ),
             },
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": render_openai(parts, tools.root)},
         ]
         schemas = _tool_schemas(sorted(skill_bodies))
         nudged = False
@@ -306,18 +292,16 @@ def make_openai_client(
                 # last step. Push back once on the output contract -- this
                 # says nothing about *which* skills to use, so it does not
                 # touch what gate 4D measures.
-                if not nudged and not (tools.artifacts / "prediction.json").is_file():
+                if not nudged:
                     nudged = True
-                    logger.info("Session answered in chat; asking for the file")
+                    logger.info("Session answered in chat; asking for JSON")
                     messages.append(
                         {
                             "role": "user",
                             "content": (
-                                "You have not written "
-                                "artifacts/prediction.json yet. Write your "
-                                "final answer there now using the Write "
-                                "tool, as JSON conforming to the check's "
-                                "schema. Do not reply with prose."
+                                "Answer as JSON conforming to the check's "
+                                "schema, and nothing else. Do not reply with "
+                                "prose."
                             ),
                         }
                     )
@@ -420,14 +404,6 @@ def _dispatch(
             return skill_bodies[wanted], None
         if name == "Read":
             return tools.read(str(arguments.get("path", "")))
-        if name == "Write":
-            return (
-                tools.write(
-                    str(arguments.get("path", "")),
-                    str(arguments.get("content", "")),
-                ),
-                None,
-            )
         return f"No tool named {name!r}.", None
     except (PermissionError, FileNotFoundError, OSError) as exc:
         return f"{type(exc).__name__}: {exc}", None

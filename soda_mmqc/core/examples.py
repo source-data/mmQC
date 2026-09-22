@@ -138,6 +138,47 @@ class Example(ABC):
         """
         pass
 
+    @abstractmethod
+    def input_parts(self) -> List[Dict[str, Any]]:
+        """This example's content, in order, as provider-neutral parts.
+
+        What an example *is* -- a caption and a figure, or a manuscript -- is
+        a fact about the example class, and stating it in one place is what
+        keeps format assumptions from settling in machinery that is supposed
+        to be example-class neutral.
+
+        The vocabulary is deliberately tiny and names no provider:
+
+        ``{"kind": "text", "text": str}``
+            Literal text. It may be derived -- ``WordExample`` puts its HTML
+            conversion here -- because a part is a message, not a file, and
+            nothing derived is ever written into a runtime.
+        ``{"kind": "image", "path": str}``
+            An image file, named by a path relative to this example's
+            ``content/`` directory. Reading and encoding it belongs to
+            whichever driver is rendering, so that base64 and media types
+            stay out of this module.
+
+        This is not :meth:`prepare_model_input`. That method builds one
+        provider's payload, embeds a prompt in it, and may upload files to
+        that provider; this one only says what the content is.
+        """
+        pass
+
+    @abstractmethod
+    def supporting_files(self) -> Dict[str, Any]:
+        """Files that accompany the content without being part of it.
+
+        A consumer that can stage files makes these available to be opened on
+        demand rather than sending them up front: a figure example may carry
+        several spreadsheets, and a check usually needs none of them.
+
+        Returns:
+            Role name to a content-relative path, ``None``, or a list of
+            content-relative paths.
+        """
+        pass
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert the example to a dictionary.
 
@@ -204,6 +245,7 @@ class FigureExample(Example):
     def __init__(self, relative_source_path: str):
         super().__init__(relative_source_path)
         self.caption: Optional[str] = None
+        self.caption_path: Optional[Path] = None
         self.image_path: Optional[Path] = None
         self.figure_id: Optional[str] = None
         # Table handling: include CSV/TSV and spreadsheet files alongside images
@@ -238,6 +280,7 @@ class FigureExample(Example):
             raise FileNotFoundError(
                 f"Caption file not found: {caption_path}"
             )
+        self.caption_path = caption_path
         with open(caption_path, "r", encoding="utf-8") as f:
             self.caption = f.read().strip()
 
@@ -427,6 +470,32 @@ class FigureExample(Example):
                     out.append(f.name)
         return sorted(out)
 
+    def input_parts(self) -> List[Dict[str, Any]]:
+        """A figure is its caption and its image, in that order."""
+        self._ensure_loaded()
+        content = self.source_path / "content"
+        return [
+            {"kind": "text", "text": f"Figure caption:\n{self.caption}"},
+            {
+                "kind": "image",
+                "path": self.image_path.relative_to(content).as_posix(),
+            },
+        ]
+
+    def supporting_files(self) -> Dict[str, Any]:
+        """Source data: available on request, not sent up front.
+
+        Seven spreadsheets on a single figure is normal here, and a check
+        usually needs none of them.
+        """
+        self._ensure_loaded()
+        return {
+            "source_data": [
+                f"source_data/{name}"
+                for name in self._get_source_data_file_list()
+            ]
+        }
+
     def prepare_model_input(
         self, prompt: str, model_config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -599,6 +668,28 @@ class WordExample(Example):
                 }
             ]
         }
+
+    def input_parts(self) -> List[Dict[str, Any]]:
+        """A manuscript is its text.
+
+        ``load_from_source`` already converted the document to HTML; that
+        conversion is a rendering of this example's content, not a file the
+        example is made of, so it travels as a part and is never written
+        anywhere.
+        """
+        self._ensure_loaded()
+        return [{"kind": "text", "text": self.content}]
+
+    def supporting_files(self) -> Dict[str, Any]:
+        """Nothing: a manuscript's content is the manuscript.
+
+        The document is staged like every other file of the example, but it
+        is not listed as something to fetch -- its content was already sent
+        as a part. Listing it would invite a session to open a `.docx` it
+        cannot read in order to obtain text it already has.
+        """
+        self._ensure_loaded()
+        return {}
 
 
 # Register example types

@@ -1,0 +1,112 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "plot-axis-units",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "is_a_plot": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel contains a plot"
+                            },
+                            "units_provided": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "axis": {
+                                            "type": "string",
+                                            "enum": ["x", "y", "z"],
+                                            "description": "The axis to be labeled"
+                                        },
+                                        "answer": {
+                                            "type": "string",
+                                            "enum": ["yes", "no", "not needed"],
+                                            "description": "Whether the units are provided"
+                                        }
+                                    },
+                                    "required": [
+                                        "axis",
+                                        "answer"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            },
+                            "unit_definition_as_provided": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "axis": {
+                                            "type": "string",
+                                            "enum": ["x", "y", "z"],
+                                            "description": "The axis to be labeled"
+                                        },
+                                        "definition": {
+                                            "type": "string",
+                                            "description": "A description or quote the text of the caption that defines the units"
+                                        }
+                                    },
+                                    "required": [
+                                        "axis",
+                                        "definition"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL", "N/A"],
+                                "description": "Panel-level verdict: PASS if all required axes have adequate units, FAIL if any required axis lacks units, N/A if the panel is not a quantitative plot"
+                            },
+                            "explanation": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "axis": {
+                                            "type": "string",
+                                            "enum": ["x", "y", "z"],
+                                            "description": "The axis to be labeled"
+                                        },
+                                        "explanation": {
+                                            "type": "string",
+                                            "description": "Explanation for why the units are missing"
+                                        }
+                                    },
+                                    "required": [
+                                        "axis",
+                                        "explanation"
+                                    ],
+                                    "additionalProperties": false
+                                }
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "is_a_plot",
+                            "units_provided",
+                            "unit_definition_as_provided",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

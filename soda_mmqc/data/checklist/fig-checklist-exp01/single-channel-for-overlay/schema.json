@@ -1,0 +1,52 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "single-channel-for-overlay",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "multicolored_overlay_micrograph": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel shows a multicolored overlay microscopy image"
+                            },
+                            "number_of_channels_in_overlay": {
+                                "type": "integer",
+                                "description": "Number of distinct channels merged in the overlay image"
+                            },
+                            "number_of_single_channel_images_shown": {
+                                "type": "integer",
+                                "description": "Number of single-channel images shown for this panel"
+                             },
+                           "all_channels_shown_separately": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether all channels in the overlay are shown as separate single-channel images"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "multicolored_overlay_micrograph",
+                            "number_of_channels_in_overlay",
+                            "number_of_single_channel_images_shown",
+                            "all_channels_shown_separately"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

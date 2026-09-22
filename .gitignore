@@ -119,8 +119,10 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# tensorboard logs
-runs/
+# tensorboard logs (root only: a bare `runs/` matches any directory of that
+# name at any depth, which silently swallowed `experiments/runs/` -- committed
+# experiment output -- until it was noticed)
+/runs/
 
 # static evaluation report snapshots
 reports/
@@ -135,3 +137,16 @@ uv.lock
 
 soda_mmqc/data/cache/
 soda_mmqc/data/cache/*
+
+# Working output of experiments run from other branches (exp-3 and friends).
+# Untracked here and easy to `git add` by accident, since `experiments/` is
+# otherwise a tracked tree: builders and committed runs live alongside it.
+experiments/results/
+
+# Run output, regenerable and per-machine: `cli run` writes predictions here
+# by default and `cli score` writes analysis beside them. Committed runs that
+# a paper figure depends on live under `experiments/runs/`, which stays
+# tracked on purpose -- see experiments/runs/README.md.
+soda_mmqc/data/predictions/
+soda_mmqc/data/evaluation/
+

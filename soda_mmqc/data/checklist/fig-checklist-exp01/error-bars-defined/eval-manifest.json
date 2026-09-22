@@ -1,0 +1,38 @@
+{
+  "checklist": "error-bars-defined",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].error_bar_on_figure": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].error_bar_defined_in_caption": {
+      "na_values": ["not needed"],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": ["", "not needed"],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].Decision_and_explanation": {
+      "matching_metric": "graded_string",
+      "na_values": ["", "not needed"],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "panel-image-matches-caption",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "image_matches_caption": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether the panel image content matches what is described in the figure caption"
+                            },
+                            "discrepancies": {
+                                "type": "string",
+                                "description": "Description of any discrepancies between the panel image and caption, or empty string if no discrepancies"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "image_matches_caption",
+                            "discrepancies"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

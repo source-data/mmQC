@@ -253,13 +253,6 @@ AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
 #: smaller surface.
 AGENTIC_BASE_TOOLS = ("Read", "Skill")
 
-#: Extensions the harness will accept as *the* figure image, in priority
-#: order. Deliberately the same list the legacy path uses in
-#: `core/examples.py`, so both routes present the same file to the model.
-#: Picking the image is mechanical harness work: the agent has no directory
-#: listing tool and must never be left to guess a filename.
-AGENTIC_IMAGE_EXTENSIONS = (".png", ".jpg", ".jpeg", ".tiff", ".webp")
-
 #: Ceiling for the SDK's newline-delimited JSON reader.
 #:
 #: The SDK reads the CLI's stream with a 1 MB default buffer, and a figure the
@@ -281,8 +274,10 @@ AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
 #: manifest below.
 AGENTIC_ORIENTATION_FILENAME = "CLAUDE.md"
 
-#: Template copied verbatim into each runtime as `CLAUDE.md`.
-AGENTIC_CLAUDE_TEMPLATE = DATA_DIR / "agentic" / "CLAUDE.md"
+#: Template copied verbatim into each runtime as `CLAUDE.md`. It lives
+#: beside the harness rather than under `data/` because it is what dictates
+#: the agent's general behaviour, not a data asset a checklist owns.
+AGENTIC_CLAUDE_TEMPLATE = Path(__file__).resolve().parent / "agentic" / "CLAUDE.md"
 
 #: Per-run manifest naming exactly what the harness staged. Machine-readable
 #: on purpose: which files exist is data, not prose, and the agent has no way
