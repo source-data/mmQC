@@ -17,6 +17,7 @@ from soda_mmqc.reporting import (
     plot_layer2_stacked,
     plot_layer_s_bar,
     plot_mean_score_bars,
+    plot_arm_contrast_by_check,
     plot_mean_score_with_instances,
     split_layer2_by_metric,
     summarize_runs,
@@ -246,3 +247,167 @@ class TestComparisonPlots:
     def test_comparison_requires_selector(self, summaries_arm):
         with pytest.raises(ValueError, match="model is required"):
             plot_comparison_layer1(summaries_arm, compare="arm")
+
+
+class TestArmContrastByCheck:
+    """One panel per check, because a difference only means something
+    against the other properties of the same check.
+
+    A single axis over all 62 exp-01 contrasts stacked eleven unrelated
+    checks into one column of bars, and the tick labels had to carry the
+    whole property path to stay unambiguous.
+    """
+
+    @pytest.fixture
+    def contrast(self):
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {
+                    "check": "micrograph-scale-bar",
+                    "property": "outputs[].panel_label",
+                    "path": "micrograph-scale-bar::::outputs[].panel_label",
+                    "difference": -0.20,
+                    "se": 0.04,
+                    "n_examples": 38,
+                    "paired_fraction": 1.0,
+                },
+                {
+                    "check": "micrograph-scale-bar",
+                    "property": "outputs[].micrograph",
+                    "path": "micrograph-scale-bar::::outputs[].micrograph",
+                    "difference": 0.05,
+                    "se": 0.01,
+                    "n_examples": 38,
+                    "paired_fraction": 1.0,
+                },
+                {
+                    "check": "plot-axis-units",
+                    "property": "outputs[].units_provided[].axis",
+                    "path": "plot-axis-units::::outputs[].units_provided[].axis",
+                    "difference": 0.002,
+                    "se": 0.005,
+                    "n_examples": 28,
+                    "paired_fraction": 0.95,
+                },
+                {
+                    "check": "plot-axis-units",
+                    "property": "outputs[].unit_definition_as_provided[].axis",
+                    "path": (
+                        "plot-axis-units::::outputs[]."
+                        "unit_definition_as_provided[].axis"
+                    ),
+                    "difference": -0.01,
+                    "se": 0.006,
+                    "n_examples": 28,
+                    "paired_fraction": 0.95,
+                },
+            ]
+        )
+
+    def test_one_panel_per_check(self, contrast):
+        fig = plot_arm_contrast_by_check(contrast)
+        titles = [annotation.text for annotation in fig.layout.annotations]
+        assert titles == ["micrograph-scale-bar", "plot-axis-units"]
+
+    def test_a_tick_drops_the_root_but_keeps_the_json_path(self, contrast):
+        """The panel title carries the check, so the tick need not.
+
+        The within-record path must stay: plot-axis-units has two distinct
+        properties tailing in `axis`, and they share one panel.
+        """
+        fig = plot_arm_contrast_by_check(contrast)
+        labels = {y for trace in fig.data for y in (trace.y or ())}
+        assert "outputs[].units_provided[].axis" in labels
+        assert "outputs[].unit_definition_as_provided[].axis" in labels
+        assert not any(label.startswith("plot-axis-units:") for label in labels)
+
+    def test_the_x_axis_is_shared_so_panels_compare(self, contrast):
+        """Per-panel autoscaling would make a 0.002 difference look like
+        a 0.2 one."""
+        fig = plot_arm_contrast_by_check(contrast)
+        layout = fig.layout.to_plotly_json()
+        ranges = {
+            tuple(value["range"])
+            for key, value in layout.items()
+            if key.startswith("xaxis") and value.get("range")
+        }
+        assert len(ranges) == 1
+
+    def test_every_bar_carries_its_standard_error(self, contrast):
+        fig = plot_arm_contrast_by_check(contrast)
+        seen = set()
+        for trace in fig.data:
+            if trace.error_x is not None and trace.error_x.array is not None:
+                seen.update(round(v, 4) for v in trace.error_x.array)
+        assert seen == {0.04, 0.01, 0.005, 0.006}
+
+    def test_an_empty_contrast_is_not_a_crash(self):
+        import pandas as pd
+
+        fig = plot_arm_contrast_by_check(
+            pd.DataFrame(
+                columns=["check", "property", "path", "difference", "se"]
+            )
+        )
+        assert fig.data == ()
+
+
+class TestArmContrastLayout:
+    """Horizontal bars with long tick labels need width, not columns.
+
+    `_comparison_subplot_grid` packs four across, which suits vertical
+    bars over short categories. A property label runs to 49 characters
+    (`outputs[].unit_definition_as_provided[].definition`), so at a
+    quarter width the label crowds out the bar.
+    """
+
+    @staticmethod
+    def _frame(checks_and_counts):
+        import pandas as pd
+
+        rows = []
+        for check, count in checks_and_counts:
+            for i in range(count):
+                rows.append(
+                    {
+                        "check": check,
+                        "property": f"outputs[].p{i}",
+                        "path": f"{check}::::outputs[].p{i}",
+                        "difference": 0.01 * i,
+                        "se": 0.001,
+                    }
+                )
+        return pd.DataFrame(rows)
+
+    def _column_count(self, fig):
+        layout = fig.layout.to_plotly_json()
+        starts = {
+            round(value["domain"][0], 4)
+            for key, value in layout.items()
+            if key.startswith("xaxis") and value.get("domain")
+        }
+        return len(starts)
+
+    def test_two_columns_by_default(self):
+        fig = plot_arm_contrast_by_check(
+            self._frame([("a", 2), ("b", 2), ("c", 2), ("d", 2)])
+        )
+        assert self._column_count(fig) == 2
+
+    def test_the_caller_can_widen_it(self):
+        fig = plot_arm_contrast_by_check(
+            self._frame([("a", 2), ("b", 2), ("c", 2), ("d", 2)]), columns=1
+        )
+        assert self._column_count(fig) == 1
+
+    def test_a_row_is_only_as_tall_as_its_tallest_panel(self):
+        """A row holding a 2-bar panel should not be sized for an 8-bar one."""
+        lopsided = plot_arm_contrast_by_check(
+            self._frame([("a", 8), ("b", 8), ("c", 2), ("d", 2)])
+        )
+        uniform = plot_arm_contrast_by_check(
+            self._frame([("a", 8), ("b", 8), ("c", 8), ("d", 8)])
+        )
+        assert lopsided.layout.height < uniform.layout.height

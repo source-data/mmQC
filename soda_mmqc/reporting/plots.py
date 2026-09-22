@@ -14,6 +14,10 @@ from soda_mmqc.core.property_rollup import instance_is_scored
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, field_order, leaf_property_tail
 from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
+    ARM_CONTRAST_BAR_COLOR,
+    ARM_CONTRAST_PANEL_CHROME,
+    ARM_CONTRAST_ROW_HEIGHT,
+    ARM_CONTRAST_ZERO_LINE_COLOR,
     COMPARISON_SERIES_OPACITIES,
     COMPARISON_SERIES_PATTERNS,
     INSTANCE_SCORE_MARKER_COLOR,
@@ -972,3 +976,131 @@ def build_dashboard(
         layout_kwargs[f"legend{col}"] = legend_layout
     fig.update_layout(**layout_kwargs)
     return _apply_plot_template(fig)
+
+
+def plot_arm_contrast_by_check(
+    contrast: pd.DataFrame,
+    *,
+    columns: int = 2,
+    title: str = "Paired arm contrast, per property",
+    xlabel: str = "difference in mean_score",
+) -> go.Figure:
+    """One panel per check; within a panel, one bar per leaf property.
+
+    A difference is only interpretable against the other properties of
+    the same check. Pooled into one axis, the eleven exp-01 checks became
+    a single column of 62 bars whose labels had to carry the whole
+    property path to stay apart -- so the panel takes over that job and
+    the tick keeps only the within-record path.
+
+    The x axis is shared across panels. Letting each autoscale would draw
+    a 0.002 difference the same width as a 0.2 one, which is the one
+    reading this figure exists to prevent.
+
+    Nothing here decides whether a difference is real. ``se`` is drawn
+    because a difference without it is not a number, and the bars are one
+    neutral colour because which direction counts as better is the
+    experiment's claim.
+
+    Two columns by default rather than the four
+    ``_comparison_subplot_grid`` packs: that grid suits vertical bars over
+    short categories, and a property label here runs to 49 characters, so
+    at a quarter width the label crowds out the bar it belongs to.
+    """
+    if contrast.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    checks = sorted(contrast["check"].unique())
+    cols = max(1, int(columns))
+    rows = (len(checks) + cols - 1) // cols
+
+    # Each row is sized for its own tallest panel. A row holding a
+    # two-property check next to an eight-property one would otherwise
+    # carry six rows of blank space.
+    bars = contrast["check"].value_counts()
+    row_heights = [
+        ARM_CONTRAST_PANEL_CHROME
+        + ARM_CONTRAST_ROW_HEIGHT
+        * max(int(bars[check]) for check in checks[index * cols:(index + 1) * cols])
+        for index in range(rows)
+    ]
+
+    fig = make_subplots(
+        rows=rows,
+        cols=cols,
+        subplot_titles=checks,
+        shared_xaxes=False,
+        shared_yaxes=False,
+        row_heights=row_heights,
+        vertical_spacing=_COMPARISON_SUBPLOT_VERTICAL_SPACING,
+        horizontal_spacing=_COMPARISON_SUBPLOT_HORIZONTAL_SPACING,
+    )
+
+    for panel_index, check in enumerate(checks):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = contrast[contrast["check"] == check].sort_values(
+            "difference", ascending=True, kind="stable"
+        )
+        errors = (
+            panel["se"].astype(float).fillna(0.0).tolist()
+            if "se" in panel
+            else None
+        )
+        fig.add_trace(
+            go.Bar(
+                x=panel["difference"].astype(float).tolist(),
+                y=panel["property"].tolist(),
+                orientation="h",
+                marker_color=ARM_CONTRAST_BAR_COLOR,
+                error_x=(
+                    {"type": "data", "array": errors, "visible": True}
+                    if errors is not None
+                    else None
+                ),
+                customdata=panel[["path"]].to_numpy(),
+                hovertemplate="%{customdata[0]}<br>%{x:.4f}<extra></extra>",
+                showlegend=False,
+            ),
+            row=row,
+            col=col,
+        )
+        fig.add_vline(
+            x=0,
+            line_width=1,
+            line_color=ARM_CONTRAST_ZERO_LINE_COLOR,
+            row=row,
+            col=col,
+        )
+
+    # One explicit range on every panel: `shared_xaxes` only links pan and
+    # zoom, and a reader comparing panels needs them equal before touching
+    # anything.
+    span = _arm_contrast_x_range(contrast)
+    fig.update_xaxes(range=list(span), title_text=xlabel)
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout(
+        title_text=title,
+        height=sum(row_heights),
+        showlegend=False,
+    )
+    return _apply_plot_template(fig)
+
+
+def _arm_contrast_x_range(contrast: pd.DataFrame) -> tuple[float, float]:
+    """Symmetric-enough bounds covering every bar and its error bar."""
+    differences = contrast["difference"].astype(float)
+    errors = (
+        contrast["se"].astype(float).fillna(0.0)
+        if "se" in contrast
+        else pd.Series(0.0, index=contrast.index)
+    )
+    low = float((differences - errors).min())
+    high = float((differences + errors).max())
+    # Always show zero: a panel of small same-signed differences would
+    # otherwise be drawn without the line they are differences from.
+    low, high = min(low, 0.0), max(high, 0.0)
+    pad = (high - low) * 0.08 or 0.01
+    return low - pad, high + pad

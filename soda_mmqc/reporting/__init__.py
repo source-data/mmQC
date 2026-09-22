@@ -80,6 +80,7 @@ from soda_mmqc.reporting.plots import (
     plot_layer2_stacked,
     plot_layer_s_bar,
     plot_mean_score_bars,
+    plot_arm_contrast_by_check,
     plot_mean_score_with_instances,
 )
 from soda_mmqc.reporting.tables import (
@@ -162,6 +163,7 @@ __all__ = [
     "plot_layer2_stacked",
     "plot_layer_s_bar",
     "plot_mean_score_bars",
+    "plot_arm_contrast_by_check",
     "plot_mean_score_with_instances",
     "score_rows_for_summaries",
     "scores_table",

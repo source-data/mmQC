@@ -64,3 +64,14 @@ MEAN_SCORE_Y_MAX = 1.1
 MEAN_SCORE_PLOT_TITLE = "Scores (mean over applicable instances)"
 
 PLOTLY_TEMPLATE = "plotly_white"
+
+# Paired arm-contrast bars. One neutral colour on purpose: the sign is
+# already in the bar's direction, and colouring it green/red would state
+# which arm is better -- a claim that belongs in the experiment's note,
+# not in its arithmetic.
+ARM_CONTRAST_BAR_COLOR = "#475569"
+ARM_CONTRAST_ZERO_LINE_COLOR = "#0f172a"
+
+# Vertical room per property row, and per-panel chrome, in pixels.
+ARM_CONTRAST_ROW_HEIGHT = 26
+ARM_CONTRAST_PANEL_CHROME = 120
