@@ -48,7 +48,7 @@ class ExampleContext:
     checklist: str
     check: str
     model: str
-    prompt: str
+    arm: str
     steps: tuple[PathStep, ...]
     exp_subtree: Any
     pred_subtree: Any | None
@@ -160,11 +160,7 @@ def _build_example_context(
 ) -> ExampleContext:
     source = record_source(record)
     expected_output, model_output = ensure_record_payloads(
-        record,
-        checklist=summary.checklist,
-        check=summary.check,
-        model=summary.model,
-        prompt=summary.prompt,
+        record, leaf_path=summary.path
     )
     doc_id = record.doc_id or ""
     ref = InstanceRef(source=source, doc_id=doc_id, steps=steps)
@@ -187,7 +183,7 @@ def _build_example_context(
         checklist=summary.checklist,
         check=summary.check,
         model=summary.model,
-        prompt=summary.prompt,
+        arm=summary.arm,
         steps=steps,
         exp_subtree=exp_subtree,
         pred_subtree=pred_subtree,

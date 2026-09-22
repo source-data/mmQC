@@ -23,20 +23,19 @@ from soda_mmqc.reporting.aggregate import (
 from soda_mmqc.reporting.compare import build_comparison_report
 from soda_mmqc.reporting.load import (
     discover_evaluation_checks,
-    load_flat_runs,
+    load_evaluation_dir,
 )
 from soda_mmqc.reporting.plots import plot_comparison_mean_scores
 
 
 @dataclass(frozen=True)
-class PromptScoreRow:
-    """One model × prompt score row for tables and winners."""
+class ArmScoreRow:
+    """One model x arm score row for tables and winners."""
 
     model: str
-    prompt: str
+    arm: str
     n_docs: int
-    macro: float
-    field_scores: dict[str, float]
+    field_scores: dict[str, float | None]
 
 
 @dataclass(frozen=True)
@@ -46,7 +45,7 @@ class CheckReportSummary:
     check: str
     models: tuple[str, ...]
     winners: tuple[str, ...]
-    score_rows: tuple[PromptScoreRow, ...]
+    score_rows: tuple[ArmScoreRow, ...]
     relative_page: str
     skipped_reason: str | None = None
 
@@ -61,63 +60,75 @@ class SchemaFieldRow:
     description: str
 
 
-def macro_mean(summary: RunSummary) -> float:
-    """Unweighted mean of profiled leaf-property mean scores."""
-    order = field_order(summary.manifest, summary.by_property.keys())
-    scores = [
-        summary.by_property[key].mean_score
-        for key in order
-        if key in summary.by_property
-    ]
-    if not scores:
-        return 0.0
-    return sum(scores) / len(scores)
-
-
-def score_rows_for_summaries(summaries: RunSummaries) -> list[PromptScoreRow]:
-    """Build sorted model/prompt score rows from run summaries."""
-    rows: list[PromptScoreRow] = []
-    for model in summaries.models:
-        for prompt in summaries.prompts:
-            if (model, prompt) not in summaries:
-                continue
-            summary = summaries[model, prompt]
-            order = field_order(summary.manifest, summary.by_property.keys())
-            field_scores = {
-                leaf_property_tail(key): summary.by_property[key].mean_score
-                for key in order
-                if key in summary.by_property
-            }
-            rows.append(
-                PromptScoreRow(
-                    model=model,
-                    prompt=prompt,
-                    n_docs=len(summary.records),
-                    macro=macro_mean(summary),
-                    field_scores=field_scores,
-                )
+def score_rows_for_summaries(summaries: RunSummaries) -> list[ArmScoreRow]:
+    """Build sorted model/arm score rows from run summaries."""
+    rows: list[ArmScoreRow] = []
+    # Iterate the summaries rather than the cross product of models and
+    # arms: a RunRef also carries a replicate, so there is no key to
+    # build from (model, arm) alone.
+    for summary in summaries.values():
+        order = field_order(summary.manifest, summary.by_property.keys())
+        field_scores = {
+            leaf_property_tail(key): summary.by_property[key].mean_score
+            for key in order
+            if key in summary.by_property
+        }
+        rows.append(
+            ArmScoreRow(
+                model=summary.model,
+                arm=summary.arm,
+                n_docs=len(summary.records),
+                field_scores=field_scores,
             )
-    rows.sort(key=lambda row: (row.model, row.prompt))
+        )
+    rows.sort(key=lambda row: (row.model, row.arm))
     return rows
 
 
-def winner_lines(rows: Sequence[PromptScoreRow]) -> list[str]:
-    """Best-prompt line per model from score rows."""
+def best_arm_per_property(
+    rows: Sequence[ArmScoreRow],
+) -> list[str]:
+    """Which arm scored highest on each property, per model.
+
+    This replaces `winner_lines`, which ranked arms by a mean across
+    properties. That number mixed measurements of different things: an
+    arm that improved `panel_label` and degraded `micrograph` came out
+    looking unchanged, and the one line hid both movements.
+
+    There is deliberately no overall winner. Whether a set of
+    per-property movements adds up to a better arm is the experiment's
+    claim, and it belongs in the experiment's note where the reasoning
+    is visible -- not in a library default that picks for you.
+    """
     lines: list[str] = []
-    models = sorted({row.model for row in rows})
-    for model in models:
+    for model in sorted({row.model for row in rows}):
         model_rows = [row for row in rows if row.model == model]
-        if not model_rows:
-            continue
-        best = max(model_rows, key=lambda row: row.macro)
-        lines.append(
-            f"Best prompt on {model}: {best.prompt} (macro {best.macro:.3f})"
+        properties = sorted(
+            {name for row in model_rows for name in row.field_scores}
         )
+        for name in properties:
+            scored = [
+                (row.arm, row.field_scores[name])
+                for row in model_rows
+                if row.field_scores.get(name) is not None
+            ]
+            if not scored:
+                lines.append(
+                    f"{model} / {name}: nothing applicable in any arm"
+                )
+                continue
+            arm, value = max(scored, key=lambda pair: pair[1])
+            lines.append(f"{model} / {name}: {arm} ({value:.3f})")
     return lines
 
 
-def scores_table(rows: Sequence[PromptScoreRow]) -> pd.DataFrame:
-    """Wide table: model, prompt, docs, macro, then per-field means."""
+def scores_table(rows: Sequence[ArmScoreRow]) -> pd.DataFrame:
+    """Wide table: model, arm, docs, then one column per property.
+
+    No summary column. A mean across properties mixes measurements of
+    different things, so the table reports each property and leaves the
+    judgement to the reader.
+    """
     field_names: list[str] = []
     seen: set[str] = set()
     for row in rows:
@@ -130,9 +141,8 @@ def scores_table(rows: Sequence[PromptScoreRow]) -> pd.DataFrame:
     for row in rows:
         record: dict[str, object] = {
             "model": row.model,
-            "prompt": row.prompt,
+            "arm": row.arm,
             "docs": row.n_docs,
-            "macro": round(row.macro, 3),
         }
         for field in field_names:
             value = row.field_scores.get(field)
@@ -305,7 +315,7 @@ def render_check_html(
 ) -> str:
     """Render one check report page (HTML string)."""
     rows = score_rows_for_summaries(summaries)
-    winners = winner_lines(rows)
+    winners = best_arm_per_property(rows)
     table = scores_table(rows)
     if schema is None:
         schema = load_check_schema(checklist, check)
@@ -341,10 +351,10 @@ def render_check_html(
         for line in winners:
             parts.append(f"<li>{html.escape(line)}</li>")
     else:
-        parts.append("<li><em>No prompt scores available.</em></li>")
+        parts.append("<li><em>No arm scores available.</em></li>")
     parts.append("</ul>")
 
-    parts.append("<h2>Scores by prompt</h2>")
+    parts.append("<h2>Scores by arm</h2>")
     parts.append(_df_html(table))
 
     include_js = True
@@ -353,10 +363,10 @@ def render_check_html(
         if not model_summaries:
             continue
         parts.append(f"<h2>Model: {html.escape(model)}</h2>")
-        parts.append("<h3>Mean scores per field (prompts compared)</h3>")
+        parts.append("<h3>Mean scores per field (arms compared)</h3>")
         mean_fig = plot_comparison_mean_scores(
             summaries,
-            compare="prompt",
+            compare="arm",
             model=model,
             title=f"Mean scores by field — {check} / {model}",
         )
@@ -366,7 +376,7 @@ def render_check_html(
         if include_comparison and len(model_summaries) >= 2:
             report = build_comparison_report(
                 summaries,
-                compare="prompt",
+                compare="arm",
                 model=model,
             )
             parts.append("<h3>Layer comparison overlays</h3>")
@@ -382,7 +392,7 @@ def render_check_html(
                 )
         elif include_comparison:
             parts.append(
-                "<p><em>Layer overlays skipped (need at least two prompts).</em></p>"
+                "<p><em>Layer overlays skipped (need at least two arms).</em></p>"
             )
 
     parts.append("</body></html>")
@@ -480,7 +490,7 @@ def export_fig_checklist_report(
             continue
 
         try:
-            runs = load_flat_runs(
+            runs = load_evaluation_dir(
                 ref.checklist,
                 ref.check,
                 models=list(models) if models else None,
@@ -531,7 +541,7 @@ def export_fig_checklist_report(
 
         rows = score_rows_for_summaries(summaries)
         rows = [row for row in rows if row.model in set(model_list)]
-        winners = winner_lines(rows)
+        winners = best_arm_per_property(rows)
         table = scores_table(rows)
         if not table.empty:
             table = table.copy()

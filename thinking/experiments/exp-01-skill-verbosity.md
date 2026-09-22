@@ -174,3 +174,54 @@ data.
 Analysis in
 [`notebooks/experiments/exp-01-skill-verbosity.ipynb`](../../notebooks/experiments/exp-01-skill-verbosity.ipynb),
 which reads the committed runs and never triggers one.
+
+---
+
+## Addendum, 2026-09-21: the sensitivity figure, re-derived per property
+
+**The preregistered threshold above is unchanged and stands as written.**
+This records that one number in its *justification* has since been
+re-derived, so that a reader is not misled by it. Nothing here alters a
+decision criterion; the criteria were fixed before any result was seen and
+stay fixed.
+
+The Threshold section justifies 0.01 as "about three times the per-check
+standard error the replicate probe measured at n=3 (0.0034, on the noisiest
+check, so an upper bound)".
+
+**0.0034 is not an upper bound.** It came from pooling the check's eight
+leaf properties into one instance-weighted mean, which the replicate probe
+did deliberately and which
+[`exploration-replicate-variability.md`](exploration-replicate-variability.md)
+now re-derives per property in its own addendum. Per property, on the same
+data:
+
+| | SE of a paired difference, n=3 |
+|---|---|
+| pooled across properties *(the figure cited above)* | 0.0034 |
+| `outputs[].replicate_statements` | **0.0199** |
+| `outputs[].n_reported` | 0.0081 |
+| six other properties | below 0.0040 |
+
+So 0.01 is comfortably detectable on six of eight properties, marginal on
+`n_reported`, and **below the noise floor on `replicate_statements`**,
+where no feasible replicate count reaches it — n=10 still gives 0.0109.
+
+### How to read the result, without moving the goalposts
+
+The threshold and the ≥ 8/11 agreement rule apply as preregistered. The
+refinement is in interpretation, and only in one direction — it makes a
+*null* weaker, never a positive stronger:
+
+- A difference at or above 0.01 on a property with SE below 0.0040 means
+  what the preregistration says it means.
+- A **null on `replicate_statements` is not evidence of no effect.** The
+  measurement cannot resolve 0.01 there, so that property should be
+  reported as uninformative rather than as a check that disagreed.
+- The ≥ 8/11 rule counts *checks*, not properties, so this does not change
+  how it is tallied. But if the tally turns on a check whose signal lives
+  in `replicate_statements`, say so in the result rather than letting the
+  count carry it silently.
+
+This is a limitation of the measurement, not of the run, and more sessions
+would not fix it.

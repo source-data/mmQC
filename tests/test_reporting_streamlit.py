@@ -42,24 +42,46 @@ class TestDiscoverEvaluationChecks:
         )
         assert discover_evaluation_checks() == ()
 
-    def test_finds_check_with_analysis_json(self, tmp_path: Path, monkeypatch):
+    def test_finds_check_with_a_scored_leaf(self, tmp_path: Path, monkeypatch):
+        """A model directory is a run root: its children are arms.
+
+        The analysis lives at <model>/<arm>/rep-NN/analysis.json, so a
+        file directly inside the model directory is not a scored run.
+        """
         eval_root = tmp_path / "evaluation"
-        analysis_path = (
-            eval_root / "fig-checklist" / "demo-check" / "model-b" / "analysis.json"
+        leaf = (
+            eval_root / "fig-checklist" / "demo-check" / "model-b"
+            / "pinned" / "rep-00"
         )
-        analysis_path.parent.mkdir(parents=True)
-        analysis_path.write_text(json.dumps({"prompt.1": {"flat": []}}), encoding="utf-8")
+        leaf.mkdir(parents=True)
+        (leaf / "analysis.json").write_text(
+            json.dumps({"flat": []}), encoding="utf-8"
+        )
         monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", eval_root)
         refs = discover_evaluation_checks()
         assert len(refs) == 1
         assert refs[0].checklist == "fig-checklist"
         assert refs[0].check == "demo-check"
 
+    def test_a_run_with_no_analysis_is_not_discovered(
+        self, tmp_path: Path, monkeypatch
+    ):
+        """Predictions without a score are an unscored run, not a result."""
+        eval_root = tmp_path / "evaluation"
+        leaf = (
+            eval_root / "fig-checklist" / "demo-check" / "model-b"
+            / "pinned" / "rep-00" / "doc-a"
+        )
+        leaf.mkdir(parents=True)
+        (leaf / "prediction.json").write_text("{}", encoding="utf-8")
+        monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", eval_root)
+        assert discover_evaluation_checks() == ()
+
 
 class TestMeanScorePlotSelection:
-    def test_return_instances_includes_customdata(self, prompt1_summary):
+    def test_return_instances_includes_customdata(self, arm1_summary):
         fig, inst = plot_mean_score_with_instances(
-            prompt1_summary,
+            arm1_summary,
             return_instances=True,
         )
         scatter = next(trace for trace in fig.data if trace.type == "scatter")
@@ -85,9 +107,10 @@ class TestTryLoadRunSummaries:
     def test_missing_manifest_returns_message(self, tmp_path: Path, monkeypatch):
         eval_root = tmp_path / "evaluation"
         check_eval = eval_root / "fig-checklist" / "demo-check"
-        (check_eval / "model-b").mkdir(parents=True)
-        (check_eval / "model-b" / "analysis.json").write_text(
-            json.dumps({"prompt.1": {"flat": []}}),
+        leaf = check_eval / "model-b" / "pinned" / "rep-00"
+        leaf.mkdir(parents=True)
+        (leaf / "analysis.json").write_text(
+            json.dumps({"flat": []}),
             encoding="utf-8",
         )
         checklist_root = tmp_path / "checklist" / "fig-checklist" / "demo-check"
@@ -104,9 +127,10 @@ class TestTryLoadRunSummaries:
     def test_loads_when_manifest_present(self, tmp_path: Path, monkeypatch):
         eval_root = tmp_path / "evaluation"
         check_eval = eval_root / "fig-checklist" / "demo-check"
-        (check_eval / "model-b").mkdir(parents=True)
-        (check_eval / "model-b" / "analysis.json").write_text(
-            json.dumps({"prompt.1": {"flat": []}}),
+        leaf = check_eval / "model-b" / "pinned" / "rep-00"
+        leaf.mkdir(parents=True)
+        (leaf / "analysis.json").write_text(
+            json.dumps({"flat": []}),
             encoding="utf-8",
         )
         checklist_root = tmp_path / "checklist" / "fig-checklist" / "demo-check"
@@ -161,13 +185,13 @@ class TestStreamlitSelectionParsing:
 
 
 @pytest.fixture
-def prompt1_summary():
-    from soda_mmqc.reporting import aggregate_run, load_flat_runs
+def arm1_summary():
+    from soda_mmqc.reporting import aggregate_run, load_evaluation_dir
 
-    runs = load_flat_runs(
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models="model-a",
-        prompts="prompt.1",
+        arms="pinned",
     )
     return aggregate_run(runs[0])

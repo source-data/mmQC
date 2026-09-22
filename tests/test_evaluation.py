@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from soda_mmqc.core.eval_manifest import load_eval_manifest, parse_eval_manifest
+from soda_mmqc.core.property_rollup import rollup_by_property
 from soda_mmqc.core.evaluation import FlatEvaluator
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -36,8 +37,22 @@ def _instance(result, path: str) -> dict:
     raise KeyError(path)
 
 
-def _property_summary(result, leaf_property: str) -> dict:
-    return result.by_property[leaf_property].to_dict()
+def _property_summary(result, leaf_property: str, manifest) -> dict:
+    """Roll the result's instances up for one property.
+
+    The evaluator no longer produces this itself: rolling up needs the
+    manifest's thresholds, which are tunable, so it happens at read time
+    in `core.property_rollup` rather than being stored at scoring time.
+    """
+    rollup = rollup_by_property(
+        [i.to_dict() for i in result.instances], manifest
+    )[leaf_property]
+    return {
+        "mean_score": rollup.mean_score,
+        "n_scored": rollup.n_scored,
+        "layer1_counts": rollup.layer1_counts,
+        "layer2_counts": rollup.layer2_counts,
+    }
 
 
 class TestExampleA:
@@ -70,23 +85,30 @@ class TestExampleA:
             for row in result.by_list["panels"]["rows"]
         )
 
-        assert _property_summary(result, "item.label") == {
+        assert _property_summary(result, "item.label", evaluator.manifest) == {
             "mean_score": 1.0,
+            "n_scored": 1,
             "layer1_counts": {"correct_applicable": 1},
             "layer2_counts": {"match": 1},
         }
-        assert _property_summary(result, "item.status") == {
-            "mean_score": 0.0,
+        # Correctly not applicable, so nothing was eligible to score. This
+        # asserted `mean_score: 0.0` before -- indistinguishable from a
+        # model that answered and got it wrong, and a false zero in every
+        # mean taken over this property.
+        assert _property_summary(result, "item.status", evaluator.manifest) == {
+            "mean_score": None,
+            "n_scored": 0,
             "layer1_counts": {"correct_NA": 1},
             "layer2_counts": {},
         }
-        assert _property_summary(result, "panels[].status") == {
+        assert _property_summary(result, "panels[].status", evaluator.manifest) == {
             "mean_score": 1.0,
+            "n_scored": 1,
             "layer1_counts": {"correct_applicable": 1, "correct_NA": 1},
             "layer2_counts": {"TP": 1},
         }
-        assert _property_summary(result, "tags")["mean_score"] == 1.0
-        assert _property_summary(result, "tags")["layer1_counts"] == {}
+        assert _property_summary(result, "tags", evaluator.manifest)["mean_score"] == 1.0
+        assert _property_summary(result, "tags", evaluator.manifest)["layer1_counts"] == {}
         assert result.aggregate_layer1_counts() == {
             "correct_applicable": 6,
             "correct_NA": 2,
@@ -100,7 +122,7 @@ class TestExampleB:
         pred["tags"] = ["alpha", "beta", "gamma"]
         result = evaluator.evaluate(BASELINE_GOLD, pred)
         assert _instance(result, "tags")["score"] == pytest.approx(2 / 3)
-        assert _property_summary(result, "tags")["mean_score"] == pytest.approx(2 / 3)
+        assert _property_summary(result, "tags", evaluator.manifest)["mean_score"] == pytest.approx(2 / 3)
 
     def test_b3_total_mismatch(self, evaluator: FlatEvaluator):
         gold = copy.deepcopy(BASELINE_GOLD)
@@ -119,7 +141,7 @@ class TestExampleC:
         inst = _instance(result, "item.label")
         assert inst["score"] == 0.0
         assert inst["layer2"] == "mismatch"
-        assert _property_summary(result, "item.label")["layer2_counts"] == {
+        assert _property_summary(result, "item.label", evaluator.manifest)["layer2_counts"] == {
             "mismatch": 1
         }
 
@@ -156,7 +178,7 @@ class TestExampleD:
         assert _instance(result, "panels[0].status")["layer2"] == "FN"
         assert _instance(result, "panels[0].id")["score"] == 0.0
         assert _instance(result, "panels[1].label")["layer2"] == "match"
-        assert _property_summary(result, "panels[].status")["mean_score"] == pytest.approx(
+        assert _property_summary(result, "panels[].status", evaluator.manifest)["mean_score"] == pytest.approx(
             0.0
         )
 
@@ -238,26 +260,21 @@ class TestGoldenSnapshots:
         pred_mutator(pred)
         result = evaluator.evaluate(BASELINE_GOLD, pred)
 
+        # The snapshot pins what the evaluator *measured*, which is what
+        # analysis.json stores. Rollups are derived at read time from the
+        # manifest in force then, so pinning them here would pin a
+        # threshold-dependent number into a fixture about measurement.
+        actual = result.to_dict()
+
         snapshot_path = FIXTURES / "evaluation_snapshots" / f"{snapshot_name}.json"
         if not snapshot_path.exists():
-            payload = {
-                "by_property": {
-                    key: summary.to_dict()
-                    for key, summary in result.by_property.items()
-                },
-                "by_list": result.by_list,
-            }
             snapshot_path.parent.mkdir(parents=True, exist_ok=True)
-            snapshot_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            snapshot_path.write_text(
+                json.dumps(actual, indent=2) + "\n", encoding="utf-8"
+            )
             pytest.fail(f"Wrote new snapshot at {snapshot_path}; re-run to verify")
 
         expected = json.loads(snapshot_path.read_text(encoding="utf-8"))
-        actual = {
-            "by_property": {
-                key: summary.to_dict() for key, summary in result.by_property.items()
-            },
-            "by_list": result.by_list,
-        }
         assert actual == expected
 
 

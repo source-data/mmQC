@@ -7,12 +7,15 @@ from pathlib import Path
 
 import pytest
 
+from soda_mmqc.core.eval_manifest import load_eval_manifest
+from soda_mmqc.core.property_rollup import rollup_by_property
 from soda_mmqc.core.scoring import ModelResult, analyze_results
 
 CHECK_DIR = (
     Path(__file__).resolve().parents[1]
     / "soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar"
 )
+MANIFEST_PATH = CHECK_DIR / "eval-manifest.json"
 SCHEMA_WRAPPER = json.loads(
     (CHECK_DIR / "schema.json").read_text(encoding="utf-8")
 )
@@ -62,9 +65,13 @@ class TestAnalyzeResults:
         analysis = record["analysis"]
         assert "instances" in analysis
         assert "by_list" in analysis
-        assert "by_property" in analysis
-        micrograph = analysis["by_property"]["outputs[].micrograph"]
-        assert micrograph["mean_score"] == 1.0
+        # No rollup is stored: it depends on manifest thresholds, which we
+        # tune, so it is derived when a report is built.
+        assert "by_property" not in analysis
+        rollups = rollup_by_property(
+            analysis["instances"], load_eval_manifest(MANIFEST_PATH)
+        )
+        assert rollups["outputs[].micrograph"].mean_score == 1.0
 
     def test_missing_manifest_raises(self, tmp_path: Path):
         with pytest.raises(FileNotFoundError, match="eval-manifest"):

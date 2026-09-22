@@ -9,7 +9,7 @@ import pytest
 
 from soda_mmqc.reporting import (
     comparison_errors_table,
-    load_flat_runs,
+    load_evaluation_dir,
     show_comparison_errors,
     show_layer1_errors,
     show_layer2_errors,
@@ -52,38 +52,38 @@ class TestSortFrame:
 class TestComparisonErrorsTable:
     @pytest.fixture
     def summaries(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts=["prompt.1", "prompt.2"],
+            arms=["pinned", "micrograph-scale-bar@v2"],
         )
         return summarize_runs(runs)
 
-    def test_prompt_contrast_includes_prompt_column(self, summaries):
+    def test_arm_contrast_includes_arm_column(self, summaries):
         frame = comparison_errors_table(
             summaries,
-            compare="prompt",
+            compare="arm",
             model="model-a",
         )
         if frame.empty:
             pytest.skip("no layer-2 errors in fixture run")
-        assert "prompt" in frame.columns
-        assert set(frame["prompt"].unique()).issubset({"prompt.1", "prompt.2"})
+        assert "arm" in frame.columns
+        assert set(frame["arm"].unique()).issubset({"pinned", "micrograph-scale-bar@v2"})
 
-    def test_prompt2_has_layer2_matching_errors(self, summaries):
+    def test_second_arm_has_layer2_matching_errors(self, summaries):
         frame = comparison_errors_table(
             summaries,
-            compare="prompt",
+            compare="arm",
             model="model-a",
         )
-        prompt2 = frame.loc[frame["prompt"] == "prompt.2"]
-        assert not prompt2.empty
-        assert prompt2["layer2"].isin({"FP", "FN", "mismatch"}).all()
-        assert "layer1" not in prompt2.columns
+        arm2 = frame.loc[frame["arm"] == "micrograph-scale-bar@v2"]
+        assert not arm2.empty
+        assert arm2["layer2"].isin({"FP", "FN", "mismatch"}).all()
+        assert "layer1" not in arm2.columns
 
-    def test_model_contrast_requires_prompt(self, summaries):
-        with pytest.raises(ValueError, match="prompt is required"):
+    def test_model_contrast_requires_arm(self, summaries):
+        with pytest.raises(ValueError, match="arm is required"):
             comparison_errors_table(summaries, compare="model")
 
 
@@ -128,14 +128,17 @@ class TestShowTable:
         assert mock_display.call_count >= 1
 
     def test_show_layer1_errors_presets_layer1_column_search(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-b",
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         summaries = summarize_runs(runs)
-        summary = summaries["model-b", "prompt.2"]
+        summary = next(
+            s for s in summaries.values()
+            if s.model == "model-b" and s.arm == "micrograph-scale-bar@v2"
+        )
 
         with patch("soda_mmqc.reporting.display.show_table") as mock_show:
             show_layer1_errors(summary, layer1="spurious_applicable")
@@ -146,14 +149,17 @@ class TestShowTable:
         assert "layer1" in passed_frame.columns
 
     def test_show_layer2_errors_filters_field(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         summaries = summarize_runs(runs)
-        summary = summaries["model-a", "prompt.2"]
+        summary = next(
+            s for s in summaries.values()
+            if s.model == "model-a" and s.arm == "micrograph-scale-bar@v2"
+        )
 
         with patch("soda_mmqc.reporting.display.show_table") as mock_show:
             show_layer2_errors(summary, field="micrograph")
@@ -163,19 +169,19 @@ class TestShowTable:
         assert "layer1" not in passed_frame.columns
 
     def test_show_comparison_errors_delegates(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts=["prompt.1", "prompt.2"],
+            arms=["pinned", "micrograph-scale-bar@v2"],
         )
         summaries = summarize_runs(runs)
         with patch("soda_mmqc.reporting.display.show_table") as mock_show:
             show_comparison_errors(
                 summaries,
-                compare="prompt",
+                compare="arm",
                 model="model-a",
             )
         mock_show.assert_called_once()
         passed_frame = mock_show.call_args[0][0]
-        assert "prompt" in passed_frame.columns
+        assert "arm" in passed_frame.columns

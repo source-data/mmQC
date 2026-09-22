@@ -325,6 +325,22 @@ def _write_predictions_dir(
     return root
 
 
+
+def _rollups(analysis: Dict[str, Any], checklist: str, check: str):
+    """Roll a record's instances up, the way a report would.
+
+    analysis.json stores measurements, not rollups: aggregating needs the
+    manifest's thresholds, which are tunable, so it happens at read time.
+    """
+    from soda_mmqc.core.eval_manifest import load_eval_manifest
+    from soda_mmqc.core.property_rollup import rollup_by_property
+
+    manifest = load_eval_manifest(
+        resolve_check_dir(checklist, check) / "eval-manifest.json"
+    )
+    return rollup_by_property(analysis["instances"], manifest)
+
+
 class TestLoadPredictions:
     def test_loads_directory_layout(self, tmp_path: Path):
         payload = {"a/content/1": _gold("A"), "b/content/2": _gold("B")}
@@ -463,12 +479,10 @@ class TestScoreCheck:
         assert record["metadata"]["source"] == "doc-a/content/1"
         assert record["expected_output"] == pilot["golds"]["doc-a/content/1"]
         assert record["model_output"] == predictions["doc-a/content/1"]
-        assert (
-            record["analysis"]["by_property"]["outputs[].micrograph"][
-                "mean_score"
-            ]
-            == 1.0
+        rollups = _rollups(
+            record["analysis"], "fig-checklist", "micrograph-scale-bar"
         )
+        assert rollups["outputs[].micrograph"].mean_score == 1.0
 
     def test_scores_only_the_examples_that_have_predictions(self, pilot):
         """A partial run over a handful of examples is still scoreable."""
@@ -847,10 +861,15 @@ class TestScoreCheckOnRealExamples:
                 instance["score"] == 1.0
                 for instance in analysis["instances"]
             )
+            rollups = _rollups(analysis, "Retired-checklist", REAL_CHECK)
             assert all(
-                summary["mean_score"] == 1.0
-                for summary in analysis["by_property"].values()
+                rollup.mean_score == 1.0
+                for rollup in rollups.values()
+                # A property nothing was applicable for scores None, not
+                # 1.0 -- it was not measured, so it cannot be perfect.
+                if rollup.mean_score is not None
             )
+            assert any(r.mean_score == 1.0 for r in rollups.values())
 
     def test_flat_records_carry_the_real_gold_and_metadata(
         self, real_pilot, tmp_path: Path
@@ -939,12 +958,10 @@ class TestScoreCheckOnRealExamples:
                 "layer2": "FN",
             }
         ]
-        assert (
-            records[0]["analysis"]["by_property"][
-                "outputs[].is_a_micrograph"
-            ]["layer2_counts"]["FN"]
-            == 1
+        rollups = _rollups(
+            records[0]["analysis"], "Retired-checklist", REAL_CHECK
         )
+        assert rollups["outputs[].is_a_micrograph"].layer2_counts["FN"] == 1
         # The other four figures are untouched.
         for record in records[1:]:
             assert all(

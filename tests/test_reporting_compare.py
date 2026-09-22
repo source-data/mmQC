@@ -8,7 +8,7 @@ import pytest
 
 from soda_mmqc.reporting import (
     build_comparison_report,
-    load_flat_runs,
+    load_evaluation_dir,
     plot_comparison_layer_s,
     show_comparison_report,
     summarize_runs,
@@ -34,71 +34,71 @@ MODEL_A = "model-a"
 
 
 @pytest.fixture
-def summaries_prompt():
-    runs = load_flat_runs(
+def summaries_arm():
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models=MODEL_A,
-        prompts=["prompt.1", "prompt.2", "prompt.3"],
+        arms=["pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3"],
     )
     return summarize_runs(runs)
 
 
 @pytest.fixture
 def summaries_model():
-    runs = load_flat_runs(
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models=[MODEL_A, "model-b"],
-        prompts="prompt.1",
+        arms="pinned",
     )
     return summarize_runs(runs)
 
 
 class TestComparisonReport:
-    def test_build_prompt_contrast_report(self, summaries_prompt):
+    def test_build_arm_contrast_report(self, summaries_arm):
         report = build_comparison_report(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
-        assert report.compare == "prompt"
+        assert report.compare == "arm"
         assert report.anchor == MODEL_A
-        assert report.series_labels == ("prompt.1", "prompt.2", "prompt.3")
+        assert report.series_labels == ("pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3")
         assert report.layer_s_figure is not None
         assert len(report.layer1_figure.data) > 0
         assert len(report.layer2_binary_figure.data) > 0
         assert len(report.layer2_graded_figure.data) > 0
-        assert "prompt" in report.errors_table.columns
+        assert "arm" in report.errors_table.columns
 
     def test_build_model_contrast_report(self, summaries_model):
         report = build_comparison_report(
             summaries_model,
             compare="model",
-            prompt="prompt.1",
+            arm="pinned",
         )
         assert report.compare == "model"
-        assert report.anchor == "prompt.1"
+        assert report.anchor == "pinned"
         assert report.series_labels == (MODEL_A, "model-b")
         assert "model" in report.errors_table.columns
 
-    def test_prompt_contrast_layer2_errors_only(self, summaries_prompt):
+    def test_arm_contrast_layer2_errors_only(self, summaries_arm):
         report = build_comparison_report(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
-        prompt2_errors = report.errors_table.loc[
-            report.errors_table["prompt"] == "prompt.2"
+        arm2_errors = report.errors_table.loc[
+            report.errors_table["arm"] == "micrograph-scale-bar@v2"
         ]
-        assert not prompt2_errors.empty
-        assert prompt2_errors["layer2"].isin({"FP", "FN", "mismatch"}).all()
-        assert "layer1" not in prompt2_errors.columns
+        assert not arm2_errors.empty
+        assert arm2_errors["layer2"].isin({"FP", "FN", "mismatch"}).all()
+        assert "layer1" not in arm2_errors.columns
 
-    def test_plot_comparison_layer_s_series(self, summaries_prompt):
+    def test_plot_comparison_layer_s_series(self, summaries_arm):
         fig = plot_comparison_layer_s(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
         assert fig is not None
@@ -111,12 +111,12 @@ class TestComparisonReport:
             report = show_comparison_report(
                 summaries_model,
                 compare="model",
-                prompt="prompt.1",
+                arm="pinned",
                 show_errors_table=False,
             )
         assert report.compare == "model"
         assert len(report.errors_table.columns) > 0
 
-    def test_requires_selector(self, summaries_prompt):
+    def test_requires_selector(self, summaries_arm):
         with pytest.raises(ValueError, match="model is required"):
-            build_comparison_report(summaries_prompt, compare="prompt")
+            build_comparison_report(summaries_arm, compare="arm")

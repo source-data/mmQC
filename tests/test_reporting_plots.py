@@ -9,7 +9,7 @@ from soda_mmqc.reporting import (
     aggregate_run,
     build_dashboard,
     layer_counts_by_property,
-    load_flat_runs,
+    load_evaluation_dir,
     plot_comparison_layer1,
     plot_comparison_layer2_binary,
     plot_comparison_layer2_graded,
@@ -60,56 +60,56 @@ MODEL_A = "model-a"
 
 
 @pytest.fixture
-def prompt1_summary():
-    runs = load_flat_runs(
+def arm1_summary():
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models=MODEL_A,
-        prompts="prompt.1",
+        arms="pinned",
     )
     return aggregate_run(runs[0])
 
 
 @pytest.fixture
-def summaries_prompt():
-    runs = load_flat_runs(
+def summaries_arm():
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models=MODEL_A,
-        prompts=["prompt.1", "prompt.2", "prompt.3"],
+        arms=["pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3"],
     )
     return summarize_runs(runs)
 
 
 @pytest.fixture
 def summaries_model():
-    runs = load_flat_runs(
+    runs = load_evaluation_dir(
         "fig-checklist",
         "micrograph-scale-bar",
         models=[MODEL_A, "model-b"],
-        prompts="prompt.1",
+        arms="pinned",
     )
     return summarize_runs(runs)
 
 
 class TestSingleRunPlots:
-    def test_plot_layer_s_bar(self, prompt1_summary):
-        counts = prompt1_summary.by_list_row_counts["outputs"]
+    def test_plot_layer_s_bar(self, arm1_summary):
+        counts = arm1_summary.by_list_row_counts["outputs"]
         fig = plot_layer_s_bar(counts, title="Layer S test", list_key="outputs")
         assert len(fig.data) == 1
         assert list(fig.data[0].x) == list(LAYER_S_ORDER)
 
-    def test_plot_layer1_stacked(self, prompt1_summary):
+    def test_plot_layer1_stacked(self, arm1_summary):
         frame = layer_counts_by_property(
-            prompt1_summary, LAYER1_ORDER, "layer1_counts"
+            arm1_summary, LAYER1_ORDER, "layer1_counts"
         )
         fig = plot_layer1_stacked(frame, title="Layer 1 test")
         assert len(fig.data) > 0
         all_fields = {field for trace in fig.data for field in trace.x}
         assert "micrograph" in all_fields
 
-    def test_plot_layer2_binary_and_graded(self, prompt1_summary):
-        binary_df, graded_df = split_layer2_by_metric(prompt1_summary)
+    def test_plot_layer2_binary_and_graded(self, arm1_summary):
+        binary_df, graded_df = split_layer2_by_metric(arm1_summary)
         fig_bin = plot_layer2_stacked(
             binary_df,
             LAYER2_BINARY_ORDER,
@@ -125,18 +125,18 @@ class TestSingleRunPlots:
         assert len(fig_bin.data) > 0
         assert len(fig_graded.data) > 0
 
-    def test_plot_mean_score_bars(self, prompt1_summary):
-        frame = mean_scores_frame(prompt1_summary)
+    def test_plot_mean_score_bars(self, arm1_summary):
+        frame = mean_scores_frame(arm1_summary)
         fig = plot_mean_score_bars(frame)
         assert len(fig.data) == 1
         assert len(fig.data[0].y) == len(frame)
 
-    def test_plot_mean_score_with_instances(self, prompt1_summary):
-        frame = mean_scores_frame(prompt1_summary)
-        inst = applicable_instance_scores_frame(prompt1_summary)
+    def test_plot_mean_score_with_instances(self, arm1_summary):
+        frame = mean_scores_frame(arm1_summary)
+        inst = applicable_instance_scores_frame(arm1_summary)
         fields = frame["field"].tolist()
         field_to_x = _field_numeric_positions(fields, spacing=MEAN_SCORE_BAR_SPACING)
-        fig = plot_mean_score_with_instances(prompt1_summary, seed=0)
+        fig = plot_mean_score_with_instances(arm1_summary, seed=0)
         assert len(fig.data) == 2
         assert fig.data[0].type == "bar"
         assert fig.data[1].type == "scatter"
@@ -144,11 +144,11 @@ class TestSingleRunPlots:
         assert len(fig.data[1].x) == len(inst)
         for x_val, row in zip(fig.data[1].x, inst.itertuples(index=False), strict=True):
             assert abs(x_val - field_to_x[row.field]) <= 0.25
-        fig_repeat = plot_mean_score_with_instances(prompt1_summary, seed=0)
+        fig_repeat = plot_mean_score_with_instances(arm1_summary, seed=0)
         assert list(fig.data[1].x) == list(fig_repeat.data[1].x)
 
-    def test_build_dashboard_layout(self, prompt1_summary):
-        fig = build_dashboard(prompt1_summary)
+    def test_build_dashboard_layout(self, arm1_summary):
+        fig = build_dashboard(arm1_summary)
         assert fig.layout.template == pio.templates[PLOTLY_TEMPLATE]
         assert fig.layout.barmode == "stack"
         assert hasattr(fig.layout, "xaxis4")
@@ -169,10 +169,10 @@ class TestSingleRunPlots:
 
 
 class TestComparisonPlots:
-    def test_prompt_contrast_layer1_series_count(self, summaries_prompt):
+    def test_arm_contrast_layer1_series_count(self, summaries_arm):
         fig = plot_comparison_layer1(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
         assert len(fig.data) > 0
@@ -183,8 +183,8 @@ class TestComparisonPlots:
             if trace.customdata is not None
             for row in trace.customdata
         }
-        assert series == {"prompt.1", "prompt.2", "prompt.3"}
-        assert set(fig.data[0].x) == {"prompt.1", "prompt.2", "prompt.3"}
+        assert series == {"pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3"}
+        assert set(fig.data[0].x) == {"pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3"}
         assert fig.data[0].orientation in (None, "v")
         subplot_titles = [annotation.text for annotation in fig.layout.annotations]
         assert len(subplot_titles) == 7
@@ -209,7 +209,7 @@ class TestComparisonPlots:
         fig = plot_comparison_layer1(
             summaries_model,
             compare="model",
-            prompt="prompt.1",
+            arm="pinned",
         )
         series = {
             row[1]
@@ -227,22 +227,22 @@ class TestComparisonPlots:
                 patterns.add(shape)
         assert "/" in patterns
 
-    def test_comparison_layer2_binary(self, summaries_prompt):
+    def test_comparison_layer2_binary(self, summaries_arm):
         fig = plot_comparison_layer2_binary(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
         assert len(fig.data) > 0
 
-    def test_comparison_layer2_graded(self, summaries_prompt):
+    def test_comparison_layer2_graded(self, summaries_arm):
         fig = plot_comparison_layer2_graded(
-            summaries_prompt,
-            compare="prompt",
+            summaries_arm,
+            compare="arm",
             model=MODEL_A,
         )
         assert len(fig.data) > 0
 
-    def test_comparison_requires_selector(self, summaries_prompt):
+    def test_comparison_requires_selector(self, summaries_arm):
         with pytest.raises(ValueError, match="model is required"):
-            plot_comparison_layer1(summaries_prompt, compare="prompt")
+            plot_comparison_layer1(summaries_arm, compare="arm")
