@@ -19,6 +19,8 @@ from soda_mmqc.reporting.styles import (
     ARM_CONTRAST_ROW_GAP,
     ARM_CONTRAST_ROW_HEIGHT,
     ARM_LEVELS_COLORS,
+    CHECK_LAYERS_PANEL_SPACING,
+    CHECK_LAYERS_TITLE_STANDOFF,
     ARM_CONTRAST_ZERO_LINE_COLOR,
     COMPARISON_SERIES_OPACITIES,
     COMPARISON_SERIES_PATTERNS,
@@ -1480,7 +1482,7 @@ def plot_check_layers(
         rows=1,
         cols=3,
         subplot_titles=("Layer S", "Layer 1", "Layer 2"),
-        horizontal_spacing=0.07,
+        horizontal_spacing=CHECK_LAYERS_PANEL_SPACING,
     )
 
     _stacked_layer_panel(
@@ -1512,9 +1514,16 @@ def plot_check_layers(
         )
 
     fig.update_layout(barmode="stack", title_text=title, height=520)
-    fig.update_yaxes(title_text="rows", row=1, col=1)
-    fig.update_yaxes(title_text="instances", row=1, col=2)
-    fig.update_yaxes(title_text="mean_score", range=[0, 1], row=1, col=3)
+    # An explicit standoff, because plotly's automatic one is computed
+    # from the tick labels and pushed these titles out of their own panel.
+    for col, label in enumerate(("rows", "instances", "mean_score"), start=1):
+        fig.update_yaxes(
+            title_text=label,
+            title_standoff=CHECK_LAYERS_TITLE_STANDOFF,
+            row=1,
+            col=col,
+        )
+    fig.update_yaxes(range=[0, 1], row=1, col=3)
     return _apply_plot_template(fig)
 
 

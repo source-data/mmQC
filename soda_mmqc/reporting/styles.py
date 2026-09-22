@@ -93,3 +93,10 @@ STACKED_COUNTS_POSITION_WIDTH = 78
 # Zero inside a group: a check's variants are two halves of one
 # measurement and should touch.
 STACKED_COUNTS_GROUP_GAP = 0.6
+
+# plot_check_layers: room between the three panels, and how far a
+# y-axis title sits from its own axis. Plotly's automatic standoff
+# put `instances` and `mean_score` left of their panel and onto the
+# neighbour; rotated tick labels need the panels further apart.
+CHECK_LAYERS_PANEL_SPACING = 0.12
+CHECK_LAYERS_TITLE_STANDOFF = 5

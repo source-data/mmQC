@@ -907,6 +907,35 @@ class TestCheckLayers:
         assert len(set(colors)) == 2
         assert colors == [colors[0], colors[1], colors[0], colors[1]]
 
+    def test_the_y_titles_hug_their_own_axis(self):
+        """Plotly's automatic standoff pushed `instances` and `mean_score`
+        left of their own panel and onto the one beside it."""
+        fig = self._fig()
+        layout = fig.layout.to_plotly_json()
+        standoffs = {
+            (layout[key].get("title") or {}).get("standoff")
+            for key in layout
+            if key.startswith("yaxis")
+        }
+        assert standoffs and None not in standoffs
+        assert max(standoffs) <= 10
+
+    def test_the_panels_are_not_crowded_together(self):
+        """Rotated tick labels run past a panel's own domain, so the
+        neighbour needs room."""
+        fig = self._fig()
+        layout = fig.layout.to_plotly_json()
+        domains = sorted(
+            layout[key]["domain"]
+            for key in layout
+            if key.startswith("xaxis") and layout[key].get("domain")
+        )
+        gaps = [
+            round(nxt[0] - cur[1], 4)
+            for cur, nxt in zip(domains, domains[1:])
+        ]
+        assert gaps and min(gaps) >= 0.1, f"panels only {gaps} apart"
+
     def test_the_arm_legend_matches_the_layer_2_colours(self):
         fig = self._fig()
         third = next(t for t in fig.data if t.xaxis == "x3")
