@@ -72,6 +72,11 @@ PLOTLY_TEMPLATE = "plotly_white"
 ARM_CONTRAST_BAR_COLOR = "#475569"
 ARM_CONTRAST_ZERO_LINE_COLOR = "#0f172a"
 
-# Vertical room per property row, and per-panel chrome, in pixels.
+# Vertical room per property row, per-panel chrome, and the gap between
+# panels -- all in pixels. The gap is converted to plotly's fractional
+# `vertical_spacing` against the figure's own height, because that
+# fraction applies between *every* pair of rows: a fixed 0.08 spends
+# 80% of an eleven-panel figure on whitespace.
 ARM_CONTRAST_ROW_HEIGHT = 26
 ARM_CONTRAST_PANEL_CHROME = 120
+ARM_CONTRAST_ROW_GAP = 70

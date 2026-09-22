@@ -16,6 +16,7 @@ from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
     ARM_CONTRAST_BAR_COLOR,
     ARM_CONTRAST_PANEL_CHROME,
+    ARM_CONTRAST_ROW_GAP,
     ARM_CONTRAST_ROW_HEIGHT,
     ARM_CONTRAST_ZERO_LINE_COLOR,
     COMPARISON_SERIES_OPACITIES,
@@ -978,10 +979,42 @@ def build_dashboard(
     return _apply_plot_template(fig)
 
 
+def _strip_shared_list_root(properties: Sequence[str]) -> list[str]:
+    """Drop the list root shared by every property of one panel.
+
+    A per-check panel's properties all hang off the same output list, so
+    every tick read ``outputs[].something``. The root is what the panel
+    title already implies, and ten characters of it on a 49-character
+    label is the difference between a panel with room for its bars and
+    one whose labels overflow into its neighbour.
+
+    Only a root shared by *all* of them is dropped, and never the whole
+    label: a check with two lists would otherwise collide ``a[].name``
+    with ``b[].name``. What remains keeps any deeper path, so
+    ``units_provided[].axis`` stays apart from
+    ``unit_definition_as_provided[].axis``.
+    """
+    if not properties:
+        return []
+    candidates: list[str] = []
+    first = properties[0]
+    index = first.find("[].")
+    while index != -1:
+        candidates.append(first[: index + 3])
+        index = first.find("[].", index + 1)
+    for prefix in reversed(candidates):
+        if all(
+            prop.startswith(prefix) and len(prop) > len(prefix)
+            for prop in properties
+        ):
+            return [prop[len(prefix):] for prop in properties]
+    return list(properties)
+
+
 def plot_arm_contrast_by_check(
     contrast: pd.DataFrame,
     *,
-    columns: int = 2,
+    columns: int = 1,
     title: str = "Paired arm contrast, per property",
     xlabel: str = "difference in mean_score",
 ) -> go.Figure:
@@ -1002,10 +1035,13 @@ def plot_arm_contrast_by_check(
     neutral colour because which direction counts as better is the
     experiment's claim.
 
-    Two columns by default rather than the four
-    ``_comparison_subplot_grid`` packs: that grid suits vertical bars over
-    short categories, and a property label here runs to 49 characters, so
-    at a quarter width the label crowds out the bar it belongs to.
+    One column by default, not the four ``_comparison_subplot_grid``
+    packs. That grid suits vertical bars over short categories; here
+    plotly hangs each y tick label outside its panel and into whatever
+    sits to the left, so at two columns the right panel's labels were
+    drawn across the left panel's bars and the two titles ran together.
+    A 40-character label needs the full width. ``columns`` raises it for
+    a check set with shorter names.
     """
     if contrast.empty:
         fig = go.Figure()
@@ -1027,6 +1063,13 @@ def plot_arm_contrast_by_check(
         for index in range(rows)
     ]
 
+    # `vertical_spacing` is a fraction of the whole figure applied between
+    # every pair of rows, so a constant one does not survive being stacked:
+    # ten gaps at 0.08 leave the panels a fifth of the height. Fix the gap
+    # in pixels and derive the fraction from the height it produces.
+    gap = ARM_CONTRAST_ROW_GAP if rows > 1 else 0
+    total_height = sum(row_heights) + gap * (rows - 1)
+
     fig = make_subplots(
         rows=rows,
         cols=cols,
@@ -1034,7 +1077,7 @@ def plot_arm_contrast_by_check(
         shared_xaxes=False,
         shared_yaxes=False,
         row_heights=row_heights,
-        vertical_spacing=_COMPARISON_SUBPLOT_VERTICAL_SPACING,
+        vertical_spacing=(gap / total_height) if rows > 1 else 0.0,
         horizontal_spacing=_COMPARISON_SUBPLOT_HORIZONTAL_SPACING,
     )
 
@@ -1052,7 +1095,7 @@ def plot_arm_contrast_by_check(
         fig.add_trace(
             go.Bar(
                 x=panel["difference"].astype(float).tolist(),
-                y=panel["property"].tolist(),
+                y=_strip_shared_list_root(panel["property"].tolist()),
                 orientation="h",
                 marker_color=ARM_CONTRAST_BAR_COLOR,
                 error_x=(
@@ -1079,11 +1122,22 @@ def plot_arm_contrast_by_check(
     # zoom, and a reader comparing panels needs them equal before touching
     # anything.
     span = _arm_contrast_x_range(contrast)
-    fig.update_xaxes(range=list(span), title_text=xlabel)
+    fig.update_xaxes(range=list(span))
     fig.update_yaxes(autorange="reversed")
+
+    # The bottom panel of each column names the axis; every panel naming it
+    # is eleven copies of the same four words.
+    for col in range(1, cols + 1):
+        bottom = max(
+            row
+            for row in range(1, rows + 1)
+            if (row - 1) * cols + (col - 1) < len(checks)
+        )
+        fig.update_xaxes(title_text=xlabel, row=bottom, col=col)
+
     fig.update_layout(
         title_text=title,
-        height=sum(row_heights),
+        height=total_height,
         showlegend=False,
     )
     return _apply_plot_template(fig)

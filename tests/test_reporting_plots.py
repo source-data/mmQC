@@ -311,17 +311,19 @@ class TestArmContrastByCheck:
         titles = [annotation.text for annotation in fig.layout.annotations]
         assert titles == ["micrograph-scale-bar", "plot-axis-units"]
 
-    def test_a_tick_drops_the_root_but_keeps_the_json_path(self, contrast):
-        """The panel title carries the check, so the tick need not.
+    def test_a_tick_drops_the_path_root_but_stays_unambiguous(self, contrast):
+        """The panel title carries the check, so the tick need not -- and
+        nor need it carry the `outputs[]` root every property shares.
 
-        The within-record path must stay: plot-axis-units has two distinct
-        properties tailing in `axis`, and they share one panel.
+        What distinguishes two properties must survive: plot-axis-units
+        has two tailing in `axis`, and they share one panel.
         """
         fig = plot_arm_contrast_by_check(contrast)
         labels = {y for trace in fig.data for y in (trace.y or ())}
-        assert "outputs[].units_provided[].axis" in labels
-        assert "outputs[].unit_definition_as_provided[].axis" in labels
+        assert "units_provided[].axis" in labels
+        assert "unit_definition_as_provided[].axis" in labels
         assert not any(label.startswith("plot-axis-units:") for label in labels)
+        assert not any(label.startswith("outputs[]") for label in labels)
 
     def test_the_x_axis_is_shared_so_panels_compare(self, contrast):
         """Per-panel autoscaling would make a 0.002 difference look like
@@ -390,17 +392,21 @@ class TestArmContrastLayout:
         }
         return len(starts)
 
-    def test_two_columns_by_default(self):
+    def test_one_column_by_default(self):
+        """Plotly hangs y tick labels outside the panel, into whatever is
+        to its left. At two columns the right panel's labels landed on
+        the left panel's bars; a 40-character label needs the full width.
+        """
         fig = plot_arm_contrast_by_check(
             self._frame([("a", 2), ("b", 2), ("c", 2), ("d", 2)])
         )
-        assert self._column_count(fig) == 2
-
-    def test_the_caller_can_widen_it(self):
-        fig = plot_arm_contrast_by_check(
-            self._frame([("a", 2), ("b", 2), ("c", 2), ("d", 2)]), columns=1
-        )
         assert self._column_count(fig) == 1
+
+    def test_the_caller_can_pack_it_tighter(self):
+        fig = plot_arm_contrast_by_check(
+            self._frame([("a", 2), ("b", 2), ("c", 2), ("d", 2)]), columns=2
+        )
+        assert self._column_count(fig) == 2
 
     def test_a_row_is_only_as_tall_as_its_tallest_panel(self):
         """A row holding a 2-bar panel should not be sized for an 8-bar one."""
@@ -411,3 +417,124 @@ class TestArmContrastLayout:
             self._frame([("a", 8), ("b", 8), ("c", 8), ("d", 8)])
         )
         assert lopsided.layout.height < uniform.layout.height
+
+
+class TestArmContrastTickLabels:
+    """Inside a per-check panel, the list root is redundant.
+
+    Every property of a check hangs off the same output list, so every
+    tick began `outputs[].`. Ten wasted characters on a 49-character
+    label is the difference between a panel that has room for its bars
+    and one whose labels overflow into the panel beside it.
+    """
+
+    @staticmethod
+    def _frame(check, properties):
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {
+                    "check": check,
+                    "property": prop,
+                    "path": f"{check}::::{prop}",
+                    "difference": 0.01,
+                    "se": 0.001,
+                }
+                for prop in properties
+            ]
+        )
+
+    def _labels(self, fig):
+        return {y for trace in fig.data for y in (trace.y or ())}
+
+    def test_the_shared_list_root_goes(self):
+        fig = plot_arm_contrast_by_check(
+            self._frame("stat-test", ["outputs[].panel_label", "outputs[].is_a_plot"])
+        )
+        assert self._labels(fig) == {"panel_label", "is_a_plot"}
+
+    def test_a_deeper_path_keeps_what_distinguishes_it(self):
+        """plot-axis-units' two `axis` properties must stay apart."""
+        fig = plot_arm_contrast_by_check(
+            self._frame(
+                "plot-axis-units",
+                [
+                    "outputs[].decision",
+                    "outputs[].units_provided[].axis",
+                    "outputs[].unit_definition_as_provided[].axis",
+                ],
+            )
+        )
+        assert self._labels(fig) == {
+            "decision",
+            "units_provided[].axis",
+            "unit_definition_as_provided[].axis",
+        }
+
+    def test_a_root_not_shared_by_every_property_stays(self):
+        """Two lists in one check: stripping either would collide them."""
+        fig = plot_arm_contrast_by_check(
+            self._frame("two-lists", ["a[].name", "b[].name"])
+        )
+        assert self._labels(fig) == {"a[].name", "b[].name"}
+
+    def test_the_full_path_is_still_in_the_hover(self):
+        fig = plot_arm_contrast_by_check(
+            self._frame("stat-test", ["outputs[].panel_label"])
+        )
+        assert fig.data[0].customdata[0][0] == (
+            "stat-test::::outputs[].panel_label"
+        )
+
+
+class TestArmContrastVerticalBudget:
+    """Spacing is a fraction of the whole figure, so it must shrink as
+    panels are added.
+
+    `vertical_spacing` is applied between every pair of rows. At the
+    0.08 the comparison grids use, eleven stacked checks spent ten gaps
+    x 0.08 = 80% of the figure on whitespace, leaving the panels a fifth
+    of the height and plotly dropping every other tick label.
+    """
+
+    @staticmethod
+    def _frame(n_checks, bars=3):
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {
+                    "check": f"check-{c:02d}",
+                    "property": f"outputs[].p{i}",
+                    "path": f"check-{c:02d}::::outputs[].p{i}",
+                    "difference": 0.01,
+                    "se": 0.001,
+                }
+                for c in range(n_checks)
+                for i in range(bars)
+            ]
+        )
+
+    def test_panels_keep_most_of_the_figure(self):
+        fig = plot_arm_contrast_by_check(self._frame(11))
+        layout = fig.layout.to_plotly_json()
+        used = sum(
+            value["domain"][1] - value["domain"][0]
+            for key, value in layout.items()
+            if key.startswith("yaxis") and value.get("domain")
+        )
+        assert used > 0.7, (
+            f"panels got {used:.0%} of the height; the rest went to gaps"
+        )
+
+    def test_only_the_bottom_panel_labels_the_x_axis(self):
+        """Eleven copies of 'difference in mean_score' is noise."""
+        fig = plot_arm_contrast_by_check(self._frame(11))
+        layout = fig.layout.to_plotly_json()
+        titled = [
+            key
+            for key, value in layout.items()
+            if key.startswith("xaxis") and (value.get("title") or {}).get("text")
+        ]
+        assert len(titled) == 1
