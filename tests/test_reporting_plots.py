@@ -18,6 +18,7 @@ from soda_mmqc.reporting import (
     plot_layer_s_bar,
     plot_mean_score_bars,
     plot_arm_contrast_by_check,
+    plot_arm_levels_by_check,
     plot_mean_score_with_instances,
     split_layer2_by_metric,
     summarize_runs,
@@ -538,3 +539,100 @@ class TestArmContrastVerticalBudget:
             if key.startswith("xaxis") and (value.get("title") or {}).get("text")
         ]
         assert len(titled) == 1
+
+
+class TestArmLevelsByCheck:
+    """Both arms' absolute scores, grouped, beside the difference.
+
+    A difference of -0.05 reads differently at 0.95 than at 0.20. The
+    grouped bars say where on the scale the contrast happened, and the
+    gap between a pair is the difference itself.
+    """
+
+    @staticmethod
+    def _levels(check="micrograph-scale-bar", properties=("outputs[].panel_label",)):
+        import pandas as pd
+
+        rows = []
+        for prop in properties:
+            for arm, label, mean in (
+                ("pinned", "detailed", 0.9),
+                (f"{check}@v2", "minimal", 0.7),
+            ):
+                rows.append(
+                    {
+                        "check": check,
+                        "property": prop,
+                        "path": f"{check}:{arm}:::{prop}",
+                        "arm": arm,
+                        "arm_label": label,
+                        "mean": mean,
+                        "se": 0.02,
+                        "n_examples": 38,
+                    }
+                )
+        return pd.DataFrame(rows)
+
+    def test_one_panel_per_check(self):
+        import pandas as pd
+
+        levels = pd.concat(
+            [self._levels("check-a"), self._levels("check-b")], ignore_index=True
+        )
+        fig = plot_arm_levels_by_check(levels)
+        assert [a.text for a in fig.layout.annotations] == ["check-a", "check-b"]
+
+    def test_the_bars_are_grouped_not_stacked(self):
+        fig = plot_arm_levels_by_check(self._levels())
+        assert fig.layout.barmode == "group"
+
+    def test_the_legend_names_the_arms_once_each(self):
+        """Every check has its own variant arm name, so raw names would
+        put twelve entries in the legend of an eleven-check figure."""
+        import pandas as pd
+
+        levels = pd.concat(
+            [self._levels("check-a"), self._levels("check-b")], ignore_index=True
+        )
+        fig = plot_arm_levels_by_check(levels, series="arm_label")
+        assert [t.name for t in fig.data if t.showlegend] == ["detailed", "minimal"]
+
+    def test_the_scale_runs_the_whole_range(self):
+        """mean_score is bounded; autoscaling to the data would magnify a
+        difference between 0.88 and 0.90 into the width of the panel."""
+        fig = plot_arm_levels_by_check(self._levels())
+        layout = fig.layout.to_plotly_json()
+        spans = {
+            tuple(value["range"])
+            for key, value in layout.items()
+            if key.startswith("xaxis") and value.get("range")
+        }
+        assert len(spans) == 1
+        low, high = spans.pop()
+        assert low <= 0.0 and high >= 1.0
+
+    def test_ticks_drop_the_shared_root(self):
+        fig = plot_arm_levels_by_check(
+            self._levels(properties=("outputs[].panel_label", "outputs[].micrograph"))
+        )
+        labels = {y for trace in fig.data for y in (trace.y or ())}
+        assert labels == {"panel_label", "micrograph"}
+
+    def test_a_panel_makes_room_for_both_bars(self):
+        """Two bars per property, so a panel is taller than the contrast
+        panel for the same properties."""
+        one = plot_arm_levels_by_check(self._levels(properties=("outputs[].a",)))
+        four = plot_arm_levels_by_check(
+            self._levels(
+                properties=("outputs[].a", "outputs[].b", "outputs[].c", "outputs[].d")
+            )
+        )
+        assert four.layout.height > one.layout.height
+
+    def test_an_empty_frame_is_not_a_crash(self):
+        import pandas as pd
+
+        fig = plot_arm_levels_by_check(
+            pd.DataFrame(columns=["check", "property", "path", "arm", "mean", "se"])
+        )
+        assert fig.data == ()

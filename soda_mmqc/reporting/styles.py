@@ -80,3 +80,7 @@ ARM_CONTRAST_ZERO_LINE_COLOR = "#0f172a"
 ARM_CONTRAST_ROW_HEIGHT = 26
 ARM_CONTRAST_PANEL_CHROME = 120
 ARM_CONTRAST_ROW_GAP = 70
+
+# Arm levels: two categories, so two hues rather than a ladder of one.
+# Not green/red -- which arm is better is the experiment's claim.
+ARM_LEVELS_COLORS = ("#475569", "#0891b2", "#a16207", "#7c3aed")

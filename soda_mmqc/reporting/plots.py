@@ -18,6 +18,7 @@ from soda_mmqc.reporting.styles import (
     ARM_CONTRAST_PANEL_CHROME,
     ARM_CONTRAST_ROW_GAP,
     ARM_CONTRAST_ROW_HEIGHT,
+    ARM_LEVELS_COLORS,
     ARM_CONTRAST_ZERO_LINE_COLOR,
     COMPARISON_SERIES_OPACITIES,
     COMPARISON_SERIES_PATTERNS,
@@ -979,6 +980,78 @@ def build_dashboard(
     return _apply_plot_template(fig)
 
 
+def _check_panel_grid(
+    checks: Sequence[str],
+    bars_per_check: Mapping[str, int],
+    *,
+    columns: int,
+) -> tuple[go.Figure, int, int, int]:
+    """An empty per-check panel grid, sized for the bars it will hold.
+
+    Each row is sized for its own tallest panel, so a row holding a
+    two-property check beside an eight-property one does not carry six
+    rows of blank space.
+
+    ``vertical_spacing`` is a fraction of the whole figure applied
+    between every pair of rows, so a constant one does not survive being
+    stacked: ten gaps at 0.08 leave the panels a fifth of the height.
+    The gap is fixed in pixels and the fraction derived from the height
+    it produces.
+    """
+    cols = max(1, int(columns))
+    rows = (len(checks) + cols - 1) // cols
+    row_heights = [
+        ARM_CONTRAST_PANEL_CHROME
+        + ARM_CONTRAST_ROW_HEIGHT
+        * max(
+            int(bars_per_check[check])
+            for check in checks[index * cols:(index + 1) * cols]
+        )
+        for index in range(rows)
+    ]
+    gap = ARM_CONTRAST_ROW_GAP if rows > 1 else 0
+    total_height = sum(row_heights) + gap * (rows - 1)
+    fig = make_subplots(
+        rows=rows,
+        cols=cols,
+        subplot_titles=list(checks),
+        shared_xaxes=False,
+        shared_yaxes=False,
+        row_heights=row_heights,
+        vertical_spacing=(gap / total_height) if rows > 1 else 0.0,
+        horizontal_spacing=_COMPARISON_SUBPLOT_HORIZONTAL_SPACING,
+    )
+    return fig, rows, cols, total_height
+
+
+def _finish_check_panels(
+    fig: go.Figure,
+    *,
+    n_checks: int,
+    rows: int,
+    cols: int,
+    total_height: int,
+    title: str,
+    xlabel: str,
+    span: tuple[float, float],
+    showlegend: bool = False,
+) -> go.Figure:
+    """Shared range on every panel, one axis title per column."""
+    fig.update_xaxes(range=list(span))
+    fig.update_yaxes(autorange="reversed")
+    for col in range(1, cols + 1):
+        bottom = max(
+            row
+            for row in range(1, rows + 1)
+            if (row - 1) * cols + (col - 1) < n_checks
+        )
+        fig.update_xaxes(title_text=xlabel, row=bottom, col=col)
+    fig.update_layout(
+        title_text=title, height=total_height, showlegend=showlegend
+    )
+    return _apply_plot_template(fig)
+
+
 def _strip_shared_list_root(properties: Sequence[str]) -> list[str]:
     """Drop the list root shared by every property of one panel.
 
@@ -1049,36 +1122,8 @@ def plot_arm_contrast_by_check(
         return _apply_plot_template(fig)
 
     checks = sorted(contrast["check"].unique())
-    cols = max(1, int(columns))
-    rows = (len(checks) + cols - 1) // cols
-
-    # Each row is sized for its own tallest panel. A row holding a
-    # two-property check next to an eight-property one would otherwise
-    # carry six rows of blank space.
-    bars = contrast["check"].value_counts()
-    row_heights = [
-        ARM_CONTRAST_PANEL_CHROME
-        + ARM_CONTRAST_ROW_HEIGHT
-        * max(int(bars[check]) for check in checks[index * cols:(index + 1) * cols])
-        for index in range(rows)
-    ]
-
-    # `vertical_spacing` is a fraction of the whole figure applied between
-    # every pair of rows, so a constant one does not survive being stacked:
-    # ten gaps at 0.08 leave the panels a fifth of the height. Fix the gap
-    # in pixels and derive the fraction from the height it produces.
-    gap = ARM_CONTRAST_ROW_GAP if rows > 1 else 0
-    total_height = sum(row_heights) + gap * (rows - 1)
-
-    fig = make_subplots(
-        rows=rows,
-        cols=cols,
-        subplot_titles=checks,
-        shared_xaxes=False,
-        shared_yaxes=False,
-        row_heights=row_heights,
-        vertical_spacing=(gap / total_height) if rows > 1 else 0.0,
-        horizontal_spacing=_COMPARISON_SUBPLOT_HORIZONTAL_SPACING,
+    fig, rows, cols, total_height = _check_panel_grid(
+        checks, contrast["check"].value_counts(), columns=columns
     )
 
     for panel_index, check in enumerate(checks):
@@ -1121,26 +1166,16 @@ def plot_arm_contrast_by_check(
     # One explicit range on every panel: `shared_xaxes` only links pan and
     # zoom, and a reader comparing panels needs them equal before touching
     # anything.
-    span = _arm_contrast_x_range(contrast)
-    fig.update_xaxes(range=list(span))
-    fig.update_yaxes(autorange="reversed")
-
-    # The bottom panel of each column names the axis; every panel naming it
-    # is eleven copies of the same four words.
-    for col in range(1, cols + 1):
-        bottom = max(
-            row
-            for row in range(1, rows + 1)
-            if (row - 1) * cols + (col - 1) < len(checks)
-        )
-        fig.update_xaxes(title_text=xlabel, row=bottom, col=col)
-
-    fig.update_layout(
-        title_text=title,
-        height=total_height,
-        showlegend=False,
+    return _finish_check_panels(
+        fig,
+        n_checks=len(checks),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=_arm_contrast_x_range(contrast),
     )
-    return _apply_plot_template(fig)
 
 
 def _arm_contrast_x_range(contrast: pd.DataFrame) -> tuple[float, float]:
@@ -1158,3 +1193,118 @@ def _arm_contrast_x_range(contrast: pd.DataFrame) -> tuple[float, float]:
     low, high = min(low, 0.0), max(high, 0.0)
     pad = (high - low) * 0.08 or 0.01
     return low - pad, high + pad
+
+
+def plot_arm_levels_by_check(
+    levels: pd.DataFrame,
+    *,
+    series: str = "arm",
+    columns: int = 1,
+    title: str = "Arm scores, per property",
+    xlabel: str = "mean_score (paired examples)",
+) -> go.Figure:
+    """Both arms' scores side by side, one panel per check.
+
+    The contrast figure says how far apart the arms are; this says where
+    on the scale they were. A difference of -0.05 is a different finding
+    at 0.95 than at 0.20, and the contrast alone cannot tell them apart.
+
+    Takes :func:`arm_levels`, whose means are over the paired examples,
+    so the gap a reader measures between a pair of bars is exactly the
+    difference the other figure plots.
+
+    The axis spans the whole of ``mean_score``. Autoscaling to the data
+    would stretch 0.88 against 0.90 across the panel and invite a reading
+    the numbers do not support.
+
+    ``series`` names the column the legend groups on. It defaults to the
+    raw ``arm``, but every check has its own variant arm name, so an
+    eleven-check figure would carry twelve legend entries; pass a column
+    holding a shared label instead.
+    """
+    if levels.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    checks = sorted(levels["check"].unique())
+    fig, rows, cols, total_height = _check_panel_grid(
+        checks, levels["check"].value_counts(), columns=columns
+    )
+
+    names = list(dict.fromkeys(levels[series]))
+    palette = _arm_levels_palette(names)
+    legend_shown: set[str] = set()
+
+    for panel_index, check in enumerate(checks):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = levels[levels["check"] == check]
+
+        # One shared property order per panel, or the grouped bars would
+        # not line up: sorted by the first series' score, so the panel
+        # reads worst-first like the contrast panel beside it.
+        first = panel[panel[series] == names[0]].set_index("property")["mean"]
+        order = list(first.sort_values().index) or sorted(panel["property"].unique())
+        labels = _strip_shared_list_root(order)
+
+        for name in names:
+            arm_rows = panel[panel[series] == name].set_index("property")
+            if arm_rows.empty:
+                continue
+            show_legend = name not in legend_shown
+            legend_shown.add(name)
+            errors = arm_rows.reindex(order)["se"].astype(float).fillna(0.0)
+            fig.add_trace(
+                go.Bar(
+                    x=arm_rows.reindex(order)["mean"].astype(float).tolist(),
+                    y=labels,
+                    orientation="h",
+                    name=str(name),
+                    legendgroup=str(name),
+                    showlegend=show_legend,
+                    marker_color=palette[name],
+                    error_x={
+                        "type": "data",
+                        "array": errors.tolist(),
+                        "visible": True,
+                    },
+                    customdata=arm_rows.reindex(order)[["path"]].to_numpy(),
+                    hovertemplate=(
+                        "%{customdata[0]}<br>%{x:.4f}<extra></extra>"
+                    ),
+                ),
+                row=row,
+                col=col,
+            )
+
+    span = _arm_levels_x_range(levels)
+    fig.update_layout(barmode="group")
+    return _finish_check_panels(
+        fig,
+        n_checks=len(checks),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=span,
+        showlegend=True,
+    )
+
+
+def _arm_levels_palette(names: Sequence[Any]) -> dict[Any, str]:
+    """Two arms are two categories, not a scale from bad to good."""
+    return {
+        name: ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+        for index, name in enumerate(names)
+    }
+
+
+def _arm_levels_x_range(levels: pd.DataFrame) -> tuple[float, float]:
+    """The full score range, widened only if an error bar runs past it."""
+    means = levels["mean"].astype(float)
+    errors = levels["se"].astype(float).fillna(0.0)
+    return min(0.0, float((means - errors).min())), max(
+        1.0, float((means + errors).max())
+    )

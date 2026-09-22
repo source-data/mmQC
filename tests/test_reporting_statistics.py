@@ -20,6 +20,7 @@ from soda_mmqc.reporting.aggregate import (
     SCORES_FRAME_COLUMNS,
     NON_RESPONSE_COLUMNS,
     arm_contrast,
+    arm_levels,
     non_response_counts,
     property_path,
     replicate_spread,
@@ -742,3 +743,79 @@ class TestFramesCarryThePath:
         contrast = arm_contrast(scores_frame(runs), baseline="pinned", variant="v2")
 
         assert contrast["path"].tolist() == [f"{CHECK}::::p1"]
+
+
+class TestArmLevels:
+    """The absolute score each arm earned on the set they can be compared on.
+
+    A grouped bar chart of the two arms sits beside the difference chart,
+    so the gap a reader measures between the bars has to be the number
+    the other chart plots. Taking each arm's mean over its own examples
+    does not give that: on exp-01 it disagreed for 17 of 67 contrasts, by
+    up to 0.14, and flipped the sign of stat-test's `explanation`.
+    """
+
+    @staticmethod
+    def _runs_with_incomplete_pairing():
+        """`v2` judged p1 inapplicable on doc-b, so only doc-a pairs.
+
+        Own-set means: pinned (1.0 + 0.0) / 2 = 0.5, v2 = 0.5, so a naive
+        difference is 0.0. Paired on doc-a alone it is 0.5 - 1.0 = -0.5.
+        """
+        return FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record("doc-a", {"p1": 1.0}),
+                        _record("doc-b", {"p1": 0.0}),
+                    ],
+                ),
+                _run(
+                    arm="v2",
+                    replicate=0,
+                    records=[
+                        _record("doc-a", {"p1": 0.5}),
+                        _record("doc-b", {"p1": None}),
+                    ],
+                ),
+            ]
+        )
+
+    def test_one_row_per_arm_per_property(self):
+        frame = scores_frame(self._runs_with_incomplete_pairing())
+        levels = arm_levels(frame, baseline="pinned", variant="v2")
+        assert sorted(levels["arm"]) == ["pinned", "v2"]
+        assert set(levels["property"]) == {"p1"}
+
+    def test_the_gap_between_the_bars_is_the_plotted_difference(self):
+        """The invariant the whole function exists for."""
+        frame = scores_frame(self._runs_with_incomplete_pairing())
+        levels = arm_levels(frame, baseline="pinned", variant="v2").set_index("arm")
+        contrast = arm_contrast(frame, baseline="pinned", variant="v2")
+
+        gap = float(levels.loc["v2", "mean"]) - float(levels.loc["pinned", "mean"])
+        assert gap == pytest.approx(float(contrast.loc[0, "difference"]))
+
+    def test_it_is_the_paired_mean_not_the_arm_s_own(self):
+        frame = scores_frame(self._runs_with_incomplete_pairing())
+        levels = arm_levels(frame, baseline="pinned", variant="v2").set_index("arm")
+        assert float(levels.loc["pinned", "mean"]) == pytest.approx(1.0)
+        assert float(levels.loc["v2", "mean"]) == pytest.approx(0.5)
+        assert set(levels["n_examples"]) == {1}
+
+    def test_a_property_with_no_pairing_at_all_is_absent(self):
+        runs = FlatRuns(
+            [
+                _run(arm="pinned", replicate=0, records=[_record("doc-a", {"p1": 1.0})]),
+                _run(arm="v2", replicate=0, records=[_record("doc-b", {"p1": 0.5})]),
+            ]
+        )
+        levels = arm_levels(scores_frame(runs), baseline="pinned", variant="v2")
+        assert levels.empty
+
+    def test_it_refuses_an_arm_that_is_not_there(self):
+        frame = scores_frame(self._runs_with_incomplete_pairing())
+        with pytest.raises(ValueError, match="nope"):
+            arm_levels(frame, baseline="pinned", variant="nope")

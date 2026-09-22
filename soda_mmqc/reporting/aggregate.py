@@ -33,6 +33,7 @@ __all__ = [
     "scores_frame",
     "replicate_spread",
     "arm_contrast",
+    "arm_levels",
     "non_response_counts",
     "field_order",
     "leaf_property_tail",
@@ -368,6 +369,17 @@ REPLICATE_SPREAD_COLUMNS = (
     "n_scored_total",
 )
 
+#: Columns of :func:`arm_levels`, in order.
+ARM_LEVELS_COLUMNS = (
+    "check",
+    "property",
+    "path",
+    "arm",
+    "mean",
+    "se",
+    "n_examples",
+)
+
 #: Columns of :func:`arm_contrast`, in order.
 ARM_CONTRAST_COLUMNS = (
     "check",
@@ -563,6 +575,96 @@ def arm_contrast(
     return result.astype(
         {"difference": "Float64", "se": "Float64", "paired_fraction": "Float64"}
     )
+
+
+def arm_levels(
+    frame: pd.DataFrame,
+    *,
+    baseline: str,
+    variant: str,
+) -> pd.DataFrame:
+    """What each arm actually scored, on the set they can be compared on.
+
+    Two rows per ``(check, property)``, one per arm, for reading beside
+    :func:`arm_contrast`: a difference of ``-0.05`` means something
+    different at 0.95 than at 0.20, and the contrast alone does not say
+    which.
+
+    The mean is taken over the **paired** examples only -- the same
+    intersection ``arm_contrast`` uses -- so that
+
+        ``variant mean - baseline mean == arm_contrast difference``
+
+    exactly, for every row. Each arm's mean over its *own* examples would
+    not: on exp-01 it disagreed for 17 of 67 contrasts, by as much as
+    0.14, and reversed the sign of ``stat-test``'s ``explanation``. Two
+    figures side by side that contradict each other are worse than one.
+
+    The price is stated rather than hidden: ``n_examples`` is the paired
+    count, and an arm that answered more is not credited here for the
+    examples its counterpart skipped. ``arm_contrast``'s
+    ``n_baseline_only`` and ``n_variant_only`` are where that goes.
+
+    A property neither arm paired on is absent, not zero.
+    """
+    present = set(frame["arm"].unique()) if not frame.empty else set()
+    for name in (baseline, variant):
+        if name not in present:
+            raise ValueError(
+                f"No arm {name!r} in this frame; it has "
+                f"{sorted(present) or 'nothing'}"
+            )
+
+    # Replicates average within (arm, example) first, exactly as
+    # arm_contrast does -- a resample refines one measurement rather than
+    # adding an example to the pairing.
+    per_example = (
+        frame.groupby(
+            ["check", "property", "arm", "example"],
+            dropna=False,
+            observed=True,
+        )["mean_score"]
+        .mean()
+        .reset_index()
+    )
+
+    rows: list[dict[str, Any]] = []
+    for key, group in per_example.groupby(
+        ["check", "property"], dropna=False, observed=True
+    ):
+        check, leaf_property = key
+        by_arm = {
+            arm: group[group["arm"] == arm]
+            .set_index("example")["mean_score"]
+            .dropna()
+            for arm in (baseline, variant)
+        }
+        paired = by_arm[baseline].index.intersection(by_arm[variant].index)
+        if not len(paired):
+            continue
+
+        for arm in (baseline, variant):
+            values = by_arm[arm].loc[paired].astype(float)
+            n_examples = int(len(values))
+            rows.append(
+                {
+                    "check": check,
+                    "property": leaf_property,
+                    "path": property_path(check, leaf_property, arm=arm),
+                    "arm": arm,
+                    "mean": float(values.mean()),
+                    "se": (
+                        float(values.std(ddof=1) / (n_examples ** 0.5))
+                        if n_examples > 1
+                        else pd.NA
+                    ),
+                    "n_examples": n_examples,
+                }
+            )
+
+    result = pd.DataFrame(rows, columns=list(ARM_LEVELS_COLUMNS))
+    return result.astype({"mean": "Float64", "se": "Float64"})
+
 
 
 #: Columns of :func:`non_response_counts`, in order.
