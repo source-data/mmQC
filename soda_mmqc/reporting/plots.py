@@ -1463,11 +1463,11 @@ def plot_check_layers(
     values under ``barmode="stack"`` put one arm's stack beside the
     other's, which is what makes a grouped stack possible at all.
 
-    In the stacked panels colour belongs to the outcome, so an arm can
-    only be opacity -- the convention the other comparison plots use. In
-    layer 2 there is no outcome and colour is free, so the arm takes it:
-    1.0 against 0.6 of one hue is not a difference a reader sees. The
-    legend swatches use those colours.
+    In the stacked panels colour belongs to the outcome, so the variant
+    is opacity *and* a hatch: two shades of one green, touching, read as
+    a single bar rather than a pair. In layer 2 there is no outcome and
+    colour is free, so the variant takes that too, keeping the hatch so
+    it reads the same way across all three panels.
     """
     names = _series_names(
         pd.concat([layer_s[[series]], layer1[[series]], layer2[[series]]]),
@@ -1500,7 +1500,10 @@ def plot_check_layers(
         fig.add_trace(
             go.Bar(
                 x=[None], y=[None], name=str(name),
-                marker={"color": _arm_color(index)},
+                marker={
+                    "color": _arm_color(index),
+                    "pattern": _variant_pattern(index),
+                },
                 showlegend=True, legendgroup=f"arm::{name}",
             ),
             row=1, col=1,
@@ -1548,6 +1551,10 @@ def _stacked_layer_panel(
 
     for index, name in enumerate(names):
         opacity = _comparison_series_opacity(index, len(names))
+        # Colour belongs to the outcome, so the variant gets a hatch too.
+        # Two shades of one green, touching, read as a single bar -- which
+        # is exactly how this figure was misread.
+        pattern = _variant_pattern(index)
         for outcome in outcomes:
             fig.add_trace(
                 go.Bar(
@@ -1560,7 +1567,11 @@ def _stacked_layer_panel(
                     legendgroup=outcome,
                     showlegend=index == 0,
                     offsetgroup=str(name),
-                    marker={"color": colors[outcome], "opacity": opacity},
+                    marker={
+                        "color": colors[outcome],
+                        "opacity": opacity,
+                        "pattern": pattern,
+                    },
                     hovertemplate=(
                         f"{name}<br>%{{x}}<br>{outcome}: %{{y:,}}<extra></extra>"
                     ),
@@ -1590,7 +1601,10 @@ def _mean_layer_panel(
                 legendgroup=f"arm::{name}",
                 showlegend=False,
                 offsetgroup=str(name),
-                marker={"color": _arm_color(index)},
+                marker={
+                    "color": _arm_color(index),
+                    "pattern": _variant_pattern(index),
+                },
                 error_y={
                     "type": "data",
                     "array": rows["sd"].astype(float).fillna(0.0).tolist(),
@@ -1665,6 +1679,7 @@ def plot_stacked_counts(
                 marker={
                     "color": ARM_CONTRAST_BAR_COLOR,
                     "opacity": _comparison_series_opacity(index, len(names)),
+                    "pattern": _variant_pattern(index),
                 },
                 showlegend=True, legendgroup=f"arm::{name}",
             ),
@@ -1675,9 +1690,27 @@ def plot_stacked_counts(
         title_text=title,
         height=520,
         xaxis_tickangle=-25,
+        # A pair that touches reads as one bar; a pair with air between
+        # reads as two.
+        bargap=0.3,
+        bargroupgap=0.08,
     )
     fig.update_yaxes(title_text=ylabel, rangemode="tozero")
     return _apply_plot_template(fig)
+
+
+def _variant_pattern(index: int) -> dict[str, Any]:
+    """Hatch for the non-baseline variants.
+
+    The baseline stays solid so it reads as the reference. Later ones
+    take a shape from the same ladder the model comparison uses.
+    """
+    return {
+        "shape": _comparison_series_pattern(index),
+        "solidity": 0.4,
+        "fgcolor": "#ffffff",
+        "size": 5,
+    }
 
 
 def _stack_palette(

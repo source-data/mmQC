@@ -998,3 +998,22 @@ class TestStackedCounts:
             group="check", category="outcome",
         )
         assert fig.data == ()
+
+    def test_the_variants_differ_by_more_than_opacity(self):
+        """Two shades of one colour, touching, read as a single bar.
+
+        Colour is spoken for by the outcome, so the variant gets a hatch
+        as well -- the device the repo already uses to separate series
+        that cannot differ in hue.
+        """
+        fig = self._fig()
+        patterns = {
+            (t.offsetgroup, (t.marker.pattern.shape if t.marker.pattern else None))
+            for t in self._data_traces(fig)
+        }
+        by_arm = dict(patterns)
+        assert by_arm["detailed"] != by_arm["minimal"]
+
+    def test_a_gap_separates_the_pair(self):
+        fig = self._fig()
+        assert fig.layout.bargroupgap and fig.layout.bargroupgap > 0
