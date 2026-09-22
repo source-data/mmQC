@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Test project architecture and imports after reorganization."""
 
+import argparse
 import unittest
 
 from soda_mmqc import logger
@@ -32,9 +33,9 @@ class TestProjectArchitecture(unittest.TestCase):
         
         # Check that scripts exist (CLI entry points)
         self.assertTrue((PACKAGE_ROOT / "scripts").exists())
-        self.assertTrue((PACKAGE_ROOT / "scripts" / "run.py").exists())
+        self.assertTrue((PACKAGE_ROOT / "cli.py").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "curate.py").exists())
-        self.assertTrue((PACKAGE_ROOT / "scripts" / "visualize.py").exists())
+        self.assertTrue((PACKAGE_ROOT / "scripts" / "report.py").exists())
         
         # Check that utils exist
         self.assertTrue((PACKAGE_ROOT / "utils").exists())
@@ -68,16 +69,26 @@ class TestProjectArchitecture(unittest.TestCase):
         except ImportError as e:
             self.fail(f"Failed to import lib modules: {e}")
     
-    def test_scripts_imports(self):
-        """Test that script modules can be imported."""
-        try:
-            from soda_mmqc.scripts import run, curate, visualize
-            self.assertTrue(hasattr(run, 'main'))
-            self.assertTrue(hasattr(curate, 'main'))
-            self.assertTrue(hasattr(visualize, 'checklist_visualization'))
-            logger.info("Scripts imports successful")
-        except ImportError as e:
-            self.fail(f"Failed to import script modules: {e}")
+    def test_scripts_are_launchers_only(self):
+        """scripts/ launches things; it holds no library code.
+
+        The rule that makes this checkable: nothing imports from
+        soda_mmqc.scripts except cli.py, which calls the two Streamlit
+        launchers. Library code that grew here (visualize.py) was dead and
+        duplicated soda_mmqc/reporting/.
+        """
+        from soda_mmqc.scripts import curate, report
+        self.assertTrue(callable(curate.main))
+        self.assertTrue(callable(report.main))
+
+        scripts_dir = PACKAGE_ROOT / "scripts"
+        for retired in ("visualize.py", "check_data.py",
+                        "analysis_json_to_html.py"):
+            self.assertFalse(
+                (scripts_dir / retired).exists(),
+                f"{retired} was deleted as dead code; do not restore it "
+                "without a caller",
+            )
     
     def test_utils_imports(self):
         """Test that utils modules can be imported."""
@@ -96,7 +107,12 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertTrue(DATA_DIR.exists())
         self.assertTrue(CHECKLIST_DIR.exists())
         self.assertTrue(EXAMPLES_DIR.exists())
-        self.assertTrue(EVALUATION_DIR.exists())
+        self.assertTrue(
+            EVALUATION_DIR.exists(),
+            "data/evaluation/ is where a production benchmark writes; it is "
+            "kept by .gitkeep so the layout does not depend on a run having "
+            "happened",
+        )
         
         # CACHE_DIR might not exist initially, but should be creatable
         CACHE_DIR.mkdir(exist_ok=True)
@@ -124,27 +140,60 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertEqual(duplicates, set(), 
                         f"Found duplicate modules between core and scripts: {duplicates}")
     
-    def test_cli_entry_points(self):
-        """Test that CLI entry points are properly configured."""
-        # Check that the main CLI functions exist
-        try:
-            from soda_mmqc.scripts.run import main as run_main
-            from soda_mmqc.scripts.run import initialize_main
-            from soda_mmqc.scripts.curate import main as curate_main
-            
-            self.assertTrue(callable(run_main))
-            self.assertTrue(callable(initialize_main))
-            self.assertTrue(callable(curate_main))
-            logger.info("CLI entry points exist and are callable")
-        except ImportError as e:
-            self.fail(f"Failed to import CLI entry points: {e}")
+    def test_one_cli_declares_every_command(self):
+        """Commands are declared in cli.py and nowhere else.
+
+        `evaluate` and `init` used to be separate console scripts pointing
+        into scripts/run.py, so a reader looking for a command had two
+        places to look and the prompt pipeline stayed alive to host them.
+        """
+        from soda_mmqc.cli import _build_parser
+
+        parser = _build_parser()
+        actions = [
+            a for a in parser._actions
+            if isinstance(a, argparse._SubParsersAction)
+        ]
+        self.assertEqual(len(actions), 1)
+        self.assertEqual(
+            set(actions[0].choices),
+            {"run", "score", "assemble", "graph", "init", "curate", "report"},
+        )
+
+    def test_importing_the_cli_does_not_pull_streamlit(self):
+        """A subcommand's dependency is imported when it runs, not on import.
+
+        `mmqc score` in a notebook must not pay for Streamlit.
+        """
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import soda_mmqc.cli, sys; "
+             "print('streamlit' in sys.modules)"],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(result.stdout.strip().splitlines()[-1], "False")
+
+    def test_the_prompt_pipeline_is_gone(self):
+        self.assertFalse(
+            (PACKAGE_ROOT / "scripts" / "run.py").exists(),
+            "scripts/run.py held the prompt-scanning pipeline; its live "
+            "symbols moved to core/scoring.py, config.py and lib/api.py",
+        )
     
     def test_data_structure(self):
         """Test that the data directory structure is correct."""
         # Check that key data subdirectories exist
         self.assertTrue((DATA_DIR / "checklist").exists())
         self.assertTrue((DATA_DIR / "examples").exists())
-        self.assertTrue((DATA_DIR / "evaluation").exists())
+        self.assertTrue(
+            (DATA_DIR / "evaluation").exists(),
+            "data/evaluation/ is where a production benchmark writes; it is "
+            "kept by .gitkeep so the layout does not depend on a run having "
+            "happened",
+        )
         
         # Check that there are some checklists
         checklist_dir = DATA_DIR / "checklist"
@@ -171,6 +220,42 @@ class TestProjectArchitecture(unittest.TestCase):
             logger.error("Test error message")
         except Exception as e:
             self.fail(f"Logging failed: {e}")
+
+
+class TestNoLegacyDependency(unittest.TestCase):
+    """The agentic package must not reach through scripts.run for config.
+
+    `EVALUATION_CONTRACT_FILES` and `owns_evaluation_contracts` are defined
+    in config.py; scripts.run only re-exported them. Importing them from
+    there made three live modules depend on a module we are deleting.
+    """
+
+    def test_list_checks_lives_in_config(self):
+        from soda_mmqc.config import list_checks, CHECKLIST_DIR
+        checks = list_checks(CHECKLIST_DIR / "fig-checklist")
+        self.assertIn("micrograph-scale-bar", checks)
+        self.assertTrue(checks["micrograph-scale-bar"].is_dir())
+
+    def test_a_shared_skill_is_not_a_check(self):
+        """owns_evaluation_contracts is the discriminator; list_checks must
+        use it, or a shared skill beside the checks becomes a phantom."""
+        from soda_mmqc.config import list_checks, CHECKLIST_DIR
+        root = CHECKLIST_DIR / "fig-checklist"
+        for name in list_checks(root):
+            self.assertTrue(
+                (root / name / "schema.json").is_file(),
+                f"{name} was listed as a check but owns no schema.json",
+            )
+
+    def test_agentic_does_not_import_scripts_run(self):
+        import pathlib
+        pkg = pathlib.Path(__file__).resolve().parents[1] / "soda_mmqc"
+        offenders = [
+            path.name
+            for path in (pkg / "agentic").glob("*.py")
+            if "scripts.run" in path.read_text(encoding="utf-8")
+        ]
+        self.assertEqual(offenders, [])
 
 
 if __name__ == "__main__":

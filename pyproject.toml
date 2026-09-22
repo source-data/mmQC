@@ -52,11 +52,15 @@ dependencies = [
 ]
 
 [project.scripts]
-evaluate = "soda_mmqc.scripts.run:main"
+# One CLI. `evaluate` and `init` used to point into scripts/run.py, so a
+# command could be declared in two places; they are now `mmqc score` and
+# `mmqc init`.
+mmqc = "soda_mmqc.cli:main"
+# Kept for muscle memory; each is also `mmqc <command>`, and each points at
+# the same launcher, so there is still one implementation.
 curate = "soda_mmqc.scripts.curate:main"
 report = "soda_mmqc.scripts.report:main"
 export-fig-report = "soda_mmqc.scripts.export_fig_checklist_report:main"
-init = "soda_mmqc.scripts.run:initialize_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["soda_mmqc"]

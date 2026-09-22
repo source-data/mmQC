@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 import yaml
 
 from soda_mmqc import config, logger
-from soda_mmqc.scripts.run import (
+from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     owns_evaluation_contracts,
 )
