@@ -15,8 +15,7 @@ from soda_mmqc.reporting import (
     layer2_instance_table,
     layer_counts_by_property,
     layer_s_issues_table,
-    load_flat_runs,
-    normalize_prompt_name,
+    load_evaluation_dir,
     split_layer2_by_metric,
     summarize_runs,
 )
@@ -29,7 +28,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snaps
 # whatever evaluation runs happened to be committed: they asserted a corpus,
 # not the reporting code, and broke when the corpus was regenerated or
 # removed. FIXTURES is a committed snapshot in the same on-disk format --
-# two models, three prompts, three records each -- so the assertions below
+# two models, three arms, three records each -- so the assertions below
 # describe the fixture and stay true whatever the real corpus holds.
 
 
@@ -39,38 +38,27 @@ def _use_fixture_corpus(monkeypatch):
     monkeypatch.setattr("soda_mmqc.reporting.load.EVALUATION_DIR", FIXTURES)
 
 
-class TestNormalizePromptName:
-    def test_local_prompt_key(self):
-        assert (
-            normalize_prompt_name("micrograph-scale-bar::local::prompt.2")
-            == "prompt.2"
-        )
-
-    def test_already_normalized(self):
-        assert normalize_prompt_name("prompt.1") == "prompt.1"
-
-
 class TestLoadFlatRuns:
-    def test_load_micrograph_models_and_prompts(self):
-        runs = load_flat_runs(
+    def test_load_micrograph_models_and_arms(self):
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models=["model-a", "model-b"],
         )
         assert len(runs) == 6
         models = {run.model for run in runs}
-        prompts = {run.prompt for run in runs}
+        arms = {run.arm for run in runs}
         assert models == {"model-a", "model-b"}
-        assert prompts == {"prompt.1", "prompt.2", "prompt.3"}
+        assert arms == {"pinned", "micrograph-scale-bar@v2", "micrograph-scale-bar@v3"}
         for run in runs:
             assert len(run.records) == 3
 
     def test_model_contrast_filter(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models=["model-a", "model-b"],
-            prompts="prompt.1",
+            arms="pinned",
         )
         assert len(runs) == 2
         assert {run.model for run in runs} == {
@@ -81,11 +69,11 @@ class TestLoadFlatRuns:
 
 class TestAggregateRun:
     def test_pools_instances_not_doc_means(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts="prompt.1",
+            arms="pinned",
         )
         summary = aggregate_run(runs[0])
         micrograph = summary.by_property["outputs[].micrograph"]
@@ -107,52 +95,55 @@ class TestAggregateRun:
         assert sum(micrograph.layer2_counts.values()) == total_instances
 
     def test_summarize_runs_indexing(self):
-        runs = load_flat_runs(
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models=["model-a", "model-b"],
-            prompts="prompt.1",
+            arms="pinned",
         )
         summaries = summarize_runs(runs)
-        assert ("model-a", "prompt.1") in summaries
-        assert ("model-b", "prompt.1") in summaries
+        assert {(s.model, s.arm) for s in summaries.values()} == {
+            ("model-a", "pinned"),
+            ("model-b", "pinned"),
+        }
+        assert all(ref.replicate == 0 for ref in summaries)
         assert len(summaries.for_model("model-b")) == 1
 
 
 class TestTables:
     @pytest.fixture
-    def prompt1_summary(self):
-        runs = load_flat_runs(
+    def arm1_summary(self):
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts="prompt.1",
+            arms="pinned",
         )
         return aggregate_run(runs[0])
 
     @pytest.fixture
-    def prompt2_summary(self):
-        runs = load_flat_runs(
+    def arm2_summary(self):
+        runs = load_evaluation_dir(
             "fig-checklist",
             "micrograph-scale-bar",
             models="model-a",
-            prompts="prompt.2",
+            arms="micrograph-scale-bar@v2",
         )
         return aggregate_run(runs[0])
 
-    def test_split_layer2_by_metric(self, prompt1_summary):
-        binary_df, graded_df = split_layer2_by_metric(prompt1_summary)
+    def test_split_layer2_by_metric(self, arm1_summary):
+        binary_df, graded_df = split_layer2_by_metric(arm1_summary)
         assert "micrograph" in binary_df["field"].tolist()
         assert "from_the_caption" in graded_df["field"].tolist()
         micrograph_row = binary_df.loc[binary_df["field"] == "micrograph"].iloc[0]
-        profile = prompt1_summary.manifest.profile_for("outputs[].micrograph")
+        profile = arm1_summary.manifest.profile_for("outputs[].micrograph")
         assert profile is not None
         assert profile.matching_metric == MatchingMetric.BINARY_POLARITY
         assert micrograph_row["TP"] + micrograph_row["TN"] > 0
 
-    def test_layer_counts_by_property(self, prompt1_summary):
+    def test_layer_counts_by_property(self, arm1_summary):
         frame = layer_counts_by_property(
-            prompt1_summary, LAYER1_ORDER, "layer1_counts"
+            arm1_summary, LAYER1_ORDER, "layer1_counts"
         )
         assert list(frame.columns) == [
             "leaf_property",
@@ -160,8 +151,8 @@ class TestTables:
             *LAYER1_ORDER,
         ]
 
-    def test_prompt2_has_layer1_outliers(self, prompt2_summary):
-        frame = layer1_instance_table(prompt2_summary)
+    def test_second_arm_has_layer1_outliers(self, arm2_summary):
+        frame = layer1_instance_table(arm2_summary)
         assert not frame.empty
         assert "spurious_applicable" in frame["layer1"].unique()
         assert "scale_bar" in "".join(frame["leaf_property"].tolist())
@@ -169,12 +160,12 @@ class TestTables:
         assert "outputs[]" not in frame["leaf_property"].iloc[0]
         assert frame["source"].str.contains("/content/").all()
 
-    def test_layer2_errors_empty_on_perfect_prompt1(self, prompt1_summary):
-        frame = layer2_instance_table(prompt1_summary)
+    def test_layer2_errors_empty_on_perfect_baseline_arm(self, arm1_summary):
+        frame = layer2_instance_table(arm1_summary)
         assert frame.empty or frame["layer2"].isin({"FP", "FN", "mismatch"}).all()
 
-    def test_layer_s_issues_table_columns(self, prompt1_summary):
-        frame = layer_s_issues_table(prompt1_summary)
+    def test_layer_s_issues_table_columns(self, arm1_summary):
+        frame = layer_s_issues_table(arm1_summary)
         assert list(frame.columns) == [
             "source",
             "list_key",
@@ -198,7 +189,7 @@ class TestCollatedLayerSIssues:
         result = evaluator.evaluate(gold, pred)
 
         from soda_mmqc.reporting.aggregate import RunSummary
-        from soda_mmqc.reporting.load import FlatRecord, FlatRun
+        from soda_mmqc.reporting.load import FlatRecord, FlatRun, RunRef
         from soda_mmqc.core.eval_manifest import load_eval_manifest
 
         manifest = load_eval_manifest(DEMO_DIR / "manifest.json")
@@ -208,10 +199,13 @@ class TestCollatedLayerSIssues:
             analysis=result.to_dict(),
         )
         run = FlatRun(
-            checklist="demo",
-            check="demo",
-            model="demo",
-            prompt="prompt.1",
+            ref=RunRef(
+                checklist="demo",
+                check="demo",
+                model="demo",
+                arm="pinned",
+                replicate=0,
+            ),
             records=(record,),
             manifest=manifest,
         )

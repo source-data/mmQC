@@ -26,9 +26,33 @@ library's core deliverable is a tidy long frame — one row per
 
 **Spec:** this document.
 
-**Depends on:** `2026-09-21-the-cli-owns-the-commands.md`. That plan moves
-`save_analysis` into the run leaf and gives every root the same shape. Do
-not start this one until it is merged.
+**Depends on:** `2026-09-21-the-cli-owns-the-commands.md`, which is **done**
+and is this branch's parent. It moved `save_analysis` into the run leaf and
+gave every root the same shape.
+
+## What the companion plan already built
+
+Checked against the tree rather than assumed, because two of these change
+what this plan should do:
+
+| surface | where | use it, do not rebuild it |
+|---|---|---|
+| `ANALYSIS_FILENAME` | `core/scoring.py` | the file this plan reads |
+| `score_check(...) -> {"flat": [...]}` | `core/scoring.py` | no run-label wrapper to unwrap |
+| `BASELINE_ARM = "pinned"` | `core/gold_drafts.py:39` | the arm name, already named once |
+| `DRAFT_REPLICATE = "rep-00"` | `core/gold_drafts.py:45` | — |
+| `_draft_leaf(root, check)` | `core/gold_drafts.py:48` | **already walks `<arm>/rep-NN/`** |
+
+`_draft_leaf` is the important one. It resolves a run root to one
+`<arm>/rep-NN/` directory, including the "root holds one check or several"
+case that `experiments/runs/` creates. Task 3 needs the same traversal over
+*every* arm and replicate rather than one, so the two must share a module
+rather than diverge: two walkers over the same layout will disagree the
+first time the layout gains anything.
+
+Task 3 therefore begins by extracting the shared piece, and the line
+references into `reporting/` below are still accurate — the companion plan
+never opened that package.
 
 ---
 
@@ -235,8 +259,12 @@ in Task 4, the first task that needs them.
   may be pooled. Arms may never be pooled with each other.
 - **Reporting reads; it does not run.** No task calls `run_check_live`.
   Scoring a leaf via `core.scoring.score_check` is allowed and cached.
-- **Run after every task:** `pytest -q` (baseline after the companion plan:
-  0 failed).
+- **One walker over the run layout.** `<arm>/rep-NN/` is traversed by code
+  in one module. `core/gold_drafts.py` already has one; Task 3 extracts it
+  rather than writing a second.
+- **Run after every task:** `pytest -q`. Measured baseline on this branch's
+  parent: **726 passed, 7 skipped, 10 deselected, 0 failed.** Every task
+  must keep passed >= 726 and add no failure.
 
 ---
 
@@ -259,6 +287,36 @@ in Task 4, the first task that needs them.
 ---
 
 ## Task 1: `mean_score` tells the truth when nothing was eligible
+
+> **Done, and it grew.** Two questions from review turned this from a
+> one-field change into the measure/aggregate split the rest of the plan
+> now assumes. Recorded here because the tasks below were written against
+> the smaller version.
+>
+> - **`eligible` was deleted again.** It duplicated
+>   `layer1_counts["correct_applicable"]` exactly for profiled properties
+>   -- 10 of 10 across the snapshots, and structurally, since
+>   `LeafInstanceResult.score` is never `None`. The denominator is
+>   `PropertyRollup.n_scored`, derived from the layer-1 count. There is no
+>   second word for an outcome layer 1 already names: use
+>   `Layer1Label.CORRECT_APPLICABLE`, not "eligible".
+> - **`by_property` left the serialization.** It was computed at scoring
+>   time and stored, while `reporting/aggregate.py` recomputed its own
+>   from `instances` and `reporting/tables.py` read the stored copy --
+>   two live paths to one number. Manifest thresholds are tunable, so a
+>   stored rollup is a cache nothing invalidates. `analysis.json` now
+>   holds `instances` and `by_list` only, and
+>   `core/property_rollup.py::rollup_by_property` is the single
+>   instances-to-statistics step, run when a report is built.
+>
+> **Consequence for Task 4:** `scores_frame` has one source. Group a
+> record's `instances`, call `rollup_by_property` per example with the
+> manifest. Do not look for a stored `by_property`; there isn't one.
+>
+> **Consequence for Task 7:** `PropertyRollup` gained `n_scored` and
+> `n_instances`, so "never show a layer-2 mean without its denominator"
+> has something concrete to show.
+
 
 **Files:**
 - Modify: `soda_mmqc/core/property_rollup.py:22-37`
@@ -593,20 +651,81 @@ for the other."
 ## Task 3: Point reporting at a root
 
 **Files:**
+- Create: `soda_mmqc/core/run_layout.py` — the one walker
+- Modify: `soda_mmqc/core/gold_drafts.py:39-80` — `_draft_leaf`,
+  `BASELINE_ARM`, `DRAFT_REPLICATE` move there and are imported back
 - Modify: `soda_mmqc/reporting/load.py:383-454` — `load_flat_runs`
 - Modify: `soda_mmqc/reporting/load.py:320-381` — `try_load_run_summaries`,
   `discover_evaluation_checks`
-- Modify: `tests/test_reporting_load.py`
+- Modify: `tests/test_reporting_load.py`, `tests/test_gold_drafts.py`
 
 **Interfaces:**
-- Consumes: `core.scoring.ANALYSIS_FILENAME` from the companion plan.
-- Produces:
+- Consumes: `core.scoring.ANALYSIS_FILENAME`.
+- Produces, in `core/run_layout.py`:
+  - `BASELINE_ARM = "pinned"`, `REPLICATE_PATTERN = re.compile(r"^rep-(\d+)$")`
+  - `resolve_check_root(root: Path, check: str) -> Path` — the "root holds
+    one check or several" step `_draft_leaf` already does
+  - `iter_leaves(root: Path) -> Iterator[tuple[str, int, Path]]` — every
+    `(arm, replicate, directory)` under a root, in sorted order
+  - `leaf(root: Path, *, arm: str, replicate: int) -> Path` — one named
+    leaf, raising if absent. `_draft_leaf` becomes a call to this.
+- Produces, in `reporting/load.py`:
   - `load_run_root(root: Path, *, checklist: str, check: str, model: str = "", include_payloads: bool = False) -> FlatRuns`
   - `load_evaluation_dir(checklist: str, check: str, *, models: Sequence[str] | None = None, include_payloads: bool = False) -> FlatRuns`
-  - `ARM_GLOB = "*"`, `REPLICATE_PATTERN = re.compile(r"^rep-(\d+)$")`
 
 `load_flat_runs` is removed; both replacements are explicit about which tree
 they read.
+
+**Extract before adding.** `core/gold_drafts.py` already walks this layout
+for `init --from-run`, including the case where a root holds one check or
+several. Writing a second walker in `reporting/` would mean two pieces of
+code that must agree about what `rep-NN` means and nothing making them.
+`core/run_layout.py` is below both — `reporting` and `gold_drafts` may
+depend on it, and it depends on neither.
+
+Do the extraction as its own commit, with `tests/test_gold_drafts.py`
+unchanged and passing, before writing anything in `reporting/`: that is the
+evidence the move preserved behaviour.
+
+- [ ] **Step 0: Extract the walker, behaviour unchanged**
+
+Move `BASELINE_ARM`, `DRAFT_REPLICATE` and the traversal inside
+`_draft_leaf` into `core/run_layout.py` as `BASELINE_ARM`,
+`REPLICATE_PATTERN`, `resolve_check_root`, `iter_leaves` and `leaf`.
+Re-express `gold_drafts._draft_leaf` as:
+
+```python
+#: Which replicate a draft comes from. Not a consensus across replicates:
+#: a curator corrects one answer, and averaging would hide precisely the
+#: examples where the replicates disagreed.
+DRAFT_REPLICATE_INDEX = 0
+
+#: Kept as the directory name it has always been, for callers and tests
+#: that match on it.
+DRAFT_REPLICATE = f"rep-{DRAFT_REPLICATE_INDEX:02d}"
+
+
+def _draft_leaf(root: Path, check: str) -> Path:
+    """The ``<arm>/rep-NN/`` directory a run root's drafts come from."""
+    return leaf(
+        resolve_check_root(Path(root), check),
+        arm=BASELINE_ARM,
+        replicate=DRAFT_REPLICATE_INDEX,
+    )
+```
+
+`run_layout.leaf` takes a replicate *number*, since that is what
+`iter_leaves` yields and what a reader of `rep-07` means. `gold_drafts`
+keeps both names: the index it passes, and `DRAFT_REPLICATE` as the string
+its tests already match on. The reason drafts are one replicate rather than
+a consensus stays in `gold_drafts` — that is a fact about curation, not
+about the layout.
+
+Run: `pytest tests/test_gold_drafts.py -q`
+Expected: 8 passed, **with that file unedited**. If it needed editing, the
+extraction changed behaviour — undo and redo it.
+
+Commit this before Step 1.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -673,10 +792,16 @@ Expected: FAIL — `load_run_root` does not exist.
 
 - [ ] **Step 3: Implement `load_run_root`**
 
-Walk `sorted(root.iterdir())` for arms, then `REPLICATE_PATTERN` matches for
-replicates, then read `analysis.json` and take its `"flat"` array. Warn and
-skip a leaf with no `analysis.json`; warn and skip a malformed one. Raise
+Use `run_layout.iter_leaves(root)` from Step 0 — do not walk the directory
+tree here. For each `(arm, replicate, directory)` it yields, read
+`ANALYSIS_FILENAME` and take its `"flat"` array. Warn and skip a leaf with
+no `analysis.json`; warn and skip a malformed one. `iter_leaves` raises
 `FileNotFoundError` if `root` itself is missing.
+
+The division: `run_layout` knows what the directories mean, `load` knows
+what the files inside them contain. A leaf with predictions and no analysis
+is `load`'s business, not the layout's -- it is a run that was never scored,
+which is a normal state and not a malformed tree.
 
 - [ ] **Step 4: Implement `load_evaluation_dir`**
 

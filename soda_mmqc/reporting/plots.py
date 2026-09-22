@@ -10,7 +10,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from soda_mmqc.core.property_rollup import instance_eligible_for_mean_score
+from soda_mmqc.core.property_rollup import instance_is_scored
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, field_order, leaf_property_tail
 from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
@@ -85,7 +85,16 @@ def _apply_plot_template(fig: go.Figure) -> go.Figure:
 
 
 def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
-    """Per-property mean scores for supplementary bar charts."""
+    """Per-property mean scores, with the denominator each was taken over.
+
+    ``mean_score`` stays ``None`` where nothing was applicable. Plotly
+    renders ``None`` in a ``y`` array as a gap, which is what we want: a
+    gap says "nothing to score here", a zero bar says "scored zero", and
+    those are different findings.
+
+    ``n_scored`` rides along so a chart can put the denominator in its
+    hover text. A layer-2 mean without it is not a reportable number.
+    """
     rows: list[dict[str, Any]] = []
     for leaf_property in field_order(summary.manifest, summary.by_property.keys()):
         rollup = summary.by_property[leaf_property]
@@ -94,6 +103,7 @@ def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 "leaf_property": leaf_property,
                 "field": leaf_property_tail(leaf_property),
                 "mean_score": rollup.mean_score,
+                "n_scored": rollup.n_scored,
             }
         )
     return pd.DataFrame(rows)
@@ -116,7 +126,7 @@ def applicable_instance_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 continue
             profile = summary.manifest.profile_for(leaf_property)
             profiled = profile is not None and profile.is_profiled
-            if not instance_eligible_for_mean_score(instance, profiled=profiled):
+            if not instance_is_scored(instance, profiled=profiled):
                 continue
             score = instance.get("score")
             if not isinstance(score, (int, float)):
@@ -241,19 +251,19 @@ def _primary_layer_s_counts(summary: RunSummary) -> dict[str, int]:
 def _comparison_summaries(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"],
+    compare: Literal["arm", "model"],
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
 ) -> tuple[RunSummary, ...]:
     if isinstance(summaries, RunSummaries):
-        if compare == "prompt":
+        if compare == "arm":
             if model is None:
-                raise ValueError("model is required when compare='prompt'")
+                raise ValueError("model is required when compare='arm'")
             selected = summaries.for_model(model)
         else:
-            if prompt is None:
-                raise ValueError("prompt is required when compare='model'")
-            selected = summaries.for_prompt(prompt)
+            if arm is None:
+                raise ValueError("arm is required when compare='model'")
+            selected = summaries.for_arm(arm)
     else:
         selected = tuple(summaries)
 
@@ -262,8 +272,8 @@ def _comparison_summaries(
     return selected
 
 
-def _series_label(summary: RunSummary, *, compare: Literal["prompt", "model"]) -> str:
-    return summary.prompt if compare == "prompt" else summary.model
+def _series_label(summary: RunSummary, *, compare: Literal["arm", "model"]) -> str:
+    return summary.arm if compare == "arm" else summary.model
 
 
 def _comparison_series_opacity(series_index: int, series_count: int) -> float:
@@ -309,10 +319,10 @@ def _comparison_marker_for_points(
     *,
     series_indices: Sequence[int],
     series_count: int,
-    compare: Literal["prompt", "model"] | None,
+    compare: Literal["arm", "model"] | None,
 ) -> dict[str, Any]:
     marker: dict[str, Any] = {"color": color}
-    if compare == "prompt":
+    if compare == "arm":
         marker["opacity"] = [
             _comparison_series_opacity(index, series_count) for index in series_indices
         ]
@@ -333,11 +343,11 @@ def _plot_comparison_stacked(
     series_frames: Mapping[str, pd.DataFrame],
     order: Sequence[str],
     color_map: Mapping[str, str],
-    compare: Literal["prompt", "model"] | None,
+    compare: Literal["arm", "model"] | None,
     title: str,
     series_label: str,
 ) -> go.Figure:
-    """One stacked-bar subplot per leaf field; x = prompt or model within each."""
+    """One stacked-bar subplot per leaf field; x = arm or model within each."""
     series_order = list(series_frames.keys())
     if not fields or not series_order:
         fig = go.Figure()
@@ -513,38 +523,92 @@ def plot_mean_score_bars(
     frame: pd.DataFrame,
     *,
     title: str = "Mean score by leaf field",
+    spread: pd.DataFrame | None = None,
+    arm: str | None = None,
 ) -> go.Figure:
-    """Supplementary per-property mean score bars."""
+    """Per-property mean score bars, with replicate spread when given.
+
+    ``spread`` is a :func:`~soda_mmqc.reporting.aggregate.replicate_spread`
+    frame. Once a run has replicates, plotting two arms as bare bars is
+    actively misleading -- the reader cannot tell a real difference from
+    resampling noise -- so the error bars are the point of passing it.
+    Where a property has fewer than two replicates its ``sd`` is NA and
+    that bar simply gets no error bar, rather than a zero-length one
+    implying perfect reproducibility.
+
+    A property with nothing applicable is a gap, never a zero bar.
+    """
     if frame.empty:
         fig = go.Figure()
         fig.update_layout(title=title)
         return _apply_plot_template(fig)
-    fig = px.bar(
-        frame,
-        x="field",
-        y="mean_score",
-        category_orders={"field": frame["field"].tolist()},
-        title=title,
-        labels={"field": "leaf field", "mean_score": "mean score"},
+
+    # None -> a gap in the bar chart. object dtype keeps None as None;
+    # a float column would coerce it to NaN, which plots the same but
+    # reads as a number in the data.
+    values = [
+        None if pd.isna(value) else float(value)
+        for value in frame["mean_score"]
+    ]
+    denominators = (
+        list(frame["n_scored"]) if "n_scored" in frame else [None] * len(frame)
     )
-    fig.update_layout(yaxis=dict(range=[0, 1]))
+
+    error_y = None
+    if spread is not None and not spread.empty:
+        by_property = spread
+        if arm is not None:
+            by_property = by_property[by_property["arm"] == arm]
+        sd_by_property = (
+            by_property.set_index("property")["sd"].to_dict()
+            if not by_property.empty
+            else {}
+        )
+        sds = [
+            None
+            if pd.isna(sd_by_property.get(key, pd.NA))
+            else float(sd_by_property[key])
+            for key in frame["leaf_property"]
+        ]
+        if any(sd is not None for sd in sds):
+            error_y = dict(type="data", array=sds, visible=True)
+
+    fig = go.Figure(
+        go.Bar(
+            x=list(frame["field"]),
+            y=values,
+            error_y=error_y,
+            customdata=denominators,
+            hovertemplate=(
+                "%{x}<br>mean %{y:.3f}"
+                "<br>over %{customdata} scored instance(s)"
+                "<extra></extra>"
+            ),
+        )
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="leaf field",
+        yaxis_title="mean score",
+        yaxis=dict(range=[0, 1]),
+    )
     return _apply_plot_template(fig)
 
 
 def plot_comparison_mean_scores(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped mean-score bars across prompts (or models) per leaf field."""
+    """Grouped mean-score bars across arms (or models) per leaf field."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     field_order_keys: list[str] = []
     seen: set[str] = set()
@@ -582,10 +646,10 @@ def plot_comparison_mean_scores(
         )
 
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"Mean scores by field — model={model}"
         else:
-            title = f"Mean scores by field — prompt={prompt}"
+            title = f"Mean scores by field — arm={arm}"
     fig.update_layout(
         title=title,
         barmode="group",
@@ -598,17 +662,17 @@ def plot_comparison_mean_scores(
 def plot_comparison_layer_s(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure | None:
-    """Grouped structural row counts across prompts or models."""
+    """Grouped structural row counts across arms or models."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     traces_added = False
     fig = go.Figure()
@@ -636,10 +700,10 @@ def plot_comparison_layer_s(
     if not traces_added:
         return None
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{LAYER_S_TITLE} comparison — model={model}"
         else:
-            title = f"{LAYER_S_TITLE} comparison — prompt={prompt}"
+            title = f"{LAYER_S_TITLE} comparison — arm={arm}"
         if list_key:
             title = f"{title} ({list_key})"
     fig.update_layout(
@@ -655,17 +719,17 @@ def plot_comparison_layer_s(
 def plot_comparison_layer1(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked Layer-1 bars across prompts or models."""
+    """Grouped stacked Layer-1 bars across arms or models."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     fields = sorted(
         {
@@ -684,10 +748,10 @@ def plot_comparison_layer1(
         for summary in selected
     }
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{LAYER1_TITLE} comparison — model={model}"
         else:
-            title = f"{LAYER1_TITLE} comparison — prompt={prompt}"
+            title = f"{LAYER1_TITLE} comparison — arm={arm}"
     return _plot_comparison_stacked(
         fields=fields,
         series_frames=series_frames,
@@ -695,24 +759,24 @@ def plot_comparison_layer1(
         color_map=LAYER1_COLORS,
         compare=compare,
         title=title,
-        series_label="prompt" if compare == "prompt" else "model",
+        series_label="arm" if compare == "arm" else "model",
     )
 
 
 def plot_comparison_layer2_binary(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked binary Layer-2 bars across prompts or models."""
+    """Grouped stacked binary Layer-2 bars across arms or models."""
     return _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
         title=title,
         metric="binary",
     )
@@ -721,17 +785,17 @@ def plot_comparison_layer2_binary(
 def plot_comparison_layer2_graded(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked graded Layer-2 bars across prompts or models."""
+    """Grouped stacked graded Layer-2 bars across arms or models."""
     return _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
         title=title,
         metric="graded",
     )
@@ -740,9 +804,9 @@ def plot_comparison_layer2_graded(
 def _plot_comparison_layer2(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"],
+    compare: Literal["arm", "model"],
     model: str | None,
-    prompt: str | None,
+    arm: str | None,
     title: str | None,
     metric: Literal["binary", "graded"],
 ) -> go.Figure:
@@ -750,7 +814,7 @@ def _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     if metric == "binary":
         order = LAYER2_BINARY_ORDER
@@ -771,10 +835,10 @@ def _plot_comparison_layer2(
         fields.update(frame["field"].tolist())
 
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{default_title} — model={model}"
         else:
-            title = f"{default_title} — prompt={prompt}"
+            title = f"{default_title} — arm={arm}"
     return _plot_comparison_stacked(
         fields=sorted(fields),
         series_frames=series_frames,
@@ -782,7 +846,7 @@ def _plot_comparison_layer2(
         color_map=colors,
         compare=compare,
         title=title,
-        series_label="prompt" if compare == "prompt" else "model",
+        series_label="arm" if compare == "arm" else "model",
     )
 
 
@@ -888,7 +952,7 @@ def build_dashboard(
 
     if title is None:
         title = (
-            f"{summary.check} — {summary.model} / {summary.prompt}"
+            f"{summary.check} — {summary.model} / {summary.arm}"
         )
         
     layout_kwargs: dict[str, Any] = {
