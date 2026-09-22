@@ -1601,3 +1601,96 @@ def _mean_layer_panel(
             row=1,
             col=col,
         )
+
+
+def plot_stacked_counts(
+    counts: pd.DataFrame,
+    *,
+    group: str,
+    category: str,
+    series: str = "arm",
+    order: Sequence[str] | None = None,
+    series_order: Sequence[Any] | None = None,
+    title: str = "Counts by arm",
+    ylabel: str = "count",
+    strip_root: bool = False,
+) -> go.Figure:
+    """One stacked bar per arm, side by side, for each ``group``.
+
+    The shape ``_add_dashboard_stacked_column`` draws -- outcomes stacked
+    inside one bar -- with the second arm as a bar beside it rather than
+    a second figure. A stack says what a panel-per-outcome layout cannot:
+    the total, and each outcome's share of it.
+
+    Plotly has no ``barmode="group+stack"``. Distinct ``offsetgroup``
+    values under ``barmode="stack"`` stack within an arm and set the arms
+    apart, which is the whole trick.
+
+    Everything not named by ``group``, ``category`` or ``series`` is
+    summed over, replicates included.
+
+    The cost is the one a stack always has: ``correct_row`` outweighs
+    ``spurious_row`` by roughly 200:1, so the small outcomes are slivers
+    on top of the big one. Read them against
+    :func:`plot_grouped_counts`, which gives each its own scale and
+    cannot show a total.
+    """
+    if counts.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    names = _series_names(counts, series, series_order)
+    fig = make_subplots(rows=1, cols=1)
+    _stacked_layer_panel(
+        fig,
+        counts,
+        col=1,
+        x=group,
+        stack=category,
+        order=order if order is not None else sorted(counts[category].unique()),
+        colors=_stack_palette(counts[category].unique(), order),
+        series=series,
+        names=names,
+        strip_root=strip_root,
+    )
+    # The swatch has to show what the figure uses. Here that is opacity
+    # on one neutral colour -- every hue is already spoken for by an
+    # outcome, so a coloured swatch would name a colour that appears
+    # nowhere in the bars.
+    for index, name in enumerate(names):
+        fig.add_trace(
+            go.Bar(
+                x=[None], y=[None], name=str(name),
+                marker={
+                    "color": ARM_CONTRAST_BAR_COLOR,
+                    "opacity": _comparison_series_opacity(index, len(names)),
+                },
+                showlegend=True, legendgroup=f"arm::{name}",
+            ),
+            row=1, col=1,
+        )
+    fig.update_layout(
+        barmode="stack",
+        title_text=title,
+        height=520,
+        xaxis_tickangle=-25,
+    )
+    fig.update_yaxes(title_text=ylabel, rangemode="tozero")
+    return _apply_plot_template(fig)
+
+
+def _stack_palette(
+    present: Sequence[str], order: Sequence[str] | None
+) -> dict[str, str]:
+    """Reuse the layer palettes where the names are a layer's, else fall
+    back to a stable categorical one."""
+    for known in (LAYER_S_COLORS, LAYER1_COLORS, LAYER2_BINARY_COLORS,
+                  LAYER2_GRADED_COLORS):
+        if set(present) <= set(known):
+            return dict(known)
+    keys = list(order) if order is not None else sorted(present)
+    return {
+        key: ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+        for index, key in enumerate(keys)
+    }

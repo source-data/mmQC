@@ -87,6 +87,7 @@ from soda_mmqc.reporting.plots import (
     plot_arm_levels_by_check,
     plot_check_layers,
     plot_grouped_counts,
+    plot_stacked_counts,
     plot_mean_score_with_instances,
 )
 from soda_mmqc.reporting.tables import (
@@ -176,6 +177,7 @@ __all__ = [
     "plot_arm_levels_by_check",
     "plot_check_layers",
     "plot_grouped_counts",
+    "plot_stacked_counts",
     "plot_mean_score_with_instances",
     "score_rows_for_summaries",
     "scores_table",

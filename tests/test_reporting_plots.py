@@ -21,6 +21,7 @@ from soda_mmqc.reporting import (
     plot_arm_levels_by_check,
     plot_check_layers,
     plot_grouped_counts,
+    plot_stacked_counts,
     plot_mean_score_with_instances,
     split_layer2_by_metric,
     summarize_runs,
@@ -906,3 +907,94 @@ class TestCheckLayers:
             if t.showlegend and t.name in third
         }
         assert legend == third
+
+
+class TestStackedCounts:
+    """Outcomes stack inside a bar; variants sit beside each other.
+
+    The earlier layer-S figure gave each outcome its own panel, which
+    scales them independently but loses the thing a stack shows: the
+    total, and each outcome's share of it. `_add_dashboard_stacked_column`
+    is the shape -- one bar per group, outcomes stacked -- with the arm
+    as a second bar beside it rather than a second figure.
+    """
+
+    @staticmethod
+    def _counts():
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {"check": check, "arm": arm, "replicate": rep,
+                 "outcome": outcome, "count": n}
+                for check in ("check-a", "check-b")
+                # minimal first, so row order is not the wanted order
+                for arm, n in (("minimal", 90), ("detailed", 100))
+                for rep in (0, 1)
+                for outcome in ("correct_row", "missing_row", "spurious_row")
+            ]
+        )
+
+    def _fig(self, **kwargs):
+        return plot_stacked_counts(
+            self._counts(), group="check", category="outcome",
+            order=("correct_row", "missing_row", "spurious_row"),
+            series_order=("detailed", "minimal"), **kwargs
+        )
+
+    @staticmethod
+    def _data_traces(fig):
+        """Excluding the arm legend swatches, which carry no data."""
+        return [t for t in fig.data if t.x is not None and any(
+            v is not None for v in t.x
+        )]
+
+    def test_the_outcomes_stack(self):
+        fig = self._fig()
+        assert fig.layout.barmode == "stack"
+        assert {t.name for t in self._data_traces(fig)} == {
+            "correct_row", "missing_row", "spurious_row"
+        }
+
+    def test_the_arms_sit_beside_each_other(self):
+        fig = self._fig()
+        assert {t.offsetgroup for t in fig.data if t.offsetgroup} == {
+            "detailed", "minimal"
+        }
+
+    def test_one_bar_pair_per_group(self):
+        fig = self._fig()
+        assert {tuple(t.x) for t in self._data_traces(fig)} == {
+            ("check-a", "check-b")
+        }
+
+    def test_replicates_are_summed(self):
+        """Two replicates of 100 is 200."""
+        fig = self._fig()
+        detailed = [
+            t for t in fig.data
+            if t.offsetgroup == "detailed" and t.name == "correct_row"
+        ]
+        assert [list(t.y) for t in detailed] == [[200.0, 200.0]]
+
+    def test_each_outcome_appears_once_in_the_legend(self):
+        """Two arms means two traces per outcome; only one may be listed.
+
+        The arms are listed too -- opacity alone does not say which is
+        which -- so the outcomes are checked among the data traces.
+        """
+        fig = self._fig()
+        shown = [t.name for t in self._data_traces(fig) if t.showlegend]
+        assert sorted(shown) == ["correct_row", "missing_row", "spurious_row"]
+        assert {"detailed", "minimal"} <= {
+            t.name for t in fig.data if t.showlegend
+        }
+
+    def test_an_empty_frame_is_not_a_crash(self):
+        import pandas as pd
+
+        fig = plot_stacked_counts(
+            pd.DataFrame(columns=["check", "arm", "outcome", "count"]),
+            group="check", category="outcome",
+        )
+        assert fig.data == ()
