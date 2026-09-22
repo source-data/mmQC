@@ -1,0 +1,95 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Intensity [AU]"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The bar graphs plot 'Signal intensity' of SDH and COX enzyme histochemical staining across genotypes (WT, Atxn1-KI, Atxn1-KI;HMGB1). This is a quantitative intensity measurement, but neither the panel nor the caption states its units (e.g., arbitrary units/AU or a defined intensity scale)."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Counts', indicating the number of cells (count) at each fluorescence intensity value."
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis of the FACS histograms is labeled only with the detector channel identifier 'FL2-H' and log-scale tick marks (10^0-10^4), representing TMRM fluorescence intensity (a quantitative measurement of mitochondrial membrane potential). No unit (e.g., arbitrary units/AU) is stated on the axis or defined in the caption."
+        }
+      ]
+    }
+  ]
+}

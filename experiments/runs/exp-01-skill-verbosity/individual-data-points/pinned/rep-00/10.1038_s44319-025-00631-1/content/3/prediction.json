@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial transcriptomic cluster image, not a quantitative plot of averaged data."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E histology images with manual annotation, not a plot."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E image and spatial expression heatmap-style plots showing per-spot mRNA levels across tissue; not a bar/summary plot of averaged data requiring individual point overlay."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; overlaying individual data points would be unreadable and is not expected for this plot type."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar chart shows log2 fold change per gene from differential expression analysis (T11b-high vs low), a summary statistic derived from underlying spot-level expression data, but no individual data points (e.g., per-spot expression values) are overlaid on the bars."
+    }
+  ]
+}

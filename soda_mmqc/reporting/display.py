@@ -11,7 +11,6 @@ import pandas as pd
 from soda_mmqc import logger
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary
 from soda_mmqc.reporting.context import ExampleContext, inspect_instance, inspect_source
-from soda_mmqc.reporting.load import load_prompt_text
 from soda_mmqc.reporting.tables import (
     filter_by_doc,
     filter_by_field,
@@ -138,7 +137,7 @@ def show_issues_table(
     """Layer S missing and spurious rows."""
     frame = layer_s_issues_table(summary)
     title = caption or (
-        f"Layer S issues — {summary.check} / {summary.model} / {summary.prompt}"
+        f"Layer S issues — {summary.check} / {summary.model} / {summary.arm}"
     )
     return show_table(
         frame,
@@ -162,7 +161,7 @@ def show_layer1_errors(
     if field is not None:
         frame = filter_by_field(frame, field)
     title = caption or (
-        f"Layer 1 outliers — {summary.check} / {summary.model} / {summary.prompt}"
+        f"Layer 1 outliers — {summary.check} / {summary.model} / {summary.arm}"
     )
     column_search = {"layer1": layer1} if layer1 is not None else None
     return show_table(
@@ -187,7 +186,7 @@ def show_layer2_errors(
     if field is not None:
         frame = filter_by_field(frame, field)
     title = caption or (
-        f"Layer 2 errors — {summary.check} / {summary.model} / {summary.prompt}"
+        f"Layer 2 errors — {summary.check} / {summary.model} / {summary.arm}"
     )
     return show_table(
         frame,
@@ -199,20 +198,20 @@ def show_layer2_errors(
 def comparison_errors_table(
     summaries: RunSummaries,
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
 ) -> pd.DataFrame:
-    """Long-form layer-2 errors across prompts or models."""
-    if compare == "prompt":
+    """Long-form layer-2 errors across arms or models."""
+    if compare == "arm":
         if model is None:
-            raise ValueError("model is required when compare='prompt'")
+            raise ValueError("model is required when compare='arm'")
         selected = summaries.for_model(model)
-        series_col = "prompt"
+        series_col = "arm"
     else:
-        if prompt is None:
-            raise ValueError("prompt is required when compare='model'")
-        selected = summaries.for_prompt(prompt)
+        if arm is None:
+            raise ValueError("arm is required when compare='model'")
+        selected = summaries.for_arm(arm)
         series_col = "model"
 
     frames: list[pd.DataFrame] = []
@@ -222,7 +221,7 @@ def comparison_errors_table(
             continue
         tagged = frame.copy()
         tagged["model"] = summary.model
-        tagged["prompt"] = summary.prompt
+        tagged["arm"] = summary.arm
         frames.append(tagged)
 
     if not frames:
@@ -236,7 +235,7 @@ def comparison_errors_table(
                 "exp_value",
                 "pred_value",
                 "model",
-                "prompt",
+                "arm",
             ]
         )
 
@@ -251,23 +250,23 @@ def comparison_errors_table(
 def show_comparison_errors(
     summaries: RunSummaries,
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     caption: str | None = None,
 ) -> Any:
-    """Interactive layer-2 error table across prompts or models."""
+    """Interactive layer-2 error table across arms or models."""
     frame = comparison_errors_table(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
-    if compare == "prompt":
+    if compare == "arm":
         title = caption or f"Layer 2 comparison — model={model}"
-        default_sort = ("prompt", "source", "leaf_property", "path")
+        default_sort = ("arm", "source", "leaf_property", "path")
     else:
-        title = caption or f"Layer 2 comparison — prompt={prompt}"
+        title = caption or f"Layer 2 comparison — arm={arm}"
         default_sort = ("model", "source", "leaf_property", "path")
     return show_table(frame, caption=title, default_sort=default_sort)
 
@@ -375,21 +374,10 @@ def _display_figure_image(
         logger.info("Figure image at %s", path)
 
 
-def _display_prompt(text: str) -> None:
-    try:
-        from IPython.display import Markdown, display
-
-        display(Markdown(f"**Prompt**\n\n```\n{text}\n```"))
-    except ImportError:
-        print("Prompt:\n")
-        print(text)
-
-
 def _render_instance_context(
     ctx: ExampleContext,
     *,
     show_full_eval: bool = False,
-    show_prompt: bool = True,
     figure_height: int = 420,
     figure_width: int | None = None,
     zoomable_figure: bool = True,
@@ -397,7 +385,7 @@ def _render_instance_context(
     """Display gold/pred content and optional figure preview for one instance."""
     header = (
         f"**Example context** — `{ctx.checklist}` / `{ctx.check}` / "
-        f"`{ctx.model}` / `{ctx.prompt}`  \n"
+        f"`{ctx.model}` / `{ctx.arm}`  \n"
         f"`source={ctx.ref.source}`"
     )
     if ctx.steps:
@@ -444,18 +432,12 @@ def _render_instance_context(
         _display_markdown("**Full model_output**")
         _display_side_by_side("model_output", ctx.model_output, "—", "—")
 
-    if show_prompt:
-        prompt_text = load_prompt_text(ctx.checklist, ctx.check, ctx.prompt)
-        if prompt_text is not None:
-            _display_prompt(prompt_text)
-
 
 @overload
 def show_instance_context(
     ctx: ExampleContext,
     *,
     show_full_eval: bool = False,
-    show_prompt: bool = True,
     figure_height: int = 420,
     figure_width: int | None = None,
     zoomable_figure: bool = True,
@@ -474,7 +456,6 @@ def show_instance_context(
     object_path: None = None,
     leaf: None = None,
     show_full_eval: bool = False,
-    show_prompt: bool = True,
     figure_height: int = 420,
     figure_width: int | None = None,
     zoomable_figure: bool = True,
@@ -490,7 +471,6 @@ def show_instance_context(
     object_path: str,
     leaf: str,
     show_full_eval: bool = False,
-    show_prompt: bool = True,
     figure_height: int = 420,
     figure_width: int | None = None,
     zoomable_figure: bool = True,
@@ -505,7 +485,6 @@ def show_instance_context(
     object_path: str | None = None,
     leaf: str | None = None,
     show_full_eval: bool = False,
-    show_prompt: bool = True,
     figure_height: int = 420,
     figure_width: int | None = None,
     zoomable_figure: bool = True,
@@ -525,7 +504,6 @@ def show_instance_context(
         _render_instance_context(
             ctx,
             show_full_eval=show_full_eval,
-            show_prompt=show_prompt,
             figure_height=figure_height,
             figure_width=figure_width,
             zoomable_figure=zoomable_figure,
@@ -554,7 +532,6 @@ def show_instance_context(
     _render_instance_context(
         resolved,
         show_full_eval=show_full_eval,
-        show_prompt=show_prompt,
         figure_height=figure_height,
         figure_width=figure_width,
         zoomable_figure=zoomable_figure,

@@ -1,0 +1,49 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "Spatial plots from cell deconvolution analysis showing the distribution of various immune cell populations in LUSCs (top) and mucinous LUADs (bottom).",
+      "decision": "PASS",
+      "explanation": "This panel shows spatial heatmaps of cell-type distribution without any significance claims (no p-values, asterisks, or comparative statistics), so a statistical test is not required."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates), ****P = 7.96E-78 (Classical monocyte), ****P = 4.74E-17 (Alveolar macrophage), ****P = 6.04E-133 (Leukocyte), ***P = 2.31E-05 (Non-classical monocyte).",
+      "decision": "PASS",
+      "explanation": "The box plots carry significance asterisks/p-values, and the caption explicitly names the statistical test (two-sided Mann–Whitney–Wilcoxon test) used to generate them."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme. Gene sets were evaluated based on the default normalized enrichment score method, and statistical significance was determined by bootstrapping with 1000 permutations.",
+      "decision": "PASS",
+      "explanation": "The GSEA plots report NES, FDR and p-values, and the caption explains the statistical method used to compute significance (GSEA Preranked permutation/bootstrapping test), satisfying the requirement to name the test."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "no",
+      "from_the_caption": "Bar graph representing the top M2-like/TAM genes from the differential gene expression (DEG) analysis of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data.",
+      "decision": "FAIL",
+      "explanation": "Each bar reports a p-value for differential expression (e.g., p=2.22E-190), implying a statistical test was performed, but the caption does not state which statistical test/method was used to derive these DEG p-values."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "Representative H&E images and immunohistochemistry (IHC) for SOX2, MSR1 (CD204), HMOX1, and ARG1 in SNL LUSC (top) and mucinous LUAD (bottom). The staining was repeated with lung sections from different mice (n = 3–4, biological replicates).",
+      "decision": "PASS",
+      "explanation": "This panel consists of representative micrographs, not a quantitative plot with statistical comparisons, so no statistical test needs to be reported."
+    }
+  ]
+}

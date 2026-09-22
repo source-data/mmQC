@@ -1,0 +1,109 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel A consists of fluorescence micrograph images (GFP, DsRed, MitoTracker Deep Red, Merge); there are no plotted data axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Categorical grouping by siRNA condition (NC, HMGB1_A, HMGB1_B); no units required for a categorical axis."
+        },
+        {
+          "axis": "y",
+          "definition": "Left bar graph y-axis is labeled 'Relative intensity (Green/Red)', an explicitly defined dimensionless ratio; right bar graph y-axis is labeled 'Intensity [AU]', with AU (arbitrary units) explicitly stated."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel C is a Western blot image (HMGB1, GAPDH bands), not a quantitative plot."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Categorical grouping by genotype (WT, Atxn1-KI, Atxn1-KI;HMGB1); no units required for a categorical axis."
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The bar graphs for SDH and COX staining are labeled only 'Signal intensity' with no unit (e.g., AU, arbitrary units, or optical density) given on the axis or in the caption, so the reader cannot tell what the numeric scale represents."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "x-axis is labeled 'FL2-H', the standard flow-cytometry fluorescence channel designation for TMRM signal; fluorescence intensity in flow cytometry is reported in arbitrary/instrument units and conventionally identified by channel name rather than a physical unit."
+        },
+        {
+          "axis": "y",
+          "definition": "y-axis is labeled 'Counts', i.e., the number of cells per bin, which is a raw count and needs no unit."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows a stacked-area/bar plot of median promoter-state frequencies computed within bins of Pol II ChIP-seq signal, aggregating thousands of promoters into a continuous trend. This binned-proportion trend visualization (6 stacked categories summing to 100% across many bins) cannot meaningfully display individual promoter data points; this is an inherent limitation of the plot type rather than an omission, so individual points are not needed."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a single-molecule stack in which each row is one individual DNA molecule (n=2952), so the underlying individual data points are directly displayed rather than only a summary/average."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same representation as panel A (binned median state frequency trend across thousands of mouse promoters); the stacked, binned-proportion format cannot meaningfully show individual data points, so this is exempt from the requirement."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel D is a single-molecule stack showing each individual DNA molecule (n=2871) and its methylation pattern, so individual data points are directly visualized."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a boxplot summarizing PIC occupancy distributions (median, IQR, whiskers) across groups of dozens to hundreds of promoters. Only extreme outlier values beyond the whiskers are plotted as points; the bulk of individual promoter data points are not overlaid on the boxes, so the underlying data distribution is not shown."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel F is a boxplot summarizing Pol II occupancy distributions across promoter groups. As in panel E, only outlier points beyond the whiskers are shown; the full set of individual data points underlying each box is not displayed."
+    }
+  ]
+}

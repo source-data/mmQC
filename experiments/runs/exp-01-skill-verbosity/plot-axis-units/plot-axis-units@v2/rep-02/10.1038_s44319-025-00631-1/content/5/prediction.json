@@ -1,0 +1,130 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x axis ('spatial1') represents relative spot position within the tissue section (a spatial coordinate used by the spatial-transcriptomics deconvolution software), not a physical measurement, so no units are required."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y axis ('spatial2') is likewise a relative spatial coordinate for spot position, not a measured quantity, so no units are required."
+        },
+        {
+          "axis": "z",
+          "explanation": "The color scale (0.0–1.0) represents the deconvolved cell-type score/fraction for each spot, which is a dimensionless proportion consistent with the 'Fraction of cells' metric quantified in panel B, so no additional units are needed."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y axis is explicitly labeled 'Fraction of cells (%)' directly on the plot."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x axis lists discrete immune cell population categories (Classical monocyte, Alveolar macrophage, Leukocyte, Non-classical monocyte); it is categorical and does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x axis of the GSEA enrichment plots is the rank position of genes in the ordered/ranked dataset, an integer index rather than a measured quantity, so no units are required."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y axis is labeled 'Enrichment score (ES)', a dimensionless statistic computed by the GSEA algorithm; being explicitly named as a score, it needs no additional units."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x axis lists individual gene names (Arg1, Il1r2, Gpnmb, etc.), a categorical axis that does not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y axis is labeled 'Log2 (fold change)', a dimensionless log-ratio quantity that is fully specified by its name and needs no separate units."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel E consists of H&E and IHC micrographs, not a quantitative plot with axes; axis units are not applicable."
+        }
+      ]
+    }
+  ]
+}

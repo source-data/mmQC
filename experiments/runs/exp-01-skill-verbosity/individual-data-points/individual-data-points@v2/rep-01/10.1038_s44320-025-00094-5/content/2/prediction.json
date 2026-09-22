@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a stacked composition/area chart summarizing median promoter-state frequencies across bins of thousands of promoters (n = 5912). It represents a large-scale binned trend across a continuous covariate (Pol II ChIP-seq level), not a simple average of a small number of replicates/samples. Overlaying individual data points on a multi-category stacked composition of this size is not feasible or informative, so individual points are not required here."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "This panel is a single-molecule stack plot in which every row represents one individual DNA molecule's methylation pattern; the state-frequency sidebars are simply a summary annotation layered on top of the fully displayed individual molecule-level data. Individual data are already shown."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same type of stacked composition plot as panel A, summarizing median state frequencies across Pol II-level bins for n = 6122 mouse promoters. As with panel A, individual data-point overlay on this stacked, binned, multi-category composition plot is impractical and not required."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Same type of panel as B (single-locus single-molecule stack for Skp1); every row is an individual molecule, so individual data are directly visible alongside the summary sidebar frequencies."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Boxplots show the median/IQR of PIC occupancy across groups (n ranging from 64 to 572 promoters), but only a sparse set of outlier dots beyond the whiskers is displayed rather than the full set of underlying individual promoter values. The bulk of the individual data points behind the box (median) are not shown, so the spread/robustness of the underlying data cannot be fully assessed."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "As in panel E, these boxplots summarize Pol II occupancy per group but only show a few outlier points outside the whiskers, not the complete set of individual promoter data points underlying each median/box, so the individual data are not adequately displayed."
+    }
+  ]
+}

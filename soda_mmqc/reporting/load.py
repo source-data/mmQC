@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
@@ -11,32 +10,8 @@ from typing import Any, Iterator, Mapping, Sequence
 from soda_mmqc import logger
 from soda_mmqc.config import CHECKLIST_DIR, EVALUATION_DIR
 from soda_mmqc.core.eval_manifest import EvalManifest, load_eval_manifest
-
-_PROMPT_RE = re.compile(r"prompt\.(\d+)")
-
-
-def normalize_prompt_name(prompt_name: str) -> str:
-    """Normalize analysis prompt keys to ``prompt.N``."""
-    if prompt_name.startswith("prompt."):
-        return prompt_name
-
-    match = _PROMPT_RE.search(prompt_name)
-    if match:
-        return f"prompt.{match.group(1)}"
-
-    if "::version::" in prompt_name:
-        try:
-            version_num = int(prompt_name.split("::version::")[-1])
-            return f"prompt.{version_num + 1}"
-        except (ValueError, IndexError):
-            pass
-
-    trailing = re.search(r"(\d+)$", prompt_name)
-    if trailing:
-        return f"prompt.{int(trailing.group(1))}"
-
-    logger.warning("Could not normalize prompt name: %s", prompt_name)
-    return prompt_name
+from soda_mmqc.core.run_layout import iter_leaves
+from soda_mmqc.core.scoring import ANALYSIS_FILENAME
 
 
 def _as_list(value: str | Sequence[str] | None) -> list[str] | None:
@@ -45,11 +20,6 @@ def _as_list(value: str | Sequence[str] | None) -> list[str] | None:
     if isinstance(value, str):
         return [value]
     return list(value)
-
-
-def _prompt_matches(raw_key: str, allowed: list[str] | None) -> bool:
-    normalized = normalize_prompt_name(raw_key)
-    return allowed is None or normalized in allowed
 
 
 @dataclass(frozen=True)
@@ -71,15 +41,59 @@ class FlatRecord:
 
 
 @dataclass(frozen=True)
-class FlatRun:
-    """One (checklist, check, model, prompt) evaluation slice."""
+class RunRef:
+    """What identifies one scored run leaf.
+
+    The harness writes ``<root>/<arm>/rep-NN/<example>/``, so an arm and a
+    replicate are what distinguish two runs of the same check. ``model``
+    is ``""`` when the root does not carry one -- an experiment root is
+    ``experiments/runs/<exp>/<check>/`` with no model segment, and the
+    caller supplies what the path does not.
+
+    There is no ``prompt``. An arm is a different *configuration* of the
+    same skill set; a prompt was a different wording. Code written for
+    one is not correct for the other, so the field was removed rather
+    than renamed.
+    """
 
     checklist: str
     check: str
     model: str
-    prompt: str
+    arm: str
+    replicate: int
+
+
+@dataclass(frozen=True)
+class FlatRun:
+    """One scored run leaf: ``<root>/<arm>/rep-NN/``."""
+
+    ref: RunRef
     records: tuple[FlatRecord, ...]
     manifest: EvalManifest
+    #: The leaf this was read from, so gold/pred payloads can be fetched
+    #: lazily later. ``None`` for a run assembled in memory.
+    path: Path | None = None
+
+    # Flat accessors so consumers read `run.check`, not `run.ref.check`.
+    @property
+    def checklist(self) -> str:
+        return self.ref.checklist
+
+    @property
+    def check(self) -> str:
+        return self.ref.check
+
+    @property
+    def model(self) -> str:
+        return self.ref.model
+
+    @property
+    def arm(self) -> str:
+        return self.ref.arm
+
+    @property
+    def replicate(self) -> int:
+        return self.ref.replicate
 
 
 class FlatRuns(Sequence[FlatRun]):
@@ -99,11 +113,22 @@ class FlatRuns(Sequence[FlatRun]):
 
 
 def _discover_models(eval_dir: Path) -> list[str]:
+    """Model directories under a check that hold at least one scored leaf.
+
+    A model directory is a run *root* now -- its children are arms -- so
+    the analysis lives at ``<model>/<arm>/rep-NN/analysis.json`` rather
+    than directly inside it.
+    """
     models: list[str] = []
     if not eval_dir.is_dir():
         return models
     for child in sorted(eval_dir.iterdir()):
-        if child.is_dir() and (child / "analysis.json").is_file():
+        if not child.is_dir():
+            continue
+        if any(
+            (path / ANALYSIS_FILENAME).is_file()
+            for _arm, _replicate, path in iter_leaves(child)
+        ):
             models.append(child.name)
     return models
 
@@ -164,40 +189,17 @@ def record_source(record: FlatRecord) -> str:
     raise ValueError("FlatRecord has no metadata.source or doc_id")
 
 
-def _find_flat_entry(
-    raw: Mapping[str, Any],
-    *,
-    prompt: str,
-    source: str,
-) -> dict[str, Any] | None:
-    for prompt_key, prompt_payload in raw.items():
-        if not _prompt_matches(prompt_key, [prompt]):
-            continue
-        if not isinstance(prompt_payload, dict):
-            continue
-        flat_entries = prompt_payload.get("flat")
-        if not isinstance(flat_entries, list):
-            continue
-        for entry in flat_entries:
-            if not isinstance(entry, dict):
-                continue
-            metadata = entry.get("metadata")
-            if not isinstance(metadata, dict):
-                continue
-            if metadata.get("source") == source:
-                return entry
-    return None
-
-
 def load_record_payloads(
-    checklist: str,
-    check: str,
-    model: str,
-    prompt: str,
+    leaf_path: Path,
     source: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Load ``expected_output`` and ``model_output`` for one flat record."""
-    analysis_path = EVALUATION_DIR / checklist / check / model / "analysis.json"
+    """Load ``expected_output`` and ``model_output`` from one run leaf.
+
+    ``leaf_path`` is a ``<root>/<arm>/rep-NN/`` directory. There is no
+    prompt key to select: a leaf holds one analysis, which is what having
+    a file per leaf bought.
+    """
+    analysis_path = Path(leaf_path) / ANALYSIS_FILENAME
     if not analysis_path.is_file():
         raise FileNotFoundError(f"Missing analysis file: {analysis_path}")
 
@@ -205,17 +207,25 @@ def load_record_payloads(
     if not isinstance(raw, dict):
         raise ValueError(f"Expected object at root of {analysis_path}")
 
-    entry = _find_flat_entry(raw, prompt=prompt, source=source)
+    entry = None
+    for candidate in raw.get("flat") or ():
+        if not isinstance(candidate, dict):
+            continue
+        metadata = candidate.get("metadata")
+        if isinstance(metadata, dict) and metadata.get("source") == source:
+            entry = candidate
+            break
     if entry is None:
         raise KeyError(
-            f"No flat record for source={source!r} prompt={prompt!r} in {analysis_path}"
+            f"No flat record for source={source!r} in {analysis_path}"
         )
 
     expected_output = _parse_payload(entry, "expected_output")
     model_output = _parse_payload(entry, "model_output")
     if expected_output is None or model_output is None:
         raise KeyError(
-            f"Record {source!r} in {analysis_path} is missing expected_output or model_output"
+            f"Record {source!r} in {analysis_path} is missing "
+            "expected_output or model_output"
         )
     return expected_output, model_output
 
@@ -231,23 +241,19 @@ def find_record(summary_records: Sequence[Any], *, source: str) -> FlatRecord:
 def ensure_record_payloads(
     record: FlatRecord,
     *,
-    checklist: str,
-    check: str,
-    model: str,
-    prompt: str,
+    leaf_path: Path | None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Return gold/pred payloads, loading from disk when not already on the record."""
+    """Gold/pred payloads, read from the leaf when not already carried."""
     if record.has_payloads:
         assert record.expected_output is not None
         assert record.model_output is not None
         return record.expected_output, record.model_output
-    return load_record_payloads(
-        checklist,
-        check,
-        model,
-        prompt,
-        record_source(record),
-    )
+    if leaf_path is None:
+        raise KeyError(
+            f"Record {record_source(record)!r} carries no payloads and the "
+            "run it came from has no path to load them from"
+        )
+    return load_record_payloads(leaf_path, record_source(record))
 
 
 def load_eval_manifest_for_check(checklist: str, check: str) -> EvalManifest:
@@ -256,27 +262,6 @@ def load_eval_manifest_for_check(checklist: str, check: str) -> EvalManifest:
     if not path.is_file():
         raise FileNotFoundError(f"Missing eval manifest: {path}")
     return load_eval_manifest(path)
-
-
-def load_prompt_text(checklist: str, check: str, prompt: str) -> str | None:
-    """Load prompt text for a normalized prompt label (e.g. ``prompt.2``)."""
-    check_dir = CHECKLIST_DIR / checklist / check
-    prompt_path = check_dir / "prompts" / f"{prompt}.txt"
-    if prompt_path.is_file():
-        return prompt_path.read_text(encoding="utf-8")
-
-    for candidate in (check_dir / "prompt.txt", check_dir / "prompts" / "prompt.txt"):
-        if candidate.is_file():
-            return candidate.read_text(encoding="utf-8")
-
-    logger.warning(
-        "No prompt text found for %s / %s / %s under %s",
-        checklist,
-        check,
-        prompt,
-        check_dir,
-    )
-    return None
 
 
 @dataclass(frozen=True)
@@ -328,15 +313,18 @@ def try_load_run_summaries(
     if not manifest_path.is_file():
         return None, (
             "This check has evaluation output but no **eval-manifest.json**. "
-            f"Add a manifest at `{manifest_path}`, then re-run `evaluate` if needed."
+            f"Add a manifest at `{manifest_path}`, then reload."
         )
 
     eval_dir = EVALUATION_DIR / checklist / check
     if not eval_dir.is_dir():
-        return None, f"No evaluation directory at `{eval_dir}`. Run `evaluate` first."
+        return None, (
+            f"No evaluation directory at `{eval_dir}`. "
+            "Run `mmqc run` and then `mmqc score` first."
+        )
 
     try:
-        runs = load_flat_runs(checklist, check)
+        runs = load_evaluation_dir(checklist, check)
     except FileNotFoundError as exc:
         return None, str(exc)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -344,11 +332,11 @@ def try_load_run_summaries(
 
     if len(runs) == 0:
         return None, (
-            f"No flat runs loaded under `{eval_dir}`. "
-            "Each `analysis.json` prompt entry needs a `flat` array (from `evaluate`). "
-            "Legacy files that only contain `perfect_match` must be re-evaluated. "
-            "If you recently added `eval-manifest.json`, clear the Streamlit cache "
-            "(⋮ menu → Clear cache) and reload."
+            f"No scored runs under `{eval_dir}`. A run writes "
+            "`<model>/<arm>/rep-NN/<example>/`, and `mmqc score` writes "
+            "`analysis.json` into that same leaf -- predictions alone are "
+            "not enough. If you recently added `eval-manifest.json`, clear "
+            "the Streamlit cache (⋮ menu → Clear cache) and reload."
         )
 
     return summarize_runs(runs), None
@@ -380,36 +368,41 @@ def discover_evaluation_checks() -> tuple[EvaluationCheckRef, ...]:
     return tuple(refs)
 
 
-def load_flat_runs(
+def load_run_root(
+    root: Path,
+    *,
     checklist: str,
     check: str,
-    *,
-    models: str | Sequence[str] | None = None,
-    prompts: str | Sequence[str] | None = None,
+    model: str = "",
+    arms: str | Sequence[str] | None = None,
     include_payloads: bool = False,
 ) -> FlatRuns:
-    """Load flat analysis runs from ``EVALUATION_DIR``.
+    """Load the scored leaves under one run root.
 
-    Each ``(model, prompt)`` pair yields one :class:`FlatRun`. Missing files
-    are skipped with a warning.
+    A root is a directory whose children are arms, so this serves a
+    production root (``data/evaluation/<checklist>/<check>/<model>/``)
+    and an experiment root (``experiments/runs/<exp>/<check>/``) alike.
+    They differ only in which facts the path carries, which is why
+    ``checklist``, ``check`` and ``model`` are arguments rather than
+    parsed out of it.
 
-    When ``include_payloads`` is false (default), ``expected_output`` and
-    ``model_output`` are omitted from :class:`FlatRecord` for lighter loads.
+    A leaf with predictions but no ``analysis.json`` is a run that was
+    never scored: warned about and skipped, not an error.
     """
     manifest = load_eval_manifest_for_check(checklist, check)
-    eval_dir = EVALUATION_DIR / checklist / check
-    model_list = _as_list(models) or _discover_models(eval_dir)
-    prompt_filter = _as_list(prompts)
-
-    if not model_list:
-        logger.warning("No model directories found under %s", eval_dir)
-        return FlatRuns(())
-
+    arm_filter = _as_list(arms)
     runs: list[FlatRun] = []
-    for model in model_list:
-        analysis_path = eval_dir / model / "analysis.json"
+
+    for arm, replicate, leaf_path in iter_leaves(Path(root)):
+        if arm_filter is not None and arm not in arm_filter:
+            continue
+        analysis_path = leaf_path / ANALYSIS_FILENAME
         if not analysis_path.is_file():
-            logger.warning("Missing analysis file: %s", analysis_path)
+            logger.warning(
+                "No %s in %s; the run is unscored, skipping",
+                ANALYSIS_FILENAME,
+                leaf_path,
+            )
             continue
 
         try:
@@ -422,33 +415,67 @@ def load_flat_runs(
             logger.warning("Expected object at root of %s", analysis_path)
             continue
 
-        for prompt_key, prompt_payload in raw.items():
-            if not _prompt_matches(prompt_key, prompt_filter):
-                continue
-            if not isinstance(prompt_payload, dict):
-                logger.warning("Unexpected payload for prompt %s", prompt_key)
-                continue
-            flat_entries = prompt_payload.get("flat")
-            if not isinstance(flat_entries, list):
-                logger.warning(
-                    "Prompt %s in %s has no 'flat' array; skipping",
-                    prompt_key,
-                    analysis_path,
-                )
-                continue
+        flat_entries = raw.get("flat")
+        if not isinstance(flat_entries, list):
+            logger.warning(
+                "%s has no 'flat' array; skipping", analysis_path
+            )
+            continue
 
-            runs.append(
-                FlatRun(
+        runs.append(
+            FlatRun(
+                ref=RunRef(
                     checklist=checklist,
                     check=check,
                     model=model,
-                    prompt=normalize_prompt_name(prompt_key),
-                    records=_parse_flat_records(
-                        flat_entries,
-                        include_payloads=include_payloads,
-                    ),
-                    manifest=manifest,
-                )
+                    arm=arm,
+                    replicate=replicate,
+                ),
+                records=_parse_flat_records(
+                    flat_entries, include_payloads=include_payloads
+                ),
+                manifest=manifest,
+                path=leaf_path,
             )
+        )
 
+    return FlatRuns(runs)
+
+
+def load_evaluation_dir(
+    checklist: str,
+    check: str,
+    *,
+    models: str | Sequence[str] | None = None,
+    arms: str | Sequence[str] | None = None,
+    include_payloads: bool = False,
+) -> FlatRuns:
+    """Load the production tree, one root per model.
+
+    A thin resolver over :func:`load_run_root`: the production path
+    carries the model and an experiment root does not, and that is the
+    only difference between the two.
+    """
+    eval_dir = EVALUATION_DIR / checklist / check
+    model_list = _as_list(models) or _discover_models(eval_dir)
+    if not model_list:
+        logger.warning("No model directories found under %s", eval_dir)
+        return FlatRuns(())
+
+    runs: list[FlatRun] = []
+    for model in model_list:
+        root = eval_dir / model
+        if not root.is_dir():
+            logger.warning("Missing run root: %s", root)
+            continue
+        runs.extend(
+            load_run_root(
+                root,
+                checklist=checklist,
+                check=check,
+                model=model,
+                arms=arms,
+                include_payloads=include_payloads,
+            )
+        )
     return FlatRuns(runs)

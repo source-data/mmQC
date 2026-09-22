@@ -1,0 +1,108 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel A is a spatial-transcriptomics cluster image with a categorical color legend (Cluster 1–9), not a chart with quantitative x/y axes; no units are applicable."
+        },
+        {
+          "axis": "y",
+          "explanation": "Same as x-axis: this is a spatial image, not a plot with a quantitative y-axis."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel B shows H&E histology images with manual region annotations (LUSC/LUAD regions), not a quantitative plot with axes."
+        },
+        {
+          "axis": "y",
+          "explanation": "Same as x-axis: no quantitative y-axis is present."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "z",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "The color scale bars beneath the spatial feature plots are explicitly labeled 'Log2 Exp – Tmprss11b', 'Log2 Exp – Trp63', and 'Log2 Exp – Hnf4a', with numeric ranges (e.g., 0.0–6.0 or 0.0–4.0), identifying the color-coded quantity as log2-transformed (normalized) gene expression, a dimensionless relative measure."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis is labeled 'Enrichment score (ES)', a dimensionless GSEA running-sum statistic; the caption further reports the associated NES, FDR, and P values for each signature, confirming the quantity plotted."
+        },
+        {
+          "axis": "x",
+          "definition": "X-axis (indicated by the ranked red-to-blue bar at the bottom of each enrichment plot) represents the rank position of genes in the pre-ranked list ordered by the ranking metric — an inherently dimensionless index that does not require a physical unit."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis is labeled 'Log2 (fold change)', a dimensionless logarithmic ratio metric that is self-defining and needs no further physical unit."
+        },
+        {
+          "axis": "x",
+          "definition": "X-axis lists individual gene symbols (Klk14, Tgm3, Sprr2d, Krt16, Il1f9, S100a7a, Plat, Sprr2h), a categorical variable that does not require units."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    }
+  ]
+}

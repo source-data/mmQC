@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution plots display per-spot (individual) values as a heatmap over tissue coordinates; this is analogous to a heatmap and does not require additional overlay of individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "This is a box plot (already exempt from requiring individual points) but additionally shows individual data points as scattered dots overlaid on the boxes for each group."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots depicting a running enrichment score across ranked genes; overlaying individual data points is not applicable and would not be meaningful for this plot type."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The bar chart shows computed log2 fold-change values per gene from a differential gene expression analysis (a single derived statistic per gene, with p-values annotated), rather than a mean of a small number of discrete replicate measurements, so individual data points are not applicable here."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrographs, not a quantitative plot, so this check does not apply."
+    }
+  ]
+}

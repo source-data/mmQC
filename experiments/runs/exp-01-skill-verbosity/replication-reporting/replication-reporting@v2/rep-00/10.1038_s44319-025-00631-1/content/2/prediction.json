@@ -1,0 +1,93 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "RPR2 mice n = 5; RPM mice n = 15; SNL mice n = 4; LP mice n = 6; SL mice n = 9; KP mice n = 8, biological replicates"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 4,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "The caption states exact n for every group and explicitly labels them as biological replicates."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel is a schematic illustration (created in BioRender) with no experimental replicate data, so replicate reporting is not applicable."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Red outlines denote tumors (Biological replicates n > 3)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "Caption states the replicate count (n > 3) and identifies them as biological replicates, though the exact number is not given as a single value."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Biological replicates n > 3"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "Caption reports both a replicate count (n > 3) and the replicate type (biological)."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated three times with serial sections (technical replicates) and with lung sections from different mice (n = 4, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical replicates (three serial sections) and biological replicates (n = 4 mice)",
+      "decision": "PASS",
+      "explanation": "Caption explicitly reports both the number and type of replicates, distinguishing technical (3 serial sections) from biological (4 mice) replicates."
+    },
+    {
+      "panel_label": "F",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Zoom-in of (E) showing Tmprss11b expression by RNAScope in squamous tumors (top panel) and normal lung (bottom panel)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical and biological replicates (inherited from panel E, which it is explicitly stated to be a zoom-in of)",
+      "decision": "PASS",
+      "explanation": "Panel F is explicitly stated to be a zoom-in of panel E, which fully reports replicate number and type; this information transfers to F by direct reference."
+    },
+    {
+      "panel_label": "G",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Representative H&E image with annotations and RNAscope analysis of Tmprss11b (red) and Sox2 (green) in SNL lung sections."
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The panel is described as \"representative,\" implying it was derived from replicated experiments, but the caption gives no number of replicates or their type (biological vs. technical)."
+    }
+  ]
+}

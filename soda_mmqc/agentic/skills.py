@@ -22,7 +22,7 @@ import json
 import yaml
 
 from soda_mmqc import config
-from soda_mmqc.scripts.run import (
+from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     list_checks,
     owns_evaluation_contracts,

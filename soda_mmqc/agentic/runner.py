@@ -59,7 +59,7 @@ from soda_mmqc.agentic.skills import (
     select_versions,
     validate_skills,
 )
-from soda_mmqc.scripts.run import list_checks
+from soda_mmqc.config import list_checks
 
 #: Top-level key under which scored records are stored in `analysis.json`.
 DEFAULT_RUN_LABEL = "agentic"
@@ -76,8 +76,15 @@ __all__ = [
 
 
 def default_predictions_dir(checklist: str, check: str, model: str) -> Path:
-    """Where a run writes its predictions, mirroring the analysis layout."""
-    return EVALUATION_DIR / checklist / check / model / "predictions"
+    """The root a run writes under, when no ``--output`` is given.
+
+    A root is a directory whose children are arms: the harness appends
+    ``<arm>/rep-NN/<example>/`` beneath this. There is no ``predictions``
+    segment, because the leaf holds its ``analysis.json`` too -- and
+    without it a production root has the same shape as an experiment's
+    ``experiments/runs/<exp>/<check>/``, so one walker serves both.
+    """
+    return EVALUATION_DIR / checklist / check / model
 
 
 def _write_prediction(
@@ -86,6 +93,8 @@ def _write_prediction(
     prediction: Dict[str, Any],
     trace: List[Dict[str, Any]],
     skill_set: Optional[SkillSet] = None,
+    arm: str = "pinned",
+    replicate: int = 0,
 ) -> Path:
     """Write one example's leaf JSON plus its trace sidecar."""
     example_dir = predictions_dir / example
@@ -104,6 +113,11 @@ def _write_prediction(
             json.dumps(
                 {
                     "digest": skill_set.digest,
+                    # Which configuration and which sample, recorded rather
+                    # than inferred: the path says the same thing, but a path
+                    # can be moved and a sidecar travels with the prediction.
+                    "arm": arm,
+                    "replicate": replicate,
                     "skills": [
                         dataclasses.asdict(e)
                         for e in sorted(
@@ -206,8 +220,12 @@ def run_check_mock(
     if not wanted:
         raise ValueError(f"No examples to run for {check_name}")
 
-    predictions_dir = Path(
-        output or default_predictions_dir(checklist, check, model)
+    # The same shape as a live run, with no exception for the fact that mock
+    # assembles no skills: it is scored by the same command, and one layout
+    # means one reader.
+    predictions_dir = (
+        Path(output or default_predictions_dir(checklist, check, model))
+        / "pinned" / "rep-00"
     )
     trace = _mock_trace(checklist_dir, check)
 
@@ -267,6 +285,8 @@ def run_check_live(
     approve_tools: bool = False,
     provider: str = "openai",
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
+    replicates: int = 1,
+    force: bool = False,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -277,15 +297,21 @@ def run_check_live(
 
     Versions come from the checklist's ``version-manifest.yaml``. ``unpin``
     varies one or more of those pins, producing one SkillSet per combination;
-    each gets its own predictions subdirectory named after what it changed, so
-    two versions of one skill can be scored against the same gold with the
-    same shared ``eval-manifest.json``. With no ``unpin`` there is exactly one
-    SkillSet and the output layout is unchanged.
+    each gets its own arm directory named after what it changed, so two
+    versions of one skill can be scored against the same gold with the same
+    shared ``eval-manifest.json``.
+
+    Every run writes ``<root>/<arm>/rep-NN/<example>/``, with no exception for
+    a single arm or a single replicate: one shape means one reader, and a run
+    that later wants replicates never has to relocate the one it has.
 
     Returns:
-        ``(predictions directory, per-example report)``. With more than one
-        SkillSet the directory is the parent holding one subdirectory per set.
+        ``(run root, per-example report)``. The root holds one directory per
+        arm, each holding one per replicate; scoring is pointed at a leaf.
     """
+    if replicates < 1:
+        raise ValueError(f"replicates must be at least one, got {replicates}")
+
     check_dir = resolve_check_dir(checklist, check)
     checklist_dir = check_dir.parent
     benchmark = _read_json(check_dir / "benchmark.json")
@@ -313,76 +339,98 @@ def run_check_live(
     report: List[Dict[str, Any]] = []
     for skill_set in skill_sets:
         label = skill_set.label(pins)
-        # Keyed on the label, never on how many sets there happen to be.
-        # `--unpin X --versions v2` expands to exactly one set, and writing
-        # that variant into the baseline directory would silently overwrite
-        # the pinned run's predictions with a different SkillSet's answers --
-        # the one outcome a version comparison must never produce.
-        predictions_dir = (
-            root_dir if label == "pinned" else root_dir / label
-        )
         versions = skill_set.pins
-        for relative_source_path in wanted:
-            logger.info(
-                "Running %s on %s [%s]", check_name, relative_source_path, label
-            )
-            entry: Dict[str, Any] = {
-                "example": relative_source_path,
-                "skill_set": skill_set.digest,
-                "label": label,
-            }
-            try:
-                with runtime_session(
-                    checklist, check, relative_source_path,
-                    keep=keep_runtime, pins=versions,
-                ) as layout:
-                    options = effective_session_options(
-                        layout, skills, defaults=defaults
+        for replicate in range(replicates):
+            # Every axis is a directory, with no exception for the degenerate
+            # case. The baseline arm used to write flat, which gave one run
+            # two shapes and made `score --predictions <root>` score that arm
+            # alone; and a run that later wants replicates must not have to
+            # relocate the one it already has.
+            predictions_dir = root_dir / label / f"rep-{replicate:02d}"
+            for relative_source_path in wanted:
+                entry: Dict[str, Any] = {
+                    "example": relative_source_path,
+                    "skill_set": skill_set.digest,
+                    "label": label,
+                    "replicate": replicate,
+                }
+                done = (
+                    predictions_dir / relative_source_path / PREDICTION_FILENAME
+                )
+                if done.is_file() and not force:
+                    # Resumability is not a convenience at this size: a full
+                    # experiment is thousands of sessions and hours long, so an
+                    # interruption must cost what it interrupted and not the
+                    # whole run. `force` is how a deliberate rerun says so.
+                    logger.info(
+                        "Skipping %s on %s [%s rep-%02d]: already has a "
+                        "prediction",
+                        check_name, relative_source_path, label, replicate,
                     )
-                    options["model"] = model
-                    client = (
-                        _openai_session_client(layout, model)
-                        if provider == "openai"
-                        else None
-                    )
-                    prediction, recorder, audit = asyncio.run(
-                        _run_agent_session(
-                            layout,
-                            versions=versions,
-                            approver=approver,
-                            options=options,
-                            client=client,
+                    entry["status"] = "skipped"
+                    report.append(entry)
+                    continue
+                logger.info(
+                    "Running %s on %s [%s]", check_name, relative_source_path, label
+                )
+                try:
+                    with runtime_session(
+                        checklist, check, relative_source_path,
+                        keep=keep_runtime, pins=versions,
+                    ) as layout:
+                        options = effective_session_options(
+                            layout, skills, defaults=defaults
                         )
-                    )
-                    # The file-production contract is gone with the write
-                    # tool: nothing the session does touches the filesystem.
-                    # What that check protected -- a shared skill that was
-                    # declared but never fired -- is answered by the hop
-                    # trace below, which reads the session's own tool calls
-                    # and needs no artifact to exist.
-                    entry["hops"] = compare_declared_and_observed(
-                        checklist_dir, check, recorder.invoked, pins=versions
-                    )
-                    entry["tools"] = audit.summary()
-                    entry["reported_tools"] = audit.session_info.get("tools")
-                    _write_prediction(
-                        predictions_dir,
-                        relative_source_path,
-                        prediction,
-                        recorder.entries,
-                        skill_set,
-                    )
-                    _copy_sidecar(
-                        audit.path,
-                        predictions_dir / relative_source_path
-                        / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
-                    )
-                    entry["status"] = "ok"
-            except Exception as exc:  # noqa: BLE001 - one example must not end the run
-                logger.error("%s failed: %s", relative_source_path, exc)
-                entry["status"] = "failed"
-                entry["error"] = str(exc)
-            report.append(entry)
+                        options["model"] = model
+                        client = (
+                            _openai_session_client(layout, model)
+                            if provider == "openai"
+                            else None
+                        )
+                        prediction, recorder, audit = asyncio.run(
+                            _run_agent_session(
+                                layout,
+                                versions=versions,
+                                approver=approver,
+                                options=options,
+                                client=client,
+                            )
+                        )
+                        # The file-production contract is gone with the write
+                        # tool: nothing the session does touches the filesystem.
+                        # What that check protected -- a shared skill that was
+                        # declared but never fired -- is answered by the hop
+                        # trace below, which reads the session's own tool calls
+                        # and needs no artifact to exist.
+                        entry["hops"] = compare_declared_and_observed(
+                            checklist_dir, check, recorder.invoked, pins=versions
+                        )
+                        entry["tools"] = audit.summary()
+                        entry["reported_tools"] = audit.session_info.get("tools")
+                        # What this session spent, so a caller can total a run
+                        # without reopening every sidecar.
+                        if audit.usage:
+                            entry["usage"] = dict(audit.usage)
+                        _write_prediction(
+                            predictions_dir,
+                            relative_source_path,
+                            prediction,
+                            recorder.entries,
+                            skill_set,
+                            arm=label,
+                            replicate=replicate,
+                        )
+                        _copy_sidecar(
+                            audit.path,
+                            predictions_dir / relative_source_path
+                            / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
+                        )
+                        entry["status"] = "ok"
+                except Exception as exc:  # noqa: BLE001 - one example must not end the run
+                    logger.error("%s failed: %s", relative_source_path, exc)
+                    entry["status"] = "failed"
+                    entry["error"] = str(exc)
+                report.append(entry)
 
     ok = sum(1 for e in report if e["status"] == "ok")
     logger.info(

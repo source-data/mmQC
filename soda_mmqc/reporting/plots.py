@@ -10,10 +10,18 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from soda_mmqc.core.property_rollup import instance_eligible_for_mean_score
+from soda_mmqc.core.property_rollup import instance_is_scored
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, field_order, leaf_property_tail
 from soda_mmqc.reporting.load import record_source
 from soda_mmqc.reporting.styles import (
+    ARM_CONTRAST_BAR_COLOR,
+    ARM_CONTRAST_PANEL_CHROME,
+    ARM_CONTRAST_ROW_GAP,
+    ARM_CONTRAST_ROW_HEIGHT,
+    ARM_LEVELS_COLORS,
+    CHECK_LAYERS_PANEL_SPACING,
+    CHECK_LAYERS_TITLE_STANDOFF,
+    ARM_CONTRAST_ZERO_LINE_COLOR,
     COMPARISON_SERIES_OPACITIES,
     COMPARISON_SERIES_PATTERNS,
     INSTANCE_SCORE_MARKER_COLOR,
@@ -34,6 +42,8 @@ from soda_mmqc.reporting.styles import (
     MEAN_SCORE_JITTER_STDDEV,
     MEAN_SCORE_PLOT_TITLE,
     MEAN_SCORE_Y_MAX,
+    STACKED_COUNTS_GROUP_GAP,
+    STACKED_COUNTS_POSITION_WIDTH,
     LAYER_S_COLORS,
     LAYER_S_ORDER,
     LAYER_S_TITLE,
@@ -85,7 +95,16 @@ def _apply_plot_template(fig: go.Figure) -> go.Figure:
 
 
 def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
-    """Per-property mean scores for supplementary bar charts."""
+    """Per-property mean scores, with the denominator each was taken over.
+
+    ``mean_score`` stays ``None`` where nothing was applicable. Plotly
+    renders ``None`` in a ``y`` array as a gap, which is what we want: a
+    gap says "nothing to score here", a zero bar says "scored zero", and
+    those are different findings.
+
+    ``n_scored`` rides along so a chart can put the denominator in its
+    hover text. A layer-2 mean without it is not a reportable number.
+    """
     rows: list[dict[str, Any]] = []
     for leaf_property in field_order(summary.manifest, summary.by_property.keys()):
         rollup = summary.by_property[leaf_property]
@@ -94,6 +113,7 @@ def mean_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 "leaf_property": leaf_property,
                 "field": leaf_property_tail(leaf_property),
                 "mean_score": rollup.mean_score,
+                "n_scored": rollup.n_scored,
             }
         )
     return pd.DataFrame(rows)
@@ -116,7 +136,7 @@ def applicable_instance_scores_frame(summary: RunSummary) -> pd.DataFrame:
                 continue
             profile = summary.manifest.profile_for(leaf_property)
             profiled = profile is not None and profile.is_profiled
-            if not instance_eligible_for_mean_score(instance, profiled=profiled):
+            if not instance_is_scored(instance, profiled=profiled):
                 continue
             score = instance.get("score")
             if not isinstance(score, (int, float)):
@@ -241,19 +261,19 @@ def _primary_layer_s_counts(summary: RunSummary) -> dict[str, int]:
 def _comparison_summaries(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"],
+    compare: Literal["arm", "model"],
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
 ) -> tuple[RunSummary, ...]:
     if isinstance(summaries, RunSummaries):
-        if compare == "prompt":
+        if compare == "arm":
             if model is None:
-                raise ValueError("model is required when compare='prompt'")
+                raise ValueError("model is required when compare='arm'")
             selected = summaries.for_model(model)
         else:
-            if prompt is None:
-                raise ValueError("prompt is required when compare='model'")
-            selected = summaries.for_prompt(prompt)
+            if arm is None:
+                raise ValueError("arm is required when compare='model'")
+            selected = summaries.for_arm(arm)
     else:
         selected = tuple(summaries)
 
@@ -262,8 +282,8 @@ def _comparison_summaries(
     return selected
 
 
-def _series_label(summary: RunSummary, *, compare: Literal["prompt", "model"]) -> str:
-    return summary.prompt if compare == "prompt" else summary.model
+def _series_label(summary: RunSummary, *, compare: Literal["arm", "model"]) -> str:
+    return summary.arm if compare == "arm" else summary.model
 
 
 def _comparison_series_opacity(series_index: int, series_count: int) -> float:
@@ -309,10 +329,10 @@ def _comparison_marker_for_points(
     *,
     series_indices: Sequence[int],
     series_count: int,
-    compare: Literal["prompt", "model"] | None,
+    compare: Literal["arm", "model"] | None,
 ) -> dict[str, Any]:
     marker: dict[str, Any] = {"color": color}
-    if compare == "prompt":
+    if compare == "arm":
         marker["opacity"] = [
             _comparison_series_opacity(index, series_count) for index in series_indices
         ]
@@ -333,11 +353,11 @@ def _plot_comparison_stacked(
     series_frames: Mapping[str, pd.DataFrame],
     order: Sequence[str],
     color_map: Mapping[str, str],
-    compare: Literal["prompt", "model"] | None,
+    compare: Literal["arm", "model"] | None,
     title: str,
     series_label: str,
 ) -> go.Figure:
-    """One stacked-bar subplot per leaf field; x = prompt or model within each."""
+    """One stacked-bar subplot per leaf field; x = arm or model within each."""
     series_order = list(series_frames.keys())
     if not fields or not series_order:
         fig = go.Figure()
@@ -513,38 +533,92 @@ def plot_mean_score_bars(
     frame: pd.DataFrame,
     *,
     title: str = "Mean score by leaf field",
+    spread: pd.DataFrame | None = None,
+    arm: str | None = None,
 ) -> go.Figure:
-    """Supplementary per-property mean score bars."""
+    """Per-property mean score bars, with replicate spread when given.
+
+    ``spread`` is a :func:`~soda_mmqc.reporting.aggregate.replicate_spread`
+    frame. Once a run has replicates, plotting two arms as bare bars is
+    actively misleading -- the reader cannot tell a real difference from
+    resampling noise -- so the error bars are the point of passing it.
+    Where a property has fewer than two replicates its ``sd`` is NA and
+    that bar simply gets no error bar, rather than a zero-length one
+    implying perfect reproducibility.
+
+    A property with nothing applicable is a gap, never a zero bar.
+    """
     if frame.empty:
         fig = go.Figure()
         fig.update_layout(title=title)
         return _apply_plot_template(fig)
-    fig = px.bar(
-        frame,
-        x="field",
-        y="mean_score",
-        category_orders={"field": frame["field"].tolist()},
-        title=title,
-        labels={"field": "leaf field", "mean_score": "mean score"},
+
+    # None -> a gap in the bar chart. object dtype keeps None as None;
+    # a float column would coerce it to NaN, which plots the same but
+    # reads as a number in the data.
+    values = [
+        None if pd.isna(value) else float(value)
+        for value in frame["mean_score"]
+    ]
+    denominators = (
+        list(frame["n_scored"]) if "n_scored" in frame else [None] * len(frame)
     )
-    fig.update_layout(yaxis=dict(range=[0, 1]))
+
+    error_y = None
+    if spread is not None and not spread.empty:
+        by_property = spread
+        if arm is not None:
+            by_property = by_property[by_property["arm"] == arm]
+        sd_by_property = (
+            by_property.set_index("property")["sd"].to_dict()
+            if not by_property.empty
+            else {}
+        )
+        sds = [
+            None
+            if pd.isna(sd_by_property.get(key, pd.NA))
+            else float(sd_by_property[key])
+            for key in frame["leaf_property"]
+        ]
+        if any(sd is not None for sd in sds):
+            error_y = dict(type="data", array=sds, visible=True)
+
+    fig = go.Figure(
+        go.Bar(
+            x=list(frame["field"]),
+            y=values,
+            error_y=error_y,
+            customdata=denominators,
+            hovertemplate=(
+                "%{x}<br>mean %{y:.3f}"
+                "<br>over %{customdata} scored instance(s)"
+                "<extra></extra>"
+            ),
+        )
+    )
+    fig.update_layout(
+        title=title,
+        xaxis_title="leaf field",
+        yaxis_title="mean score",
+        yaxis=dict(range=[0, 1]),
+    )
     return _apply_plot_template(fig)
 
 
 def plot_comparison_mean_scores(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped mean-score bars across prompts (or models) per leaf field."""
+    """Grouped mean-score bars across arms (or models) per leaf field."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     field_order_keys: list[str] = []
     seen: set[str] = set()
@@ -582,10 +656,10 @@ def plot_comparison_mean_scores(
         )
 
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"Mean scores by field — model={model}"
         else:
-            title = f"Mean scores by field — prompt={prompt}"
+            title = f"Mean scores by field — arm={arm}"
     fig.update_layout(
         title=title,
         barmode="group",
@@ -598,17 +672,17 @@ def plot_comparison_mean_scores(
 def plot_comparison_layer_s(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure | None:
-    """Grouped structural row counts across prompts or models."""
+    """Grouped structural row counts across arms or models."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     traces_added = False
     fig = go.Figure()
@@ -636,10 +710,10 @@ def plot_comparison_layer_s(
     if not traces_added:
         return None
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{LAYER_S_TITLE} comparison — model={model}"
         else:
-            title = f"{LAYER_S_TITLE} comparison — prompt={prompt}"
+            title = f"{LAYER_S_TITLE} comparison — arm={arm}"
         if list_key:
             title = f"{title} ({list_key})"
     fig.update_layout(
@@ -655,17 +729,17 @@ def plot_comparison_layer_s(
 def plot_comparison_layer1(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked Layer-1 bars across prompts or models."""
+    """Grouped stacked Layer-1 bars across arms or models."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     fields = sorted(
         {
@@ -684,10 +758,10 @@ def plot_comparison_layer1(
         for summary in selected
     }
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{LAYER1_TITLE} comparison — model={model}"
         else:
-            title = f"{LAYER1_TITLE} comparison — prompt={prompt}"
+            title = f"{LAYER1_TITLE} comparison — arm={arm}"
     return _plot_comparison_stacked(
         fields=fields,
         series_frames=series_frames,
@@ -695,24 +769,24 @@ def plot_comparison_layer1(
         color_map=LAYER1_COLORS,
         compare=compare,
         title=title,
-        series_label="prompt" if compare == "prompt" else "model",
+        series_label="arm" if compare == "arm" else "model",
     )
 
 
 def plot_comparison_layer2_binary(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked binary Layer-2 bars across prompts or models."""
+    """Grouped stacked binary Layer-2 bars across arms or models."""
     return _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
         title=title,
         metric="binary",
     )
@@ -721,17 +795,17 @@ def plot_comparison_layer2_binary(
 def plot_comparison_layer2_graded(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     title: str | None = None,
 ) -> go.Figure:
-    """Grouped stacked graded Layer-2 bars across prompts or models."""
+    """Grouped stacked graded Layer-2 bars across arms or models."""
     return _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
         title=title,
         metric="graded",
     )
@@ -740,9 +814,9 @@ def plot_comparison_layer2_graded(
 def _plot_comparison_layer2(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"],
+    compare: Literal["arm", "model"],
     model: str | None,
-    prompt: str | None,
+    arm: str | None,
     title: str | None,
     metric: Literal["binary", "graded"],
 ) -> go.Figure:
@@ -750,7 +824,7 @@ def _plot_comparison_layer2(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     if metric == "binary":
         order = LAYER2_BINARY_ORDER
@@ -771,10 +845,10 @@ def _plot_comparison_layer2(
         fields.update(frame["field"].tolist())
 
     if title is None:
-        if compare == "prompt":
+        if compare == "arm":
             title = f"{default_title} — model={model}"
         else:
-            title = f"{default_title} — prompt={prompt}"
+            title = f"{default_title} — arm={arm}"
     return _plot_comparison_stacked(
         fields=sorted(fields),
         series_frames=series_frames,
@@ -782,7 +856,7 @@ def _plot_comparison_layer2(
         color_map=colors,
         compare=compare,
         title=title,
-        series_label="prompt" if compare == "prompt" else "model",
+        series_label="arm" if compare == "arm" else "model",
     )
 
 
@@ -888,7 +962,7 @@ def build_dashboard(
 
     if title is None:
         title = (
-            f"{summary.check} — {summary.model} / {summary.prompt}"
+            f"{summary.check} — {summary.model} / {summary.arm}"
         )
         
     layout_kwargs: dict[str, Any] = {
@@ -908,3 +982,855 @@ def build_dashboard(
         layout_kwargs[f"legend{col}"] = legend_layout
     fig.update_layout(**layout_kwargs)
     return _apply_plot_template(fig)
+
+
+def _check_panel_grid(
+    checks: Sequence[str],
+    bars_per_check: Mapping[str, int],
+    *,
+    columns: int,
+) -> tuple[go.Figure, int, int, int]:
+    """An empty per-check panel grid, sized for the bars it will hold.
+
+    Each row is sized for its own tallest panel, so a row holding a
+    two-property check beside an eight-property one does not carry six
+    rows of blank space.
+
+    ``vertical_spacing`` is a fraction of the whole figure applied
+    between every pair of rows, so a constant one does not survive being
+    stacked: ten gaps at 0.08 leave the panels a fifth of the height.
+    The gap is fixed in pixels and the fraction derived from the height
+    it produces.
+    """
+    cols = max(1, int(columns))
+    rows = (len(checks) + cols - 1) // cols
+    row_heights = [
+        ARM_CONTRAST_PANEL_CHROME
+        + ARM_CONTRAST_ROW_HEIGHT
+        * max(
+            int(bars_per_check[check])
+            for check in checks[index * cols:(index + 1) * cols]
+        )
+        for index in range(rows)
+    ]
+    gap = ARM_CONTRAST_ROW_GAP if rows > 1 else 0
+    total_height = sum(row_heights) + gap * (rows - 1)
+    fig = make_subplots(
+        rows=rows,
+        cols=cols,
+        subplot_titles=list(checks),
+        shared_xaxes=False,
+        shared_yaxes=False,
+        row_heights=row_heights,
+        vertical_spacing=(gap / total_height) if rows > 1 else 0.0,
+        horizontal_spacing=_COMPARISON_SUBPLOT_HORIZONTAL_SPACING,
+    )
+    return fig, rows, cols, total_height
+
+
+def _finish_check_panels(
+    fig: go.Figure,
+    *,
+    n_checks: int,
+    rows: int,
+    cols: int,
+    total_height: int,
+    title: str,
+    xlabel: str,
+    span: tuple[float, float] | None,
+    showlegend: bool = False,
+) -> go.Figure:
+    """Shared range on every panel, one axis title per column.
+
+    ``span`` of ``None`` leaves each panel to scale itself, which is
+    right when the panels hold quantities of different magnitude and
+    wrong when they hold the same one.
+    """
+    if span is not None:
+        fig.update_xaxes(range=list(span))
+    fig.update_yaxes(autorange="reversed")
+    for col in range(1, cols + 1):
+        # A trailing column can hold no panel at all -- three categories
+        # across two columns leaves the second column of the last row
+        # empty -- and naming an axis that is not there raises.
+        occupied = [
+            row
+            for row in range(1, rows + 1)
+            if (row - 1) * cols + (col - 1) < n_checks
+        ]
+        if not occupied:
+            continue
+        fig.update_xaxes(title_text=xlabel, row=max(occupied), col=col)
+    fig.update_layout(
+        title_text=title, height=total_height, showlegend=showlegend
+    )
+    return _apply_plot_template(fig)
+
+
+def _strip_shared_list_root(properties: Sequence[str]) -> list[str]:
+    """Drop the list root shared by every property of one panel.
+
+    A per-check panel's properties all hang off the same output list, so
+    every tick read ``outputs[].something``. The root is what the panel
+    title already implies, and ten characters of it on a 49-character
+    label is the difference between a panel with room for its bars and
+    one whose labels overflow into its neighbour.
+
+    Only a root shared by *all* of them is dropped, and never the whole
+    label: a check with two lists would otherwise collide ``a[].name``
+    with ``b[].name``. What remains keeps any deeper path, so
+    ``units_provided[].axis`` stays apart from
+    ``unit_definition_as_provided[].axis``.
+    """
+    if not properties:
+        return []
+    candidates: list[str] = []
+    first = properties[0]
+    index = first.find("[].")
+    while index != -1:
+        candidates.append(first[: index + 3])
+        index = first.find("[].", index + 1)
+    for prefix in reversed(candidates):
+        if all(
+            prop.startswith(prefix) and len(prop) > len(prefix)
+            for prop in properties
+        ):
+            return [prop[len(prefix):] for prop in properties]
+    return list(properties)
+
+
+def plot_arm_contrast_by_check(
+    contrast: pd.DataFrame,
+    *,
+    columns: int = 1,
+    title: str = "Paired arm contrast, per property",
+    xlabel: str = "difference in mean_score",
+) -> go.Figure:
+    """One panel per check; within a panel, one bar per leaf property.
+
+    A difference is only interpretable against the other properties of
+    the same check. Pooled into one axis, the eleven exp-01 checks became
+    a single column of 62 bars whose labels had to carry the whole
+    property path to stay apart -- so the panel takes over that job and
+    the tick keeps only the within-record path.
+
+    The x axis is shared across panels. Letting each autoscale would draw
+    a 0.002 difference the same width as a 0.2 one, which is the one
+    reading this figure exists to prevent.
+
+    Nothing here decides whether a difference is real. ``se`` is drawn
+    because a difference without it is not a number, and the bars are one
+    neutral colour because which direction counts as better is the
+    experiment's claim.
+
+    One column by default, not the four ``_comparison_subplot_grid``
+    packs. That grid suits vertical bars over short categories; here
+    plotly hangs each y tick label outside its panel and into whatever
+    sits to the left, so at two columns the right panel's labels were
+    drawn across the left panel's bars and the two titles ran together.
+    A 40-character label needs the full width. ``columns`` raises it for
+    a check set with shorter names.
+    """
+    if contrast.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    checks = sorted(contrast["check"].unique())
+    fig, rows, cols, total_height = _check_panel_grid(
+        checks, contrast["check"].value_counts(), columns=columns
+    )
+
+    for panel_index, check in enumerate(checks):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = contrast[contrast["check"] == check].sort_values(
+            "difference", ascending=True, kind="stable"
+        )
+        errors = (
+            panel["se"].astype(float).fillna(0.0).tolist()
+            if "se" in panel
+            else None
+        )
+        fig.add_trace(
+            go.Bar(
+                x=panel["difference"].astype(float).tolist(),
+                y=_strip_shared_list_root(panel["property"].tolist()),
+                orientation="h",
+                marker_color=ARM_CONTRAST_BAR_COLOR,
+                error_x=(
+                    {"type": "data", "array": errors, "visible": True}
+                    if errors is not None
+                    else None
+                ),
+                customdata=panel[["path"]].to_numpy(),
+                hovertemplate="%{customdata[0]}<br>%{x:.4f}<extra></extra>",
+                showlegend=False,
+            ),
+            row=row,
+            col=col,
+        )
+        fig.add_vline(
+            x=0,
+            line_width=1,
+            line_color=ARM_CONTRAST_ZERO_LINE_COLOR,
+            row=row,
+            col=col,
+        )
+
+    # One explicit range on every panel: `shared_xaxes` only links pan and
+    # zoom, and a reader comparing panels needs them equal before touching
+    # anything.
+    return _finish_check_panels(
+        fig,
+        n_checks=len(checks),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=_arm_contrast_x_range(contrast),
+    )
+
+
+def _arm_contrast_x_range(contrast: pd.DataFrame) -> tuple[float, float]:
+    """Symmetric-enough bounds covering every bar and its error bar."""
+    differences = contrast["difference"].astype(float)
+    errors = (
+        contrast["se"].astype(float).fillna(0.0)
+        if "se" in contrast
+        else pd.Series(0.0, index=contrast.index)
+    )
+    low = float((differences - errors).min())
+    high = float((differences + errors).max())
+    # Always show zero: a panel of small same-signed differences would
+    # otherwise be drawn without the line they are differences from.
+    low, high = min(low, 0.0), max(high, 0.0)
+    pad = (high - low) * 0.08 or 0.01
+    return low - pad, high + pad
+
+
+def plot_arm_levels_by_check(
+    levels: pd.DataFrame,
+    *,
+    series: str = "arm",
+    columns: int = 1,
+    title: str = "Arm scores, per property",
+    xlabel: str = "mean_score (paired examples)",
+) -> go.Figure:
+    """Both arms' scores side by side, one panel per check.
+
+    The contrast figure says how far apart the arms are; this says where
+    on the scale they were. A difference of -0.05 is a different finding
+    at 0.95 than at 0.20, and the contrast alone cannot tell them apart.
+
+    Takes :func:`arm_levels`, whose means are over the paired examples,
+    so the gap a reader measures between a pair of bars is exactly the
+    difference the other figure plots.
+
+    The axis spans the whole of ``mean_score``. Autoscaling to the data
+    would stretch 0.88 against 0.90 across the panel and invite a reading
+    the numbers do not support.
+
+    ``series`` names the column the legend groups on. It defaults to the
+    raw ``arm``, but every check has its own variant arm name, so an
+    eleven-check figure would carry twelve legend entries; pass a column
+    holding a shared label instead.
+    """
+    if levels.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    checks = sorted(levels["check"].unique())
+    fig, rows, cols, total_height = _check_panel_grid(
+        checks, levels["check"].value_counts(), columns=columns
+    )
+
+    names = list(dict.fromkeys(levels[series]))
+    palette = _arm_levels_palette(names)
+    legend_shown: set[str] = set()
+
+    for panel_index, check in enumerate(checks):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = levels[levels["check"] == check]
+
+        # One shared property order per panel, or the grouped bars would
+        # not line up: sorted by the first series' score, so the panel
+        # reads worst-first like the contrast panel beside it.
+        first = panel[panel[series] == names[0]].set_index("property")["mean"]
+        order = list(first.sort_values().index) or sorted(panel["property"].unique())
+        labels = _strip_shared_list_root(order)
+
+        for name in names:
+            arm_rows = panel[panel[series] == name].set_index("property")
+            if arm_rows.empty:
+                continue
+            show_legend = name not in legend_shown
+            legend_shown.add(name)
+            errors = arm_rows.reindex(order)["se"].astype(float).fillna(0.0)
+            fig.add_trace(
+                go.Bar(
+                    x=arm_rows.reindex(order)["mean"].astype(float).tolist(),
+                    y=labels,
+                    orientation="h",
+                    name=str(name),
+                    legendgroup=str(name),
+                    showlegend=show_legend,
+                    marker_color=palette[name],
+                    error_x={
+                        "type": "data",
+                        "array": errors.tolist(),
+                        "visible": True,
+                    },
+                    customdata=arm_rows.reindex(order)[["path"]].to_numpy(),
+                    hovertemplate=(
+                        "%{customdata[0]}<br>%{x:.4f}<extra></extra>"
+                    ),
+                ),
+                row=row,
+                col=col,
+            )
+
+    span = _arm_levels_x_range(levels)
+    fig.update_layout(barmode="group")
+    return _finish_check_panels(
+        fig,
+        n_checks=len(checks),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=span,
+        showlegend=True,
+    )
+
+
+def _arm_levels_palette(names: Sequence[Any]) -> dict[Any, str]:
+    """Two arms are two categories, not a scale from bad to good."""
+    return {
+        name: ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+        for index, name in enumerate(names)
+    }
+
+
+def _arm_levels_x_range(levels: pd.DataFrame) -> tuple[float, float]:
+    """The full score range, widened only if an error bar runs past it."""
+    means = levels["mean"].astype(float)
+    errors = levels["se"].astype(float).fillna(0.0)
+    return min(0.0, float((means - errors).min())), max(
+        1.0, float((means + errors).max())
+    )
+
+
+def plot_grouped_counts(
+    counts: pd.DataFrame,
+    *,
+    group: str,
+    category: str,
+    series: str = "arm",
+    order: Sequence[str] | None = None,
+    series_order: Sequence[Any] | None = None,
+    columns: int = 1,
+    title: str = "Counts by arm",
+    xlabel: str = "count",
+) -> go.Figure:
+    """One panel per ``category``, ``group`` on the y axis, a bar per arm.
+
+    The obvious layout is the other way round -- a panel per check, the
+    outcomes stacked on its y axis -- and for counts it does not work.
+    ``correct_applicable`` outweighs ``withheld_applicable`` by 14x to
+    208x depending on the check, and ``correct_row`` outweighs
+    ``spurious_row`` by roughly 200:1, so a panel would hold one long bar
+    and three invisible ones. A panel per outcome gives each its own
+    scale, which is why the ranges here are deliberately *not* shared.
+
+    They do all start at zero. Bar length has to stay proportional to the
+    count, which is also why this is not a log axis.
+
+    Everything not named by ``group``, ``category`` or ``series`` is
+    summed over -- replicates included, so a count is over the whole run
+    rather than per replicate. A group with no rows in a category is
+    drawn at zero: for a count, nothing observed is a result.
+
+    ``series_order`` fixes the legend and the colours. Without it they
+    follow whatever order the rows happened to arrive in, and the same
+    two arms swap colour between one figure and the next; the default is
+    sorted, which is at least stable.
+
+    One column by default, as elsewhere: plotly hangs a y tick label
+    outside its panel, and a layer-S group label reaches 45 characters
+    (``plot-axis-units - unit_definition_as_provided``).
+    """
+    if counts.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    totals = (
+        counts.groupby([group, category, series], dropna=False, observed=True)[
+            "count"
+        ]
+        .sum()
+        .reset_index()
+    )
+    categories = (
+        [value for value in order if value in set(totals[category])]
+        if order is not None
+        else sorted(totals[category].unique())
+    )
+    groups = sorted(totals[group].unique())
+    present = set(totals[series])
+    names = (
+        [name for name in series_order if name in present]
+        if series_order is not None
+        else sorted(present)
+    )
+    palette = _arm_levels_palette(names)
+
+    fig, rows, cols, total_height = _check_panel_grid(
+        categories,
+        {value: len(groups) * len(names) for value in categories},
+        columns=columns,
+    )
+
+    legend_shown: set[str] = set()
+    for panel_index, value in enumerate(categories):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = totals[totals[category] == value]
+        for name in names:
+            values = (
+                panel[panel[series] == name]
+                .set_index(group)["count"]
+                .reindex(groups)
+                .fillna(0)
+            )
+            show_legend = name not in legend_shown
+            legend_shown.add(name)
+            fig.add_trace(
+                go.Bar(
+                    x=values.tolist(),
+                    y=groups,
+                    orientation="h",
+                    name=str(name),
+                    legendgroup=str(name),
+                    showlegend=show_legend,
+                    marker_color=palette[name],
+                    hovertemplate="%{y}<br>%{x:,}<extra></extra>",
+                ),
+                row=row,
+                col=col,
+            )
+
+    fig.update_layout(barmode="group")
+    fig.update_xaxes(rangemode="tozero")
+    return _finish_check_panels(
+        fig,
+        n_checks=len(categories),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=None,
+        showlegend=True,
+    )
+
+
+def plot_check_layers(
+    *,
+    layer_s: pd.DataFrame,
+    layer1: pd.DataFrame,
+    layer2: pd.DataFrame,
+    series: str = "arm",
+    series_order: Sequence[Any] | None = None,
+    title: str = "Three layers, one check",
+) -> go.Figure:
+    """One check across all three layers, arms side by side in each panel.
+
+    Layer 2 is conditional on layer 1, which is conditional on there
+    being a row at all, so the three read together: an arm that returns
+    fewer rows has fewer applicability calls to make, and an arm that
+    withholds more has fewer instances left for layer 2 to score. Put
+    them on separate pages and the reader has to hold three figures in
+    mind to notice that.
+
+    Layer S and layer 1 stack their outcomes, because those partition
+    everything that happened. Layer 2 does not: ``mean_score`` has
+    nothing to stack, and two arms' means stacked would read as their
+    sum, which is not a quantity.
+
+    Plotly has no ``barmode="group+stack"``. Distinct ``offsetgroup``
+    values under ``barmode="stack"`` put one arm's stack beside the
+    other's, which is what makes a grouped stack possible at all.
+
+    In the stacked panels colour belongs to the outcome, so the variant
+    is opacity *and* a hatch: two shades of one green, touching, read as
+    a single bar rather than a pair. In layer 2 there is no outcome and
+    colour is free, so the variant takes that too, keeping the hatch so
+    it reads the same way across all three panels.
+    """
+    names = _series_names(
+        pd.concat([layer_s[[series]], layer1[[series]], layer2[[series]]]),
+        series,
+        series_order,
+    )
+    fig = make_subplots(
+        rows=1,
+        cols=3,
+        subplot_titles=("Layer S", "Layer 1", "Layer 2"),
+        horizontal_spacing=CHECK_LAYERS_PANEL_SPACING,
+    )
+
+    _stacked_layer_panel(
+        fig, layer_s, col=1, x="list_key", stack="outcome",
+        order=LAYER_S_ORDER, colors=LAYER_S_COLORS,
+        series=series, names=names, strip_root=False,
+    )
+    _stacked_layer_panel(
+        fig, layer1, col=2, x="property", stack="layer1",
+        order=LAYER1_ORDER, colors=LAYER1_COLORS,
+        series=series, names=names, strip_root=True,
+    )
+    _mean_layer_panel(fig, layer2, col=3, series=series, names=names)
+
+    # Which arm is which needs saying: in the stacked panels it is only
+    # opacity, which no legend can show well. The swatch carries the
+    # layer-2 colour instead, where the arm *is* the colour.
+    for index, name in enumerate(names):
+        fig.add_trace(
+            go.Bar(
+                x=[None], y=[None], name=str(name),
+                marker={
+                    "color": _arm_color(index),
+                    "pattern": _variant_pattern(index),
+                },
+                showlegend=True, legendgroup=f"arm::{name}",
+            ),
+            row=1, col=1,
+        )
+
+    fig.update_layout(barmode="stack", title_text=title, height=520)
+    # An explicit standoff, because plotly's automatic one is computed
+    # from the tick labels and pushed these titles out of their own panel.
+    for col, label in enumerate(("rows", "instances", "mean_score"), start=1):
+        fig.update_yaxes(
+            title_text=label,
+            title_standoff=CHECK_LAYERS_TITLE_STANDOFF,
+            row=1,
+            col=col,
+        )
+    fig.update_yaxes(range=[0, 1], row=1, col=3)
+    return _apply_plot_template(fig)
+
+
+def _arm_color(index: int) -> str:
+    return ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+
+
+def _series_names(
+    frame: pd.DataFrame, series: str, series_order: Sequence[Any] | None
+) -> list[Any]:
+    present = set(frame[series])
+    if series_order is None:
+        return sorted(present)
+    return [name for name in series_order if name in present]
+
+
+def _bar_positions(
+    n_groups: int, n_variants: int, group_gap: float
+) -> tuple[list[float], list[float]]:
+    """Numeric x for each (group, variant) bar, and each group's centre.
+
+    Bars are one unit wide and one unit apart inside a group, so a
+    check's variants touch -- they are two halves of one measurement.
+    ``group_gap`` units of air then separate one check from the next.
+
+    Plotly cannot express that on a categorical axis: ``bargap`` applies
+    between every pair of adjacent positions, within a group and between
+    groups alike, and ``bargroupgap`` only exists for the offsetgroup
+    mechanism this module no longer uses. Explicit positions can.
+    """
+    step = n_variants + group_gap
+    xs = [
+        group * step + variant
+        for group in range(n_groups)
+        for variant in range(n_variants)
+    ]
+    centres = [
+        group * step + (n_variants - 1) / 2 for group in range(n_groups)
+    ]
+    return xs, centres
+
+
+def _stacked_layer_panel(
+    fig: go.Figure,
+    frame: pd.DataFrame,
+    *,
+    col: int,
+    x: str,
+    stack: str,
+    order: Sequence[str],
+    colors: Mapping[str, str],
+    series: str,
+    names: Sequence[Any],
+    strip_root: bool,
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
+) -> None:
+    """Outcomes stacked within a variant; variants at their own positions.
+
+    Every ``(group, variant)`` pair gets its own numeric x, so the only
+    thing plotly can stack at a position is that variant's own outcomes.
+
+    This replaced ``offsetgroup``, which is advisory: it needs
+    ``alignmentgroup`` beside it, and without one plotly.js stacked the
+    two variants into a single bar while kaleido drew them side by side
+    from the same figure JSON. A static export could not catch that. A
+    position can only be read one way.
+    """
+    totals = frame.groupby([x, stack, series], observed=True)["count"].sum()
+    categories = sorted({value for value, _, _ in totals.index})
+    labels = (
+        _strip_shared_list_root(categories) if strip_root else list(categories)
+    )
+    outcomes = [o for o in order if o in {value for _, value, _ in totals.index}]
+
+    xs, centres = _bar_positions(len(categories), len(names), group_gap)
+    per_bar = [index for _ in categories for index in range(len(names))]
+
+    for outcome in outcomes:
+        fig.add_trace(
+            go.Bar(
+                x=xs,
+                y=[
+                    float(totals.get((category, outcome, name), 0))
+                    for category in categories
+                    for name in names
+                ],
+                width=1.0,
+                name=outcome,
+                legendgroup=outcome,
+                showlegend=True,
+                marker=_variant_marker(colors[outcome], per_bar, len(names)),
+                customdata=[
+                    f"{label} / {name}"
+                    for label in labels
+                    for name in names
+                ],
+                hovertemplate=(
+                    f"%{{customdata}}<br>{outcome}: %{{y:,}}<extra></extra>"
+                ),
+            ),
+            row=1,
+            col=col,
+        )
+    fig.update_xaxes(
+        tickvals=centres, ticktext=labels, tickangle=-25, row=1, col=col
+    )
+
+
+def _variant_marker(
+    color: str, per_bar: Sequence[int], n_variants: int
+) -> dict[str, Any]:
+    """One hue for the outcome; the variant is opacity plus a hatch.
+
+    Colour is spoken for, and two shades of one green with no air
+    between them read as a single bar -- which is how this figure was
+    misread more than once.
+    """
+    return {
+        "color": color,
+        "opacity": [
+            _comparison_series_opacity(index, n_variants) for index in per_bar
+        ],
+        "pattern": {
+            "shape": [_comparison_series_pattern(index) for index in per_bar],
+            "solidity": 0.4,
+            "fgcolor": "#ffffff",
+            "size": 5,
+        },
+    }
+
+
+def _mean_layer_panel(
+    fig: go.Figure,
+    frame: pd.DataFrame,
+    *,
+    col: int,
+    series: str,
+    names: Sequence[Any],
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
+) -> None:
+    """Layer-2 means on the same positions as the stacked panels."""
+    categories = sorted(frame["property"].unique())
+    labels = _strip_shared_list_root(categories)
+    indexed = frame.set_index(["property", series])
+
+    def _cell(category: str, name: Any, column: str) -> float:
+        try:
+            value = indexed.loc[(category, name), column]
+        except KeyError:
+            return float("nan")
+        return float(value) if pd.notna(value) else float("nan")
+
+    xs, centres = _bar_positions(len(categories), len(names), group_gap)
+    per_bar = [index for _ in categories for index in range(len(names))]
+    marker = _variant_marker(ARM_CONTRAST_BAR_COLOR, per_bar, len(names))
+    marker["color"] = [_arm_color(index) for index in per_bar]
+
+    fig.add_trace(
+        go.Bar(
+            x=xs,
+            y=[
+                _cell(category, name, "mean")
+                for category in categories
+                for name in names
+            ],
+            width=1.0,
+            showlegend=False,
+            marker=marker,
+            error_y={
+                "type": "data",
+                "array": [
+                    0.0 if pd.isna(value) else value
+                    for value in (
+                        _cell(category, name, "sd")
+                        for category in categories
+                        for name in names
+                    )
+                ],
+                "visible": True,
+            },
+            customdata=[
+                f"{label} / {name}" for label in labels for name in names
+            ],
+            hovertemplate="%{customdata}<br>%{y:.4f}<extra></extra>",
+        ),
+        row=1,
+        col=col,
+    )
+    fig.update_xaxes(
+        tickvals=centres, ticktext=labels, tickangle=-25, row=1, col=col
+    )
+
+
+def plot_stacked_counts(
+    counts: pd.DataFrame,
+    *,
+    group: str,
+    category: str,
+    series: str = "arm",
+    order: Sequence[str] | None = None,
+    series_order: Sequence[Any] | None = None,
+    title: str = "Counts by arm",
+    ylabel: str = "count",
+    strip_root: bool = False,
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
+) -> go.Figure:
+    """One stacked bar per arm, side by side, for each ``group``.
+
+    The shape ``_add_dashboard_stacked_column`` draws -- outcomes stacked
+    inside one bar -- with the second arm as a bar beside it rather than
+    a second figure. A stack says what a panel-per-outcome layout cannot:
+    the total, and each outcome's share of it.
+
+    Plotly has no ``barmode="group+stack"``. Distinct ``offsetgroup``
+    values under ``barmode="stack"`` stack within an arm and set the arms
+    apart, which is the whole trick.
+
+    Everything not named by ``group``, ``category`` or ``series`` is
+    summed over, replicates included.
+
+    The cost is the one a stack always has: ``correct_row`` outweighs
+    ``spurious_row`` by roughly 200:1, so the small outcomes are slivers
+    on top of the big one. Read them against
+    :func:`plot_grouped_counts`, which gives each its own scale and
+    cannot show a total.
+    """
+    if counts.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    names = _series_names(counts, series, series_order)
+    fig = make_subplots(rows=1, cols=1)
+    _stacked_layer_panel(
+        fig,
+        counts,
+        col=1,
+        x=group,
+        stack=category,
+        order=order if order is not None else sorted(counts[category].unique()),
+        colors=_stack_palette(counts[category].unique(), order),
+        series=series,
+        names=names,
+        strip_root=strip_root,
+        group_gap=group_gap,
+    )
+    # The swatch has to show what the figure uses. Here that is opacity
+    # on one neutral colour -- every hue is already spoken for by an
+    # outcome, so a coloured swatch would name a colour that appears
+    # nowhere in the bars.
+    for index, name in enumerate(names):
+        fig.add_trace(
+            go.Bar(
+                x=[None], y=[None], name=str(name),
+                marker={
+                    "color": ARM_CONTRAST_BAR_COLOR,
+                    "opacity": _comparison_series_opacity(index, len(names)),
+                    "pattern": _variant_pattern(index),
+                },
+                showlegend=True, legendgroup=f"arm::{name}",
+            ),
+            row=1, col=1,
+        )
+    positions = len(set(counts[group])) * max(1, len(names))
+    fig.update_layout(
+        barmode="stack",
+        title_text=title,
+        height=520,
+        # The bars carry their own width and position, so plotly must
+        # not add a gap of its own: none inside a pair, `group_gap`
+        # between pairs, both set by _bar_positions.
+        bargap=0,
+        # A group's name sits under that group's bars alone, so a long
+        # name needs the width those bars occupy. At a container's
+        # width, fourteen check names overlap into mush; an explicit
+        # width scrolls instead.
+        width=max(900, STACKED_COUNTS_POSITION_WIDTH * positions),
+    )
+    fig.update_yaxes(title_text=ylabel, rangemode="tozero")
+    return _apply_plot_template(fig)
+
+
+def _variant_pattern(index: int) -> dict[str, Any]:
+    """Hatch for the non-baseline variants.
+
+    The baseline stays solid so it reads as the reference. Later ones
+    take a shape from the same ladder the model comparison uses.
+    """
+    return {
+        "shape": _comparison_series_pattern(index),
+        "solidity": 0.4,
+        "fgcolor": "#ffffff",
+        "size": 5,
+    }
+
+
+def _stack_palette(
+    present: Sequence[str], order: Sequence[str] | None
+) -> dict[str, str]:
+    """Reuse the layer palettes where the names are a layer's, else fall
+    back to a stable categorical one."""
+    for known in (LAYER_S_COLORS, LAYER1_COLORS, LAYER2_BINARY_COLORS,
+                  LAYER2_GRADED_COLORS):
+        if set(present) <= set(known):
+            return dict(known)
+    keys = list(order) if order is not None else sorted(present)
+    return {
+        key: ARM_LEVELS_COLORS[index % len(ARM_LEVELS_COLORS)]
+        for index, key in enumerate(keys)
+    }

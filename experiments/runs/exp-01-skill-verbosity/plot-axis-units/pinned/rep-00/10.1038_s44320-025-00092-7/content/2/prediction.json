@@ -1,0 +1,233 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "x-axis labeled 'Lag (hours)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Rhythmicity index is a dimensionless normalized index, so no unit is required."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Circadian component is a dimensionless fractional component (0-1), no unit required."
+        },
+        {
+          "axis": "y",
+          "explanation": "Log10(Noise component) is a dimensionless log-transformed component, no unit required."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Top subplot x-axis labeled 'Period (hours)'"
+        },
+        {
+          "axis": "x",
+          "definition": "Bottom subplot x-axis labeled 'log(amplitude) (arb. u.)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Density (top subplot) is a normalized probability-density value, self-described by the axis label, no additional unit required."
+        },
+        {
+          "axis": "y",
+          "explanation": "Density (bottom subplot) is a normalized probability-density value, self-described by the axis label, no additional unit required."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "y-axis labeled 'Ridge length (hours)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "x-axis lists categorical cell line names, no unit required."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Angular axis tick marks expressed as fractions of π (0, π/6, π/3, ... 2π), with caption stating '2π corresponds to one full circadian cycle', indicating radian units."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Radial axis represents normalized probability, a dimensionless quantity that does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Angular axis explicitly labeled 'Phase difference (radians)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Radial axis represents normalized probability, a dimensionless quantity that does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "x-axis labeled 'Time (hours)'"
+        },
+        {
+          "axis": "y",
+          "definition": "y-axis labeled 'Signal (arb. u.)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "H",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "x-axis 'Amplitude exponential decay rate (γ)' is a physical rate constant (from the exponential decay model in panel G, where time is in hours) but no unit (e.g., h⁻¹) is given on the axis or in the caption; only a scale multiplier (10⁻³) is shown."
+        },
+        {
+          "axis": "y",
+          "explanation": "y-axis 'Amplitude (A₀)' is derived from the signal amplitude, which panel G specifies in arbitrary units, but no unit is stated on this axis or in the caption for panel H; only a scale multiplier (10²) is shown."
+        }
+      ]
+    }
+  ]
+}

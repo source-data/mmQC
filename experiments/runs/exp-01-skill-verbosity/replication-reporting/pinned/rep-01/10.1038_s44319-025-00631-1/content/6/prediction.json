@@ -1,0 +1,91 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Representative ex vivo bright-field/fluorescence images with no quantification or statistics; nothing to report."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "control n = 5 mice; Ad-Cre n = 3 mice, biological replicates",
+        "Unpaired t test with Welch's correction was used for the analysis, P = 0.0281"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (mice)",
+      "decision": "PASS",
+      "explanation": "Bar graph with individual points and statistical test clearly states n = 5 (control) and n = 3 (Ad-Cre) biological replicates (mice), meeting the reporting requirement."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Representative H&E, fluorescence, RNAscope, and spatial expression images from a single section with no quantification or statistics shown."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "NES=4.736, FDR=0.0, p=0.0",
+        "NES=4.505, FDR=0.0, p=0.0",
+        "NES=3.769, FDR=0.0, p=0.0",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "GSEA plots report NES, FDR and p values (statistical analysis) comparing low pH vs high pH spatial transcriptomics regions, but the legend does not state how many biological samples/sections/mice underlie the spatial transcriptomics data used for this comparison."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "p= 1.97E-65",
+        "p= 1.76E-75",
+        "p= 8.08E-69",
+        "p= 1.31E-64",
+        "p= 1.81E-74",
+        "p= 4.15E-55",
+        "p= 1.76E-55",
+        "p= 4.35E-45",
+        "p= 1.81E-10",
+        "Differential gene expression was calculated using Seurat's FindAllMarkers function... Wilcoxon rank-sum test with Bonferroni P value correction"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Bar graph with statistical p values from differential expression analysis, but the legend does not state the number or type of biological replicates (e.g., mice/sections) contributing to the low pH vs high pH spatial transcriptomics comparison."
+    },
+    {
+      "panel_label": "F",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 2, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (mice)",
+      "decision": "PASS",
+      "explanation": "Representative ICG/IHC images with no summary statistics; n = 2 biological replicates is explicitly stated, which is acceptable for representative (non-statistical) panels."
+    }
+  ]
+}

@@ -24,6 +24,11 @@ dependencies = [
     "numpy>=1.24.0",
     "tqdm",
     "plotly>=5.13.0",
+    # Static image export for plotly figures, so a paper figure can be
+    # written from a notebook. plotly 6.5 declares kaleido>=1.1.0 for
+    # its own `kaleido` extra; v1 drives a real browser rather than
+    # bundling one, so `write_image` needs Chrome available.
+    "kaleido>=1.1.0",
     "pandas>=1.3.0",
     "streamlit>=1.34.0",
     "streamlit-image-zoom>=0.0.4",
@@ -52,11 +57,15 @@ dependencies = [
 ]
 
 [project.scripts]
-evaluate = "soda_mmqc.scripts.run:main"
+# One CLI. `evaluate` and `init` used to point into scripts/run.py, so a
+# command could be declared in two places; they are now `mmqc score` and
+# `mmqc init`.
+mmqc = "soda_mmqc.cli:main"
+# Kept for muscle memory; each is also `mmqc <command>`, and each points at
+# the same launcher, so there is still one implementation.
 curate = "soda_mmqc.scripts.curate:main"
 report = "soda_mmqc.scripts.report:main"
 export-fig-report = "soda_mmqc.scripts.export_fig_checklist_report:main"
-init = "soda_mmqc.scripts.run:initialize_main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["soda_mmqc"]

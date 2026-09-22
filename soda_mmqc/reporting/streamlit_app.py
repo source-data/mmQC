@@ -15,7 +15,6 @@ from soda_mmqc.reporting.load import (
     EvaluationCheckRef,
     discover_evaluation_checks,
     evaluation_data_cache_key,
-    load_prompt_text,
     try_load_run_summaries,
 )
 from soda_mmqc.reporting.navigate import instance_object_path
@@ -23,7 +22,7 @@ from soda_mmqc.reporting.plots import plot_mean_score_with_instances
 from soda_mmqc.reporting.styles import MEAN_SCORE_PLOT_TITLE, PLOTLY_TEMPLATE
 from soda_mmqc.reporting.tables import layer2_instance_table
 
-CompareMode = Literal["single", "prompt", "model"]
+CompareMode = Literal["single", "arm", "model"]
 
 # Match comparative-reporting.ipynb drill-down defaults
 INSTANCE_FIGURE_HEIGHT = 1200
@@ -45,7 +44,7 @@ def render_instance_context(
     """Render gold/pred drill-down (Streamlit backend)."""
     st.subheader("Selected instance")
     st.caption(
-        f"`{ctx.checklist}` / `{ctx.check}` / `{ctx.model}` / `{ctx.prompt}` · "
+        f"`{ctx.checklist}` / `{ctx.check}` / `{ctx.model}` / `{ctx.arm}` · "
         f"`source={ctx.ref.source}`"
     )
     if ctx.steps:
@@ -112,11 +111,6 @@ def render_instance_context(
             st.markdown(f"**{pred_label.title()} at path**")
             st.code(_format_value(ctx.pred_subtree), language="json")
 
-    prompt_text = load_prompt_text(ctx.checklist, ctx.check, ctx.prompt)
-    if prompt_text is not None:
-        with st.expander("Prompt text"):
-            st.code(prompt_text)
-
 
 def _selected_instance_index(selection: Any) -> int | None:
     if selection is None or not getattr(selection, "points", None):
@@ -156,7 +150,7 @@ def _render_mean_score_panel(
     enable_selection: bool,
 ) -> pd.Series | None:
     title = (
-        f"{summary.check} — {summary.model} / {summary.prompt} — "
+        f"{summary.check} — {summary.model} / {summary.arm} — "
         f"{MEAN_SCORE_PLOT_TITLE}"
     )
     fig, inst = plot_mean_score_with_instances(
@@ -254,10 +248,10 @@ def main() -> None:
 
         compare_mode = st.radio(
             "Contrast by",
-            options=("single", "prompt", "model"),
+            options=("single", "arm", "model"),
             format_func=lambda value: {
                 "single": "Single run",
-                "prompt": "Prompt",
+                "arm": "Arm",
                 "model": "Model",
             }[value],
             horizontal=True,
@@ -275,27 +269,47 @@ def main() -> None:
             st.warning("No runs loaded")
         elif summaries is not None:
             models = summaries.models
-            prompts = summaries.prompts
+            arms = summaries.arms
+
+            def _pick(model: str, arm: str) -> list:
+                """Every replicate of one (model, arm), in order.
+
+                A RunRef carries a replicate too, so one (model, arm)
+                can name several runs. They are listed rather than
+                pooled: pooling replicates is a statistic, and this
+                selector only chooses what to show.
+                """
+                return [
+                    summary
+                    for summary in summaries.for_model(model)
+                    if summary.arm == arm
+                ]
+
+            def _label(summary) -> str:
+                reps = summaries.replicates
+                suffix = f" rep-{summary.replicate:02d}" if len(reps) > 1 else ""
+                return f"{summary.arm}{suffix}"
 
             if compare_mode == "single":
                 model = st.selectbox("Model", models)
-                prompt = st.selectbox("Prompt", prompts)
+                arm = st.selectbox("Arm", arms)
                 active_summaries = [
-                    (f"{model} / {prompt}", summaries[model, prompt])
+                    (f"{model} / {_label(summary)}", summary)
+                    for summary in _pick(model, arm)
                 ]
-            elif compare_mode == "prompt":
+            elif compare_mode == "arm":
                 model = st.selectbox("Model (fixed)", models)
                 active_summaries = [
-                    (prompt, summaries[model, prompt])
-                    for prompt in prompts
-                    if (model, prompt) in summaries
+                    (_label(summary), summary)
+                    for arm in arms
+                    for summary in _pick(model, arm)
                 ]
             else:
-                prompt = st.selectbox("Prompt (fixed)", prompts)
+                arm = st.selectbox("Arm (fixed)", arms)
                 active_summaries = [
-                    (model, summaries[model, prompt])
+                    (model, summary)
                     for model in models
-                    if (model, prompt) in summaries
+                    for summary in _pick(model, arm)
                 ]
 
     if load_error or not active_summaries:

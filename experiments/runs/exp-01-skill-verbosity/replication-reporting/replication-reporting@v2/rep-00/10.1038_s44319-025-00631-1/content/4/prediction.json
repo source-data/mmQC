@@ -1,0 +1,57 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "unclear",
+      "replicate_statements": [
+        "H&E image of the lung section from 3 A), annotated with regions of LUSC and LUAD, (left) and corresponding spatial plots depicting the distribution of the indicated mRNAs."
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel A shows a single lung section (referenced from Figure 3A) with H&E and spatial transcriptomic overlays. No number of sections/animals or replicate type is stated for this panel, so it is unclear whether this represents a single specimen or a replicated observation, and no replicate information is given."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 2–3, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (n = 2–3, different mice)",
+      "decision": "PASS",
+      "explanation": "The caption explicitly states the number (n = 2–3) and type (biological replicates, different mice) of replicates used for the RNAscope staining shown."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC ...)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 500,
+      "replicate_type_reported": "yes",
+      "replicate_type": "independent patient tumor samples (LUSC n = 500, LUAD n = 512, TCGA-GDC dataset)",
+      "decision": "PASS",
+      "explanation": "The caption reports the exact sample sizes (n = 500 LUSC tumors, n = 512 LUAD tumors) and identifies them as patient tumor samples from a named public dataset, satisfying both number and type of replicate reporting."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
+        "The experiment was repeated two times to confirm the observations."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical replicates (n = 3 per group), experiment repeated twice",
+      "decision": "PASS",
+      "explanation": "The caption clearly states n = 3 technical replicates per group and additionally notes the experiment was independently repeated two times, fully reporting both number and type of replicates."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The scatter plot itself plots all n=141 individual samples as points (no averaging), and the accompanying marginal histograms show the actual binned counts of these individual measurements (with a fitted gamma curve overlaid), so individual data are directly visible rather than hidden behind a summary statistic."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Each point represents the mean ± s.d. across 6 replicate samples per reporter/cell line (n=2 biological x triplicate/duplicate technical replicates). Only the averaged value and its error bar are shown; the individual replicate measurements that went into each mean are not plotted."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The panel shows fitted normal-distribution curves of subtype-averaged periods and amplitudes, built from already-averaged per-cell-line values (n=1–4 cell line models per subtype, themselves averages of 3–6 replicates). No individual cell-line data points (e.g., as dots or a histogram of the underlying averaged values) are overlaid on the smooth curves, so the spread of the small number of contributing values is hidden."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The boxplots have individual sample data points (purple for Per2-Luc, pink for Bmal1-Luc) overlaid on top of the boxes for each cell line, so the underlying n=4–12 individual ridge-length measurements are directly visible alongside the summary boxplot statistics."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are polar histograms showing the full distribution (binned by probability) of phase-difference values over time for each cell line; a histogram inherently displays the underlying data distribution rather than collapsing it to a single mean with error bar, so no additional individual-point overlay is required."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Like panel E, this is a polar histogram depicting the distribution of subtype-level phase-difference values across time (with per-cell-line breakdowns already provided in panel E). As a histogram-type distribution plot rather than a single mean-with-error summary, it does not require separate individual point markers."
+    },
+    {
+      "panel_label": "G",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel is an illustrative example of a single fitted signal (original trace, fitted sinusoid, and decay envelope) used to explain the fitting method; it is not a summary/average across replicates, so individual-data-point display is not applicable."
+    },
+    {
+      "panel_label": "H",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each of the n=117 points plotted is an individual sample's fitted amplitude and decay rate; the error bars represent the fitting uncertainty (s.d.) of that individual sample's parameters, not an average across multiple replicate samples, so individual data are already shown directly."
+    }
+  ]
+}

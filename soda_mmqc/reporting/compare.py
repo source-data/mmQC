@@ -24,9 +24,9 @@ from soda_mmqc.reporting.plots import (
 
 @dataclass
 class ComparisonReport:
-    """Overlay figures and error table for a prompt or model contrast."""
+    """Overlay figures and error table for an arm or model contrast."""
 
-    compare: Literal["prompt", "model"]
+    compare: Literal["arm", "model"]
     anchor: str
     summaries: tuple[RunSummary, ...]
     layer_s_figure: go.Figure | None
@@ -37,39 +37,39 @@ class ComparisonReport:
 
     @property
     def series_labels(self) -> tuple[str, ...]:
-        if self.compare == "prompt":
-            return tuple(summary.prompt for summary in self.summaries)
+        if self.compare == "arm":
+            return tuple(summary.arm for summary in self.summaries)
         return tuple(summary.model for summary in self.summaries)
 
 
 def build_comparison_report(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
 ) -> ComparisonReport:
     """Build overlay Layer S / 1 / 2 figures and a long-form error table."""
     selected = _comparison_summaries(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
-    if compare == "prompt":
+    if compare == "arm":
         if model is None:
-            raise ValueError("model is required when compare='prompt'")
+            raise ValueError("model is required when compare='arm'")
         anchor = model
     else:
-        if prompt is None:
-            raise ValueError("prompt is required when compare='model'")
-        anchor = prompt
+        if arm is None:
+            raise ValueError("arm is required when compare='model'")
+        anchor = arm
 
     errors_table = comparison_errors_table(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     return ComparisonReport(
         compare=compare,
@@ -79,25 +79,25 @@ def build_comparison_report(
             summaries,
             compare=compare,
             model=model,
-            prompt=prompt,
+            arm=arm,
         ),
         layer1_figure=plot_comparison_layer1(
             summaries,
             compare=compare,
             model=model,
-            prompt=prompt,
+            arm=arm,
         ),
         layer2_binary_figure=plot_comparison_layer2_binary(
             summaries,
             compare=compare,
             model=model,
-            prompt=prompt,
+            arm=arm,
         ),
         layer2_graded_figure=plot_comparison_layer2_graded(
             summaries,
             compare=compare,
             model=model,
-            prompt=prompt,
+            arm=arm,
         ),
         errors_table=errors_table,
     )
@@ -106,9 +106,9 @@ def build_comparison_report(
 def show_comparison_report(
     summaries: RunSummaries | Sequence[RunSummary],
     *,
-    compare: Literal["prompt", "model"] = "prompt",
+    compare: Literal["arm", "model"] = "arm",
     model: str | None = None,
-    prompt: str | None = None,
+    arm: str | None = None,
     show_errors_table: bool = True,
 ) -> ComparisonReport:
     """Display comparison overlay charts and optional error table."""
@@ -116,7 +116,7 @@ def show_comparison_report(
         summaries,
         compare=compare,
         model=model,
-        prompt=prompt,
+        arm=arm,
     )
     if report.layer_s_figure is not None:
         report.layer_s_figure.show()
@@ -128,6 +128,6 @@ def show_comparison_report(
             summaries,
             compare=compare,
             model=model,
-            prompt=prompt,
+            arm=arm,
         )
     return report

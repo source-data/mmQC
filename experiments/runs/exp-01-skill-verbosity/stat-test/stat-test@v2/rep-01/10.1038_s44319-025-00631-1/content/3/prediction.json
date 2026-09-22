@@ -1,0 +1,49 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "Image depicting the different clusters identified in a SNL lung section based on spatial transcriptomic analysis.",
+      "decision": "PASS",
+      "explanation": "This panel is a spatial cluster map with no statistical significance claims (no p-values, error bars, or significance symbols), so no statistical test needs to be reported."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image of the lung section from A) (left) and manual annotation of different regions (right); LUSC (S1, S2, S3) and LUAD (A1 and A2).",
+      "decision": "PASS",
+      "explanation": "This is a histology image with manual region annotations, not a quantitative plot involving statistical comparison, so no test is required."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image annotated with regions of LUSC and LUAD, and corresponding spatial plots depicting the distribution of the indicated mRNAs.",
+      "decision": "PASS",
+      "explanation": "This panel shows spatial expression maps overlaid on histology, without any statistical significance testing or comparison, so no test needs to be named."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "The nominal P and FDR values were obtained from the 'GSEA Preranked' tool (from Broad Institute) using a weighted scoring scheme. Gene sets were evaluated based on the default normalized enrichment score method, and statistical significance was determined by bootstrapping with 1000 permutations.",
+      "decision": "PASS",
+      "explanation": "The enrichment plots report NES, FDR and P values, and the caption explicitly names the statistical method (GSEA Preranked, weighted scoring, bootstrapping with 1000 permutations used to determine significance)."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction.",
+      "decision": "PASS",
+      "explanation": "The bar graph displays P values for each gene, and the caption explicitly states the statistical test used (Wilcoxon rank-sum test with Bonferroni correction) via Seurat's FindMarkers function."
+    }
+  ]
+}

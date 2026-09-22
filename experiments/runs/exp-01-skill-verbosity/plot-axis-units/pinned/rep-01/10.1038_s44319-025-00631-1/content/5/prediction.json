@@ -1,0 +1,121 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The 'spatial1' axis represents arbitrary spatial coordinates of tissue spots and does not require a physical unit for this qualitative comparison of deconvolution signal distribution."
+        },
+        {
+          "axis": "y",
+          "explanation": "The 'spatial2' axis represents arbitrary spatial coordinates of tissue spots and does not require a physical unit."
+        },
+        {
+          "axis": "z",
+          "explanation": "The color scale (0.0-1.0) represents a deconvolved cell-type fraction/proportion (a ratio), which does not require a unit under the ratio/percentage exemption."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Fraction of cells (%)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis lists categorical immune cell population names, which do not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis of the GSEA enrichment plots represents gene rank position within the ranked gene list (a discrete count/ordinal index), but no axis label such as 'Rank in ordered dataset' or 'gene rank (n)' is legible in the panel, and the caption does not define it either."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis lists categorical gene names, which do not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "Y-axis is 'Log2 (fold change)', a log ratio, which is exempt from requiring units."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    }
+  ]
+}

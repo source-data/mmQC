@@ -1,0 +1,82 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Representative ex vivo bright-field and ICG fluorescence images with no quantification; nothing about replicate number needs to be reported for this representative panel."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "control n = 5 mice; Ad-Cre n = 3 mice, biological replicates",
+        "Unpaired t test with Welch's correction was used for the analysis, P = 0.0281",
+        "Plot represents mean ± SD"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (mice)",
+      "decision": "PASS",
+      "explanation": "The legend states the exact number of mice per group (control n=5, Ad-Cre n=3) and identifies them as biological replicates; n_value_min of 3 is adequate for the reported statistical test and individual points are shown."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Shows representative H&E, ICG, RNAscope, and spatial expression images from a single serial section with no quantification or statistics across replicates, so no replicate reporting is required."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "GSEA of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The panel reports p-values/FDR from a statistical enrichment test, but the legend gives no n-number or replicate type (e.g., number of mice, sections, or spots) underlying the low pH vs high pH spatial transcriptomics comparison — only the permutation method (1000 permutations) used for computing significance is described, which is not equivalent to a biological/technical replicate count."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data",
+        "Differential gene expression was calculated using Seurat's FindAllMarkers function... Wilcoxon rank-sum test with Bonferroni P value correction"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "P-values are shown for each gene from a Wilcoxon rank-sum test comparing low pH vs high pH regions, but the legend does not state the number of samples/sections/mice or spots (n) or the type of replicate underlying the spatial transcriptomics comparison."
+    },
+    {
+      "panel_label": "F",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 2, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (different mice)",
+      "decision": "PASS",
+      "explanation": "The legend explicitly reports n = 2 biological replicates (different mice) for this representative IHC/ICG image panel; since no summary statistics or statistical test is applied, n = 2 is acceptable for representative data."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "Image depicting the different clusters identified in a SNL lung section based on spatial transcriptomic analysis.",
+      "decision": "PASS",
+      "explanation": "This panel is a spatial cluster visualization, not a statistical comparison between groups, so no test is required."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image of the lung section with manual annotation of different regions (LUSC and LUAD).",
+      "decision": "PASS",
+      "explanation": "This panel is a histology image with manual region annotations, not a statistical plot."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image annotated with LUSC/LUAD regions and spatial plots showing mRNA distribution of Tmprss11b, Trp63, and Hnf4a.",
+      "decision": "PASS",
+      "explanation": "These are spatial expression heatmap images, not statistical comparisons requiring a named test."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "GSEA with NES, FDR, and P values obtained from the 'GSEA Preranked' tool using a weighted scoring scheme; statistical significance determined by bootstrapping with 1000 permutations.",
+      "decision": "PASS",
+      "explanation": "The caption names the statistical approach (GSEA Preranked with permutation-based bootstrapping) used to derive the significance values shown."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "P values obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction.",
+      "decision": "PASS",
+      "explanation": "The caption explicitly names the Wilcoxon rank-sum test (with Bonferroni correction) used to generate the p-values shown on the bar graph."
+    }
+  ]
+}

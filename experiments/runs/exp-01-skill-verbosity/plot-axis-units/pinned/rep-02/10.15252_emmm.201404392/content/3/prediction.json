@@ -1,0 +1,104 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Intensity [AU]"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis of both bar graphs shows siRNA treatment groups (NC, HMGB1_A, HMGB1_B), a categorical variable, so units are not needed."
+        },
+        {
+          "axis": "y",
+          "explanation": "The left bar graph's y-axis is 'Relative intensity (Green/Red)', a ratio, so units are not needed."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Both bar graphs plot 'Signal intensity' (quantification of SDH and COX histochemical staining) but no unit is given—it is not labeled as arbitrary units (AU) or any other measurement unit on the axis or in the caption."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Counts (cell number, a discrete count)"
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The FACS histograms' x-axis is labeled only 'FL2-H', the flow cytometer detector channel name for TMRM fluorescence intensity. This is a physical fluorescence measurement that needs units, and it is not explicitly labeled as arbitrary units (AU) or any other unit in the image or caption."
+        }
+      ]
+    }
+  ]
+}

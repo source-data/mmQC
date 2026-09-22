@@ -1,0 +1,191 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Lag (hours) — x-axis explicitly labeled with unit 'hours'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Period (hours) — top sub-plot x-axis labeled with unit 'hours'"
+        },
+        {
+          "axis": "x",
+          "definition": "log(amplitude) (arb. u.) — bottom sub-plot x-axis explicitly labeled as arbitrary units"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Ridge length (hours) — y-axis explicitly labeled with unit 'hours'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Angular axis labeled in fractions of π (radians) for Bmal1-Per2 phase difference; caption states '2π corresponds to one full circadian cycle'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Phase difference (radians) — explicitly labeled on the polar axis"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Time (hours) — x-axis explicitly labeled with unit 'hours'"
+        },
+        {
+          "axis": "y",
+          "definition": "Signal (arb. u.) — y-axis explicitly labeled as arbitrary units"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "H",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis plots the amplitude exponential decay rate (γ), a physical rate quantity with dimension of inverse time, but neither the axis nor the caption states its unit (e.g., h⁻¹). Only a scale multiplier (×10⁻³) is shown, without a base unit."
+        },
+        {
+          "axis": "y",
+          "explanation": "Y-axis plots the fitted signal amplitude (A0). Unlike panel G, where the corresponding signal axis is explicitly labeled '(arb. u.)', panel H's amplitude axis omits any unit or 'arbitrary units' designation, leaving the quantity undefined despite being a measured physical amplitude."
+        }
+      ]
+    }
+  ]
+}

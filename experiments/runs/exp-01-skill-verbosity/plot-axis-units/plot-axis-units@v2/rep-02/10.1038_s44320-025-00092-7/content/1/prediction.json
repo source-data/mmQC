@@ -1,0 +1,214 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel A is an anatomical diagram and a classification table (subtype, biomarkers, frequency), not a quantitative axis-based plot."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel B is a conceptual/schematic diagram (icons and text boxes) with no plotted axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel C is a schematic illustration of the experimental setup (reporter cell, luciferase gene, imaging camera) with no plotted axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis labeled \"Days\" with tick marks at 0 and 5, giving the time unit directly on the axis."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The y-axis for the three schematic luciferase traces has no numeric scale; it is used only to depict the qualitative shape of the oscillation (rhythmic, damped, arrhythmic) that later underlies the functional/unstable/weak/dysfunctional classification, not an absolute measured quantity, so no unit is required."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x- and y-axes list categorical identifiers (numbered circadian parameters 1–7) rather than continuous quantities, so no unit applies."
+        },
+        {
+          "axis": "z",
+          "explanation": "The color scale (−1 to 1) represents a Pearson/Spearman-type correlation coefficient, which is inherently dimensionless."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis labeled \"Days\" with tick marks at 1 and 4."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The y-axis is labeled \"Cell number\" on a log scale (1 to 10); a cell count is a dimensionless number and needs no additional unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis labeled \"Dose (µM)\", giving the concentration unit directly on the axis."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The y-axis \"Growth inh.\" ranges from 0 to 1, representing a dimensionless fraction/ratio of growth inhibition, which needs no unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "H",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Both heatmaps (gene expression and mutation) have categorical axes (\"Cell line\" and \"Clock genes\" identifiers), which require no units."
+        },
+        {
+          "axis": "z",
+          "explanation": "The gene-expression color scale is labeled qualitatively as \"low\" to \"high\" (relative intensity, not an absolute measurement), and the mutation heatmap uses a binary 0/1 categorical indicator; neither requires a physical unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "I",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The PCA plot axes (PC1, PC2) are dimensionless principal-component scores, which by convention do not carry physical units."
+        },
+        {
+          "axis": "z",
+          "explanation": "The 3D scatter axes (\"Parameter #1/#2/#3\") represent composite/derived circadian metrics obtained by integrating multiple measured parameters; as abstract composite scores analogous to principal components, they do not require conventional physical units."
+        }
+      ]
+    }
+  ]
+}

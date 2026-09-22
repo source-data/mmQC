@@ -143,10 +143,38 @@ soda_mmqc/data/cache/*
 # otherwise a tracked tree: builders and committed runs live alongside it.
 experiments/results/
 
-# Run output, regenerable and per-machine: `cli run` writes predictions here
-# by default and `cli score` writes analysis beside them. Committed runs that
-# a paper figure depends on live under `experiments/runs/`, which stays
+# Run output, regenerable and per-machine: `mmqc run` writes predictions
+# under data/evaluation/<checklist>/<check>/<model>/<arm>/rep-NN/ and
+# `mmqc score` writes analysis.json in the same leaf. Committed runs that a
+# paper figure depends on live under `experiments/runs/`, which stays
 # tracked on purpose -- see experiments/runs/README.md.
-soda_mmqc/data/predictions/
-soda_mmqc/data/evaluation/
+#
+# The directory itself is part of the layout -- it is where a production
+# benchmark writes -- so ignore its contents and keep the directory. The
+# rule has to name the contents rather than the directory: a negation
+# cannot rescue a file whose parent directory is excluded.
+soda_mmqc/data/evaluation/*
+!soda_mmqc/data/evaluation/.gitkeep
 
+# `experiments/runs/` is tracked on purpose, but only for what cannot be
+# regenerated. Predictions are committed because they cost money and come
+# from a non-deterministic model: run the check again and you get
+# different ones. An analysis is neither -- it is a pure function of the
+# committed predictions, the committed gold and the committed
+# eval-manifest.json, so the repo already pins it by pinning those three,
+# and `mmqc score` reproduces it for free.
+#
+# It is also bulky, and by more than it looks: each record embeds a copy of
+# expected_output and model_output that both already exist elsewhere in the
+# tree, and one analysis covers a whole leaf. Measured on exp-01, the 66
+# analyses come to 86 MB against 6 MB of predictions.
+experiments/runs/**/analysis.json
+
+# The per-session debug sidecars go too, for the same reason one step
+# further out: no figure can depend on one. `load_predictions` globs
+# prediction.json and ignores everything beside it, so tool_audit.json,
+# skill_trace.json and skill_set.json answer "why did this session do
+# that", which is a question for the machine that ran it. They are 13 MB
+# against the predictions' 6 MB in exp-01 -- twice the cost of the thing
+# they annotate, for output nothing reads back.
+experiments/runs/**/intermediates/

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a spatial cluster map image, not a plot of averaged data."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B shows H&E histology images with manual region annotation, not a plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C shows H&E images and spatial expression heatmaps, not a plot of averaged data requiring individual points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D shows GSEA enrichment plots (running enrichment score curves with NES/FDR/p-values), which are not averages of replicate measurements but rank-based enrichment statistics computed from the full ranked gene list; there are no individual replicate data points to overlay."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E is a bar graph of log2 fold-change per gene derived from a single differential expression statistical test (Seurat FindMarkers, Wilcoxon rank-sum across thousands of spots) comparing Tmprss11b-high vs -low groups. Each bar represents one computed fold-change value (not a mean of a small number of biological replicates), so there are no discrete individual data points to plot; the associated p-values already convey the statistical basis."
+    }
+  ]
+}

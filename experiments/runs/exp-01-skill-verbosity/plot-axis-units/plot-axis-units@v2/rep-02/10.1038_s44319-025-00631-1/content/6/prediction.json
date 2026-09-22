@@ -1,0 +1,127 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The y-axis is labeled 'ICG Mean Fluorescence Intensity' but no units are given (e.g., arbitrary units/a.u. or counts). Fluorescence intensity values are shown (0-0.8) without any stated unit in the axis label or caption."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale legends are labeled 'Log2 Exp - Cd68' (range 0.0-6.0) and 'Log2 Exp - Spp1' (range 0.0-9.0)"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "z",
+          "explanation": "The spatial expression color scales represent a log2-transformed expression value, which is a dimensionless, log-transformed quantity and does not require additional units. The scale is otherwise clearly labeled with the gene name and quantity ('Log2 Exp')."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Enrichment score (ES)', a dimensionless GSEA statistic"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Enrichment score (ES) from GSEA is a dimensionless statistic and does not require units."
+        },
+        {
+          "axis": "x",
+          "explanation": "The x-axis represents rank position in the ordered gene list (standard GSEA 'Preranked' output), a unitless ordinal position; only the direction (pH-low to pH-high) is indicated, which is standard for this plot type and does not require numeric units."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Log2 (fold change)'"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Log2 fold change is a dimensionless ratio and does not require units."
+        },
+        {
+          "axis": "x",
+          "explanation": "The x-axis lists gene names (categorical), which do not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    }
+  ]
+}
