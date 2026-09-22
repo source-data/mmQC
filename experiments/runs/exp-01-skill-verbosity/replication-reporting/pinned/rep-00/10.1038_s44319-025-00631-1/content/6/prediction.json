@@ -1,0 +1,81 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel shows representative ex vivo bright-field and ICG fluorescence images without quantification or statistics; nothing to report."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)",
+        "Unpaired t test with Welch's correction was used for the analysis, P = 0.0281"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "Both n-numbers (5 and 3 mice) and replicate type (biological replicates) are stated; minimum n=3 is adequate for the statistical comparison shown."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel presents a representative H&E/ICG/RNAscope image series and spatial transcript maps without quantification or statistics; no replicate reporting required."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel reports NES, FDR and p values from a statistical enrichment analysis but does not state how many biological samples/sections/mice underlie the low pH versus high pH spatial transcriptomics comparison, nor the replicate type."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Bar graph representing top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data",
+        "corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel shows fold-change bars with p-values from a statistical DEG comparison, but the caption does not state the number or type of replicates (e.g., samples, sections, or mice) underlying the low pH versus high pH comparison."
+    },
+    {
+      "panel_label": "F",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 2, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "Panel shows representative ICG and IHC images with no quantification/statistics; n = 2 biological replicates is explicitly stated, which is acceptable for representative-only data."
+    }
+  ]
+}

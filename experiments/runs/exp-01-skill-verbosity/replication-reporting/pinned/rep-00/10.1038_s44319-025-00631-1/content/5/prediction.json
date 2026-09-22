@@ -1,0 +1,68 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel A shows representative spatial deconvolution plots (one representative tissue section per group) without its own quantification or statistics; no replicate reporting is required for this representative image panel."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates)"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 344,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "The caption explicitly reports the n-number for each group (n = 344 for LUSC, n = 1148 for LUAD) and states these represent biological replicates, satisfying the requirement."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme.",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel C presents GSEA enrichment plots with NES, FDR and p-values (a statistical test), but the caption only describes the permutation-based statistical method and does not state the underlying number or type of biological/technical replicates for this comparison."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Bar graph representing the top M2-like/TAM genes from the differential gene expression (DEG) analysis of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data."
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel D reports p-values for differential gene expression between groups, but neither the number nor the type of replicates underlying this comparison (e.g., spots, sections, or animals) is stated in the caption for this panel."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 3–4, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "The caption states the staining was repeated in n = 3–4 mice, explicitly identified as biological replicates, which is sufficient for this representative-image panel."
+    }
+  ]
+}

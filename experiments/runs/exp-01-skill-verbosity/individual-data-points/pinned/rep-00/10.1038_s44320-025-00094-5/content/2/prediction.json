@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a stacked composition plot showing median state frequency across many contiguous Pol II ChIP-seq bins (n=5912 promoters divided into a large number of bins), rendered as a continuous stacked-area trend rather than a small set of discrete categorical bars. Functionally it behaves like a binned trend/line plot summarizing a continuous covariate, for which overlaying thousands of individual promoter values per bin would be unreadable and is not the type of plot this check targets (analogous to the line-plot exemption)."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The main panel is a single-molecule heatmap in which every row is one individual DNA molecule (2952 molecules), so the individual data underlying the state-frequency sidebar summary are directly displayed within the same panel."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same representation as panel A: a continuous stacked-area trend of median state frequency across many Pol II ChIP-seq bins (n=6122 promoters), equivalent to a binned line/trend plot rather than a categorical bar chart requiring individual-point overlay."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Like panel B, the single-molecule heatmap (2871 molecules) displays every individual molecule as a row, so the individual data behind the summarized state-frequency sidebar are shown."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Box plots already convey the distribution (median, IQR, whiskers) and are exempt from requiring an individual-point overlay per the check guidelines."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Box plots already convey the distribution (median, IQR, whiskers) and are exempt from requiring an individual-point overlay per the check guidelines."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "Image depicting the different clusters identified in a SNL lung section based on spatial transcriptomic analysis.",
+      "decision": "PASS",
+      "explanation": "This is a spatial cluster image, not a plot reporting statistical comparisons or significance."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image with manual annotation of different regions (LUSC and LUAD).",
+      "decision": "PASS",
+      "explanation": "This is a histology image with manual annotations, not a quantitative plot requiring a statistical test."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "H&E image annotated with LUSC/LUAD regions and corresponding spatial plots of mRNA distribution.",
+      "decision": "PASS",
+      "explanation": "These are spatial expression heatmap images overlaid on tissue, not statistical comparison plots."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "GSEA with NES, FDR and P values; the nominal P and FDR values were obtained from the 'GSEA Preranked' tool (Broad Institute) using a weighted scoring scheme, with statistical significance determined by bootstrapping with 1000 permutations.",
+      "decision": "PASS",
+      "explanation": "The caption explicitly names the statistical method (GSEA Preranked, weighted scoring scheme, permutation-based bootstrapping) used to generate the P and FDR values shown in the enrichment plots."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction.",
+      "decision": "PASS",
+      "explanation": "The caption names the statistical test (Wilcoxon rank-sum test with Bonferroni correction) used to generate the P values shown above each bar."
+    }
+  ]
+}

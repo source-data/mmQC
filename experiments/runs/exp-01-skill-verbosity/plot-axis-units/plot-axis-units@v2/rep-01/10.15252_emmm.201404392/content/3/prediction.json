@@ -1,0 +1,130 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel A consists only of fluorescence micrographs (GFP, DsRed, MitoTracker Deep Red, Merge) with no quantitative axes; the check does not apply."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Left bar graph y-axis is labeled 'Relative intensity (Green/Red)', a dimensionless ratio."
+        },
+        {
+          "axis": "y",
+          "definition": "Right bar graph y-axis is labeled 'Intensity [AU]', explicitly stating arbitrary units."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis in both bar graphs shows categorical siRNA treatment groups (NC, HMGB1_A, HMGB1_B), which are labels, not quantities, so no units are needed."
+        },
+        {
+          "axis": "y",
+          "explanation": "The left graph's y-axis is a dimensionless ratio (Green/Red intensity), which does not require additional units; the right graph explicitly states '[AU]' for signal intensity, so both axes are adequately labeled."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel C is a Western blot image, not a quantitative plot, so the check does not apply."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis shows categorical genotype/treatment groups (WT, Atxn1-KI, Atxn1-KI;HMGB1), which are labels and do not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "Both the SDH and COX bar graphs label the y-axis simply 'Signal intensity' with numeric values (e.g., 0–50) but no unit is given, nor is it indicated as arbitrary units (e.g., 'AU'), so the reader cannot determine the scale of measurement. Neither the image nor the caption defines what this intensity value represents in measurable terms."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "X-axis labeled 'FL2-H', the standard flow-cytometry fluorescence detector channel designation representing TMRM signal on a log scale of arbitrary fluorescence intensity."
+        },
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Counts', representing the number of cells, a dimensionless count."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "FL2-H is a conventional flow-cytometry channel label denoting fluorescence intensity in inherently arbitrary/relative units; this is standard practice for FACS histograms and does not require an additional explicit unit."
+        },
+        {
+          "axis": "y",
+          "explanation": "'Counts' represents the number of cells per bin, a dimensionless quantity that does not need units."
+        }
+      ]
+    }
+  ]
+}

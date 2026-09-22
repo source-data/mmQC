@@ -1,0 +1,69 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "(B) Quantification of immune cell populations in (A).",
+        "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 344,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "Panel A shows the representative spatial plots that are explicitly quantified in panel B ('Quantification of immune cell populations in (A)'). Panel B states the underlying n (T11b-high LUSC n = 344, LUAD n = 1148) and identifies them as biological replicates, so the replicate number and type for the data shown in A are reported via this explicit link."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates)"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 344,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "The caption explicitly states the n for each group (344 and 1148) and labels them as biological replicates."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The nominal P and FDR values were obtained from the “GSEA Preranked” tool (from Broad Institute) using a weighted scoring scheme.",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 1000,
+      "replicate_type_reported": "yes",
+      "replicate_type": "statistical resampling (bootstrapping with 1000 permutations, GSEA Preranked)",
+      "decision": "PASS",
+      "explanation": "The caption fully describes the statistical resampling scheme underlying the reported NES/FDR/P values, including the number of permutations (1000) and the method used, satisfying the requirement to state the number and type of 'replicate' underlying the statistics."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel D reports p-values for a differential gene expression analysis (Tmprss11b-high LUSC vs LUAD) but the caption does not state the sample size or replicate type (e.g., number of spots/sections/mice, or statistical test) used to derive these p-values, unlike panel C which explicitly describes its statistical method."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 3–4, biological replicates)."
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates (different mice)",
+      "decision": "PASS",
+      "explanation": "The caption explicitly reports the number of biological replicates (n = 3-4 mice) used to generate the representative IHC images."
+    }
+  ]
+}

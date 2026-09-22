@@ -1,0 +1,49 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution plots show representative spatial distributions of cell populations; no statistical comparison or significance claim is depicted."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates), ****P = 7.96E-78 (Classical monocyte), ****P = 4.74E-17 (Alveolar macrophage), ****P = 6.04E-133 (Leukocyte), ***P = 2.31E-05 (Non-classical monocyte).",
+      "decision": "PASS",
+      "explanation": "The box plot displays significance asterisks and p-values, and the caption explicitly names the statistical test (two-sided Mann–Whitney–Wilcoxon test)."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme. Gene sets were evaluated based on the default normalized enrichment score method, and statistical significance was determined by bootstrapping with 1000 permutations.",
+      "decision": "PASS",
+      "explanation": "The GSEA enrichment plots report NES, FDR and P values, and the caption describes the statistical method (GSEA Preranked with permutation-based significance testing)."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_test_needed": "yes",
+      "statistical_test_mentioned": "no",
+      "from_the_caption": "(D) Bar graph representing the top M2-like/TAM genes from the differential gene expression (DEG) analysis of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data.",
+      "decision": "FAIL",
+      "explanation": "The bar graph reports p-values for each gene's fold change, implying a statistical comparison, but the caption does not state which statistical test (e.g., DEG method/tool used, such as Wilcoxon rank-sum or a specific DE package test) generated these p-values."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "no",
+      "statistical_test_needed": "no",
+      "statistical_test_mentioned": "not needed",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "This panel shows representative H&E and IHC images without any quantification or statistical comparison."
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale bars labeled 'Log2 Exp - Tmprss11b' (0.0–6.0), 'Log2 Exp - Krt13' (0.0–9.0), and 'Log2 Exp - Krt6a' (0.0–7.0), defining the quantity represented by spot color as log2-transformed expression."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The H&E and spatial panels show tissue spatial coordinates rather than a quantitative x-axis, so no unit is needed."
+        },
+        {
+          "axis": "y",
+          "explanation": "Same as x-axis: this is a spatial image, not a plotted quantitative y-axis, so no unit is needed."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'TMPRSS11B mRNA (FPKM)(Log2(value+1))', stating the unit (FPKM) and the applied log2(value+1) transformation."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis is categorical (LUAD vs LUSC tumor groups), so no unit is required."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'TMPRSS11B expression relative to Actin', indicating a normalized/relative (dimensionless) expression ratio that does not require an additional physical unit."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis is categorical (GFP/KLF4, ±DOX conditions), so no unit is required."
+        }
+      ]
+    }
+  ]
+}

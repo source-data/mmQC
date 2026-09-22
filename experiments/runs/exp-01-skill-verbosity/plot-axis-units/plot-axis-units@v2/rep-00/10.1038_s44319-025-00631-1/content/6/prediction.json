@@ -1,0 +1,131 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel A shows bright-field and fluorescence images of lungs; it is a micrograph/photograph panel, not a quantitative plot with axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis distinguishes two categorical groups (No Cre, Adeno Cre); categorical axes do not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y-axis is labeled 'ICG Mean Fluorescence Intensity' with numeric values (0 to 0.8) but no unit is given anywhere on the axis or in the caption (e.g., arbitrary units/AU, or a normalization basis). Fluorescence intensity values require a stated unit or explicit indication that they are in arbitrary units."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "z",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale bars are labeled 'Log2 Exp - Cd68' (0.0-6.0) and 'Log2 Exp - Spp1' (0.0-9.0), indicating log2-transformed expression values, which are inherently dimensionless/unitless."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "z",
+          "explanation": "The spatial transcriptomics color scales are explicitly labeled as log2 expression, a dimensionless transformed value that does not require additional units; the label itself communicates the quantity shown. The H&E, ICG, and RNAscope images in this panel are micrographs without quantitative axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis of these GSEA enrichment plots represents the rank position of genes in the ordered dataset (pH-low to pH-high), a dimensionless index that does not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y-axis, 'Enrichment score (ES)', is a dimensionless statistical score inherent to the GSEA method and does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis lists individual gene names (categorical), which does not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y-axis, 'Log2 (fold change)', is a dimensionless log-ratio statistic and does not require additional units."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Panel F shows fluorescence and IHC micrographs of lung sections; it is an image panel, not a quantitative plot with axes."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "symbols_defined": [],
+      "symbol_definition": [],
+      "decision": "N/A",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "****"
+      ],
+      "symbols_defined": [
+        "yes"
+      ],
+      "symbol_definition": [
+        "****P < 0.0001 for all comparisons"
+      ],
+      "decision": "PASS",
+      "explanation": "The **** symbol shown on the bar chart is explicitly defined in the caption as P < 0.0001 for all comparisons."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "**"
+      ],
+      "symbols_defined": [
+        "no"
+      ],
+      "symbol_definition": [
+        ""
+      ],
+      "decision": "FAIL",
+      "explanation": "Two '**' asterisk annotations appear over the comparison bars, but neither the image nor the caption states what significance threshold (e.g., P < 0.01) the '**' symbol represents. The caption only reports exact P values (P = 0.0036, P = 0.0022) for the two comparisons without explicitly tying them to the asterisk symbol, so the symbol itself is left undefined."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "**"
+      ],
+      "symbols_defined": [
+        "no"
+      ],
+      "symbol_definition": [
+        ""
+      ],
+      "decision": "FAIL",
+      "explanation": "The '**' symbol appears twice above the bars, but no key (e.g., **P < 0.01) is given on the image or in the caption. The caption lists exact P values (P = 0.0012, P = 0.0013) separately without linking them to the asterisk notation, leaving the symbol's meaning undefined."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "p = 0.0013",
+        "p < 0.0001"
+      ],
+      "symbols_defined": [
+        "yes",
+        "yes"
+      ],
+      "symbol_definition": [
+        "p = 0.0013",
+        "p < 0.0001"
+      ],
+      "decision": "PASS",
+      "explanation": "Exact p-values are printed directly on the plot next to each comparison bracket, so they are self-explanatory and require no additional key."
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "**"
+      ],
+      "symbols_defined": [
+        "no"
+      ],
+      "symbol_definition": [
+        ""
+      ],
+      "decision": "FAIL",
+      "explanation": "A '**' symbol marks the comparison on the plot, but neither the image nor the caption defines what significance level '**' corresponds to (e.g., P < 0.01); only the exact P = 0.0042 is given in the caption without being tied to the asterisk symbol."
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "***"
+      ],
+      "symbols_defined": [
+        "no"
+      ],
+      "symbol_definition": [
+        ""
+      ],
+      "decision": "FAIL",
+      "explanation": "A '***' symbol marks the comparison on the plot, but neither the image nor the caption defines the significance threshold represented by '***'; the caption only provides the exact P = 0.0008 value without linking it explicitly to the asterisk notation."
+    }
+  ]
+}

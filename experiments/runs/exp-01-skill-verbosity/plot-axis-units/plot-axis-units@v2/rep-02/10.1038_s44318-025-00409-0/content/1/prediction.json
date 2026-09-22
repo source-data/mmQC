@@ -1,0 +1,202 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis is labeled \"Day\", which is itself the unit (day number in the time-course, matching the days shown in panel A)."
+        },
+        {
+          "axis": "y",
+          "definition": "Axis is labeled \"Relative expression (A.U.)\"; A.U. is defined in the caption's abbreviation list as \"A.U. arbitrary units\"."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Axes show flow-cytometric fluorescence intensity for marker/antibody channels (e.g., SOX17-Tom, NKX2-5-GFP, PDGFRα-BV421). These are conventionally reported as arbitrary fluorescence intensity without a numerical unit, so no unit is required."
+        },
+        {
+          "axis": "y",
+          "explanation": "Same as x-axis: fluorescence intensity for the paired marker/antibody channel (e.g., CD235-APC, PDGFRα-BV421, SOX17-Tom) is conventionally unitless/arbitrary in flow cytometry plots."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Tick labels give concentrations directly with units (e.g., \"5μM SB\", \"1.7μM SB\", ... \"0.5μM DM\")."
+        },
+        {
+          "axis": "y",
+          "definition": "Axis labeled \"Positive cells (%)\", with % as the stated unit."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Tick labels give concentrations directly with units (e.g., \"5μM SB\" ... \"0.5μM DM\"), same series as panel F."
+        },
+        {
+          "axis": "y",
+          "definition": "Axis labeled \"Positive cells (%)\", with % as the stated unit."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "H",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "I",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Axis labeled \"Normalized read counts\", stating the quantity (RNA-seq normalized read counts) plotted."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis is categorical, listing the 8 sorted population numbers (1–8) defined by SOX17-Tom/NKX2-5-GFP status shown below the axis; no unit is applicable."
+        }
+      ]
+    },
+    {
+      "panel_label": "J",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "z",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale legend is labeled \"log2FC\"; caption states \"Expression levels are represented as Z-score normalized log2 FC differences\", defining FC as fold change per the abbreviation list."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis lists categorical sample/treatment identifiers (SOX17-Tom, NKX2-5-GFP, treatment) via clustering dendrogram, not a quantitative scale."
+        },
+        {
+          "axis": "y",
+          "explanation": "Y-axis lists categorical gene names via clustering dendrogram, not a quantitative scale."
+        }
+      ]
+    }
+  ]
+}

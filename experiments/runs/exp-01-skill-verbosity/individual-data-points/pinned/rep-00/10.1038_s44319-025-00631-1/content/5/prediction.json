@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows spatial heatmap plots of cell-type deconvolution scores overlaid on tissue images; this is a heatmap-type visualization, which is exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a box plot with individual data points (dots for each spatial spot) overlaid on top of the box plots, satisfying the requirement."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C shows GSEA enrichment plots, which are line plots; overlaying individual data points on this plot type is not appropriate and is exempt."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel D is a bar chart displaying summary log2 fold-change values for each gene without any overlaid individual data points showing the underlying expression values/variability."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrograph images, not a quantitative plot, so this check does not apply."
+    }
+  ]
+}

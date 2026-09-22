@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This stacked composition plot shows the median state frequency per Pol II ChIP-seq bin, aggregated across thousands of promoters (n=5912) into continuous bins. This is a compositional/percentage summary (not a mean+error bar type plot), and overlaying individual promoter values on a 100%-stacked area chart across many continuous bins is not a feasible or conventional way to show individual data points for this plot type."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each row of the single-molecule stack already represents one individual DNA molecule's methylation pattern; the plot displays all ~2952 individual molecules directly rather than only a summary. The colour sidebar simply annotates the state assigned to each individual molecule, so individual data are fully shown."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same type of plot as panel A (median state frequency per ChIP-seq bin across n=6122 mouse promoters). This compositional binned summary does not lend itself to overlaying individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Same representation as panel B: every row is an individual molecule's raw methylation trace, so individual data points (molecules) are directly displayed, not just an average."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Boxplots summarize PIC occupancy (median, IQR, whiskers) across groups of promoters (n=64-572), but only a sparse set of outlier points beyond the whiskers is plotted. The bulk of the underlying individual promoter values within the box/whisker range are not shown, so the full spread and variability of the raw data behind the averages is not visible."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "As in panel E, these boxplots of Pol II occupancy across promoter groups (n=64-572) show only outlier points beyond the whiskers rather than the full set of individual data points, so the underlying individual measurements are largely not displayed alongside the summary statistics."
+    }
+  ]
+}

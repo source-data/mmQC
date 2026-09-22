@@ -1,0 +1,115 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "This panel is a spatial cluster map (image) overlaid on tissue, not a quantitative x/y plot; a scale bar is used instead of an axis."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "This panel consists of H&E histology images with manual region annotations; it is not a quantitative plot with axes."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "z",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale bars are labeled 'Log2 Exp - Tmprss11b/Trp63/Hnf4a' with numeric ranges (e.g., 0.0-6.0, 0.0-4.0)."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "z",
+          "explanation": "The color-coded expression intensity is a log2-transformed, normalized expression value, which is a dimensionless quantity and does not require a unit; the scale is clearly labeled with its metric (Log2 Exp) and range."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Enrichment score (ES)', a dimensionless GSEA metric shown with numeric values (e.g., 0.0 to 0.6-0.7)."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis represents rank position within the ordered gene list (a dimensionless index/count), which does not require a unit. The axis title itself appears truncated in the image ('...ked', likely 'Rank in Ordered Dataset'), but this does not affect the unit requirement since rank order has no physical unit."
+        },
+        {
+          "axis": "y",
+          "explanation": "The enrichment score (ES) is a dimensionless statistic computed by the GSEA algorithm and does not require a unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Y-axis labeled 'Log2 (fold change)'."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis lists categorical gene names, which do not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "Log2 fold change is a dimensionless ratio metric and does not require a unit."
+        }
+      ]
+    }
+  ]
+}

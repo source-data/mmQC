@@ -1,0 +1,112 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The y-axis is labeled \"ICG Mean Fluorescence Intensity\" with numeric values (0–0.8) but no unit is given, either on the axis or in the caption (e.g., arbitrary units, a.u., or the imaging software's intensity scale). Fluorescence intensity values are not self-evidently dimensionless and typically require a stated unit (commonly \"a.u.\")."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "z",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "z",
+          "definition": "Color scale bars beneath the Cd68 and Spp1 spatial plots are labeled \"Log2 Exp - Cd68\" (range 0.0–6.0) and \"Log2 Exp - Spp1\" (range 0.0–9.0), i.e., log2-transformed expression, a dimensionless quantity that does not require additional units."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis represents the ranked gene list from GSEA (ordered from pH-low to pH-high), which is an ordinal index with no physical units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y-axis is the Enrichment Score (ES), a dimensionless statistic computed by the GSEA algorithm; it does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis lists categorical gene names, which do not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The y-axis, \"Log2 (fold change)\", is a dimensionless ratio-based measure and does not require additional units."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    }
+  ]
+}

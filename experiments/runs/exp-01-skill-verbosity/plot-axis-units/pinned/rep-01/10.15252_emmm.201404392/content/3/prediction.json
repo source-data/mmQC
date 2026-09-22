@@ -1,0 +1,104 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Intensity [AU] — arbitrary units explicitly labeled for the anti-HMGB1 signal intensity bar graph"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The x-axis of both bar graphs (JC-1 ratio and anti-HMGB1 intensity) shows categorical siRNA conditions (NC, A, B), which does not require units."
+        },
+        {
+          "axis": "y",
+          "explanation": "The left bar graph plots 'Relative intensity (Green/Red)', a ratio, which does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The two bar graphs plot 'Signal intensity' for SDH and COX staining without any stated units or an explicit 'arbitrary units'/'AU' label, even though this is a quantitative intensity measurement that requires such labeling."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Counts — axis labeled 'Counts', denoting the number of cells (a count), which is an acceptable unit label"
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "The FACS histograms' x-axis is labeled 'FL2-H' representing TMRM fluorescence intensity on a log scale, but it is not explicitly labeled with units or as 'arbitrary units'/'AU' as required for a fluorescence intensity measurement."
+        }
+      ]
+    }
+  ]
+}

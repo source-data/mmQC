@@ -1,0 +1,217 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis labeled \"Lag (hours)\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Rhythmicity index is a dimensionless index (bounded score), so no unit is required."
+        }
+      ]
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "Circadian component is a dimensionless fraction/component score (0-1 range), no unit required."
+        },
+        {
+          "axis": "y",
+          "explanation": "Noise component (log10 scale) is a dimensionless ratio-based component score, no unit required."
+        }
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Top subplot x-axis labeled \"Period (hours)\"; bottom subplot x-axis labeled \"log(amplitude) (arb. u.)\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Density axis reflects a normalized probability density from the fitted distributions, which is dimensionless and does not require units."
+        }
+      ]
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Axis labeled \"Ridge length (hours)\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis lists categorical cell line names, not a quantitative measurement, so no unit is required."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Angular axis tick labels expressed as fractions of π (e.g., π/6, π/3, π/2 ... 2π), indicating radians; caption states \"2π corresponds to one full circadian cycle\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Radial axis values represent normalized probability (per caption: \"Polar histograms were normalized by probability\"), which is dimensionless and needs no unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "F",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Angular axis explicitly labeled \"Phase difference (radians)\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "Radial axis values represent normalized probability, which is dimensionless and needs no unit."
+        }
+      ]
+    },
+    {
+      "panel_label": "G",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Axis labeled \"Time (hours)\""
+        },
+        {
+          "axis": "y",
+          "definition": "Axis labeled \"Signal (arb. u.)\""
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "H",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "X-axis is labeled \"Amplitude exponential decay rate (γ)\" (with a ×10⁻³ scale factor) but no physical unit (e.g., h⁻¹) is given on the axis or in the caption, even though decay rate is a physical rate measurement requiring units."
+        },
+        {
+          "axis": "y",
+          "explanation": "Y-axis is labeled \"Amplitude (A₀)\" (with a ×10² scale factor) but no unit (e.g., arbitrary units, as used for signal amplitude in panel G) is stated on the axis or in the caption."
+        }
+      ]
+    }
+  ]
+}

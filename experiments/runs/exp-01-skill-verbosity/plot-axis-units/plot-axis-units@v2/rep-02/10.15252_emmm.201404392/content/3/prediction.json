@@ -1,0 +1,99 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Categorical groups (NC, siRNA HMGB1_A, siRNA HMGB1_B) — no numeric unit required"
+        },
+        {
+          "axis": "y",
+          "definition": "Left graph y-axis labeled 'Relative intensity (Green/Red)', a dimensionless ratio; right graph y-axis labeled 'Intensity [AU]', explicitly given in arbitrary units"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "N/A",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Categorical groups (WT, Atxn1-KI, Atxn1-KI;HMGB1) — no numeric unit required"
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "The bar graphs for SDH and COX staining are labeled only 'Signal intensity' with a bare numeric scale; no unit (e.g., arbitrary units/AU, or a specific measurement unit) is given in the axis label or in the figure caption, so the reader cannot tell what the intensity value represents (raw pixel value, normalized value, arbitrary units, etc.)."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not needed"
+        },
+        {
+          "axis": "y",
+          "answer": "not needed"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "FL2-H is the standard FACS fluorescence-intensity detector channel designation (log-scale arbitrary fluorescence units), a conventional flow-cytometry axis label that does not require an additional explicit unit"
+        },
+        {
+          "axis": "y",
+          "definition": "'Counts' denotes the number of cells/events detected, a dimensionless count that does not require a unit"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    }
+  ]
+}

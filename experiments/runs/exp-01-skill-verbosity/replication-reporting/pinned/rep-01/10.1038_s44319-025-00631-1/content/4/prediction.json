@@ -1,0 +1,59 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel shows a representative H&E image and corresponding spatial transcriptomics feature plots from a single tissue section; no quantification or statistical comparison is presented, so replicate reporting is not required."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "no",
+      "replicate_statements": [
+        "The staining was repeated with lung sections from different mice (n = 2–3, biological replicates)."
+      ],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel shows representative H&E and RNAscope images with no quantification, so formal replicate reporting is not required for the panel itself; the caption nonetheless notes the staining was repeated in lung sections from n = 2–3 biological replicate mice."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512)",
+        "LUAD (n=512)",
+        "LUSC (n=500)",
+        "Welch’s t test was used for the analysis"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 500,
+      "replicate_type_reported": "yes",
+      "replicate_type": "LUSC patient tumors (n = 500) / LUAD tumors (n = 512), TCGA-GDC dataset",
+      "decision": "PASS",
+      "explanation": "The panel presents a statistical comparison (Welch's t test) of TCGA patient tumor samples, with both the number of samples (n = 500 LUSC, n = 512 LUAD) and the sample type (patient tumors) clearly stated in the caption and on the plot legend."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
+        "The experiment was repeated two times to confirm the observations.",
+        "Ordinary one-way ANOVA with Dunnett’s multiple comparisons test was used for the analysis"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical replicates",
+      "decision": "PASS",
+      "explanation": "The bar plot shows quantified qRT-PCR data with individual data points, statistical testing (one-way ANOVA with Dunnett's test), and the caption explicitly states n = 3 technical replicates per group, plus notes the experiment was repeated twice."
+    }
+  ]
+}

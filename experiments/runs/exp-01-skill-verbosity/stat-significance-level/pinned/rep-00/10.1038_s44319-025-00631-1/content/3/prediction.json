@@ -1,0 +1,67 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "symbols_defined": [],
+      "symbol_definition": [],
+      "decision": "N/A",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "symbols_defined": [],
+      "symbol_definition": [],
+      "decision": "N/A",
+      "explanation": ""
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "symbols_defined": [],
+      "symbol_definition": [],
+      "decision": "N/A",
+      "explanation": ""
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "NES=",
+        "FDR=",
+        "p="
+      ],
+      "symbols_defined": [
+        "yes",
+        "yes",
+        "yes"
+      ],
+      "symbol_definition": [
+        "NES=3.768 (Normalized Enrichment Score, labeled on plot; abbreviation defined in caption as 'normalized enrichment scores (NES)')",
+        "FDR=0.0 (false discovery rate, labeled on plot; abbreviation defined in caption as 'false discovery rate (FDR)')",
+        "p=0.0 (nominal P value, labeled on plot; caption states 'nominal P and FDR values were obtained from the GSEA Preranked tool...statistical significance was determined by bootstrapping with 1000 permutations')"
+      ],
+      "decision": "PASS",
+      "explanation": "Each enrichment plot reports exact NES, FDR and p values directly on the image with self-explanatory labels, and the caption spells out the abbreviations and how these statistics were computed, so no ambiguity remains about their meaning."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "p="
+      ],
+      "symbols_defined": [
+        "yes"
+      ],
+      "symbol_definition": [
+        "Exact p-value printed above each bar (e.g., p=1.89E-26); caption states P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction"
+      ],
+      "decision": "PASS",
+      "explanation": "Exact p-values are printed directly above each bar and are self-explanatory (labeled with 'p='), and the caption additionally specifies the statistical test and correction method used to generate them, so the significance indicator is adequately defined."
+    }
+  ]
+}
