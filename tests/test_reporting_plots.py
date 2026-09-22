@@ -852,12 +852,16 @@ class TestCheckLayers:
         assert titles[:3] == ["Layer S", "Layer 1", "Layer 2"]
 
     def test_the_arms_sit_beside_each_other_not_on_top(self):
-        """offsetgroup is what makes a grouped stack a grouped stack."""
+        """A two-level x axis, not offsetgroup: every (group, variant) is
+        its own position, so only that variant's outcomes can stack."""
         fig = self._fig()
         assert fig.layout.barmode == "stack"
-        assert {t.offsetgroup for t in fig.data if t.offsetgroup} == {
-            "detailed", "minimal"
-        }
+        assert not any(t.offsetgroup for t in fig.data)
+        first = next(
+            t for t in fig.data
+            if (t.xaxis or "x") == "x" and t.x is not None and len(t.x) == 2
+        )
+        assert set(first.x[1]) == {"detailed", "minimal"}
 
     def test_layer_s_stacks_its_three_outcomes(self):
         fig = self._fig()
@@ -873,11 +877,15 @@ class TestCheckLayers:
 
     def test_layer_2_is_one_bar_per_arm_not_a_stack(self):
         """A mean_score has nothing to stack; stacking two would read as
-        their sum, which is not a number."""
+        their sum, which is not a number. One trace, one bar per
+        (property, variant) position."""
         fig = self._fig()
         third = [t for t in fig.data if t.xaxis == "x3"]
-        assert len(third) == 2
-        assert {t.offsetgroup for t in third} == {"detailed", "minimal"}
+        assert len(third) == 1
+        assert list(third[0].x[1]) == [
+            "detailed", "minimal", "detailed", "minimal"
+        ]
+        assert list(third[0].y) == [0.9, 0.7, 0.9, 0.7]
 
     def test_the_legend_names_both_arms(self):
         """Arms are told apart by opacity, which needs saying somewhere."""
@@ -886,8 +894,8 @@ class TestCheckLayers:
 
     def test_ticks_drop_the_shared_root(self):
         fig = self._fig()
-        labels = {y for t in fig.data if t.xaxis == "x3" for y in (t.x or ())}
-        assert labels == {"panel_label", "micrograph"}
+        third = next(t for t in fig.data if t.xaxis == "x3")
+        assert set(third.x[0]) == {"panel_label", "micrograph"}
 
     def test_layer_2_tells_the_arms_apart_by_colour(self):
         """In the stacked panels colour is taken by the outcome, so an arm
@@ -895,18 +903,21 @@ class TestCheckLayers:
         and 1.0 against 0.6 of one hue is not a difference a reader sees.
         """
         fig = self._fig()
-        third = [t for t in fig.data if t.xaxis == "x3"]
-        assert len({t.marker.color for t in third}) == 2
+        third = next(t for t in fig.data if t.xaxis == "x3")
+        colors = list(third.marker.color)
+        assert len(set(colors)) == 2
+        assert colors == [colors[0], colors[1], colors[0], colors[1]]
 
     def test_the_arm_legend_matches_the_layer_2_colours(self):
         fig = self._fig()
-        third = {t.name: t.marker.color for t in fig.data if t.xaxis == "x3"}
+        third = next(t for t in fig.data if t.xaxis == "x3")
+        by_variant = dict(zip(third.x[1], third.marker.color))
         legend = {
             t.name: t.marker.color
             for t in fig.data
-            if t.showlegend and t.name in third
+            if t.showlegend and t.name in by_variant
         }
-        assert legend == third
+        assert legend == by_variant
 
 
 class TestStackedCounts:
@@ -957,25 +968,27 @@ class TestStackedCounts:
         }
 
     def test_the_arms_sit_beside_each_other(self):
+        """Adjacent x positions under a shared group label."""
         fig = self._fig()
-        assert {t.offsetgroup for t in fig.data if t.offsetgroup} == {
-            "detailed", "minimal"
-        }
+        trace = self._data_traces(fig)[0]
+        assert list(trace.x[1]) == [
+            "detailed", "minimal", "detailed", "minimal"
+        ]
 
     def test_one_bar_pair_per_group(self):
         fig = self._fig()
-        assert {tuple(t.x) for t in self._data_traces(fig)} == {
-            ("check-a", "check-b")
-        }
+        for trace in self._data_traces(fig):
+            assert list(trace.x[0]) == [
+                "check-a", "check-a", "check-b", "check-b"
+            ]
 
     def test_replicates_are_summed(self):
-        """Two replicates of 100 is 200."""
+        """Two replicates of 100 is 200, at every position."""
         fig = self._fig()
-        detailed = [
-            t for t in fig.data
-            if t.offsetgroup == "detailed" and t.name == "correct_row"
-        ]
-        assert [list(t.y) for t in detailed] == [[200.0, 200.0]]
+        trace = next(
+            t for t in self._data_traces(fig) if t.name == "correct_row"
+        )
+        assert list(trace.y) == [200.0, 180.0, 200.0, 180.0]
 
     def test_each_outcome_appears_once_in_the_legend(self):
         """Two arms means two traces per outcome; only one may be listed.
@@ -1004,16 +1017,61 @@ class TestStackedCounts:
 
         Colour is spoken for by the outcome, so the variant gets a hatch
         as well -- the device the repo already uses to separate series
-        that cannot differ in hue.
+        that cannot differ in hue. One trace per outcome now, so the
+        hatch is per bar.
         """
         fig = self._fig()
-        patterns = {
-            (t.offsetgroup, (t.marker.pattern.shape if t.marker.pattern else None))
-            for t in self._data_traces(fig)
-        }
-        by_arm = dict(patterns)
-        assert by_arm["detailed"] != by_arm["minimal"]
+        trace = self._data_traces(fig)[0]
+        shapes = list(trace.marker.pattern.shape)
+        assert shapes[0] != shapes[1], "baseline and variant look alike"
+        assert shapes == [shapes[0], shapes[1], shapes[0], shapes[1]]
 
     def test_a_gap_separates_the_pair(self):
         fig = self._fig()
-        assert fig.layout.bargroupgap and fig.layout.bargroupgap > 0
+        assert fig.layout.bargap and fig.layout.bargap > 0
+
+    def test_each_variant_is_its_own_x_position(self):
+        """Not offsetgroup. A two-level x axis puts (group, variant) at
+        distinct positions, so stacking within a position is the only
+        thing plotly can do with them.
+
+        offsetgroup alone is advisory: it needs alignmentgroup beside it,
+        and without that plotly.js stacked the two variants into one bar
+        while kaleido drew them side by side. Same JSON, two renderings.
+        """
+        fig = self._fig()
+        for trace in self._data_traces(fig):
+            assert len(trace.x) == 2, "x must be [groups, variants]"
+            groups, variants = trace.x
+            assert list(groups) == [
+                "check-a", "check-a", "check-b", "check-b"
+            ]
+            assert list(variants) == [
+                "detailed", "minimal", "detailed", "minimal"
+            ]
+
+    def test_the_axis_is_multicategory(self):
+        fig = self._fig()
+        assert fig.layout.xaxis.type == "multicategory"
+
+    def test_no_trace_relies_on_offsetgroup(self):
+        fig = self._fig()
+        assert not any(t.offsetgroup for t in fig.data)
+
+    def test_the_figure_widens_with_the_number_of_bars(self):
+        """A two-level axis writes the group label under its own bars, so
+        fourteen long check names in a fixed width overlap into mush."""
+        import pandas as pd
+
+        def frame(n):
+            return pd.DataFrame(
+                [
+                    {"check": f"check-{i:02d}", "arm": arm,
+                     "outcome": "correct_row", "count": 1}
+                    for i in range(n) for arm in ("detailed", "minimal")
+                ]
+            )
+
+        narrow = plot_stacked_counts(frame(2), group="check", category="outcome")
+        wide = plot_stacked_counts(frame(14), group="check", category="outcome")
+        assert wide.layout.width > narrow.layout.width

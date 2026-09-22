@@ -40,6 +40,7 @@ from soda_mmqc.reporting.styles import (
     MEAN_SCORE_JITTER_STDDEV,
     MEAN_SCORE_PLOT_TITLE,
     MEAN_SCORE_Y_MAX,
+    STACKED_COUNTS_POSITION_WIDTH,
     LAYER_S_COLORS,
     LAYER_S_ORDER,
     LAYER_S_TITLE,
@@ -1542,6 +1543,18 @@ def _stacked_layer_panel(
     names: Sequence[Any],
     strip_root: bool,
 ) -> None:
+    """Outcomes stacked within a variant; variants at their own positions.
+
+    The x axis is two-level -- ``[[group...], [variant...]]`` -- so every
+    ``(group, variant)`` pair is a distinct categorical position and the
+    only thing plotly can stack there is that variant's own outcomes.
+
+    This replaced ``offsetgroup``, which is advisory: it needs
+    ``alignmentgroup`` beside it, and without one plotly.js stacked the
+    two variants into a single bar while kaleido drew them side by side.
+    Same figure JSON, two renderings -- so a static export could not be
+    used to check it. A position cannot be misread that way.
+    """
     totals = frame.groupby([x, stack, series], observed=True)["count"].sum()
     categories = sorted({value for value, _, _ in totals.index})
     labels = (
@@ -1549,36 +1562,43 @@ def _stacked_layer_panel(
     )
     outcomes = [o for o in order if o in {value for _, value, _ in totals.index}]
 
-    for index, name in enumerate(names):
-        opacity = _comparison_series_opacity(index, len(names))
-        # Colour belongs to the outcome, so the variant gets a hatch too.
-        # Two shades of one green, touching, read as a single bar -- which
-        # is exactly how this figure was misread.
-        pattern = _variant_pattern(index)
-        for outcome in outcomes:
-            fig.add_trace(
-                go.Bar(
-                    x=labels,
-                    y=[
-                        float(totals.get((category, outcome, name), 0))
-                        for category in categories
+    level_group = [label for label in labels for _ in names]
+    level_variant = [str(name) for _ in labels for name in names]
+    per_bar = [index for _ in labels for index in range(len(names))]
+
+    for outcome in outcomes:
+        fig.add_trace(
+            go.Bar(
+                x=[level_group, level_variant],
+                y=[
+                    float(totals.get((category, outcome, name), 0))
+                    for category in categories
+                    for name in names
+                ],
+                name=outcome,
+                legendgroup=outcome,
+                showlegend=True,
+                marker={
+                    "color": colors[outcome],
+                    "opacity": [
+                        _comparison_series_opacity(index, len(names))
+                        for index in per_bar
                     ],
-                    name=outcome,
-                    legendgroup=outcome,
-                    showlegend=index == 0,
-                    offsetgroup=str(name),
-                    marker={
-                        "color": colors[outcome],
-                        "opacity": opacity,
-                        "pattern": pattern,
+                    "pattern": {
+                        "shape": [
+                            _comparison_series_pattern(index)
+                            for index in per_bar
+                        ],
+                        "solidity": 0.4,
+                        "fgcolor": "#ffffff",
+                        "size": 5,
                     },
-                    hovertemplate=(
-                        f"{name}<br>%{{x}}<br>{outcome}: %{{y:,}}<extra></extra>"
-                    ),
-                ),
-                row=1,
-                col=col,
-            )
+                },
+                hovertemplate=f"%{{x}}<br>{outcome}: %{{y:,}}<extra></extra>",
+            ),
+            row=1,
+            col=col,
+        )
 
 
 def _mean_layer_panel(
@@ -1589,32 +1609,59 @@ def _mean_layer_panel(
     series: str,
     names: Sequence[Any],
 ) -> None:
+    """Layer-2 means on the same two-level x axis as the stacked panels."""
     categories = sorted(frame["property"].unique())
     labels = _strip_shared_list_root(categories)
-    for index, name in enumerate(names):
-        rows = frame[frame[series] == name].set_index("property").reindex(categories)
-        fig.add_trace(
-            go.Bar(
-                x=labels,
-                y=rows["mean"].astype(float).tolist(),
-                name=str(name),
-                legendgroup=f"arm::{name}",
-                showlegend=False,
-                offsetgroup=str(name),
-                marker={
-                    "color": _arm_color(index),
-                    "pattern": _variant_pattern(index),
+    indexed = frame.set_index(["property", series])
+
+    def _cell(category: str, name: Any, column: str) -> float:
+        try:
+            value = indexed.loc[(category, name), column]
+        except KeyError:
+            return float("nan")
+        return float(value) if pd.notna(value) else float("nan")
+
+    per_bar = [index for _ in labels for index in range(len(names))]
+    fig.add_trace(
+        go.Bar(
+            x=[
+                [label for label in labels for _ in names],
+                [str(name) for _ in labels for name in names],
+            ],
+            y=[
+                _cell(category, name, "mean")
+                for category in categories
+                for name in names
+            ],
+            showlegend=False,
+            marker={
+                "color": [_arm_color(index) for index in per_bar],
+                "pattern": {
+                    "shape": [
+                        _comparison_series_pattern(index) for index in per_bar
+                    ],
+                    "solidity": 0.4,
+                    "fgcolor": "#ffffff",
+                    "size": 5,
                 },
-                error_y={
-                    "type": "data",
-                    "array": rows["sd"].astype(float).fillna(0.0).tolist(),
-                    "visible": True,
-                },
-                hovertemplate=f"{name}<br>%{{x}}<br>%{{y:.4f}}<extra></extra>",
-            ),
-            row=1,
-            col=col,
-        )
+            },
+            error_y={
+                "type": "data",
+                "array": [
+                    0.0 if pd.isna(v) else v
+                    for v in (
+                        _cell(category, name, "sd")
+                        for category in categories
+                        for name in names
+                    )
+                ],
+                "visible": True,
+            },
+            hovertemplate="%{x}<br>%{y:.4f}<extra></extra>",
+        ),
+        row=1,
+        col=col,
+    )
 
 
 def plot_stacked_counts(
@@ -1685,6 +1732,7 @@ def plot_stacked_counts(
             ),
             row=1, col=1,
         )
+    positions = len(set(counts[group])) * max(1, len(names))
     fig.update_layout(
         barmode="stack",
         title_text=title,
@@ -1692,9 +1740,15 @@ def plot_stacked_counts(
         xaxis_tickangle=-25,
         # A pair that touches reads as one bar; a pair with air between
         # reads as two.
-        bargap=0.3,
-        bargroupgap=0.08,
+        bargap=0.25,
+        # The outer level writes a group's name under that group's bars
+        # alone, so a long name needs the width its bars occupy. Fixed
+        # at the container's width, fourteen check names overlap into
+        # mush; an explicit width scrolls instead.
+        width=max(900, STACKED_COUNTS_POSITION_WIDTH * positions),
     )
+    # Say it rather than let plotly infer it from the nested x.
+    fig.update_xaxes(type="multicategory")
     fig.update_yaxes(title_text=ylabel, rangemode="tozero")
     return _apply_plot_template(fig)
 

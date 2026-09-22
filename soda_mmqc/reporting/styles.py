@@ -84,3 +84,7 @@ ARM_CONTRAST_ROW_GAP = 70
 # Arm levels: two categories, so two hues rather than a ladder of one.
 # Not green/red -- which arm is better is the experiment's claim.
 ARM_LEVELS_COLORS = ("#475569", "#0891b2", "#a16207", "#7c3aed")
+
+# Horizontal room for one (group, variant) bar position, in pixels.
+# The two-level axis writes the group name under its own bars only.
+STACKED_COUNTS_POSITION_WIDTH = 78
