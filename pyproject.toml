@@ -24,6 +24,11 @@ dependencies = [
     "numpy>=1.24.0",
     "tqdm",
     "plotly>=5.13.0",
+    # Static image export for plotly figures, so a paper figure can be
+    # written from a notebook. plotly 6.5 declares kaleido>=1.1.0 for
+    # its own `kaleido` extra; v1 drives a real browser rather than
+    # bundling one, so `write_image` needs Chrome available.
+    "kaleido>=1.1.0",
     "pandas>=1.3.0",
     "streamlit>=1.34.0",
     "streamlit-image-zoom>=0.0.4",
