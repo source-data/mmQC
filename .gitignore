@@ -164,7 +164,17 @@ soda_mmqc/data/evaluation/*
 # eval-manifest.json, so the repo already pins it by pinning those three,
 # and `mmqc score` reproduces it for free.
 #
-# It is also bulky: about 70% the size of the predictions it scores,
-# because each record embeds a copy of expected_output and model_output
-# that both already exist elsewhere in the tree.
+# It is also bulky, and by more than it looks: each record embeds a copy of
+# expected_output and model_output that both already exist elsewhere in the
+# tree, and one analysis covers a whole leaf. Measured on exp-01, the 66
+# analyses come to 86 MB against 6 MB of predictions.
 experiments/runs/**/analysis.json
+
+# The per-session debug sidecars go too, for the same reason one step
+# further out: no figure can depend on one. `load_predictions` globs
+# prediction.json and ignores everything beside it, so tool_audit.json,
+# skill_trace.json and skill_set.json answer "why did this session do
+# that", which is a question for the machine that ran it. They are 13 MB
+# against the predictions' 6 MB in exp-01 -- twice the cost of the thing
+# they annotate, for output nothing reads back.
+experiments/runs/**/intermediates/
