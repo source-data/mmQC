@@ -7,6 +7,8 @@ from soda_mmqc.reporting.aggregate import (
     aggregate_run,
     arm_contrast,
     arm_levels,
+    layer1_counts,
+    layer_s_counts,
     non_response_counts,
     replicate_spread,
     scores_frame,
@@ -83,6 +85,7 @@ from soda_mmqc.reporting.plots import (
     plot_mean_score_bars,
     plot_arm_contrast_by_check,
     plot_arm_levels_by_check,
+    plot_grouped_counts,
     plot_mean_score_with_instances,
 )
 from soda_mmqc.reporting.tables import (
@@ -118,6 +121,8 @@ __all__ = [
     "aggregate_run",
     "arm_contrast",
     "arm_levels",
+    "layer1_counts",
+    "layer_s_counts",
     "non_response_counts",
     "replicate_spread",
     "scores_frame",
@@ -168,6 +173,7 @@ __all__ = [
     "plot_mean_score_bars",
     "plot_arm_contrast_by_check",
     "plot_arm_levels_by_check",
+    "plot_grouped_counts",
     "plot_mean_score_with_instances",
     "score_rows_for_summaries",
     "scores_table",

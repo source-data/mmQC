@@ -19,6 +19,7 @@ from soda_mmqc.reporting import (
     plot_mean_score_bars,
     plot_arm_contrast_by_check,
     plot_arm_levels_by_check,
+    plot_grouped_counts,
     plot_mean_score_with_instances,
     split_layer2_by_metric,
     summarize_runs,
@@ -636,3 +637,161 @@ class TestArmLevelsByCheck:
             pd.DataFrame(columns=["check", "property", "path", "arm", "mean", "se"])
         )
         assert fig.data == ()
+
+
+class TestGroupedCounts:
+    """One panel per outcome, checks on the y axis, one bar per arm.
+
+    The other way round -- a panel per check, outcomes on the y axis --
+    is unreadable for counts: correct_applicable outweighs
+    withheld_applicable by 14x to 208x depending on the check, and
+    correct_row outweighs spurious_row by about 200:1. Three invisible
+    bars beside one long one. Giving each outcome its own panel gives it
+    its own scale.
+    """
+
+    @staticmethod
+    def _counts():
+        import pandas as pd
+
+        rows = []
+        for check, big, small in (("check-a", 8312, 40), ("check-b", 6825, 471)):
+            for arm, factor in (("detailed", 1.0), ("minimal", 0.9)):
+                for replicate in (0, 1):
+                    rows += [
+                        {"check": check, "arm": arm, "replicate": replicate,
+                         "layer1": "correct_applicable", "count": int(big * factor)},
+                        {"check": check, "arm": arm, "replicate": replicate,
+                         "layer1": "withheld_applicable", "count": int(small * factor)},
+                    ]
+        return pd.DataFrame(rows)
+
+    def test_one_panel_per_category_in_the_order_given(self):
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm",
+            order=("withheld_applicable", "correct_applicable"),
+        )
+        assert [a.text for a in fig.layout.annotations] == [
+            "withheld_applicable", "correct_applicable"
+        ]
+
+    def test_bars_are_grouped_and_the_legend_names_each_arm_once(self):
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm"
+        )
+        assert fig.layout.barmode == "group"
+        assert [t.name for t in fig.data if t.showlegend] == ["detailed", "minimal"]
+
+    def test_replicates_are_summed(self):
+        """Two replicates of 8312 is 16624, not 8312."""
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm",
+            order=("correct_applicable",),
+        )
+        detailed = next(t for t in fig.data if t.name == "detailed")
+        assert max(detailed.x) == 16624
+
+    def test_each_panel_scales_on_its_own(self):
+        """A shared axis would flatten withheld_applicable to nothing."""
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm"
+        )
+        layout = fig.layout.to_plotly_json()
+        spans = {
+            tuple(value["range"])
+            for key, value in layout.items()
+            if key.startswith("xaxis") and value.get("range")
+        }
+        assert len(spans) != 1, "every panel got the same range"
+
+    def test_bars_start_at_zero(self):
+        """Bar length has to be proportional to the count."""
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm"
+        )
+        layout = fig.layout.to_plotly_json()
+        modes = {
+            value.get("rangemode")
+            for key, value in layout.items()
+            if key.startswith("xaxis")
+        }
+        assert modes == {"tozero"}
+
+    def test_a_group_missing_from_a_category_is_drawn_as_zero(self):
+        """image-annotation-defined logged no correct_NA at all. Zero
+        occurrences is a fact about the arm, not a gap in the axis."""
+        import pandas as pd
+
+        counts = pd.DataFrame(
+            [
+                {"check": "a", "arm": "detailed", "layer1": "correct_NA", "count": 5},
+                {"check": "b", "arm": "detailed", "layer1": "correct_applicable", "count": 9},
+            ]
+        )
+        fig = plot_grouped_counts(
+            counts, group="check", category="layer1", series="arm",
+            order=("correct_NA",),
+        )
+        trace = fig.data[0]
+        assert dict(zip(trace.y, trace.x)) == {"a": 5, "b": 0}
+
+    def test_an_empty_frame_is_not_a_crash(self):
+        import pandas as pd
+
+        fig = plot_grouped_counts(
+            pd.DataFrame(columns=["check", "arm", "layer1", "count"]),
+            group="check", category="layer1", series="arm",
+        )
+        assert fig.data == ()
+
+
+class TestGroupedCountsLayout:
+    @staticmethod
+    def _counts(groups=("check-a", "check-b")):
+        import pandas as pd
+
+        return pd.DataFrame(
+            [
+                {"check": g, "arm": arm, "layer1": cat, "count": 10}
+                # `minimal` first, so first-appearance order is not the
+                # order the figure should use.
+                for arm in ("minimal", "detailed")
+                for g in groups
+                for cat in ("correct_NA", "correct_applicable")
+            ]
+        )
+
+    def _columns(self, fig):
+        layout = fig.layout.to_plotly_json()
+        return len(
+            {
+                round(value["domain"][0], 4)
+                for key, value in layout.items()
+                if key.startswith("xaxis") and value.get("domain")
+            }
+        )
+
+    def test_one_column_by_default(self):
+        """Layer S group labels reach 45 characters
+        (`plot-axis-units - unit_definition_as_provided`), and at two
+        columns the right panel's labels are drawn over the left panel's
+        bars."""
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm"
+        )
+        assert self._columns(fig) == 1
+
+    def test_the_series_order_is_the_callers_to_fix(self):
+        """Otherwise the legend follows row order, and the same two arms
+        swap colour between one figure and the next."""
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm",
+            series_order=("detailed", "minimal"),
+        )
+        assert [t.name for t in fig.data if t.showlegend] == ["detailed", "minimal"]
+
+    def test_the_default_series_order_is_stable(self):
+        fig = plot_grouped_counts(
+            self._counts(), group="check", category="layer1", series="arm"
+        )
+        assert [t.name for t in fig.data if t.showlegend] == ["detailed", "minimal"]

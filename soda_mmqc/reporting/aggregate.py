@@ -34,6 +34,8 @@ __all__ = [
     "replicate_spread",
     "arm_contrast",
     "arm_levels",
+    "layer1_counts",
+    "layer_s_counts",
     "non_response_counts",
     "field_order",
     "leaf_property_tail",
@@ -744,3 +746,91 @@ def non_response_counts(runs: FlatRuns) -> pd.DataFrame:
     if not frame.empty:
         frame["empty"] = frame["empty"].astype(bool)
     return frame
+
+
+#: Columns of :func:`layer1_counts`, in order.
+LAYER1_COUNTS_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "layer1",
+    "count",
+)
+
+#: Columns of :func:`layer_s_counts`, in order.
+LAYER_S_COUNTS_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "list_key",
+    "outcome",
+    "count",
+)
+
+
+def layer1_counts(runs: FlatRuns) -> pd.DataFrame:
+    """Applicability calls per run leaf, by layer-1 label.
+
+    A count, not a mean, which is why it may be summed over a check's
+    leaf properties: the standing constraint bans averaging a *score*
+    over ``panel_label`` and ``micrograph`` because they measure
+    different things, and ``EvaluationResult.aggregate_layer1_counts``
+    already sums these the same way.
+
+    One row per ``(check, model, arm, replicate, layer1)``, so both
+    variance axes survive and the caller decides what to pool. A label
+    nothing was judged as is absent rather than zero -- three of the four
+    are genuinely missing from ``image-annotation-defined``.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        summary = aggregate_run(run)
+        totals: Counter[str] = Counter()
+        for rollup in summary.by_property.values():
+            totals.update(rollup.layer1_counts)
+        for label, count in sorted(totals.items()):
+            rows.append(
+                {
+                    "check": run.check,
+                    "model": run.model,
+                    "arm": run.arm,
+                    "replicate": run.replicate,
+                    "layer1": label,
+                    "count": int(count),
+                }
+            )
+    return pd.DataFrame(rows, columns=list(LAYER1_COUNTS_COLUMNS))
+
+
+def layer_s_counts(runs: FlatRuns) -> pd.DataFrame:
+    """Row outcomes per run leaf, by the list they came from.
+
+    ``list_key`` is on the row because a check may evaluate more than one
+    row set: ten exp-01 checks have only ``outputs``, but
+    ``plot-axis-units`` also has ``explanation``, ``units_provided`` and
+    ``unit_definition_as_provided``, and pooling them would add a
+    sub-list's spurious rows to the top-level list's.
+
+    Examples are summed within a leaf -- layer S is a count over row
+    sets, and one example contributes one row set per list. Replicates
+    stay on the row.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        summary = aggregate_run(run)
+        for list_key, counts in sorted(summary.by_list_row_counts.items()):
+            for outcome, count in sorted(counts.items()):
+                rows.append(
+                    {
+                        "check": run.check,
+                        "model": run.model,
+                        "arm": run.arm,
+                        "replicate": run.replicate,
+                        "list_key": list_key,
+                        "outcome": outcome,
+                        "count": int(count),
+                    }
+                )
+    return pd.DataFrame(rows, columns=list(LAYER_S_COUNTS_COLUMNS))

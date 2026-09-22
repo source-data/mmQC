@@ -1033,19 +1033,30 @@ def _finish_check_panels(
     total_height: int,
     title: str,
     xlabel: str,
-    span: tuple[float, float],
+    span: tuple[float, float] | None,
     showlegend: bool = False,
 ) -> go.Figure:
-    """Shared range on every panel, one axis title per column."""
-    fig.update_xaxes(range=list(span))
+    """Shared range on every panel, one axis title per column.
+
+    ``span`` of ``None`` leaves each panel to scale itself, which is
+    right when the panels hold quantities of different magnitude and
+    wrong when they hold the same one.
+    """
+    if span is not None:
+        fig.update_xaxes(range=list(span))
     fig.update_yaxes(autorange="reversed")
     for col in range(1, cols + 1):
-        bottom = max(
+        # A trailing column can hold no panel at all -- three categories
+        # across two columns leaves the second column of the last row
+        # empty -- and naming an axis that is not there raises.
+        occupied = [
             row
             for row in range(1, rows + 1)
             if (row - 1) * cols + (col - 1) < n_checks
-        )
-        fig.update_xaxes(title_text=xlabel, row=bottom, col=col)
+        ]
+        if not occupied:
+            continue
+        fig.update_xaxes(title_text=xlabel, row=max(occupied), col=col)
     fig.update_layout(
         title_text=title, height=total_height, showlegend=showlegend
     )
@@ -1307,4 +1318,119 @@ def _arm_levels_x_range(levels: pd.DataFrame) -> tuple[float, float]:
     errors = levels["se"].astype(float).fillna(0.0)
     return min(0.0, float((means - errors).min())), max(
         1.0, float((means + errors).max())
+    )
+
+
+def plot_grouped_counts(
+    counts: pd.DataFrame,
+    *,
+    group: str,
+    category: str,
+    series: str = "arm",
+    order: Sequence[str] | None = None,
+    series_order: Sequence[Any] | None = None,
+    columns: int = 1,
+    title: str = "Counts by arm",
+    xlabel: str = "count",
+) -> go.Figure:
+    """One panel per ``category``, ``group`` on the y axis, a bar per arm.
+
+    The obvious layout is the other way round -- a panel per check, the
+    outcomes stacked on its y axis -- and for counts it does not work.
+    ``correct_applicable`` outweighs ``withheld_applicable`` by 14x to
+    208x depending on the check, and ``correct_row`` outweighs
+    ``spurious_row`` by roughly 200:1, so a panel would hold one long bar
+    and three invisible ones. A panel per outcome gives each its own
+    scale, which is why the ranges here are deliberately *not* shared.
+
+    They do all start at zero. Bar length has to stay proportional to the
+    count, which is also why this is not a log axis.
+
+    Everything not named by ``group``, ``category`` or ``series`` is
+    summed over -- replicates included, so a count is over the whole run
+    rather than per replicate. A group with no rows in a category is
+    drawn at zero: for a count, nothing observed is a result.
+
+    ``series_order`` fixes the legend and the colours. Without it they
+    follow whatever order the rows happened to arrive in, and the same
+    two arms swap colour between one figure and the next; the default is
+    sorted, which is at least stable.
+
+    One column by default, as elsewhere: plotly hangs a y tick label
+    outside its panel, and a layer-S group label reaches 45 characters
+    (``plot-axis-units - unit_definition_as_provided``).
+    """
+    if counts.empty:
+        fig = go.Figure()
+        fig.update_layout(title=title)
+        return _apply_plot_template(fig)
+
+    totals = (
+        counts.groupby([group, category, series], dropna=False, observed=True)[
+            "count"
+        ]
+        .sum()
+        .reset_index()
+    )
+    categories = (
+        [value for value in order if value in set(totals[category])]
+        if order is not None
+        else sorted(totals[category].unique())
+    )
+    groups = sorted(totals[group].unique())
+    present = set(totals[series])
+    names = (
+        [name for name in series_order if name in present]
+        if series_order is not None
+        else sorted(present)
+    )
+    palette = _arm_levels_palette(names)
+
+    fig, rows, cols, total_height = _check_panel_grid(
+        categories,
+        {value: len(groups) * len(names) for value in categories},
+        columns=columns,
+    )
+
+    legend_shown: set[str] = set()
+    for panel_index, value in enumerate(categories):
+        row = panel_index // cols + 1
+        col = panel_index % cols + 1
+        panel = totals[totals[category] == value]
+        for name in names:
+            values = (
+                panel[panel[series] == name]
+                .set_index(group)["count"]
+                .reindex(groups)
+                .fillna(0)
+            )
+            show_legend = name not in legend_shown
+            legend_shown.add(name)
+            fig.add_trace(
+                go.Bar(
+                    x=values.tolist(),
+                    y=groups,
+                    orientation="h",
+                    name=str(name),
+                    legendgroup=str(name),
+                    showlegend=show_legend,
+                    marker_color=palette[name],
+                    hovertemplate="%{y}<br>%{x:,}<extra></extra>",
+                ),
+                row=row,
+                col=col,
+            )
+
+    fig.update_layout(barmode="group")
+    fig.update_xaxes(rangemode="tozero")
+    return _finish_check_panels(
+        fig,
+        n_checks=len(categories),
+        rows=rows,
+        cols=cols,
+        total_height=total_height,
+        title=title,
+        xlabel=xlabel,
+        span=None,
+        showlegend=True,
     )

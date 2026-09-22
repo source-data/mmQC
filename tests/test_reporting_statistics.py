@@ -19,6 +19,10 @@ from soda_mmqc.core.eval_manifest import (
 from soda_mmqc.reporting.aggregate import (
     SCORES_FRAME_COLUMNS,
     NON_RESPONSE_COLUMNS,
+    LAYER1_COUNTS_COLUMNS,
+    LAYER_S_COUNTS_COLUMNS,
+    layer1_counts,
+    layer_s_counts,
     arm_contrast,
     arm_levels,
     non_response_counts,
@@ -819,3 +823,117 @@ class TestArmLevels:
         frame = scores_frame(self._runs_with_incomplete_pairing())
         with pytest.raises(ValueError, match="nope"):
             arm_levels(frame, baseline="pinned", variant="nope")
+
+
+def _record_with_layers(example, scores, row_counts=None, list_key="outputs"):
+    """A record carrying both leaf instances and layer-S row counts.
+
+    Distinct from `_record_with_rows` above, which has no instances: the
+    layer-1 and layer-S frames are built from the same record and this
+    has to exercise both.
+    """
+    record = _record(example, scores)
+    by_list = (
+        {list_key: {"row_counts": dict(row_counts), "rows": []}}
+        if row_counts
+        else {}
+    )
+    return FlatRecord(
+        doc_id=record.doc_id,
+        metadata=record.metadata,
+        analysis={"instances": record.analysis["instances"], "by_list": by_list},
+    )
+
+
+class TestLayerCounts:
+    """Counts, not means, so they may be summed across properties.
+
+    The standing constraint bans averaging a score over `panel_label` and
+    `micrograph`, which measure different things. A count of how many
+    applicability calls an arm got wrong is not that average, and
+    EvaluationResult.aggregate_layer1_counts already sums exactly this.
+    """
+
+    def test_layer1_counts_are_tidy_per_replicate(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[_record("doc-a", {"p1": 1.0, "p2": None})],
+                )
+            ]
+        )
+        frame = layer1_counts(runs)
+        assert list(frame.columns) == list(LAYER1_COUNTS_COLUMNS)
+        by_label = frame.set_index("layer1")["count"]
+        assert by_label["correct_applicable"] == 1
+        assert by_label["correct_NA"] == 1
+        assert set(frame["replicate"]) == {0}
+
+    def test_layer1_counts_sum_a_check_s_properties(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record("doc-a", {"p1": 1.0, "p2": 0.5}),
+                        _record("doc-b", {"p1": 0.0, "p2": 1.0}),
+                    ],
+                )
+            ]
+        )
+        frame = layer1_counts(runs).set_index("layer1")["count"]
+        assert frame["correct_applicable"] == 4
+
+    def test_layer_s_counts_keep_the_list_they_came_from(self):
+        """plot-axis-units evaluates four row sets, not one."""
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record_with_layers(
+                            "doc-a",
+                            {"p1": 1.0},
+                            {"correct_row": 7, "missing_row": 1, "spurious_row": 2},
+                        )
+                    ],
+                )
+            ]
+        )
+        frame = layer_s_counts(runs)
+        assert list(frame.columns) == list(LAYER_S_COUNTS_COLUMNS)
+        assert set(frame["list_key"]) == {"outputs"}
+        counts = frame.set_index("outcome")["count"]
+        assert (counts["correct_row"], counts["missing_row"], counts["spurious_row"]) == (7, 1, 2)
+
+    def test_layer_s_counts_sum_examples_within_a_leaf(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record_with_layers("doc-a", {"p1": 1.0}, {"correct_row": 3}),
+                        _record_with_layers("doc-b", {"p1": 1.0}, {"correct_row": 4}),
+                    ],
+                )
+            ]
+        )
+        frame = layer_s_counts(runs)
+        assert frame.set_index("outcome")["count"]["correct_row"] == 7
+
+    def test_an_absent_outcome_is_absent_not_zero(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[_record_with_layers("doc-a", {"p1": 1.0}, {"correct_row": 3})],
+                )
+            ]
+        )
+        assert set(layer_s_counts(runs)["outcome"]) == {"correct_row"}
