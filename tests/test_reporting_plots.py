@@ -852,16 +852,17 @@ class TestCheckLayers:
         assert titles[:3] == ["Layer S", "Layer 1", "Layer 2"]
 
     def test_the_arms_sit_beside_each_other_not_on_top(self):
-        """A two-level x axis, not offsetgroup: every (group, variant) is
-        its own position, so only that variant's outcomes can stack."""
+        """Explicit positions, not offsetgroup: each variant owns an x,
+        so only that variant's outcomes can stack there."""
         fig = self._fig()
         assert fig.layout.barmode == "stack"
         assert not any(t.offsetgroup for t in fig.data)
         first = next(
             t for t in fig.data
-            if (t.xaxis or "x") == "x" and t.x is not None and len(t.x) == 2
+            if (t.xaxis or "x") == "x" and t.x is not None and len(t.x) > 1
         )
-        assert set(first.x[1]) == {"detailed", "minimal"}
+        xs = list(first.x)
+        assert xs[1] - xs[0] == first.width, "variants must touch"
 
     def test_layer_s_stacks_its_three_outcomes(self):
         fig = self._fig()
@@ -882,10 +883,9 @@ class TestCheckLayers:
         fig = self._fig()
         third = [t for t in fig.data if t.xaxis == "x3"]
         assert len(third) == 1
-        assert list(third[0].x[1]) == [
-            "detailed", "minimal", "detailed", "minimal"
-        ]
         assert list(third[0].y) == [0.9, 0.7, 0.9, 0.7]
+        xs = list(third[0].x)
+        assert xs[1] - xs[0] == third[0].width
 
     def test_the_legend_names_both_arms(self):
         """Arms are told apart by opacity, which needs saying somewhere."""
@@ -894,8 +894,7 @@ class TestCheckLayers:
 
     def test_ticks_drop_the_shared_root(self):
         fig = self._fig()
-        third = next(t for t in fig.data if t.xaxis == "x3")
-        assert set(third.x[0]) == {"panel_label", "micrograph"}
+        assert set(fig.layout.xaxis3.ticktext) == {"panel_label", "micrograph"}
 
     def test_layer_2_tells_the_arms_apart_by_colour(self):
         """In the stacked panels colour is taken by the outcome, so an arm
@@ -911,7 +910,9 @@ class TestCheckLayers:
     def test_the_arm_legend_matches_the_layer_2_colours(self):
         fig = self._fig()
         third = next(t for t in fig.data if t.xaxis == "x3")
-        by_variant = dict(zip(third.x[1], third.marker.color))
+        # bars run (group, variant) pairwise, so the first two are the
+        # two variants of the first property
+        by_variant = dict(zip(("detailed", "minimal"), third.marker.color))
         legend = {
             t.name: t.marker.color
             for t in fig.data
@@ -967,21 +968,6 @@ class TestStackedCounts:
             "correct_row", "missing_row", "spurious_row"
         }
 
-    def test_the_arms_sit_beside_each_other(self):
-        """Adjacent x positions under a shared group label."""
-        fig = self._fig()
-        trace = self._data_traces(fig)[0]
-        assert list(trace.x[1]) == [
-            "detailed", "minimal", "detailed", "minimal"
-        ]
-
-    def test_one_bar_pair_per_group(self):
-        fig = self._fig()
-        for trace in self._data_traces(fig):
-            assert list(trace.x[0]) == [
-                "check-a", "check-a", "check-b", "check-b"
-            ]
-
     def test_replicates_are_summed(self):
         """Two replicates of 100 is 200, at every position."""
         fig = self._fig()
@@ -1026,34 +1012,6 @@ class TestStackedCounts:
         assert shapes[0] != shapes[1], "baseline and variant look alike"
         assert shapes == [shapes[0], shapes[1], shapes[0], shapes[1]]
 
-    def test_a_gap_separates_the_pair(self):
-        fig = self._fig()
-        assert fig.layout.bargap and fig.layout.bargap > 0
-
-    def test_each_variant_is_its_own_x_position(self):
-        """Not offsetgroup. A two-level x axis puts (group, variant) at
-        distinct positions, so stacking within a position is the only
-        thing plotly can do with them.
-
-        offsetgroup alone is advisory: it needs alignmentgroup beside it,
-        and without that plotly.js stacked the two variants into one bar
-        while kaleido drew them side by side. Same JSON, two renderings.
-        """
-        fig = self._fig()
-        for trace in self._data_traces(fig):
-            assert len(trace.x) == 2, "x must be [groups, variants]"
-            groups, variants = trace.x
-            assert list(groups) == [
-                "check-a", "check-a", "check-b", "check-b"
-            ]
-            assert list(variants) == [
-                "detailed", "minimal", "detailed", "minimal"
-            ]
-
-    def test_the_axis_is_multicategory(self):
-        fig = self._fig()
-        assert fig.layout.xaxis.type == "multicategory"
-
     def test_no_trace_relies_on_offsetgroup(self):
         fig = self._fig()
         assert not any(t.offsetgroup for t in fig.data)
@@ -1075,3 +1033,42 @@ class TestStackedCounts:
         narrow = plot_stacked_counts(frame(2), group="check", category="outcome")
         wide = plot_stacked_counts(frame(14), group="check", category="outcome")
         assert wide.layout.width > narrow.layout.width
+
+    def test_variants_of_one_group_touch(self):
+        """No air inside a pair: they are two halves of one check."""
+        fig = self._fig()
+        trace = self._data_traces(fig)[0]
+        xs, width = list(trace.x), trace.width
+        assert xs[1] - xs[0] == width, "variants must be adjacent"
+
+    def test_checks_are_separated(self):
+        """Air between checks, so a pair reads as a pair."""
+        fig = self._fig()
+        trace = self._data_traces(fig)[0]
+        xs, width = list(trace.x), trace.width
+        within = xs[1] - xs[0]
+        between = xs[2] - xs[1]
+        assert between > within, "no gap between checks"
+
+    def test_the_gap_between_checks_is_the_callers(self):
+        wide = plot_stacked_counts(
+            self._counts(), group="check", category="outcome",
+            series_order=("detailed", "minimal"), group_gap=1.0,
+        )
+        tight = plot_stacked_counts(
+            self._counts(), group="check", category="outcome",
+            series_order=("detailed", "minimal"), group_gap=0.1,
+        )
+        span = lambda f: list(self._data_traces(f)[0].x)[2] - list(
+            self._data_traces(f)[0].x
+        )[1]
+        assert span(wide) > span(tight)
+
+    def test_the_group_name_sits_under_its_own_bars(self):
+        fig = self._fig()
+        trace = self._data_traces(fig)[0]
+        xs = list(trace.x)
+        assert list(fig.layout.xaxis.ticktext) == ["check-a", "check-b"]
+        centres = list(fig.layout.xaxis.tickvals)
+        assert centres[0] == (xs[0] + xs[1]) / 2
+        assert centres[1] == (xs[2] + xs[3]) / 2

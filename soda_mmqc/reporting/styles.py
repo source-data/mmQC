@@ -88,3 +88,8 @@ ARM_LEVELS_COLORS = ("#475569", "#0891b2", "#a16207", "#7c3aed")
 # Horizontal room for one (group, variant) bar position, in pixels.
 # The two-level axis writes the group name under its own bars only.
 STACKED_COUNTS_POSITION_WIDTH = 78
+
+# Air between one group of variant bars and the next, in bar widths.
+# Zero inside a group: a check's variants are two halves of one
+# measurement and should touch.
+STACKED_COUNTS_GROUP_GAP = 0.6

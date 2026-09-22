@@ -40,6 +40,7 @@ from soda_mmqc.reporting.styles import (
     MEAN_SCORE_JITTER_STDDEV,
     MEAN_SCORE_PLOT_TITLE,
     MEAN_SCORE_Y_MAX,
+    STACKED_COUNTS_GROUP_GAP,
     STACKED_COUNTS_POSITION_WIDTH,
     LAYER_S_COLORS,
     LAYER_S_ORDER,
@@ -1530,6 +1531,32 @@ def _series_names(
     return [name for name in series_order if name in present]
 
 
+def _bar_positions(
+    n_groups: int, n_variants: int, group_gap: float
+) -> tuple[list[float], list[float]]:
+    """Numeric x for each (group, variant) bar, and each group's centre.
+
+    Bars are one unit wide and one unit apart inside a group, so a
+    check's variants touch -- they are two halves of one measurement.
+    ``group_gap`` units of air then separate one check from the next.
+
+    Plotly cannot express that on a categorical axis: ``bargap`` applies
+    between every pair of adjacent positions, within a group and between
+    groups alike, and ``bargroupgap`` only exists for the offsetgroup
+    mechanism this module no longer uses. Explicit positions can.
+    """
+    step = n_variants + group_gap
+    xs = [
+        group * step + variant
+        for group in range(n_groups)
+        for variant in range(n_variants)
+    ]
+    centres = [
+        group * step + (n_variants - 1) / 2 for group in range(n_groups)
+    ]
+    return xs, centres
+
+
 def _stacked_layer_panel(
     fig: go.Figure,
     frame: pd.DataFrame,
@@ -1542,18 +1569,18 @@ def _stacked_layer_panel(
     series: str,
     names: Sequence[Any],
     strip_root: bool,
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
 ) -> None:
     """Outcomes stacked within a variant; variants at their own positions.
 
-    The x axis is two-level -- ``[[group...], [variant...]]`` -- so every
-    ``(group, variant)`` pair is a distinct categorical position and the
-    only thing plotly can stack there is that variant's own outcomes.
+    Every ``(group, variant)`` pair gets its own numeric x, so the only
+    thing plotly can stack at a position is that variant's own outcomes.
 
     This replaced ``offsetgroup``, which is advisory: it needs
     ``alignmentgroup`` beside it, and without one plotly.js stacked the
-    two variants into a single bar while kaleido drew them side by side.
-    Same figure JSON, two renderings -- so a static export could not be
-    used to check it. A position cannot be misread that way.
+    two variants into a single bar while kaleido drew them side by side
+    from the same figure JSON. A static export could not catch that. A
+    position can only be read one way.
     """
     totals = frame.groupby([x, stack, series], observed=True)["count"].sum()
     categories = sorted({value for value, _, _ in totals.index})
@@ -1562,43 +1589,61 @@ def _stacked_layer_panel(
     )
     outcomes = [o for o in order if o in {value for _, value, _ in totals.index}]
 
-    level_group = [label for label in labels for _ in names]
-    level_variant = [str(name) for _ in labels for name in names]
-    per_bar = [index for _ in labels for index in range(len(names))]
+    xs, centres = _bar_positions(len(categories), len(names), group_gap)
+    per_bar = [index for _ in categories for index in range(len(names))]
 
     for outcome in outcomes:
         fig.add_trace(
             go.Bar(
-                x=[level_group, level_variant],
+                x=xs,
                 y=[
                     float(totals.get((category, outcome, name), 0))
                     for category in categories
                     for name in names
                 ],
+                width=1.0,
                 name=outcome,
                 legendgroup=outcome,
                 showlegend=True,
-                marker={
-                    "color": colors[outcome],
-                    "opacity": [
-                        _comparison_series_opacity(index, len(names))
-                        for index in per_bar
-                    ],
-                    "pattern": {
-                        "shape": [
-                            _comparison_series_pattern(index)
-                            for index in per_bar
-                        ],
-                        "solidity": 0.4,
-                        "fgcolor": "#ffffff",
-                        "size": 5,
-                    },
-                },
-                hovertemplate=f"%{{x}}<br>{outcome}: %{{y:,}}<extra></extra>",
+                marker=_variant_marker(colors[outcome], per_bar, len(names)),
+                customdata=[
+                    f"{label} / {name}"
+                    for label in labels
+                    for name in names
+                ],
+                hovertemplate=(
+                    f"%{{customdata}}<br>{outcome}: %{{y:,}}<extra></extra>"
+                ),
             ),
             row=1,
             col=col,
         )
+    fig.update_xaxes(
+        tickvals=centres, ticktext=labels, tickangle=-25, row=1, col=col
+    )
+
+
+def _variant_marker(
+    color: str, per_bar: Sequence[int], n_variants: int
+) -> dict[str, Any]:
+    """One hue for the outcome; the variant is opacity plus a hatch.
+
+    Colour is spoken for, and two shades of one green with no air
+    between them read as a single bar -- which is how this figure was
+    misread more than once.
+    """
+    return {
+        "color": color,
+        "opacity": [
+            _comparison_series_opacity(index, n_variants) for index in per_bar
+        ],
+        "pattern": {
+            "shape": [_comparison_series_pattern(index) for index in per_bar],
+            "solidity": 0.4,
+            "fgcolor": "#ffffff",
+            "size": 5,
+        },
+    }
 
 
 def _mean_layer_panel(
@@ -1608,8 +1653,9 @@ def _mean_layer_panel(
     col: int,
     series: str,
     names: Sequence[Any],
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
 ) -> None:
-    """Layer-2 means on the same two-level x axis as the stacked panels."""
+    """Layer-2 means on the same positions as the stacked panels."""
     categories = sorted(frame["property"].unique())
     labels = _strip_shared_list_root(categories)
     indexed = frame.set_index(["property", series])
@@ -1621,35 +1667,27 @@ def _mean_layer_panel(
             return float("nan")
         return float(value) if pd.notna(value) else float("nan")
 
-    per_bar = [index for _ in labels for index in range(len(names))]
+    xs, centres = _bar_positions(len(categories), len(names), group_gap)
+    per_bar = [index for _ in categories for index in range(len(names))]
+    marker = _variant_marker(ARM_CONTRAST_BAR_COLOR, per_bar, len(names))
+    marker["color"] = [_arm_color(index) for index in per_bar]
+
     fig.add_trace(
         go.Bar(
-            x=[
-                [label for label in labels for _ in names],
-                [str(name) for _ in labels for name in names],
-            ],
+            x=xs,
             y=[
                 _cell(category, name, "mean")
                 for category in categories
                 for name in names
             ],
+            width=1.0,
             showlegend=False,
-            marker={
-                "color": [_arm_color(index) for index in per_bar],
-                "pattern": {
-                    "shape": [
-                        _comparison_series_pattern(index) for index in per_bar
-                    ],
-                    "solidity": 0.4,
-                    "fgcolor": "#ffffff",
-                    "size": 5,
-                },
-            },
+            marker=marker,
             error_y={
                 "type": "data",
                 "array": [
-                    0.0 if pd.isna(v) else v
-                    for v in (
+                    0.0 if pd.isna(value) else value
+                    for value in (
                         _cell(category, name, "sd")
                         for category in categories
                         for name in names
@@ -1657,10 +1695,16 @@ def _mean_layer_panel(
                 ],
                 "visible": True,
             },
-            hovertemplate="%{x}<br>%{y:.4f}<extra></extra>",
+            customdata=[
+                f"{label} / {name}" for label in labels for name in names
+            ],
+            hovertemplate="%{customdata}<br>%{y:.4f}<extra></extra>",
         ),
         row=1,
         col=col,
+    )
+    fig.update_xaxes(
+        tickvals=centres, ticktext=labels, tickangle=-25, row=1, col=col
     )
 
 
@@ -1675,6 +1719,7 @@ def plot_stacked_counts(
     title: str = "Counts by arm",
     ylabel: str = "count",
     strip_root: bool = False,
+    group_gap: float = STACKED_COUNTS_GROUP_GAP,
 ) -> go.Figure:
     """One stacked bar per arm, side by side, for each ``group``.
 
@@ -1714,6 +1759,7 @@ def plot_stacked_counts(
         series=series,
         names=names,
         strip_root=strip_root,
+        group_gap=group_gap,
     )
     # The swatch has to show what the figure uses. Here that is opacity
     # on one neutral colour -- every hue is already spoken for by an
@@ -1737,18 +1783,16 @@ def plot_stacked_counts(
         barmode="stack",
         title_text=title,
         height=520,
-        xaxis_tickangle=-25,
-        # A pair that touches reads as one bar; a pair with air between
-        # reads as two.
-        bargap=0.25,
-        # The outer level writes a group's name under that group's bars
-        # alone, so a long name needs the width its bars occupy. Fixed
-        # at the container's width, fourteen check names overlap into
-        # mush; an explicit width scrolls instead.
+        # The bars carry their own width and position, so plotly must
+        # not add a gap of its own: none inside a pair, `group_gap`
+        # between pairs, both set by _bar_positions.
+        bargap=0,
+        # A group's name sits under that group's bars alone, so a long
+        # name needs the width those bars occupy. At a container's
+        # width, fourteen check names overlap into mush; an explicit
+        # width scrolls instead.
         width=max(900, STACKED_COUNTS_POSITION_WIDTH * positions),
     )
-    # Say it rather than let plotly infer it from the nested x.
-    fig.update_xaxes(type="multicategory")
     fig.update_yaxes(title_text=ylabel, rangemode="tozero")
     return _apply_plot_template(fig)
 
