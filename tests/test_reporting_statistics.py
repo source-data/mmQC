@@ -21,6 +21,7 @@ from soda_mmqc.reporting.aggregate import (
     NON_RESPONSE_COLUMNS,
     arm_contrast,
     non_response_counts,
+    property_path,
     replicate_spread,
     scores_frame,
 )
@@ -647,3 +648,97 @@ class TestMeanScoreBars:
             self._summary_frame(), spread=spread, arm="pinned"
         )
         assert fig.data[0].error_y.array is None
+
+
+class TestPropertyPath:
+    """A property's label says where it came from, not just what it is.
+
+    `outputs[].panel_label` appears in all eleven exp-01 checks, so a
+    table or a plot keyed on the property alone puts eleven different
+    measurements under one name. The path prefixes the axes that locate
+    it, and writes a pooled axis as an empty segment so the delimiter
+    doubles: position is preserved, and `split(":")` always gives five
+    fields back.
+    """
+
+    def test_every_axis_present(self):
+        assert property_path(
+            "micrograph-scale-bar",
+            "outputs[].panel_label",
+            arm="pinned",
+            replicate=0,
+            example="10.1038_x/content/1",
+        ) == (
+            "micrograph-scale-bar:pinned:rep-00:10.1038_x/content/1"
+            ":outputs[].panel_label"
+        )
+
+    def test_a_pooled_axis_is_an_empty_segment(self):
+        assert property_path(
+            "micrograph-scale-bar",
+            "outputs[].panel_label",
+            arm="pinned",
+        ) == "micrograph-scale-bar:pinned:::outputs[].panel_label"
+
+    def test_everything_pooled_but_the_check(self):
+        assert property_path(
+            "micrograph-scale-bar", "outputs[].panel_label"
+        ) == "micrograph-scale-bar::::outputs[].panel_label"
+
+    def test_it_round_trips_to_five_fields(self):
+        """Positional, so a reader can always say which axis is missing."""
+        path = property_path(
+            "micrograph-scale-bar", "outputs[].panel_label", arm="pinned"
+        )
+        check, arm, replicate, example, leaf_property = path.split(":")
+        assert check == "micrograph-scale-bar"
+        assert arm == "pinned"
+        assert (replicate, example) == ("", "")
+        assert leaf_property == "outputs[].panel_label"
+
+    def test_the_property_keeps_its_json_path(self):
+        """plot-axis-units has two distinct properties tailing in `axis`.
+
+        Stripping the within-record path would collide them inside a
+        single check, which no amount of prefix can disambiguate.
+        """
+        first = property_path("plot-axis-units", "outputs[].units_provided[].axis")
+        second = property_path(
+            "plot-axis-units", "outputs[].unit_definition_as_provided[].axis"
+        )
+        assert first != second
+
+
+class TestFramesCarryThePath:
+    def test_scores_frame_pools_nothing(self):
+        runs = FlatRuns(
+            [_run(arm="pinned", replicate=0, records=[_record("doc-a", {"p1": 1.0})])]
+        )
+
+        frame = scores_frame(runs)
+
+        assert frame["path"].tolist() == [f"{CHECK}:pinned:rep-00:doc-a:p1"]
+
+    def test_replicate_spread_pools_replicate_and_example(self):
+        runs = FlatRuns(
+            [
+                _run(arm="pinned", replicate=r, records=[_record("doc-a", {"p1": 1.0})])
+                for r in (0, 1)
+            ]
+        )
+
+        spread = replicate_spread(scores_frame(runs))
+
+        assert spread["path"].tolist() == [f"{CHECK}:pinned:::p1"]
+
+    def test_arm_contrast_pools_arm_replicate_and_example(self):
+        runs = FlatRuns(
+            [
+                _run(arm="pinned", replicate=0, records=[_record("doc-a", {"p1": 1.0})]),
+                _run(arm="v2", replicate=0, records=[_record("doc-a", {"p1": 0.5})]),
+            ]
+        )
+
+        contrast = arm_contrast(scores_frame(runs), baseline="pinned", variant="v2")
+
+        assert contrast["path"].tolist() == [f"{CHECK}::::p1"]

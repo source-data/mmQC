@@ -36,6 +36,7 @@ __all__ = [
     "non_response_counts",
     "field_order",
     "leaf_property_tail",
+    "property_path",
 ]
 
 
@@ -81,6 +82,57 @@ class RunSummary:
 def leaf_property_tail(leaf_property: str) -> str:
     """Display label for a leaf property pattern."""
     return leaf_property.rsplit(".", maxsplit=1)[-1]
+
+
+#: Separator between the segments of a :func:`property_path`.
+PATH_SEPARATOR = ":"
+
+#: Segments of a :func:`property_path`, in order.
+PROPERTY_PATH_SEGMENTS = ("check", "arm", "replicate", "example", "property")
+
+
+def property_path(
+    check: str,
+    leaf_property: str,
+    *,
+    arm: str | None = None,
+    replicate: int | None = None,
+    example: str | None = None,
+) -> str:
+    """Locate a measurement: ``check:arm:replicate:example:property``.
+
+    A leaf property does not identify what was measured. In exp-01
+    ``outputs[].panel_label`` occurs in all eleven checks and
+    ``outputs[].decision`` in six, so a table or a plot keyed on the
+    property alone stacks unrelated measurements under one label.
+
+    ``None`` means *pooled over*, and renders as an empty segment, so
+    the separator doubles on its own rather than by a special rule. The
+    segments stay positional: ``split(":")`` gives five fields whatever
+    was pooled, and the second is the arm whether or not it is there.
+
+        >>> property_path("micrograph-scale-bar", "outputs[].panel_label")
+        'micrograph-scale-bar::::outputs[].panel_label'
+
+    ``leaf_property`` keeps its within-record JSON path. That path
+    carries the same notation one level in -- ``outputs[]`` is a pooling
+    over the panels of one example -- and dropping it would collide
+    ``outputs[].units_provided[].axis`` with
+    ``outputs[].unit_definition_as_provided[].axis`` inside a single
+    check, where no prefix can separate them.
+
+    ``model`` is deliberately not a segment: it is constant within a run
+    root, so it would only ever add a separator.
+    """
+    return PATH_SEPARATOR.join(
+        (
+            check,
+            arm or "",
+            "" if replicate is None else f"rep-{int(replicate):02d}",
+            example or "",
+            leaf_property,
+        )
+    )
 
 
 def field_order(
@@ -238,6 +290,7 @@ SCORES_FRAME_COLUMNS = (
     "replicate",
     "example",
     "property",
+    "path",
     "mean_score",
     "n_scored",
     "n_instances",
@@ -282,6 +335,13 @@ def scores_frame(runs: FlatRuns) -> pd.DataFrame:
                         "replicate": run.replicate,
                         "example": example,
                         "property": leaf_property,
+                        "path": property_path(
+                            run.check,
+                            leaf_property,
+                            arm=run.arm,
+                            replicate=run.replicate,
+                            example=example,
+                        ),
                         "mean_score": rollup.mean_score,
                         "n_scored": rollup.n_scored,
                         "n_instances": rollup.n_instances,
@@ -301,6 +361,7 @@ REPLICATE_SPREAD_COLUMNS = (
     "model",
     "arm",
     "property",
+    "path",
     "mean",
     "sd",
     "n_replicates",
@@ -311,6 +372,7 @@ REPLICATE_SPREAD_COLUMNS = (
 ARM_CONTRAST_COLUMNS = (
     "check",
     "property",
+    "path",
     "difference",
     "se",
     "n_examples",
@@ -383,6 +445,7 @@ def replicate_spread(frame: pd.DataFrame) -> pd.DataFrame:
                 "model": model,
                 "arm": arm,
                 "property": leaf_property,
+                "path": property_path(check, leaf_property, arm=arm),
                 "mean": float(values.mean()) if n_replicates else pd.NA,
                 # ddof=1: the SD of a single observation is undefined,
                 # not zero. Reporting 0.0 there would claim perfect
@@ -478,6 +541,7 @@ def arm_contrast(
             {
                 "check": check,
                 "property": leaf_property,
+                "path": property_path(check, leaf_property),
                 "difference": (
                     float(differences.mean()) if n_examples else pd.NA
                 ),
@@ -509,6 +573,7 @@ NON_RESPONSE_COLUMNS = (
     "replicate",
     "example",
     "list_key",
+    "path",
     "empty",
     "correct_row",
     "missing_row",
@@ -559,6 +624,13 @@ def non_response_counts(runs: FlatRuns) -> pd.DataFrame:
                         "replicate": run.replicate,
                         "example": example,
                         "list_key": list_key,
+                        "path": property_path(
+                            run.check,
+                            f"{list_key}[]",
+                            arm=run.arm,
+                            replicate=run.replicate,
+                            example=example,
+                        ),
                         "empty": correct == 0 and missing > 0,
                         "correct_row": correct,
                         "missing_row": missing,

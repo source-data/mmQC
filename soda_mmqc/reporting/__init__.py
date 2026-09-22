@@ -11,6 +11,7 @@ from soda_mmqc.reporting.aggregate import (
     scores_frame,
     field_order,
     leaf_property_tail,
+    property_path,
     summarize_runs,
 )
 from soda_mmqc.reporting.load import (
@@ -141,6 +142,7 @@ __all__ = [
     "layer_s_issues_table",
     "layer_s_row_steps",
     "leaf_property_tail",
+    "property_path",
     "load_eval_manifest_for_check",
     "load_evaluation_dir",
     "load_run_root",
