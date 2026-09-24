@@ -2,29 +2,31 @@
   "outputs": [
     {
       "panel_label": "A",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
-        "(A, B) Representative 3D super-resolution reconstructions of PacL2-mEos or CtpG-mEos in M. smegmatis cells using 3D PALM."
+        "Representative 3D super-resolution reconstructions of PacL2-mEos or CtpG-mEos in M. smegmatis cells using 3D PALM.",
+        "Exact p values and replicate numbers presented in this figure are reported in Table EV6."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Panel A shows a single representative 3D reconstruction (localizations, density map, 3D localizations, cluster segmentation) of one CtpG-mEos cell. No averaged/quantified data across replicates is shown, so replicate number/type reporting does not apply."
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel A is described as a 'representative' reconstruction, implying it was chosen from a larger set of repeated observations (e.g., multiple imaged cells/experiments), but neither the number of cells/experiments this image is representative of nor the replicate type is stated in the caption; the caption only defers replicate numbers to an external Table EV6 not provided with this panel."
     },
     {
       "panel_label": "B",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
-        "(A, B) Representative 3D super-resolution reconstructions of PacL2-mEos or CtpG-mEos in M. smegmatis cells using 3D PALM."
+        "Representative 3D super-resolution reconstructions of PacL2-mEos or CtpG-mEos in M. smegmatis cells using 3D PALM.",
+        "Exact p values and replicate numbers presented in this figure are reported in Table EV6."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Panel B shows a single representative 3D reconstruction of one PacL2-mEos cell, analogous to panel A. No aggregated data requiring replicate reporting is presented."
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Same issue as panel A: the caption calls this a representative image but does not state how many cells/experiments it represents; only an external table (Table EV6, not accessible here) is referenced for replicate numbers."
     },
     {
       "panel_label": "C",
@@ -39,7 +41,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "The caption states this is a mean ± SEM plot of individual cells (gray dots), so the replicate type (cells) is given, but the actual number of cells per condition is not stated in the legend; the reader is instead referred to a separate table (Table EV6), which is not shown/provided here."
+      "explanation": "The type of replicate is named (means from individual cells, shown as gray dots), but the actual number of cells analyzed per condition is not given in the caption or panel; the caption states this number is only reported in the separate Table EV6, which is not part of the figure legend itself."
     },
     {
       "panel_label": "D",
@@ -54,7 +56,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "clusters",
       "decision": "FAIL",
-      "explanation": "The replicate unit (clusters, one gray dot per cluster) is stated, but the number of clusters analyzed per condition is not given in the caption itself, only deferred to Table EV6."
+      "explanation": "The replicate unit is named (means from clusters, shown as gray dots), but the actual number of clusters analyzed is not stated in the caption; it is only said to be available in the separate Table EV6."
     },
     {
       "panel_label": "E",
@@ -69,47 +71,47 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "As for panel C, individual cells are the stated replicate unit, but the exact number of cells per condition is not given in the legend, only referenced to Table EV6."
+      "explanation": "The replicate type is named (individual cells), but the number of cells contributing to the means shown is not given in the caption; the caption defers this to the external Table EV6."
     },
     {
       "panel_label": "F",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
-        "(F) Representative super-resolution reconstructions of PacL2-mEos protein acquired by sptPALM."
+        "Representative super-resolution reconstructions of PacL2-mEos protein acquired by sptPALM.",
+        "Exact p values and replicate numbers presented in this figure are reported in Table EV6."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "This panel shows a single representative cell's localizations/trajectories, not aggregated data, so replicate reporting is not required."
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "This panel shows a 'representative' sptPALM reconstruction, implying an underlying set of repeated observations, but neither how many cells/experiments it is representative of, nor the replicate type, is stated in the caption itself."
     },
     {
       "panel_label": "G",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Top: Histogram of diffusion coefficients computed from 19 cells.",
-        "Bottom: mean square displacement of the molecules computed from the trajectories of the cell in (F)."
+        "Top: Histogram of diffusion coefficients computed from 19 cells."
       ],
       "n_reported": "yes",
       "n_value_min": 19,
       "replicate_type_reported": "yes",
-      "replicate_type": "cells (19 cells)",
+      "replicate_type": "cells",
       "decision": "PASS",
-      "explanation": "The top histogram explicitly states the data were computed from 19 cells, directly giving both the number and type of replicate in the legend. The bottom MSD plot displays individual trajectories from the single cell shown in panel F and is not itself an averaged/replicate-based statistic."
+      "explanation": "The caption explicitly states that the diffusion coefficient histogram was computed from 19 cells, giving both a number (n=19) and the replicate type (cells). The bottom MSD sub-panel is drawn from the trajectories of the single cell shown in (F) and is presented as raw/illustrative data rather than an averaged statistic, so it does not require a separate replicate count."
     },
     {
       "panel_label": "H",
       "involves_replicates": "no",
       "replicate_statements": [
-        "(H) Trajectories and kymograph analysis along the long axis of the cell, color-coded with their diffusion coefficients, examples of trajectories showing immobilized (1 and 4), freely diffusive (2, 3, and 6), and highly mobile molecules (5 and 7)."
+        "Trajectories and kymograph analysis along the long axis of the cell, color-coded with their diffusion coefficients, examples of trajectories showing immobilized (1 and 4), freely diffusive (2, 3, and 6), and highly mobile molecules (5 and 7)."
       ],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "This panel illustrates example trajectories/kymograph from a single cell to demonstrate different mobility behaviors; it is not an averaged/quantified measure across replicates, so replicate number/type reporting does not apply."
+      "explanation": "This panel illustrates qualitatively different single-molecule trajectory behaviors within one cell's dataset (numbered examples 1-7); it is not an averaged or statistically summarized result across independent replicates, so replicate-number reporting is not required here."
     }
   ]
 }

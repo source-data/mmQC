@@ -4,127 +4,113 @@
       "panel_label": "A",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Data are mean ± SD from three biological replicates (A, B).",
-        "Statistics: unpaired two-tailed student's t-test (A, C, D)."
+        "Data are mean ± SD from three biological replicates (A, B)."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "three biological replicates",
       "decision": "PASS",
-      "explanation": "Bar chart with error bars, individual data points (n=3 dots per group), and p-values; caption explicitly states 'three biological replicates' for panel A, satisfying both n-number and replicate type."
+      "explanation": "Bar chart with error bars and individual data points (n=3 dots visible); caption explicitly states mean ± SD from three biological replicates for panel A, satisfying both number and type requirements, and n>2."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Data are mean ± SD from three biological replicates (A, B).",
-        "one-way ANOVA (B)."
+        "Data are mean ± SD from three biological replicates (A, B)."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "three biological replicates",
       "decision": "PASS",
-      "explanation": "Quantified invasion bar graph (right side of B) with error bars, individual points and p-values; caption states panel B data are from three biological replicates, meeting both n and type requirements."
+      "explanation": "Quantification bar chart with error bars and dots; caption states mean ± SD from three biological replicates covering panel B, with n>2."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "TCGA RNA-seq data of patients with COAD ... were analyzed.",
+        "TCGA RNA-seq data of patients with COAD (C) ... were analyzed.",
         "I/II (n=240)",
-        "III/IV (n=187)",
-        "P=3.7e-5",
-        "unpaired two-tailed student's t-test (A, C, D)."
+        "III/IV (n=187)"
       ],
       "n_reported": "yes",
       "n_value_min": 187,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-COAD patient samples (n numbers per stage group shown on panel)",
+      "replicate_type": "patients (TCGA-COAD)",
       "decision": "PASS",
-      "explanation": "Violin plot comparing PPA2 expression between stage groups with a stated statistical test; sample sizes (n=240, n=187) are printed on the panel and the caption identifies the cohort as TCGA COAD patients, so both n and replicate type are reported."
+      "explanation": "Violin plot comparing PPA2 expression across stage groups; sample sizes (n=240, n=187) are labeled directly on the panel and the caption identifies the replicate type as COAD patients from TCGA RNA-seq data."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "TCGA RNA-seq data of patients with ... READ ... were analyzed.",
+        "TCGA RNA-seq data of patients with ... READ (D) were analyzed.",
         "I/II (n=73)",
-        "III/IV (n=65)",
-        "P=0.022",
-        "unpaired two-tailed student's t-test (A, C, D)."
+        "III/IV (n=65)"
       ],
       "n_reported": "yes",
       "n_value_min": 65,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-READ patient samples (n numbers per stage group shown on panel)",
+      "replicate_type": "patients (TCGA-READ)",
       "decision": "PASS",
-      "explanation": "Violin plot with named statistical test and patient sample sizes (n=73, n=65) displayed on the panel, and caption identifies the cohort as TCGA READ patients; both n and replicate type are reported."
+      "explanation": "Violin plot with stage group sample sizes (n=73, n=65) labeled on the panel; caption specifies TCGA-READ patient RNA-seq data as the replicate type."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Low PPA2 (n=93)",
-        "High PPA2 (n=94)",
-        "P=0.047",
-        "log-rank test (E–H)."
+        "High PPA2 (n=94)"
       ],
       "n_reported": "yes",
       "n_value_min": 93,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-COAD patients (stage III/IV), grouped by low/high PPA2 expression",
+      "replicate_type": "patients (TCGA-COAD stage III/IV)",
       "decision": "PASS",
-      "explanation": "Kaplan-Meier curve with a named statistical test (log-rank) and per-group patient numbers (n=93, n=94) shown directly on the panel, and the caption identifies the dataset as TCGA-COAD, so both n and replicate type are adequately reported."
+      "explanation": "Kaplan-Meier survival curve with group sizes (n=93, n=94) labeled on the panel; caption identifies TCGA-COAD dataset patients as the replicate type."
     },
     {
       "panel_label": "F",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Low PPA2 (n=32)",
-        "High PPA2 (n=33)",
-        "P=0.008",
-        "log-rank test (E–H)."
+        "High PPA2 (n=33)"
       ],
       "n_reported": "yes",
       "n_value_min": 32,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-READ patients (stage III/IV), grouped by low/high PPA2 expression",
+      "replicate_type": "patients (TCGA-READ stage III/IV)",
       "decision": "PASS",
-      "explanation": "Kaplan-Meier curve with a named statistical test (log-rank) and per-group patient numbers (n=32, n=33) shown on the panel, and caption identifies the TCGA-READ cohort, so both n and replicate type are reported."
+      "explanation": "Kaplan-Meier curve with labeled group sizes (n=32, n=33); caption identifies TCGA-READ dataset patients as replicate type."
     },
     {
       "panel_label": "G",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Low PPA2 (n=120)",
-        "High PPA2 (n=120)",
-        "P=0.22",
-        "log-rank test (E–H)."
+        "High PPA2 (n=120)"
       ],
       "n_reported": "yes",
       "n_value_min": 120,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-COAD patients (stage I/II), grouped by low/high PPA2 expression",
+      "replicate_type": "patients (TCGA-COAD stage I/II)",
       "decision": "PASS",
-      "explanation": "Kaplan-Meier curve with named statistical test and per-group patient numbers (n=120, n=120) shown on the panel; caption identifies the TCGA-COAD cohort, satisfying n and replicate type reporting."
+      "explanation": "Kaplan-Meier curve with labeled group sizes (n=120, n=120); caption identifies TCGA-COAD dataset patients as replicate type."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Low PPA2 (n=36)",
-        "High PPA2 (n=37)",
-        "P=0.99",
-        "log-rank test (E–H)."
+        "High PPA2 (n=37)"
       ],
       "n_reported": "yes",
       "n_value_min": 36,
       "replicate_type_reported": "yes",
-      "replicate_type": "TCGA-READ patients (stage I/II), grouped by low/high PPA2 expression",
+      "replicate_type": "patients (TCGA-READ stage I/II)",
       "decision": "PASS",
-      "explanation": "Kaplan-Meier curve with named statistical test and per-group patient numbers (n=36, n=37) shown on the panel; caption identifies the TCGA-READ cohort, satisfying n and replicate type reporting."
+      "explanation": "Kaplan-Meier curve with labeled group sizes (n=36, n=37); caption identifies TCGA-READ dataset patients as replicate type."
     }
   ]
 }

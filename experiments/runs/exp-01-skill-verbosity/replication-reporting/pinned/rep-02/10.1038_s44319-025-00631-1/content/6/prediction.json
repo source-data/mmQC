@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Representative ex vivo bright-field and ICG fluorescence images with no quantification; nothing about replicate number needs to be reported for this representative panel."
+      "explanation": "Panel A shows representative bright-field and ICG fluorescence images of lungs, without quantification or statistics; treated as representative data."
     },
     {
       "panel_label": "B",
@@ -22,9 +22,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (mice)",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The legend states the exact number of mice per group (control n=5, Ad-Cre n=3) and identifies them as biological replicates; n_value_min of 3 is adequate for the reported statistical test and individual points are shown."
+      "explanation": "The bar graph with mean ± SD and a t-test reports both group sizes (n=5 and n=3) and explicitly states these are biological replicates (mice); minimum n=3 exceeds 2."
     },
     {
       "panel_label": "C",
@@ -35,13 +35,13 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Shows representative H&E, ICG, RNAscope, and spatial expression images from a single serial section with no quantification or statistics across replicates, so no replicate reporting is required."
+      "explanation": "Panel C shows representative H&E, ICG, RNAscope, and spatial expression images from a single section, with no quantification requiring replicate reporting."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "GSEA of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values",
+        "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values",
         "statistical significance was determined by bootstrapping with 1000 permutations"
       ],
       "n_reported": "no",
@@ -49,21 +49,21 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The panel reports p-values/FDR from a statistical enrichment test, but the legend gives no n-number or replicate type (e.g., number of mice, sections, or spots) underlying the low pH vs high pH spatial transcriptomics comparison — only the permutation method (1000 permutations) used for computing significance is described, which is not equivalent to a biological/technical replicate count."
+      "explanation": "This panel reports statistical enrichment scores, FDR and p values (a statistical comparison), but the caption does not state the number or type of biological/technical replicates (e.g., number of mice or tissue sections) underlying the low pH vs high pH comparison; only the permutation method for the statistical test is described."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data",
-        "Differential gene expression was calculated using Seurat's FindAllMarkers function... Wilcoxon rank-sum test with Bonferroni P value correction"
+        "Bar graph representing top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data",
+        "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction"
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "P-values are shown for each gene from a Wilcoxon rank-sum test comparing low pH vs high pH regions, but the legend does not state the number of samples/sections/mice or spots (n) or the type of replicate underlying the spatial transcriptomics comparison."
+      "explanation": "The bar graph reports fold changes with p values from a statistical test, but no number or type of biological/technical replicate (e.g., mice or sections) used to generate the underlying spatial transcriptomics data is stated."
     },
     {
       "panel_label": "F",
@@ -74,9 +74,9 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (different mice)",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The legend explicitly reports n = 2 biological replicates (different mice) for this representative IHC/ICG image panel; since no summary statistics or statistical test is applied, n = 2 is acceptable for representative data."
+      "explanation": "Panel F shows representative ICG fluorescence and IHC images with no summary statistics; n=2 biological replicates is explicitly reported, which is acceptable for representative-only data."
     }
   ]
 }

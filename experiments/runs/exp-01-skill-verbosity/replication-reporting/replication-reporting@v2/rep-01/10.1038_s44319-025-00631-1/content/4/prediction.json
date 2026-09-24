@@ -2,14 +2,16 @@
   "outputs": [
     {
       "panel_label": "A",
-      "involves_replicates": "no",
-      "replicate_statements": [],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Panel A shows a single, specific lung section (the same one referenced from Fig 3A) with its H&E image and spatial expression plots. It is presented as a single specimen's data rather than an average or generalized representative image across multiple biological/technical replicates, so no replicate number or type needs to be reported."
+      "involves_replicates": "unclear",
+      "replicate_statements": [
+        "H&E image of the lung section from 3 A), annotated with regions of LUSC and LUAD, (left) and corresponding spatial plots depicting the distribution of the indicated mRNAs."
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The panel shows an H&E image and spatial transcriptomic plots from a single lung section (referenced back to Figure 3A). The caption gives no indication of how many sections, tumors, or mice this spatial dataset represents, so it is unclear whether these data derive from a single sample or replicated observations, and no replicate number or type is stated."
     },
     {
       "panel_label": "B",
@@ -20,36 +22,38 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates",
+      "replicate_type": "biological replicates (lung sections from different mice, n = 2–3)",
       "decision": "PASS",
-      "explanation": "The legend explicitly states the number (n = 2–3) and type (biological replicates, i.e., different mice) of replicates underlying the RNAscope images."
+      "explanation": "The caption explicitly states that the RNAscope/H&E staining was repeated in lung sections from different mice, giving both the number (n = 2–3) and the type (biological replicates) of replication. This is representative imaging data (not a quantified statistic), so an n as low as 2 is acceptable."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC ...)"
+        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC...)",
+        "LUAD (n=512)",
+        "LUSC (n=500)"
       ],
       "n_reported": "yes",
       "n_value_min": 500,
       "replicate_type_reported": "yes",
-      "replicate_type": "individual patient tumor samples (biological replicates, TCGA-GDC cohort)",
+      "replicate_type": "patient tumor samples (LUSC and LUAD patient tumors, TCGA-GDC cohort)",
       "decision": "PASS",
-      "explanation": "The legend reports the sample sizes for each group (n = 500 LUSC, n = 512 LUAD) and clarifies these are individual patient tumor samples from the TCGA-GDC dataset, satisfying both n-number and replicate-type reporting."
+      "explanation": "The caption and plot legend clearly state the number of patient tumor samples per group (n = 500 LUSC, n = 512 LUAD) and identify these as patient tumor samples from the TCGA-GDC dataset, satisfying both number and type reporting for this statistical comparison."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 3 (technical replicates) per group",
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group, ****P < 0.0001.",
         "The experiment was repeated two times to confirm the observations."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "technical replicates (n = 3), with the overall experiment repeated twice",
+      "replicate_type": "technical replicates (n = 3 per group), with the experiment repeated two independent times",
       "decision": "PASS",
-      "explanation": "The legend states both the number of replicates plotted (n = 3) and their type (technical replicates), and additionally notes the experiment was repeated twice to confirm findings."
+      "explanation": "The caption states n = 3 technical replicates per group used for the mean ± SD plot and statistical test, and additionally notes the experiment was repeated two times, providing both the number and type of replication."
     }
   ]
 }

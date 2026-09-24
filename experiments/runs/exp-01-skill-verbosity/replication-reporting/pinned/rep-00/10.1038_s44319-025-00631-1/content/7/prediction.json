@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a schematic of the experimental pipeline (created in BioRender), not quantified/replicated data."
+      "explanation": "Panel A is a schematic/workflow diagram illustrating the experimental pipeline; it does not present quantitative or replicated data."
     },
     {
       "panel_label": "B",
@@ -20,35 +20,33 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel B shows representative fluorescence, H&E, and bright-field images without quantification, so replicate reporting is not required."
+      "explanation": "Panel B shows representative fluorescence, H&E and bright-field images used to illustrate the LMD procedure, with no quantification or statistical summary presented."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 7–11 regions per group from a total of 2 mice, biological replicates",
-        "Ordinary one-way ANOVA with Dunnett’s multiple comparisons test was used for the statistical analysis, P = 0.0057"
+        "n = 7–11 regions per group from a total of 2 mice, biological replicates"
       ],
       "n_reported": "yes",
-      "n_value_min": 7,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "n = 7–11 regions per group from a total of 2 mice, biological replicates",
-      "decision": "PASS",
-      "explanation": "The caption reports the n-number (7–11 regions per group) and the replicate type (biological replicates, regions from 2 mice), satisfying reporting requirements for this quantified bar chart with statistics and individual data points."
+      "replicate_type": "regions per group from a total of 2 mice, biological replicates",
+      "decision": "FAIL",
+      "explanation": "The caption clarifies that the 7–11 quantified regions per group were all drawn from only 2 mice total, explicitly labeled as the biological replicate unit. Since a one-way ANOVA and summary statistics (mean with 95% CI) are presented, but the true biological replicate number is only 2, this falls at or below the minimum threshold of >2 required for statistical summaries, indicating a pseudoreplication issue in replicate reporting."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 12–20 regions per group from a total of two mice, biological replicates",
-        "Ordinary one-way ANOVA with Dunnett’s multiple comparisons test was used for the statistical analysis, P = 0.0013"
+        "n = 12–20 regions per group from a total of two mice, biological replicates"
       ],
       "n_reported": "yes",
-      "n_value_min": 12,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "n = 12–20 regions per group from a total of two mice, biological replicates",
-      "decision": "PASS",
-      "explanation": "The caption reports the n-number (12–20 regions per group) and the replicate type (biological replicates, regions from two mice), satisfying reporting requirements for this quantified bar chart with statistics and individual data points."
+      "replicate_type": "regions per group from a total of two mice, biological replicates",
+      "decision": "FAIL",
+      "explanation": "As in panel C, the 12–20 quantified regions were obtained from only two mice total, which is explicitly designated as the biological replicate. Statistical testing (ANOVA with Dunnett's) and summary statistics (mean with 95% CI) are shown, but the underlying biological replicate number of 2 does not meet the >2 threshold expected for such summary/statistical analyses."
     },
     {
       "panel_label": "E",
@@ -59,7 +57,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel E is a schematic/model diagram (created in BioRender) summarizing the proposed immunosuppressive niche, not quantified replicated data."
+      "explanation": "Panel E is a schematic/model diagram summarizing the proposed immunosuppressive niche and tumor progression; it does not present replicated quantitative data."
     }
   ]
 }

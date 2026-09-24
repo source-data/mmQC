@@ -9,61 +9,57 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A shows representative spatial deconvolution heatmaps for one LUSC and one LUAD section without quantification or statistics, so replicate reporting does not apply."
+      "explanation": "Panel A shows representative spatial deconvolution plots (one section per tumor type) illustrating distribution of immune markers; no quantification, averaging, error bars, or statistical test is shown in this panel itself (quantification is performed separately in panel B), so it is treated as representative imaging data for which replicate reporting is not required."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
-      "replicate_statements": [
-        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates)"
-      ],
       "n_reported": "yes",
+      "replicate_statements": [
+        "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates"
+      ],
       "n_value_min": 344,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly reports the n-numbers (344 and 1148) and states they are biological replicates, satisfying replicate reporting requirements for this quantified boxplot/statistical panel."
+      "explanation": "The legend explicitly reports the number of observations for each group (n = 344 and n = 1148) and states they are biological replicates; the minimum n is well above 2, consistent with the boxplots and Mann–Whitney–Wilcoxon statistical test shown."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
+      "n_reported": "no",
       "replicate_statements": [
-        "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme.",
         "statistical significance was determined by bootstrapping with 1000 permutations"
       ],
-      "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel C reports NES, FDR and p-values from GSEA but does not state the number or type of biological/independent replicates underlying the comparison; only the number of statistical permutations (1000) is given, which is not a replicate count."
+      "explanation": "The GSEA panel reports NES, FDR, and P values (a statistical comparison), which requires replicate reporting per the check criteria. The caption only describes the bootstrapping/permutation procedure used to derive significance (1000 permutations), but does not state the number or type (e.g., biological/technical) of underlying replicates/samples used to generate the ranked gene list for this specific panel."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
-      "replicate_statements": [
-        "Bar graph representing the top M2-like/TAM genes from the differential gene expression (DEG) analysis of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data.",
-        "p= 2.22E-190 ... (and other p-values per gene)"
-      ],
       "n_reported": "no",
+      "replicate_statements": [],
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel D presents DEG fold changes with associated p-values but the legend does not state the number or type of replicates (e.g., samples, spots, or biological replicates) used for the differential expression analysis."
+      "explanation": "This bar graph presents differential gene expression results with per-gene P values (a statistical comparison), but the caption does not state the number or type of replicates/samples underlying the DEG analysis for this panel."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
+      "n_reported": "yes",
       "replicate_statements": [
         "The staining was repeated with lung sections from different mice (n = 3–4, biological replicates)."
       ],
-      "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The legend explicitly reports the n-range (3-4) and identifies them as biological replicates (different mice), which is sufficient for this representative IHC panel."
+      "explanation": "The legend explicitly states the number (n = 3–4) and type (biological replicates, different mice) of replicates. Although the minimum n (3) is low, this panel shows only representative H&E/IHC images without summary statistics or a statistical test, so the low n is acceptable per the check's decision rules."
     }
   ]
 }

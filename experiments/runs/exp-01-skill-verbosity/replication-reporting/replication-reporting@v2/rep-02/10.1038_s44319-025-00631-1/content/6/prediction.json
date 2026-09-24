@@ -4,47 +4,47 @@
       "panel_label": "A",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Representative ex vivo images of lungs from SNL mice, control (no Cre) or infected with Ad-Cre (11 months post infection)",
-        "(B) Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)."
+        "Representative ex vivo images of lungs from SNL mice, control (no Cre) or infected with Ad-Cre (11 months post infection), 24 h post injection with PDBA ICG 5.3 ultra pH-sensitive (UPS) nanoparticle.",
+        "(control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)"
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (mice); control n = 5 mice, Ad-Cre n = 3 mice",
+      "replicate_type": "biological replicates (mice); n stated in panel B for the same imaged mice",
       "decision": "PASS",
-      "explanation": "Panel A shows representative images from the same ICG-imaging experiment quantified in panel B, where the caption explicitly states control n = 5 mice and Ad-Cre n = 3 mice as biological replicates, so the replicate number and type applicable to the images shown in A are disclosed."
+      "explanation": "Panel A shows representative images of the same lungs whose ICG fluorescence is quantified in Panel B, where the caption explicitly states n = 5 control mice and n = 3 Ad-Cre mice as biological replicates. The replicate number and type for this experiment are therefore reported in the shared legend, even though not repeated verbatim under panel A."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)."
+        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates). Unpaired t test with Welch's correction was used for the analysis, P = 0.0281."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (mice); control n = 5, Ad-Cre n = 3",
+      "replicate_type": "biological replicates (mice)",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the number of mice per group (5 and 3) and identifies them as biological replicates."
+      "explanation": "The caption explicitly states the number of mice per group (n = 5 control, n = 3 Ad-Cre) and identifies them as biological replicates, satisfying replication reporting requirements for this quantitative bar/point plot with statistics."
     },
     {
       "panel_label": "C",
-      "involves_replicates": "unclear",
+      "involves_replicates": "no",
       "replicate_statements": [
         "H&E image of the lung section from Fig. 3A), with ICG signal on the same section, and RNAscope of Tmprss11b (red) on a serial section."
       ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "Panel C presents a single lung section (H&E, ICG, RNAscope, and spatial Cd68/Spp1 plots) as an example of the low-pH/Tmprss11b-high tumor phenotype, but the caption does not state how many mice or sections were examined or that this image is representative of a defined number of biological replicates."
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel C explicitly refers to one specific lung section (the same section shown in Fig. 3A and a serial section from it), presented as a single illustrative case rather than a summary of replicated observations. No claim of representativeness across multiple samples is made, so replicate reporting is not required here."
     },
     {
       "panel_label": "D",
       "involves_replicates": "unclear",
       "replicate_statements": [
-        "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data...",
+        "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values for the indicated gene signatures.",
         "statistical significance was determined by bootstrapping with 1000 permutations."
       ],
       "n_reported": "no",
@@ -52,21 +52,21 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The caption describes the statistical permutation procedure used by the GSEA tool (1000 permutations) but does not state how many biological samples, sections, or mice the underlying low-pH versus high-pH spatial transcriptomics comparison was derived from, so the biological replicate number/type is not disclosed."
+      "explanation": "The GSEA compares low pH versus high pH regions derived from spatial transcriptomics data, but the caption never states how many tissue sections, mice, or spatial spots/regions underlie the low-pH and high-pH groups being compared. Only the number of statistical permutations (1000) used for computing significance is given, which is a resampling parameter, not a report of biological or technical replicates."
     },
     {
       "panel_label": "E",
       "involves_replicates": "unclear",
       "replicate_statements": [
         "Bar graph representing top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data.",
-        "Differential gene expression was calculated using Seurat's FindAllMarkers function... Wilcoxon rank-sum test with Bonferroni P value correction."
+        "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction."
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The caption details the statistical test (Wilcoxon rank-sum with Bonferroni correction) used for the DEG analysis but does not state the number of biological replicates (mice/sections) underlying the low pH versus high pH spatial transcriptomics comparison."
+      "explanation": "This bar graph presents log2 fold-change and p values comparing low pH versus high pH spatial transcriptomics regions, but the caption does not state how many tissue sections/mice or how many spots/observations per class were used to generate the differential expression statistics, so the number and type of replicates underlying this comparison are not reported."
     },
     {
       "panel_label": "F",
@@ -77,9 +77,9 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (different mice), n = 2",
+      "replicate_type": "biological replicates (different mice)",
       "decision": "PASS",
-      "explanation": "The caption explicitly states that staining was repeated on lung sections from n = 2 different mice, identified as biological replicates."
+      "explanation": "The caption explicitly states that IHC staining was repeated in lung sections from n = 2 different mice, identified as biological replicates. This is a qualitative representative-image panel rather than a quantitative summary/statistical panel, so the reporting is complete even though n = 2 is low."
     }
   ]
 }

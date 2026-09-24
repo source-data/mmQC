@@ -3,26 +3,24 @@
     {
       "panel_label": "A",
       "involves_replicates": "no",
-      "replicate_statements": [
-        "Antibody IP efficiency was evaluated in Q20-8 weeks whole brain by western blotting using Odyssey Infrared detection (bottom)."
-      ],
+      "replicate_statements": [],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a domain map plus representative (unquantified) western blots of IP efficiency; no summary statistics are shown, so replicate reporting is not required."
+      "explanation": "Panel A is a domain map plus representative western blots showing IP efficiency for each antibody; no averaged/statistical data derived from replicates is presented here (quantification is shown separately in B), so replicate reporting is not required."
     },
     {
       "panel_label": "B",
-      "involves_replicates": "yes",
+      "involves_replicates": "no",
       "replicate_statements": [],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "Panel B shows quantified bar charts (% HTT FT depletion, log2 elution abundance vs mIgG) but the caption gives no n-number or replicate type for how many blots/experiments underlie these values."
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Bars quantify the single representative western blot shown in (A) for each antibody (densitometry of one FT/E blot pair); no error bars or language indicating averaging across multiple replicate experiments is present, so this appears to be single-measurement quantification rather than a replicated statistic."
     },
     {
       "panel_label": "C",
@@ -35,7 +33,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "two biological replicates",
       "decision": "FAIL",
-      "explanation": "The heatmap presents averaged (summary) abundance values from only n=2 biological replicates, which is too low to support a summary statistic despite n and type being stated."
+      "explanation": "The heatmap explicitly reports that values are the log2 average of only two biological replicates. Reporting an averaged/summary heatmap value from n=2 is below the minimum (>2) required for panels presenting summary statistics."
     },
     {
       "panel_label": "D",
@@ -46,20 +44,20 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The violin plot shows enrichment-ratio distributions derived from replicated IP-MS measurements, but the caption for panel D does not state the number or type of replicates underlying each protein's value."
+      "explanation": "The violin plots summarize distributions (median/quartile lines) of protein enrichment ratios across biologically replicated IP-MS measurements, but the panel's legend text does not state how many replicates or what type of replicate underlie these values."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "(n = 4, mean ± SD)"
+        "n = 4, mean ± SD"
       ],
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "An n-number (n=4) and mean ± SD are given, but the caption never specifies what the 4 replicates are (e.g., animals, biological replicates), so the replicate type is not reported."
+      "explanation": "The legend reports n = 4 with mean ± SD, satisfying the numeric requirement (n>2), but it does not explicitly state what the 4 replicates represent (e.g., mice, independent IPs, or technical replicates), so the replicate type is not reported."
     },
     {
       "panel_label": "F",
@@ -70,7 +68,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel F is a sequence alignment and a single predicted (AlphaFold) structural model, not replicated experimental data."
+      "explanation": "Panel F is a sequence alignment with a predicted structural model, not quantitative replicated data, so replicate reporting does not apply."
     },
     {
       "panel_label": "G",
@@ -81,18 +79,20 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The scatterplots compare quantitative enrichment ratios across genotypes, but the caption does not state the number or type of replicates used to generate these ratios in panel G."
+      "explanation": "The scatterplots compare co-isolated protein enrichment ratios across genotype/antibody conditions derived from biologically replicated IP-MS experiments, but no replicate number or type is stated for this panel."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
-      "replicate_statements": [],
+      "replicate_statements": [
+        "showing high correlation in all individual IP-MS experiments by tissue"
+      ],
       "n_reported": "no",
       "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
+      "replicate_type_reported": "yes",
+      "replicate_type": "individual IP-MS experiments",
       "decision": "FAIL",
-      "explanation": "The scatterplot reports a correlation (R2 = 0.78) across 'individual IP-MS experiments by tissue' but does not state how many experiments/replicates were performed per tissue or antibody."
+      "explanation": "The legend indicates the scatter includes points from individual IP-MS experiments (replicate type stated), but no numerical count of experiments/replicates is given."
     },
     {
       "panel_label": "I",
@@ -103,7 +103,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The PCA plot groups quantitative data by antibody set and tissue, but the caption does not state the number of replicate samples/animals contributing points to the plot."
+      "explanation": "The PCA aggregates data points from multiple individual samples/experiments across antibody set and tissue, but the legend does not state how many replicate samples/experiments were used or what type they represent."
     },
     {
       "panel_label": "J",
@@ -114,7 +114,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "As in panel I, this PCA analysis stratified by antibody set, polyQ length, and tissue does not report the number or type of replicates represented by each data point."
+      "explanation": "Like panel I, this PCA plot is built from multiple individual samples stratified by antibody set, polyQ length, and tissue, but no replicate number or type is reported in the legend."
     }
   ]
 }

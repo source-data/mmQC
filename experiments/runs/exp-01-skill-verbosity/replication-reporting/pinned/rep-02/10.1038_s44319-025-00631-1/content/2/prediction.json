@@ -4,16 +4,19 @@
       "panel_label": "A",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "RPR2 mice n = 5; RPM mice n = 15; SNL mice n = 4; LP mice n = 6; SL mice n = 9; KP mice n = 8, biological replicates",
-        "One-way ANOVA with Dunnett's multiple comparisons test was used for the statistical analysis",
-        "Plot represents mean ± SD"
+        "RPR2 mice n = 5",
+        "RPM mice n = 15",
+        "SNL mice n = 4",
+        "LP mice n = 6",
+        "SL mice n = 9",
+        "KP mice n = 8, biological replicates"
       ],
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "Bar chart with mean ± SD and a named statistical test (one-way ANOVA, Dunnett's) reporting n for each group (lowest n = 4 for SNL) and explicitly labeling them as biological replicates."
+      "explanation": "Bar chart with mean ± SD, individual data points, and one-way ANOVA statistics. N-numbers and replicate type (biological replicates) are explicitly reported for each group, and the minimum n (4) is greater than 2."
     },
     {
       "panel_label": "B",
@@ -24,70 +27,72 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel is a schematic/workflow diagram (BioRender) with no quantitative or replicated data, so replicate reporting is not required."
+      "explanation": "Panel B is a schematic diagram of the experimental workflow and does not present replicated quantitative data."
     },
     {
       "panel_label": "C",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "Biological replicates n > 3"
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "Panel shows representative MRI images without quantification; caption additionally notes 'Biological replicates n > 3' but no replicate reporting is strictly required for a non-quantified representative image, so this passes."
+      "explanation": "Representative MRI images with no summary statistics; replicate number (n > 3) and type (biological replicates) are stated in the caption."
     },
     {
       "panel_label": "D",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "Biological replicates n > 3"
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "Representative H&E images without quantification; replicate info (n > 3, biological replicates) is additionally noted in the caption, which is more than sufficient."
+      "explanation": "Representative H&E images with no quantification/statistics; replicate number (n > 3) and type (biological replicates) are explicitly reported."
     },
     {
       "panel_label": "E",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "The staining was repeated three times with serial sections (technical replicates) and with lung sections from different mice (n = 4, biological replicates)"
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical replicates (serial sections) and biological replicates (different mice, n = 4)",
       "decision": "PASS",
-      "explanation": "Representative H&E/RNAscope image without quantification; caption explicitly and thoroughly reports both technical (x3 serial sections) and biological (n = 4 mice) replicate information."
+      "explanation": "Representative H&E/RNAscope image; both technical replicate number (3) and biological replicate number (n = 4) with their types are explicitly stated."
     },
     {
       "panel_label": "F",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "Zoom-in of (E)"
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "technical replicates (serial sections) and biological replicates (n = 4), as described for panel E",
       "decision": "PASS",
-      "explanation": "Panel is a zoomed-in representative image derived from panel E, with no independent quantification; replicate context is inherited from panel E's reporting."
+      "explanation": "Panel F is explicitly described as a zoom-in of panel E, which already reports the replicate number and type for this same tissue/staining; no separate quantification is shown."
     },
     {
       "panel_label": "G",
-      "involves_replicates": "no",
-      "replicate_statements": [],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Representative H&E and RNAscope image without quantification; no replicate reporting is required for this qualitative representative panel."
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "Representative H&E image with annotations and RNAscope analysis of Tmprss11b (red) and Sox2 (green) in SNL lung sections."
+      ],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The panel is described as 'representative,' implying repeated experiments/samples, but no replicate number or replicate type (e.g., number of mice or sections) is stated anywhere in the caption for this panel."
     }
   ]
 }

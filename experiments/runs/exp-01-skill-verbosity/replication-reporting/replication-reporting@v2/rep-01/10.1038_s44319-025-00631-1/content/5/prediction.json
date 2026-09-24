@@ -2,56 +2,57 @@
   "outputs": [
     {
       "panel_label": "A",
-      "involves_replicates": "unclear",
-      "replicate_statements": [
-        "Spatial plots from cell deconvolution analysis showing the distribution of various immune cell populations in LUSCs (top) and mucinous LUADs (bottom)."
-      ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "Panel A shows representative spatial deconvolution maps for LUSC and LUAD, but the caption does not state how many tissue sections/tumors/mice these representative images derive from, nor the replicate type. The n=344/1148 'biological replicates' given later in the legend is explicitly attributed to panel B's quantification, not restated for the representative spatial images themselves."
-    },
-    {
-      "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates)"
+        "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates (stated in panel B, which is explicitly described as the quantification of the immune cell population data shown in panel A)"
       ],
       "n_reported": "yes",
       "n_value_min": 344,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the number of replicates for each group (n = 344 for T11b-high LUSC, n = 1148 for LUAD) and labels them as biological replicates."
+      "explanation": "Panel A shows representative spatial deconvolution plots for one LUSC and one LUAD tissue section. The caption does not state a replicate number within panel A's own description, but panel B is explicitly labeled as the 'Quantification of immune cell populations in (A)' and reports n = 344 (LUSC) and n = 1148 (LUAD) as 'biological replicates,' directly covering the same dataset displayed in A."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates",
+        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 344,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
+      "decision": "PASS",
+      "explanation": "The box plots summarize distributions of immune cell fractions and the caption explicitly reports the number of observations for each group (n = 344 for T11b-high LUSC, n = 1148 for LUAD) and labels them as biological replicates, satisfying both the number and type requirement. (Note: given the large magnitude of these n values relative to typical animal/sample counts, they likely represent spatial spots rather than independent biological specimens, but the caption's stated label is taken at face value for this check.)"
     },
     {
       "panel_label": "C",
-      "involves_replicates": "unclear",
+      "involves_replicates": "no",
       "replicate_statements": [
-        "Gene set enrichment analysis (GSEA) of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data...",
-        "statistical significance was determined by bootstrapping with 1000 permutations."
+        "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme.",
+        "statistical significance was determined by bootstrapping with 1000 permutations"
       ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The panel describes a GSEA analysis on spatial transcriptomics data and mentions permutation-based statistics, but does not state how many biological samples/sections/spots underlie the comparison or what type of replicate they represent."
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel C presents GSEA enrichment plots (NES, FDR, P) derived from a single preranked gene list comparing T11b-high LUSC versus LUAD spatial transcriptomics data. It does not display averaged values or a distribution across discrete biological replicates; the permutation count described (1000) is an internal statistical resampling parameter of the GSEA algorithm, not a biological replicate count. Replicate reporting is not applicable to this panel type."
     },
     {
       "panel_label": "D",
-      "involves_replicates": "unclear",
+      "involves_replicates": "no",
       "replicate_statements": [
         "Bar graph representing the top M2-like/TAM genes from the differential gene expression (DEG) analysis of Tmprss11b-high LUSC versus LUAD spatial transcriptomics data."
       ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The DEG bar graph reports p-values for each gene but the caption does not state the number or type of replicates (e.g., biological samples, spots, sections) used to derive the differential expression analysis."
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel D shows point-estimate log2 fold-change values and associated p-values per gene from a differential expression analysis of pooled spatial transcriptomics data, without error bars or individual replicate data points. No averaged replicate-derived summary statistic is being displayed, so explicit replicate reporting is not applicable here."
     },
     {
       "panel_label": "E",
@@ -62,9 +63,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates",
+      "replicate_type": "biological replicates (different mice)",
       "decision": "PASS",
-      "explanation": "The caption explicitly states that staining was repeated in lung sections from different mice, with n = 3–4 biological replicates."
+      "explanation": "The caption states that IHC/H&E staining was repeated in lung sections from n = 3–4 different mice, explicitly identifying both the number and type (biological replicates) of replicates underlying the representative images."
     }
   ]
 }

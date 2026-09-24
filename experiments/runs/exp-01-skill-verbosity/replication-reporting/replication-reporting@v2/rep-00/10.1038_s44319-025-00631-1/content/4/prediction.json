@@ -3,15 +3,13 @@
     {
       "panel_label": "A",
       "involves_replicates": "unclear",
-      "replicate_statements": [
-        "H&E image of the lung section from 3 A), annotated with regions of LUSC and LUAD, (left) and corresponding spatial plots depicting the distribution of the indicated mRNAs."
-      ],
+      "replicate_statements": [],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel A shows a single lung section (referenced from Figure 3A) with H&E and spatial transcriptomic overlays. No number of sections/animals or replicate type is stated for this panel, so it is unclear whether this represents a single specimen or a replicated observation, and no replicate information is given."
+      "explanation": "Panel A shows a single H&E image and spatial transcriptomic plots from one lung section (referenced back to the section shown in Figure 3A). The caption does not state how many tissue sections/animals were profiled by spatial transcriptomics or whether the pattern was reproduced across replicates, so it is unclear whether this represents a single observation or a replicated finding, and no n or replicate type is given."
     },
     {
       "panel_label": "B",
@@ -22,36 +20,37 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (n = 2–3, different mice)",
+      "replicate_type": "biological replicates (different mice, n = 2–3)",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the number (n = 2–3) and type (biological replicates, different mice) of replicates used for the RNAscope staining shown."
+      "explanation": "The legend explicitly states the number (n = 2-3) and type (biological replicates, different mice) of replicates for the RNAscope staining shown."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC ...)."
+        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512)",
+        "Welch's t test was used for the analysis, ****P < 0.0001."
       ],
       "n_reported": "yes",
       "n_value_min": 500,
       "replicate_type_reported": "yes",
-      "replicate_type": "independent patient tumor samples (LUSC n = 500, LUAD n = 512, TCGA-GDC dataset)",
+      "replicate_type": "independent patient tumor samples (LUSC n = 500, LUAD n = 512)",
       "decision": "PASS",
-      "explanation": "The caption reports the exact sample sizes (n = 500 LUSC tumors, n = 512 LUAD tumors) and identifies them as patient tumor samples from a named public dataset, satisfying both number and type of replicate reporting."
+      "explanation": "Both the number (n = 500 and n = 512) and the type of replicate (independent patient tumors, TCGA-GDC dataset) are clearly reported for the statistical comparison shown."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group, ****P < 0.0001.",
         "The experiment was repeated two times to confirm the observations."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "technical replicates (n = 3 per group), experiment repeated twice",
+      "replicate_type": "technical replicates (n = 3 per group); experiment repeated two independent times",
       "decision": "PASS",
-      "explanation": "The caption clearly states n = 3 technical replicates per group and additionally notes the experiment was independently repeated two times, fully reporting both number and type of replicates."
+      "explanation": "The legend explicitly states the number (n = 3) and type (technical replicates) of replicates underlying the mean ± SD plot and statistical test, and additionally notes the experiment was repeated twice independently."
     }
   ]
 }

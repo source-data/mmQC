@@ -11,7 +11,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "This panel is a computational sequence-conservation logo built from 120 homologous protein sequences, not an experimental measurement with biological/technical replicates. Replicate reporting does not apply."
+      "explanation": "Panel A is a sequence conservation logo built from a set of 120 distinct bacterial protein sequences (a bioinformatic dataset), not from replicated biological or technical measurements of a single experiment. Replicate reporting does not apply to this panel."
     },
     {
       "panel_label": "B",
@@ -25,25 +25,24 @@
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "FAIL",
-      "explanation": "The type of replicate (biological replicates) is stated, but the actual number of replicates for this panel is not given in the figure or caption itself; it is deferred to a supplementary table (Table EV6) not provided with this panel."
+      "explanation": "The type of replicate is named (biological replicates), but the actual number of replicates is not given in the caption. The caption explicitly defers this number to a separate supplementary table (Table EV6) rather than stating it in the figure legend itself."
     },
     {
       "panel_label": "C",
       "involves_replicates": "unclear",
-      "replicate_statements": [
-        "Epifluorescence microscopy images of live M. smegmatis strains ... cultivated with or without 100 nM CdSO4. Insets represent enlarged regions indicated by arrows."
-      ],
+      "replicate_statements": [],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "These are single representative fluorescence images with no statement of how many independent experiments, cells, or fields were examined, nor of the type of replicate (e.g., biological replicates), even though the images likely derive from a repeated experiment (as quantified in panels D/E)."
+      "explanation": "The caption for panel C only describes the imaging conditions and does not state how many independent experiments, cells, or biological replicates the shown micrographs are representative of, nor what type of replicate underlies the images."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
+        "Mean fluorescence intensity (gray values) quantified in ImageJ from 8-bit grayscale images of cells of the indicated strains.",
         "Results are shown as means ± SEM from individual cells, represented by yellow or blue dots.",
         "Exact p values and biological replicate numbers presented in this figure are reported in Table EV6."
       ],
@@ -52,13 +51,15 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "The replicate type (individual cells) is stated and dots are shown, but no number of cells or biological replicates is given in the caption itself; the exact replicate number is deferred to Table EV6."
+      "explanation": "The unit of replication (individual cells) is named, but the number of cells or underlying biological replicates analyzed is not stated in the caption; it is only referenced as being reported in a separate supplementary table (Table EV6)."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
+        "Mean fluorescence intensity (gray values) quantified in ImageJ from 8-bit grayscale images of cells of the indicated strains.",
         "Results are shown as means ± SEM from individual cells, represented by yellow or blue dots.",
+        "Statistical analyses were conducted on ln-transformed data for (E).",
         "Exact p values and biological replicate numbers presented in this figure are reported in Table EV6."
       ],
       "n_reported": "no",
@@ -66,7 +67,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "As with panel D, the replicate type (individual cells) is named but no explicit n-number is provided in the caption; the exact number is deferred to Table EV6."
+      "explanation": "As in panel D, the replicate unit (individual cells) is named but the actual number of cells/replicates analyzed is not stated in the caption, only deferred to a separate supplementary table (Table EV6)."
     },
     {
       "panel_label": "F",
@@ -74,12 +75,12 @@
       "replicate_statements": [
         "Representative images are shown from dozens of analyzed cells."
       ],
-      "n_reported": "yes",
+      "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "yes",
-      "replicate_type": "analyzed cells (dozens)",
-      "decision": "PASS",
-      "explanation": "The caption states that the representative images come from 'dozens of analyzed cells,' giving an approximate quantity and specifying the replicate unit (individual cells), which satisfies minimal replicate reporting even though an exact count is not given."
+      "replicate_type": "individual cells",
+      "decision": "FAIL",
+      "explanation": "The caption names the type of replicate (individual cells) and gives a vague quantifier ('dozens'), but does not report an exact or approximate number of replicates/cells examined."
     },
     {
       "panel_label": "G",
@@ -90,9 +91,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "individual cells pooled from n = 3 independent biological replicates",
+      "replicate_type": "individual cells, pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states both the number (n = 3 independent biological replicates) and the type (individual cells pooled across replicates) for this panel."
+      "explanation": "The caption clearly states both the number (n = 3 independent biological replicates) and the type of replicate (individual cells) underlying the data in panel G."
     },
     {
       "panel_label": "H",
@@ -103,9 +104,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "individual clusters pooled from n = 3 independent biological replicates",
+      "replicate_type": "individual clusters, pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states both the number (n = 3 independent biological replicates) and the type (individual clusters pooled across replicates) for this panel."
+      "explanation": "The caption clearly states both the number (n = 3 independent biological replicates) and the type of replicate (individual clusters) underlying the data in panel H."
     },
     {
       "panel_label": "I",
@@ -116,9 +117,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "individual cells pooled from n = 3 independent biological replicates",
+      "replicate_type": "individual cells, pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states both the number (n = 3 independent biological replicates) and the type (individual cells pooled across replicates) for this panel."
+      "explanation": "The caption clearly states both the number (n = 3 independent biological replicates) and the type of replicate (individual cells) underlying the data in panel I."
     }
   ]
 }

@@ -5,31 +5,31 @@
       "involves_replicates": "yes",
       "replicate_statements": [
         "Representative ex vivo images of lungs from SNL mice, control (no Cre) or infected with Ad-Cre (11 months post infection), 24 h post injection with PDBA ICG 5.3 ultra pH-sensitive (UPS) nanoparticle.",
-        "(control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)"
+        "(B) Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates (mice)",
       "decision": "PASS",
-      "explanation": "The images in A are representative of the same cohorts of mice that are quantified in panel B, where the caption explicitly states n = 5 control mice and n = 3 Ad-Cre mice as biological replicates, covering the experiment depicted in A."
+      "explanation": "Panel A shows representative images of the same mice that are quantified in panel B, where the caption explicitly states n = 5 (control) and n = 3 (Ad-Cre) mice as biological replicates, satisfying both number and type of replicate for the underlying experiment shown in A."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)."
+        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates). Unpaired t test with Welch's correction was used for the analysis, P = 0.0281."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates (mice)",
       "decision": "PASS",
-      "explanation": "The caption explicitly reports the number of replicates (n = 5 control, n = 3 Ad-Cre) and identifies them as biological replicates (mice)."
+      "explanation": "The number (n = 5 and n = 3) and type (biological replicates, mice) of replicates used for the statistical comparison are explicitly stated, and the minimum group size (3) exceeds 2."
     },
     {
       "panel_label": "C",
-      "involves_replicates": "no",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "H&E image of the lung section from Fig. 3A), with ICG signal on the same section, and RNAscope of Tmprss11b (red) on a serial section."
       ],
@@ -38,11 +38,11 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "The panel presents a single specific lung section explicitly cross-referenced to Fig. 3A (and a serial section from the same specimen), not a claim of representativeness across multiple biological replicates. No replicate count is implied or required."
+      "explanation": "Panel C presents images and spatial expression plots from a single lung section (referenced from Fig. 3A) without a quantitative/statistical claim requiring replicate reporting; no replication is claimed or implied for this specific panel."
     },
     {
       "panel_label": "D",
-      "involves_replicates": "yes",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values for the indicated gene signatures.",
         "statistical significance was determined by bootstrapping with 1000 permutations."
@@ -52,11 +52,11 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The caption describes the statistical permutation procedure used for GSEA significance testing but does not state how many samples, sections, or spatial spots comprised the low-pH versus high-pH groups being compared, nor their biological/technical nature."
+      "explanation": "The panel reports statistical significance (NES, FDR, p values) for a low pH versus high pH comparison, but the caption does not state how many biological samples, sections, or spatial regions/spots underlie the 'low pH' and 'high pH' groups being compared; only the permutation method for the statistical test (1000 permutations) is given, which does not substitute for the number/type of replicates in the underlying data."
     },
     {
       "panel_label": "E",
-      "involves_replicates": "yes",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "Bar graph representing top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data.",
         "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction."
@@ -66,7 +66,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The caption names the statistical test used for differential expression but does not report the number or type of replicates (e.g., sections, mice, or spots) underlying the low-pH versus high-pH comparison."
+      "explanation": "This panel presents fold changes with highly significant p values from a statistical comparison (Wilcoxon rank-sum test) between low pH and high pH regions, but the caption does not state the number of spots, sections, or mice compared, nor the type of replicate underlying the low pH versus high pH groups."
     },
     {
       "panel_label": "F",
@@ -79,7 +79,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates (different mice)",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the number (n = 2) and type (biological replicates from different mice) of replicates for the IHC validation."
+      "explanation": "The caption explicitly states the number (n = 2) and type (biological replicates, different mice) of replicates for these representative IHC/ICG images; since this panel shows representative qualitative images rather than an averaged/statistical summary, the n = 2 disclosure meets the reporting requirement."
     }
   ]
 }

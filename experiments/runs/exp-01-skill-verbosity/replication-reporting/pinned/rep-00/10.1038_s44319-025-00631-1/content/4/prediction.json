@@ -9,51 +9,47 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A shows a representative H&E image and spatial transcriptomic plots with no quantification or statistical comparison, so replicate reporting is not required."
+      "explanation": "Panel A shows a representative H&E image and spatial transcriptomic plots from a single tissue section with no quantification, averaging, or statistical comparison; replication reporting is not applicable."
     },
     {
       "panel_label": "B",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "The staining was repeated with lung sections from different mice (n = 2–3, biological replicates)."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "Panel B consists of representative H&E and RNAscope images without quantification or statistics; replicate reporting is not strictly required, though the legend additionally states the staining was repeated in n = 2–3 biological replicates (mice)."
+      "explanation": "Panel B presents representative RNAscope images (no summary statistics or error bars). The caption reports both the number (n = 2–3) and type (biological replicates, different mice) of replicates, which is sufficient for representative image data even though the minimum n is 2."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512)",
-        "LUAD (n=512)",
-        "LUSC (n=500)",
-        "Welch's t test was used for the analysis, ****P < 0.0001."
+        "LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512)"
       ],
       "n_reported": "yes",
       "n_value_min": 500,
       "replicate_type_reported": "yes",
-      "replicate_type": "LUSC patient tumors / LUAD tumors (TCGA-GDC patient samples)",
+      "replicate_type": "patient tumors (LUAD n = 512, LUSC n = 500)",
       "decision": "PASS",
-      "explanation": "Panel C reports a statistical test (Welch's t test) on TCGA data with explicit sample sizes (n = 500 LUSC, n = 512 LUAD) and clearly identifies the replicate type as patient tumor samples."
+      "explanation": "Panel C shows a scatter plot with median and 95% CI and a statistical test (Welch's t test) comparing TCGA patient tumor samples. Both the number (n = 500/512) and type (patient tumors) of replicates are reported, well above the minimum threshold."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
-        "The experiment was repeated two times to confirm the observations.",
-        "Ordinary one-way ANOVA with Dunnett's multiple comparisons test was used for the analysis."
+        "n = 3 (technical replicates) per group",
+        "The experiment was repeated two times to confirm the observations."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "technical replicates",
       "decision": "PASS",
-      "explanation": "Panel D reports mean ± SD with a statistical test (one-way ANOVA), and the legend explicitly states n = 3 technical replicates per group, with the experiment repeated twice."
+      "explanation": "Panel D is a bar graph (mean ± SD) with a statistical test (one-way ANOVA with Dunnett's test). The legend reports both the number (n = 3) and type (technical replicates) of replicates, and the minimum n exceeds 2."
     }
   ]
 }

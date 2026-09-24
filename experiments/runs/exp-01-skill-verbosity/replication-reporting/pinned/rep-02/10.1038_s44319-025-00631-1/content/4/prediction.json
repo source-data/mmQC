@@ -9,42 +9,41 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A shows a single H&E section and its corresponding spatial transcriptomic maps for representative marker genes; it is a representative image without quantification or statistics, so replicate reporting is not applicable."
+      "explanation": "Panel A shows a single representative H&E image and corresponding spatial transcriptomic plots from one lung section (referenced from Fig 3A); no quantification, averaging, or statistical comparison is presented, so replicate reporting is not required."
     },
     {
       "panel_label": "B",
-      "involves_replicates": "no",
+      "involves_replicates": "yes",
       "replicate_statements": [
         "The staining was repeated with lung sections from different mice (n = 2–3, biological replicates)."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
+      "n_reported": "yes",
+      "n_value_min": 2,
+      "replicate_type_reported": "yes",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "Panel B shows representative H&E and RNAscope micrographs without quantification, so it falls under representative-image content where replicate reporting is not strictly required for a PASS; nonetheless the legend does state that staining was repeated in n = 2–3 biological replicates (mice)."
+      "explanation": "Panel B shows representative RNAscope/H&E images with no summary statistics or quantification; the caption explicitly reports n = 2–3 biological replicates (different mice), which is acceptable for representative image data even though the minimum is 2."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512)",
-        "Welch's t test was used for the analysis, ****P < 0.0001",
-        "Plot represents median with 95% CI"
+        "LUAD (n=512)",
+        "LUSC (n=500)"
       ],
       "n_reported": "yes",
       "n_value_min": 500,
       "replicate_type_reported": "yes",
-      "replicate_type": "LUSC patient tumors (n = 500), LUAD tumors (n = 512) from TCGA-GDC",
+      "replicate_type": "patient tumors",
       "decision": "PASS",
-      "explanation": "Panel C is a quantitative dot plot with a statistical test; the legend clearly reports the n for each group (500 LUSC and 512 LUAD tumors) and identifies the replicate unit as patient tumors from the TCGA-GDC dataset."
+      "explanation": "Panel C presents a statistical comparison (Welch's t test) of TMPRSS11B expression between LUAD and LUSC patient tumors, with both the number (n = 500 and n = 512) and type (patient tumors) of replicates clearly reported."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Ordinary one-way ANOVA with Dunnett's multiple comparisons test was used for the analysis.",
-        "Plot represents mean ± SD; n = 3 (technical replicates) per group, ****P < 0.0001.",
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
         "The experiment was repeated two times to confirm the observations."
       ],
       "n_reported": "yes",
@@ -52,7 +51,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "technical replicates",
       "decision": "PASS",
-      "explanation": "Panel D is a bar plot with individual data points and a statistical test (one-way ANOVA); the legend states n = 3 technical replicates per group and notes the experiment was repeated twice, satisfying replicate number and type reporting."
+      "explanation": "Panel D shows a bar plot of mean ± SD with individual data points and an ANOVA statistical test; the caption reports n = 3 technical replicates per group, satisfying both the number and type requirements and exceeding the minimum of 2."
     }
   ]
 }

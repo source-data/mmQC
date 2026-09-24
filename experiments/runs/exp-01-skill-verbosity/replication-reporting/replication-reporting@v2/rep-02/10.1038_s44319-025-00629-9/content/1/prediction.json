@@ -11,7 +11,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The blot is described as 'representative,' implying the experiment was repeated, but the caption does not state how many times the western blot was performed or what type of replicate (biological/technical) underlies the representative image."
+      "explanation": "The panel is explicitly labeled a 'representative' western blot, implying the experiment was performed multiple times, but the caption never states how many times the blot was repeated or what kind of replicate (e.g., independent experiments, biological replicates) the representative image stands for."
     },
     {
       "panel_label": "B",
@@ -24,13 +24,13 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "No indication is given of whether these single phase-contrast images are representative of multiple independent experiments, and no replicate number or type is provided."
+      "explanation": "The panel shows phase-contrast images that presumably were selected from repeated culture/imaging experiments, but the caption gives no indication of how many independent experiments, colonies, or dishes were examined, so reproducibility cannot be assessed."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "A representative result of Annexin V/PI flow cytometry analysis (top) and statistical analysis results (bottom) from three independent experiments...",
+        "A representative result of Annexin V/PI flow cytometry analysis (top) and statistical analysis results (bottom) from three independent experiments in naïve NT and NANOG iKO SHhES8 hESCs, either untreated or treated with DOX for three days.",
         "Data are presented as mean ± SEM (n = 3)."
       ],
       "n_reported": "yes",
@@ -38,13 +38,13 @@
       "replicate_type_reported": "yes",
       "replicate_type": "three independent experiments",
       "decision": "PASS",
-      "explanation": "The caption clearly reports n = 3 and states the data derive from three independent experiments (biological replicates)."
+      "explanation": "The caption clearly states that the flow cytometry statistics derive from three independent experiments (n = 3), satisfying both the number and type of replicates."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "A representative Annexin V/PI flow cytometry analysis result (top) and statistical analysis of results (bottom) from three independent experiments...",
+        "A representative Annexin V/PI flow cytometry analysis result (top) and statistical analysis of results (bottom) from three independent experiments in naïve NT and NANOG iKO SHhES8 hESCs, either untreated or treated with DOX or DOX and Z-VAD (40 μM) for three days.",
         "Data are presented as mean ± SD (n = 3)."
       ],
       "n_reported": "yes",
@@ -52,7 +52,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "three independent experiments",
       "decision": "PASS",
-      "explanation": "The caption clearly reports n = 3 and specifies that data derive from three independent experiments."
+      "explanation": "The caption explicitly reports n = 3 from three independent experiments for the quantified flow cytometry data, meeting both replicate criteria."
     },
     {
       "panel_label": "E",
@@ -63,9 +63,9 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates",
+      "replicate_type": "three biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states n = 3 biological replicates per condition for the RNA-seq heatmap data."
+      "explanation": "The caption states that the RNA-seq heatmap data derive from three biological replicates per condition (n = 3), clearly reporting both number and type."
     },
     {
       "panel_label": "F",
@@ -78,12 +78,13 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The blot is labeled 'representative,' implying repeated experiments, but no number or type of replicate is stated in the caption."
+      "explanation": "As with panel A, this is a 'representative' western blot image, implying repeated experiments, but no number or type of replicate is given in the caption."
     },
     {
       "panel_label": "G",
       "involves_replicates": "yes",
       "replicate_statements": [
+        "RT-qPCR analysis results for relative mRNA levels of pluripotency genes (left) and lineage marker genes (right) in naïve NANOG iKO hESCs, either untreated or treated with DOX for two or three days.",
         "Data are presented as mean ± SEM (n = 3)."
       ],
       "n_reported": "yes",
@@ -91,11 +92,11 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "An n = 3 is reported for the RT-qPCR data, but the caption does not specify what the replicates represent (e.g., biological vs. technical replicates or independent experiments)."
+      "explanation": "The caption reports n = 3 for the RT-qPCR bar graphs but never specifies what these three replicates represent (e.g., biological replicates, independent experiments, or technical replicates), leaving the replicate type unreported."
     },
     {
       "panel_label": "H",
-      "involves_replicates": "yes",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "Representative immunofluorescence staining images of NANOG, GATA3, and GATA6 in naïve NANOG iKO hESCs, either untreated or treated with DOX for two or three days."
       ],
@@ -104,7 +105,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The images are described as 'representative,' implying repeated staining experiments, but no number or type of replicate is given in the caption."
+      "explanation": "The panel is described as 'representative' immunofluorescence images, implying the staining was performed multiple times, but the caption does not state how many replicates/experiments/colonies were examined or what type of replicate the representative image reflects."
     }
   ]
 }

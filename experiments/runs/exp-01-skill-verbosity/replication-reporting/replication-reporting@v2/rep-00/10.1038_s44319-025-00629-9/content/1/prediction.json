@@ -11,7 +11,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The panel is described as 'a representative' western blot, implying the experiment was repeated multiple times, but the caption does not state how many times (n) it was repeated or what kind of replicate (biological/technical) was used."
+      "explanation": "The caption calls the blot 'representative,' implying the experiment was performed multiple times, but it never states how many times (n) or what kind of replicate (e.g., independent experiments) underlies this representative image."
     },
     {
       "panel_label": "B",
@@ -23,8 +23,8 @@
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The panel shows phase-contrast images across multiple conditions without stating whether these are representative of a repeated experiment, and if so, how many times it was performed or what replicate type was used."
+      "decision": "PASS",
+      "explanation": "The caption presents single phase-contrast images per condition without claiming they are 'representative' of multiple experiments or presenting any quantification, so it is unclear that replicated observations underlie this panel; no replicate reporting appears to be required."
     },
     {
       "panel_label": "C",
@@ -38,7 +38,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "three independent experiments",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the data derive from three independent experiments and reports n = 3, satisfying both the number and type of replicate."
+      "explanation": "The caption explicitly states the data derive from three independent experiments (n = 3), satisfying both the number and type of replicate requirements."
     },
     {
       "panel_label": "D",
@@ -52,7 +52,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "three independent experiments",
       "decision": "PASS",
-      "explanation": "The caption explicitly states three independent experiments and n = 3, providing both the number and type of replicate."
+      "explanation": "The caption explicitly states the statistics are from three independent experiments (n = 3), providing both the replicate count and type."
     },
     {
       "panel_label": "E",
@@ -65,7 +65,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "three biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly reports n = 3 biological replicates for each RNA-seq condition, fully specifying number and type of replicate."
+      "explanation": "The caption clearly states both the number (n = 3) and type (biological replicates) of replicates used for the RNA-seq heatmaps."
     },
     {
       "panel_label": "F",
@@ -78,13 +78,12 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Described as 'a representative' western blot, implying repeated experiments, but no number of replicates or replicate type is stated in the caption."
+      "explanation": "As with panel A, the blot is described as 'representative,' implying repeated experiments, but no number or type of replicate is stated anywhere in the caption."
     },
     {
       "panel_label": "G",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "RT-qPCR analysis results for relative mRNA levels of pluripotency genes (left) and lineage marker genes (right) in naïve NANOG iKO hESCs, either untreated or treated with DOX for two or three days.",
         "Data are presented as mean ± SEM (n = 3)."
       ],
       "n_reported": "yes",
@@ -92,7 +91,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The caption reports n = 3 for the RT-qPCR data but does not specify whether these are biological or technical replicates (or independent experiments)."
+      "explanation": "The caption reports n = 3 but never specifies what these three replicates represent (e.g., independent experiments, biological replicates, or technical replicates), so the type of replicate is not reported."
     },
     {
       "panel_label": "H",
@@ -105,7 +104,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The images are labeled 'representative', implying repeated experiments, but the caption does not state how many replicates were performed or what type of replicate was used."
+      "explanation": "The images are labeled 'representative,' indicating the staining was repeated, but the caption gives no number of replicates or description of what constitutes a replicate (e.g., number of colonies or independent experiments)."
     }
   ]
 }

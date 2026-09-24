@@ -4,17 +4,16 @@
       "panel_label": "A",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "N=4",
-        "n>100",
         "**p<0.01",
-        "The mean ± SD are shown in the lower graph."
+        "N=4",
+        "n>100"
       ],
       "n_reported": "yes",
       "n_value_min": 4,
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "Panel shows a quantified bar graph with error bars and significance testing (**p<0.01), and reports 'N=4, n>100' directly on the image, but neither the image nor the caption states what N and n represent (e.g., mice, sections, cells), so the replicate type is not identifiable."
+      "replicate_type_reported": "yes",
+      "replicate_type": "N=4 (mice; matches genotype groups WT/Atxn1-KI/Atxn1-KI;HMGB1 used throughout figure), n>100 (Purkinje cells, per y-axis label 'HMGB1 Signal intensity (Purkinje Cell)')",
+      "decision": "PASS",
+      "explanation": "Bar graph with mean±SD and significance testing embeds N=4 and n>100 directly on the panel. N corresponds to mice (consistent with genotype categories used across the figure and confirmed for the same N=4 value in panel B's caption) and n corresponds to Purkinje cells (per the y-axis label). Minimum n (4 mice) exceeds 2."
     },
     {
       "panel_label": "B",
@@ -22,28 +21,25 @@
       "replicate_statements": [
         "N=4",
         "n>400",
-        "the ratio of aggregate-positive Purkinje cells did not differ between the four mutant Atxn1-KI mice and the four double-transgenic mice (lower graph)",
-        "The data are presented as mean ± SD."
+        "the ratio of aggregate-positive Purkinje cells did not differ between the four mutant Atxn1-KI mice and the four double-transgenic mice"
       ],
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "yes",
-      "replicate_type": "four mutant Atxn1-KI mice and four double-transgenic mice (N=4 mice per group); n>400 Purkinje cells scored per group",
+      "replicate_type": "mice (four mutant Atxn1-KI mice and four double-transgenic mice); n>400 Purkinje cells scored",
       "decision": "PASS",
-      "explanation": "Caption explicitly identifies N=4 as mice per genotype group, and the y-axis label ('% aggregate-positive Purkinje cells') together with n>400 indicates the number of cells scored; both replicate number and type are reported."
+      "explanation": "The quantification graph reports mean±SD across four mice per genotype, explicitly stated as such in the caption ('four mutant Atxn1-KI mice and the four double-transgenic mice'), with N=4 and n>400 also embedded on the panel image. Minimum n (4 mice) exceeds 2."
     },
     {
       "panel_label": "C",
       "involves_replicates": "no",
-      "replicate_statements": [
-        "Western blot analysis with anti-ubiquitin antibody confirmed that aggregate formation was similar in mutant Atxn1‐KI mice and double‐transgenic mice."
-      ],
+      "replicate_statements": [],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel is a single representative western blot (one lane per genotype) without quantification, error bars, or statistics, so no replicate reporting is required."
+      "explanation": "Western blot is shown as a representative image confirming aggregate formation, with no quantification, error bars, or statistical comparison presented."
     },
     {
       "panel_label": "D",
@@ -53,14 +49,15 @@
         "Atxn1-KI;HMGB1 (N=9)",
         "HMGB1 (N=7)",
         "WT (N=13)",
-        "The data are presented as mean ± SD. Statistical analysis was performed with the Bonferroni–Dunn test and Student's t‐test."
+        "The data are presented as mean ± SD",
+        "Statistical analysis was performed with the Bonferroni–Dunn test and Student's t-test"
       ],
       "n_reported": "yes",
       "n_value_min": 7,
       "replicate_type_reported": "yes",
-      "replicate_type": "mice, by genotype group (Atxn1-KI, Atxn1-KI;HMGB1, HMGB1, WT), consistent with the caption's reference to 'mutant Atxn1-KI mice' and 'double-transgenic mice'",
+      "replicate_type": "mice per genotype (Atxn1-KI, Atxn1-KI;HMGB1, HMGB1, WT mice, as named in the caption)",
       "decision": "PASS",
-      "explanation": "N-numbers per genotype group are given directly in the panel legend, and the caption identifies these groups as mice; both the replicate number and type are adequately reported."
+      "explanation": "N-numbers per genotype group are embedded in the panel legend, and the genotypes are explicitly identified as mice elsewhere in the caption (e.g., 'mutant Atxn1-KI mice', 'double-transgenic mice'). Data are mean±SD with statistical tests; minimum n (7) exceeds 2."
     },
     {
       "panel_label": "E",
@@ -69,15 +66,15 @@
         "Atx1-KI (N=13)",
         "Atxn1-KI;HMGB1 (N=9)",
         "HMGB1 (N=7)",
-        "WT (N=9)",
-        "The data are presented as mean ± SD."
+        "WT (N=13)",
+        "The data are presented as mean ± SD"
       ],
       "n_reported": "yes",
       "n_value_min": 7,
       "replicate_type_reported": "yes",
-      "replicate_type": "mice, by genotype group (Atxn1-KI, Atxn1-KI;HMGB1, HMGB1, WT)",
+      "replicate_type": "mice per genotype (same groups as panel D)",
       "decision": "PASS",
-      "explanation": "N-numbers per genotype are shown in the panel legend, and these genotype groups are identified as mice elsewhere in the figure legend; both replicate number and type are reported."
+      "explanation": "The same per-genotype N-numbers as panel D are shown in the panel legend, referring to mice. Data are presented as mean±SD; minimum n (7) exceeds 2."
     },
     {
       "panel_label": "F",
@@ -87,44 +84,41 @@
         "Atxn1-KI;HMGB1 (N=12)",
         "HMGB1 (N=10)",
         "WT (N=10)",
-        "The survival rates of the four genotypes of mice.",
+        "The survival rates of the four genotypes of mice",
         "the end-point postponement was significant in the log-rank test (P = 0.0025)"
       ],
       "n_reported": "yes",
       "n_value_min": 10,
       "replicate_type_reported": "yes",
-      "replicate_type": "the four genotypes of mice",
+      "replicate_type": "mice (explicitly stated as 'the four genotypes of mice')",
       "decision": "PASS",
-      "explanation": "The caption explicitly states that the survival curves represent 'the four genotypes of mice', and N-numbers per genotype are shown in the panel legend, so both n and replicate type are clearly reported."
+      "explanation": "Kaplan-Meier survival curves list N per genotype in the panel legend, and the caption explicitly identifies these as mice ('the four genotypes of mice'). Minimum n (10) exceeds 2, supporting the log-rank statistical test."
     },
     {
       "panel_label": "G",
       "involves_replicates": "no",
-      "replicate_statements": [
-        "Histological evaluation of the double‐transgenic mice."
-      ],
+      "replicate_statements": [],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel shows representative histological micrographs without quantification or error bars in this panel itself (quantification is presented separately in panel H); no replicate reporting is required."
+      "explanation": "Representative histological images shown without quantification; quantitative analysis is provided separately in panel H."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
         "N=3, n=9",
-        "The mean thickness was quantified in more than 10 visual fields per mouse, and the mean ± SD was calculated for nine mice in each group.",
-        "The number of Purkinje cells, similarly calculated, was not changed in mutant Atxn1‐KI mice or in double‐transgenic mice (lower graph).",
-        "*P < 0.05 in Student's t‐test, #P < 0.05 in one‐way ANOVA followed by post hoc Tukey's HSD test."
+        "The mean thickness was quantified in more than 10 visual fields per mouse, and the mean ± SD was calculated for nine mice in each group",
+        "The number of Purkinje cells, similarly calculated"
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "nine mice per group (N=3 genotype groups: WT, Atxn1-KI, double-transgenic)",
+      "replicate_type": "nine mice per group (n=9 mice); N=3 not further specified",
       "decision": "PASS",
-      "explanation": "The caption explicitly states that mean ± SD values were calculated from nine mice per group (n=9), with N=3 groups compared and specific statistical tests named; both replicate number and type (mice) are clearly reported."
+      "explanation": "The caption explicitly states the mean±SD was calculated from nine mice per group (matching n=9 shown on the panel), satisfying both number and type of replicate; the minimum relevant n (9 mice, or at minimum N=3) exceeds 2."
     }
   ]
 }
