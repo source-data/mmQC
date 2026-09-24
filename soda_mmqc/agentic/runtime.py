@@ -347,18 +347,6 @@ def _assert_sealed(staging: Path) -> None:
         )
 
 
-def _abs_rule_path(path: Path) -> str:
-    """Render a path for an SDK permission rule, portably.
-
-    The SDK's ``//path`` form means "absolute filesystem path"; a single
-    leading slash anchors at the session's working directory instead, which
-    would scope the rule to the wrong place. ``as_posix()`` keeps the rule
-    readable on Windows, where a native path would carry backslashes that the
-    glob syntax does not expect.
-    """
-    return f"//{path.resolve().as_posix().lstrip('/')}/**"
-
-
 def _leaf_schema(layout: RuntimeLayout) -> Dict[str, Any]:
     """The JSON Schema the final prediction must satisfy."""
     envelope = _read_json(layout.schema_path)
@@ -385,10 +373,11 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
       pool below, which is what makes them non-invocable.
     * ``permission_mode`` is ``dontAsk``. Without it ``allowed_tools`` is only
       a list of auto-approvals and every *unlisted* tool remains reachable.
-    * The file rules are **scoped to paths**, not bare tool names: reads are
-      confined to the runtime, writes to its artifacts directory. A bare
-      ``Read`` would auto-approve reading anything on disk, including the
-      repository and the gold.
+    * There are **no file tools at all**. The example's content travels with
+      the request, and no skill in any checklist reaches for a supporting
+      file, so a ``Read`` -- even one scoped to the runtime -- would be an
+      unused capability that an experiment could come to depend on by
+      accident. Without it, what the model saw is exactly what it was sent.
 
     ``skills="all"`` is deliberate: every assembled skill must be invocable,
     because delegating discovery to the agent is the premise under test. It is
@@ -428,14 +417,11 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
         # rather than merely denied, so it cannot be reached by a tool name
         # this profile failed to anticipate.
         "tools": list(AGENTIC_BASE_TOOLS),
-        # What it may use without prompting, scoped to paths. There is no
-        # write rule because there is no write tool: the runner serialises
-        # the structured result, so nothing the session does needs to touch
-        # the filesystem.
-        "allowed_tools": [
-            f"Read({_abs_rule_path(layout.root)})",
-            "Skill",
-        ],
+        # What it may use without prompting. There are no path rules because
+        # there are no file tools: the content arrives in the request and the
+        # runner serialises the structured result, so nothing the session
+        # does touches the filesystem.
+        "allowed_tools": ["Skill"],
         "disallowed_tools": sorted(AGENTIC_FORBIDDEN_TOOLS),
         "permission_mode": AGENTIC_PERMISSION_MODE,
         # Without this the session dies the moment it opens the figure: the

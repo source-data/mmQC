@@ -438,25 +438,20 @@ class TestCuration(unittest.TestCase):
         )
 
     def test_load_checklist_with_actual_data(self):
-        """Test load_checklist with actual checklist data from CHECKLIST_DIR."""
-        # Check if CHECKLIST_DIR exists
-        if not CHECKLIST_DIR.exists():
-            self.skipTest(f"CHECKLIST_DIR does not exist: {CHECKLIST_DIR}")
-        
-        # Get the first available checklist
-        checklist_dirs = [
-            d for d in CHECKLIST_DIR.iterdir() if d.is_dir()
-        ]
-        if not checklist_dirs:
-            self.skipTest(
-                f"No checklist directories found in {CHECKLIST_DIR}"
-            )
-        
-        # Test with the first checklist directory
-        test_checklist_dir = checklist_dirs[0]
+        """load_checklist against a named real checklist.
+
+        Named rather than "whichever directory iterdir happens to yield
+        first": that made the test depend on filesystem order, so adding any
+        checklist beside the others could silently change what was under
+        test, and a checklist still being assembled would fail it for a
+        reason having nothing to do with load_checklist.
+        """
+        test_checklist_dir = CHECKLIST_DIR / "fig-checklist"
+        if not test_checklist_dir.is_dir():
+            self.skipTest(f"Checklist not found: {test_checklist_dir}")
+
         checklist = load_checklist(test_checklist_dir)
-        
-        # Verify the checklist is not empty
+
         self.assertIsInstance(checklist, dict)
         self.assertGreater(len(checklist), 0)
         

@@ -101,8 +101,8 @@ what is relevant; dropping a panel here silently removes it from that decision.
 
 ## Output
 
-Return the panel inventory as JSON conforming to the `schema.json` file that
-sits next to this skill.
+State the panel inventory as JSON in your reply: a single object whose
+**`panels`** key holds the list, one entry per panel.
 
 You are not a separate agent and there is nothing to return to: invoking this
 skill loaded these instructions into the session that is already running. So

@@ -44,6 +44,7 @@ from soda_mmqc.config import CHECKLIST_DIR, EXAMPLES_DIR
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
+    require_leaf_contracts,
     list_checks,
     owns_evaluation_contracts,
 )
@@ -196,14 +197,13 @@ class TestOwnsEvaluationContracts:
             (check_dir / name).write_text("{}", encoding="utf-8")
         assert owns_evaluation_contracts(check_dir) is True
 
-    def test_shared_skill_with_runtime_schema_only_is_not_a_check(
+    def test_shared_skill_owning_no_schema_is_not_a_check(
         self, tmp_path: Path
     ):
-        # This is exactly the shape of identify-panels: a runtime schema, no
-        # eval assets, sitting as a flat sibling of the checks.
+        # This is exactly the shape of identify-panels: prose only, sitting
+        # as a flat sibling of the checks, owning no contract at all.
         skill_dir = tmp_path / "identify-panels"
         (skill_dir / "v1").mkdir(parents=True)
-        (skill_dir / "schema.json").write_text("{}", encoding="utf-8")
         (skill_dir / "v1" / "SKILL.md").write_text("---\n---\n", encoding="utf-8")
         assert owns_evaluation_contracts(skill_dir) is False
 
@@ -236,6 +236,7 @@ class TestListChecks:
         assert set(list_checks(checklist_dir)) == every_subdir
 
     def test_shared_skill_sibling_is_not_enumerated(self, tmp_path: Path):
+        """A shared skill carries no schema, which is what makes it shared."""
         checklist_dir = tmp_path / "fig-checklist"
         checklist_dir.mkdir()
 
@@ -246,9 +247,66 @@ class TestListChecks:
 
         shared = checklist_dir / "identify-panels"
         shared.mkdir()
-        (shared / "schema.json").write_text("{}", encoding="utf-8")
 
         assert set(list_checks(checklist_dir)) == {"micrograph-scale-bar"}
+
+    def test_the_schema_is_what_makes_a_directory_a_leaf(
+        self, tmp_path: Path
+    ):
+        """One discriminator, and it is the output contract.
+
+        A leaf answers with structured output and so owns a schema; an
+        intermediate skill reports into the session it is already running in
+        and owns nothing. Deriving leaf-ness from anything else -- a name, a
+        marker file, the presence of a benchmark -- gives two answers that
+        can disagree.
+        """
+        checklist_dir = tmp_path / "fig-checklist"
+        checklist_dir.mkdir()
+        leaf = checklist_dir / "micrograph-scale-bar"
+        leaf.mkdir()
+        (leaf / "schema.json").write_text("{}", encoding="utf-8")
+
+        assert set(list_checks(checklist_dir)) == {"micrograph-scale-bar"}
+
+    def test_a_leaf_missing_its_benchmark_says_so(self, tmp_path: Path):
+        """A half-built leaf must fail loudly rather than vanish.
+
+        Under the old rule a leaf that lost its benchmark silently stopped
+        being a check, which is the confusing failure: the check disappears
+        and nothing says why.
+        """
+        checklist_dir = tmp_path / "fig-checklist"
+        checklist_dir.mkdir()
+        leaf = checklist_dir / "micrograph-scale-bar"
+        leaf.mkdir()
+        (leaf / "schema.json").write_text("{}", encoding="utf-8")
+
+        with pytest.raises(ValueError, match="benchmark.json"):
+            require_leaf_contracts(leaf)
+
+    def test_no_checklist_has_a_skill_with_a_schema_but_no_benchmark(self):
+        """The repo-wide invariant, checked against the real data.
+
+        A directory carrying a schema is a leaf, so one carrying a schema
+        without a benchmark is a leaf that cannot be scored -- and, before
+        this rule, was how a shared skill accidentally advertised an output
+        contract it was never asked to satisfy.
+        """
+        offenders = []
+        for checklist in sorted(CHECKLIST_DIR.iterdir()):
+            if not checklist.is_dir():
+                continue
+            for candidate in sorted(checklist.iterdir()):
+                if not candidate.is_dir():
+                    continue
+                if not (candidate / "schema.json").is_file():
+                    continue
+                if not (candidate / "benchmark.json").is_file():
+                    offenders.append(
+                        f"{checklist.name}/{candidate.name}"
+                    )
+        assert offenders == []
 
 
 @pytest.fixture
@@ -402,7 +460,6 @@ class TestResolveCheckDir:
     def test_shared_skill_is_not_scoreable(self, pilot):
         shared = pilot["checklist_root"] / "fig-checklist" / "identify-panels"
         (shared / "v1").mkdir(parents=True)
-        (shared / "schema.json").write_text("{}", encoding="utf-8")
         with pytest.raises(ValueError, match="is not a check"):
             resolve_check_dir("fig-checklist", "identify-panels")
 
@@ -1185,11 +1242,13 @@ def _write_check(check_dir: Path, name: str) -> None:
 
 
 def _write_shared_skill(skill_dir: Path, name: str) -> None:
-    """The Milestone 2 shape: a runtime schema, no evaluation contracts."""
+    """An intermediate skill: prose only, and no contract of any kind.
+
+    Owning a schema is what makes a directory a leaf, so a shared skill that
+    carried one would be advertising an output contract nobody asked it to
+    satisfy.
+    """
     (skill_dir / "v1").mkdir(parents=True, exist_ok=True)
-    (skill_dir / "schema.json").write_text(
-        json.dumps({"format": {"name": name}}), encoding="utf-8"
-    )
     (skill_dir / "v1" / "SKILL.md").write_text("---\n---\n", encoding="utf-8")
 
 
@@ -1794,9 +1853,11 @@ class TestEvaluationContractsStayAtSkillLevel:
             assert (PILOT_CHECK_DIR / contract).is_file()
         assert owns_evaluation_contracts(PILOT_CHECK_DIR)
 
-    def test_the_shared_skill_owns_a_runtime_schema_and_no_eval_assets(self):
+    def test_the_shared_skill_owns_no_contract_of_any_kind(self):
+        """An intermediate skill answers nothing on its own, so it owns
+        nothing: no schema, no benchmark, no manifest."""
         shared_dir = FIG_CHECKLIST_DIR / SHARED_SKILL
-        assert (shared_dir / "schema.json").is_file()
+        assert not (shared_dir / "schema.json").exists()
         assert not (shared_dir / "benchmark.json").exists()
         assert not (shared_dir / "eval-manifest.json").exists()
         assert not owns_evaluation_contracts(shared_dir)
@@ -1808,26 +1869,6 @@ class TestEvaluationContractsStayAtSkillLevel:
     def test_the_shared_skill_cannot_be_scored(self):
         with pytest.raises(ValueError, match=r"is not a check"):
             resolve_check_dir("fig-checklist", SHARED_SKILL)
-
-    def test_the_panels_schema_is_a_usable_runtime_contract(self):
-        schema = json.loads(
-            (FIG_CHECKLIST_DIR / SHARED_SKILL / "schema.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        panels = schema["format"]["schema"]["properties"]["panels"]
-        fields = panels["items"]["properties"]
-
-        assert schema["format"]["name"] == SHARED_SKILL
-        assert set(fields) == {
-            "panel_label",
-            "location_in_figure",
-            "panel_content",
-            "caption_excerpt",
-            "caption_covers_panels",
-        }
-        assert set(panels["items"]["required"]) == set(fields)
-        assert panels["items"]["additionalProperties"] is False
 
 
 class TestTheLeafProseMatchesItsContracts:
@@ -2363,9 +2404,14 @@ class TestRuntimeSkillPlacement:
         assert links == []
         assert not (assembled.root / "checklist").exists()
 
-    def test_each_skill_keeps_its_runtime_schema(self, assembled):
-        for name in (SHARED_SKILL, PILOT_LEAF):
-            assert (assembled.skills_root / name / "schema.json").is_file()
+    def test_only_the_leaf_carries_a_schema_into_the_runtime(self, assembled):
+        """The leaf answers with structured output and needs its contract
+        staged; an intermediate skill reports into the running session and
+        has none to stage."""
+        assert (assembled.skills_root / PILOT_LEAF / "schema.json").is_file()
+        assert not (
+            assembled.skills_root / SHARED_SKILL / "schema.json"
+        ).exists()
 
 
 @requires_subpanel_figure
@@ -2420,12 +2466,16 @@ class TestRuntimeOrientation:
         for forbidden in ("figure", "caption", "micrograph", "image"):
             assert forbidden not in text
 
-    def test_the_instructions_describe_supporting_files(self, assembled):
-        """The entry point is per-run and travels in the request; the
-        supporting files are per-run and travel in the manifest. Neither
-        belongs in a file that is byte-identical for every run."""
+    def test_the_instructions_state_that_nothing_can_be_opened(
+        self, assembled
+    ):
+        """The entry point is per-run and travels in the request, so it does
+        not belong in a file byte-identical for every run. The supporting
+        files it used to advertise are gone with the `Read` tool, and saying
+        a session may fetch them would promise a capability it lacks."""
         text = assembled.orientation_path.read_text(encoding="utf-8")
-        assert "inputs.json" in text
+        assert "inputs.json" not in text
+        assert "Skill" in text
         assert PILOT_LEAF not in text
 
     def test_the_instructions_promise_no_writable_directory(self, assembled):
@@ -2531,23 +2581,42 @@ NETWORK_TOOLS = ("WebFetch", "WebSearch")
 
 @requires_subpanel_figure
 class TestPermissionProfile:
-    def test_the_allowlist_is_exactly_the_two_things_allowed(self, assembled):
-        """Read inside the runtime, and call a skill. Nothing else."""
+    def test_the_allowlist_is_exactly_the_one_thing_allowed(self, assembled):
+        """Call a skill. Nothing else, and nothing that touches a file."""
         rules = session_options(assembled)["allowed_tools"]
-        assert len(rules) == 2
+        assert len(rules) == 1
         named = {rule.split("(")[0] for rule in rules}
         assert named == set(AGENTIC_ALLOWED_TOOL_NAMES)
 
-    def test_reads_are_scoped_to_the_runtime(self, assembled):
-        """A bare `Read` would auto-approve reading anything on disk --
-        including the repository and the gold. The rule must be path-scoped
-        and must use the SDK's `//` absolute form, since a single leading
-        slash anchors at the working directory instead."""
-        rules = session_options(assembled)["allowed_tools"]
-        read = next(r for r in rules if r.startswith("Read("))
-        assert read.startswith("Read(//")
-        assert assembled.root.resolve().as_posix().lstrip("/") in read
-        assert read.endswith("/**)")
+    def test_the_session_has_no_read_tool_at_all(self, assembled):
+        """Nothing the session needs lives in a file any more.
+
+        The example's content travels with the request, and the supporting
+        files a `Read` existed to fetch are used by no skill in any
+        checklist. An unused capability is one an experiment could
+        accidentally come to depend on, and one whose absence makes what the
+        model saw exactly what it was sent.
+        """
+        options = session_options(assembled)
+        assert "Read" not in options["tools"]
+        assert not any(
+            rule.startswith("Read(") for rule in options["allowed_tools"]
+        )
+
+    def test_the_instruction_names_no_file_to_open(self, assembled):
+        """With no `Read`, pointing at a manifest would promise a capability
+        the session does not have."""
+        text = " ".join(
+            part["text"]
+            for part in _session_message(assembled)
+            if part.get("kind") == "text"
+        )
+        assert AGENTIC_INPUT_MANIFEST_FILENAME not in text
+
+    def test_the_orientation_names_no_file_to_open(self, assembled):
+        """Same rule for the byte-identical orientation file."""
+        text = assembled.orientation_path.read_text(encoding="utf-8")
+        assert AGENTIC_INPUT_MANIFEST_FILENAME not in text
 
     def test_the_session_has_no_write_tool_at_all(self, assembled):
         """A check observes an example; it does not change one.

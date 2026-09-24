@@ -94,29 +94,65 @@ EVALUATION_DIR = DATA_DIR / "evaluation"
 EVALUATION_CONTRACT_FILES = ("schema.json", "benchmark.json")
 
 
-def owns_evaluation_contracts(candidate_dir: Path) -> bool:
-    """Return whether a directory owns a check's evaluation contracts.
+#: The one file that makes a directory a leaf. See
+#: :func:`owns_evaluation_contracts`.
+LEAF_SCHEMA_FILE = "schema.json"
 
-    A *check* is a directory that can be scored: it carries the output
-    ``schema.json`` and the ``benchmark.json`` naming the examples to score
-    against. Shared skills live as flat siblings of the checks in the same
-    checklist directory and carry at most a runtime ``schema.json``, so they
-    are not checks -- not because a name convention or marker file filters
-    them out, but because there is nothing to score.
+
+def owns_evaluation_contracts(candidate_dir: Path) -> bool:
+    """Return whether a directory is a **leaf** of its checklist.
+
+    The discriminator is the output ``schema.json``, and only that. A leaf
+    answers with structured output, so it owns the contract describing that
+    output; an intermediate skill reports into the session it is already
+    running in, answers nothing on its own, and therefore owns no schema, no
+    benchmark and no manifest.
+
+    One discriminator matters more than which one. Deriving leaf-ness from a
+    name convention, a marker file, or a combination of files gives two
+    answers that can disagree, and a shared skill that carries a schema is
+    then advertising an output contract nobody asked it to satisfy.
+
+    A leaf also needs ``benchmark.json`` to be scored, but that is a
+    *completeness* question rather than an identity one:
+    :func:`require_leaf_contracts` raises for a leaf that lacks it, so a
+    half-built check fails by name instead of silently ceasing to be a check.
 
     ``eval-manifest.json`` is deliberately not part of this test. It is
     required when scoring, but several legacy checklists predate it and must
     keep enumerating as they do today.
 
     This lives in config so that every enumerator -- the runner and the
-    curation UI -- shares one definition of what a check is.
+    curation UI -- shares one definition of what a leaf is.
     """
     if not candidate_dir.is_dir():
         return False
-    return all(
-        (candidate_dir / name).is_file()
+    return (candidate_dir / LEAF_SCHEMA_FILE).is_file()
+
+
+def require_leaf_contracts(candidate_dir: Path) -> None:
+    """Raise unless a leaf carries every contract it needs to be scored.
+
+    Raises:
+        ValueError: If the directory is not a leaf, or is one with a contract
+            missing. The message names the file.
+    """
+    if not owns_evaluation_contracts(candidate_dir):
+        raise ValueError(
+            f"{candidate_dir} is not a leaf: it has no {LEAF_SCHEMA_FILE}. "
+            f"Intermediate skills carry no schema, no benchmark and no "
+            f"manifest."
+        )
+    missing = [
+        name
         for name in EVALUATION_CONTRACT_FILES
-    )
+        if not (candidate_dir / name).is_file()
+    ]
+    if missing:
+        raise ValueError(
+            f"{candidate_dir} owns {LEAF_SCHEMA_FILE} and so is a leaf, but "
+            f"cannot be scored: missing {', '.join(missing)}"
+        )
 
 
 def list_checks(checklist_dir: Path) -> Dict[str, Path]:
@@ -268,7 +304,7 @@ AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
 #: No Glob either: the manifest names every staged file, and searching is not
 #: the agent's job. The deny list below stays as defence in depth over a much
 #: smaller surface.
-AGENTIC_BASE_TOOLS = ("Read", "Skill")
+AGENTIC_BASE_TOOLS = ("Skill",)
 
 #: Ceiling for the SDK's newline-delimited JSON reader.
 #:
@@ -351,7 +387,7 @@ AGENTIC_SETTING_SOURCES = ("project",)
 #: "Edit(path) rules govern all built-in tools that write files, including
 #: Write and NotebookEdit; a Write(path) rule is never matched by the file
 #: permission checks." A scoped `Write(...)` rule would silently match nothing.
-AGENTIC_ALLOWED_TOOL_NAMES = ("Read", "Skill")
+AGENTIC_ALLOWED_TOOL_NAMES = ("Skill",)
 
 #: Tools removed from the model's context entirely, each for a specific
 #: reason. Bare names are required: a scoped rule leaves the tool available.

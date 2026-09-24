@@ -5,17 +5,12 @@ manuscript.
 
 ## What you have
 
-The example's content came with the request: read it there. Nothing needs to
-be found or opened before you can start.
+Everything you need came with the request: the example's content is in the
+message you were sent. Nothing has to be found or opened before you start.
 
-- `input/inputs.json` — the *additional* files this example carries, if any,
-  and the exact path of each. They are there if you need them; most checks
-  do not. What you were already sent is not listed again.
-- `input/` — the example's files, under their original names.
-
-Paths outside this directory are not available and not needed. There is no
-shell, no file search and no directory listing, so anything not sent to you
-and not named in `inputs.json` is not meant to be found.
+You have exactly one tool, `Skill`, and no way to read files, run commands,
+search, or list directories. If something was not sent to you, it is not
+available and it is not needed.
 
 ## How to work
 

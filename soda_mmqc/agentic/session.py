@@ -23,8 +23,6 @@ from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_DEFAULT_MODEL,
     AGENTIC_FORBIDDEN_TOOLS,
-    AGENTIC_INPUT_MANIFEST_FILENAME,
-    AGENTIC_INPUT_SUBDIR,
     AGENTIC_MAX_BUFFER_BYTES,
 )
 from soda_mmqc.agentic.pinning import SkillSet, checklist_pins
@@ -282,15 +280,15 @@ def _session_message(layout: RuntimeLayout) -> List[Dict[str, Any]]:
 
     The example's content follows the instruction rather than waiting in a
     file. A session cannot fail to fetch what it was already given, which is
-    why this commit deletes the gate that used to check.
+    why the gate that used to check is gone -- and why the session has no
+    file tool left to fetch anything with.
     """
     instruction = {
         "kind": "text",
         "text": (
             f"Apply the `{layout.entry_point}` check to the example below, "
             f"and answer with the structured output you were given a schema "
-            f"for. Supporting files, if any, are named in "
-            f"{AGENTIC_INPUT_SUBDIR}/{AGENTIC_INPUT_MANIFEST_FILENAME}."
+            f"for."
         ),
     }
     return [instruction, *(dict(part) for part in layout.input_parts)]

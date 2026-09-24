@@ -91,8 +91,8 @@ panel here silently removes it from that decision.
 
 ## Output
 
-Return the description as JSON conforming to the `schema.json` file that sits
-next to this skill: a single object whose **`plot_panels`** key holds the list.
+State the description as JSON in your reply: a single object whose
+**`plot_panels`** key holds the list, one entry per panel.
 
 Nothing is written to disk. Invoking this skill loaded these instructions into
 the session already running, so stating the JSON in your reply is what makes it
