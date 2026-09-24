@@ -122,7 +122,7 @@ stay listed: a method section is more honest when the dead ends are visible.
 | id | kind | question | status | headline result | note | notebook |
 |----|------|----------|--------|-----------------|------|----------|
 | — | exploration | How much does a check's score move between identical runs, and how many replicates does it take to see past that? | done | **3 replicates**, except `replicate_statements`, which no feasible count resolves. Pooled per-example SD 0.025; SE of a paired difference bounded at 0.0034 for n=3 against 0.0026 for n=5 — 1,700 extra sessions for nothing. Read per property (2026-09-21 addendum) the noise sits almost entirely in one field: 0.0199 at n=3 there, still 0.0109 at n=10, against under 0.0040 for six of the eight. | [note](exploration-replicate-variability.md) | [nb](../../notebooks/experiments/exploration-replicate-variability.ipynb) |
-| exp-01 | experiment | Do detailed skill instructions outperform minimal ones on all three evaluation layers? | preregistered | — | [note](exp-01-skill-verbosity.md) | [nb](../../notebooks/experiments/exp-01-skill-verbosity.ipynb) |
+| exp-01 | experiment | Do detailed skill instructions outperform minimal ones on all three evaluation layers? | running | — Run in full; **`plot-gap-labeling` and `replication-reporting` were rebuilt and re-run on 2026-09-24**, their detailed arm having been converted from prompts written as pseudocode rather than narrative. Hypothesis and decision criteria unchanged; see the addendum. Analysis pending. | [note](exp-01-skill-verbosity.md) | [nb](../../notebooks/experiments/exp-01-skill-verbosity.ipynb) |
 
 `kind` is `exploration` or `experiment`; `status` is `planned`, `running`,
 `done` or `abandoned`.
