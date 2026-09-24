@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 
+import numpy as np
 import pandas as pd
 
 from soda_mmqc.core.eval_manifest import EvalManifest
@@ -36,6 +37,9 @@ __all__ = [
     "arm_levels",
     "layer1_counts",
     "layer_s_counts",
+    "layer1_counts_by_example",
+    "layer_s_counts_by_example",
+    "rate_contrast",
     "non_response_counts",
     "field_order",
     "leaf_property_tail",
@@ -837,3 +841,271 @@ def layer_s_counts(runs: FlatRuns) -> pd.DataFrame:
                     }
                 )
     return pd.DataFrame(rows, columns=list(LAYER_S_COUNTS_COLUMNS))
+
+
+#: Columns of :func:`layer_s_counts_by_example`, in order.
+LAYER_S_BY_EXAMPLE_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "example",
+    "list_key",
+    "outcome",
+    "count",
+)
+
+#: Columns of :func:`layer1_counts_by_example`, in order.
+LAYER1_BY_EXAMPLE_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "example",
+    "property",
+    "layer1",
+    "count",
+)
+
+
+def layer_s_counts_by_example(runs: FlatRuns) -> pd.DataFrame:
+    """Row outcomes with the **example** left on the row.
+
+    :func:`layer_s_counts` sums examples within a leaf, which is right
+    for a report and wrong for a paired comparison: two arms are paired
+    by example, so the example has to survive. Summing this frame over
+    ``example`` reproduces that function exactly -- these are counts,
+    and counts are additive.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        for record in run.records:
+            by_list = record.analysis.get("by_list", {})
+            if not isinstance(by_list, dict):
+                continue
+            counts: dict[str, dict[str, int]] = {}
+            _merge_row_counts(counts, by_list)
+            example = record_source(record)
+            for list_key, outcomes in sorted(counts.items()):
+                for outcome, count in sorted(outcomes.items()):
+                    rows.append(
+                        {
+                            "check": run.check,
+                            "model": run.model,
+                            "arm": run.arm,
+                            "replicate": run.replicate,
+                            "example": example,
+                            "list_key": list_key,
+                            "outcome": outcome,
+                            "count": int(count),
+                        }
+                    )
+    return pd.DataFrame(rows, columns=list(LAYER_S_BY_EXAMPLE_COLUMNS))
+
+
+def layer1_counts_by_example(runs: FlatRuns) -> pd.DataFrame:
+    """Applicability calls with the **example** left on the row.
+
+    The per-example counterpart of :func:`layer1_counts`, rolled up one
+    record at a time rather than over the pooled instances of a leaf.
+    Summing over ``example`` reproduces that function exactly.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        for record in run.records:
+            instances = record.analysis.get("instances", ())
+            if not isinstance(instances, list):
+                continue
+            rollups = rollup_by_property(
+                (inst for inst in instances if isinstance(inst, dict)),
+                run.manifest,
+            )
+            example = record_source(record)
+            for leaf_property, rollup in rollups.items():
+                for label, count in sorted(rollup.layer1_counts.items()):
+                    rows.append(
+                        {
+                            "check": run.check,
+                            "model": run.model,
+                            "arm": run.arm,
+                            "replicate": run.replicate,
+                            "example": example,
+                            "property": leaf_property,
+                            "layer1": label,
+                            "count": int(count),
+                        }
+                    )
+    return pd.DataFrame(rows, columns=list(LAYER1_BY_EXAMPLE_COLUMNS))
+
+
+#: Columns of :func:`rate_contrast`, in order. The group columns the
+#: caller asked for are prepended to these.
+RATE_CONTRAST_COLUMNS = (
+    "difference",
+    "ci_low",
+    "ci_high",
+    "se",
+    "n_examples",
+    "n_baseline_only",
+    "n_variant_only",
+    "paired_fraction",
+)
+
+#: Resamples drawn for a bootstrap interval. Enough that the interval is
+#: stable to the third decimal, which is finer than any margin an
+#: experiment here sets, and cheap at these sizes.
+BOOTSTRAP_RESAMPLES = 10_000
+
+
+def rate_contrast(
+    frame: pd.DataFrame,
+    *,
+    baseline: str,
+    variant: str,
+    category: str,
+    numerator: Sequence[str],
+    denominator: Sequence[str] | None = None,
+    group: Sequence[str] = (),
+    resamples: int = BOOTSTRAP_RESAMPLES,
+    seed: int = 0,
+) -> pd.DataFrame:
+    """Paired difference between two arms for a **rate over counts**.
+
+    Layers S and 1 are rates over rows, not means over properties, so
+    :func:`arm_contrast` cannot express them: it averages a per-example
+    score, and there is none here. The pairing rule is the same one it
+    uses -- average replicates per ``(arm, example)``, then take the
+    difference within an example -- because the example is the
+    clustering unit. Rows inside one figure share a figure, a caption
+    and a curator, so treating them as independent draws would understate
+    the interval.
+
+    The statistic is the **mean of per-example rate differences**, which
+    weighs every example alike. That is deliberately not the ratio of
+    sums a stacked count plot shows, where a twelve-panel figure counts
+    twelve times a one-panel figure. Only the former has an example-level
+    interval, and only the former matches what :func:`arm_contrast` does
+    one layer up.
+
+    ``numerator`` and ``denominator`` name values of ``category``:
+    ``("correct_row",)`` over ``("correct_row", "missing_row")`` is layer
+    S against gold rows. ``denominator`` defaults to every value present,
+    which is what layer 1 wants -- every profiled instance carries
+    exactly one label.
+
+    The interval is a **percentile bootstrap over examples**, seeded.
+    Near a ceiling -- layer S sits above 0.97 -- the sampling
+    distribution is skewed and a normal interval would be symmetric about
+    a point it should not be symmetric about. ``se`` is reported beside
+    it as the bootstrap standard deviation, for comparison with
+    :func:`arm_contrast`, not as the basis of the interval.
+
+    Unpaired examples are dropped from the difference but counted, never
+    dropped silently.
+    """
+    group = list(group)
+    if frame.empty:
+        return pd.DataFrame(columns=group + list(RATE_CONTRAST_COLUMNS))
+
+    present = set(frame["arm"].unique())
+    for name in (baseline, variant):
+        if name not in present:
+            raise ValueError(
+                f"No arm {name!r} in this frame; it has "
+                f"{sorted(present) or 'nothing'}"
+            )
+
+    wanted = set(numerator) | (
+        set(denominator) if denominator is not None else set(frame[category])
+    )
+    kept = frame[frame[category].isin(wanted)]
+
+    keys = group + ["arm", "example", "replicate"]
+    totals = kept.groupby(keys, dropna=False, observed=True)["count"].sum()
+    hits = (
+        kept[kept[category].isin(list(numerator))]
+        .groupby(keys, dropna=False, observed=True)["count"]
+        .sum()
+    )
+    rates = (hits.reindex(totals.index).fillna(0) / totals).rename("rate")
+
+    # A replicate is a resample of one measurement, so it reduces that
+    # measurement's noise rather than adding an example to the pairing.
+    per_example = (
+        rates.reset_index()
+        .groupby(group + ["arm", "example"], dropna=False, observed=True)["rate"]
+        .mean()
+        .reset_index()
+    )
+
+    rng_root = seed
+    rows: list[dict[str, Any]] = []
+    grouped = (
+        per_example.groupby(group, dropna=False, observed=True)
+        if group
+        else [((), per_example)]
+    )
+    for key, block in grouped:
+        base = block[block["arm"] == baseline].set_index("example")["rate"]
+        var = block[block["arm"] == variant].set_index("example")["rate"]
+
+        paired = base.index.intersection(var.index)
+        differences = (
+            var.loc[paired].astype(float) - base.loc[paired].astype(float)
+        ).to_numpy()
+        n_examples = int(len(differences))
+        n_baseline_only = int(len(base.index.difference(var.index)))
+        n_variant_only = int(len(var.index.difference(base.index)))
+        considered = n_examples + n_baseline_only + n_variant_only
+
+        low, high, spread = _bootstrap_interval(
+            differences, resamples=resamples, seed=rng_root
+        )
+
+        row = dict(zip(group, key if isinstance(key, tuple) else (key,)))
+        row |= {
+            "difference": float(differences.mean()) if n_examples else pd.NA,
+            "ci_low": low,
+            "ci_high": high,
+            "se": spread,
+            "n_examples": n_examples,
+            "n_baseline_only": n_baseline_only,
+            "n_variant_only": n_variant_only,
+            "paired_fraction": (
+                n_examples / considered if considered else pd.NA
+            ),
+        }
+        rows.append(row)
+
+    result = pd.DataFrame(rows, columns=group + list(RATE_CONTRAST_COLUMNS))
+    return result.astype(
+        {
+            "difference": "Float64",
+            "ci_low": "Float64",
+            "ci_high": "Float64",
+            "se": "Float64",
+            "paired_fraction": "Float64",
+        }
+    )
+
+
+def _bootstrap_interval(
+    differences: Any,
+    *,
+    resamples: int,
+    seed: int,
+) -> tuple[Any, Any, Any]:
+    """Percentile bootstrap over examples, and the resample spread.
+
+    Seeded, because an interval a reader cannot recompute is not one an
+    experiment can preregister.
+    """
+    n = len(differences)
+    if n < 2:
+        return pd.NA, pd.NA, pd.NA
+
+    rng = np.random.default_rng(seed)
+    draws = rng.integers(0, n, size=(resamples, n))
+    means = differences[draws].mean(axis=1)
+    low, high = np.percentile(means, [2.5, 97.5])
+    return float(low), float(high), float(means.std(ddof=1))

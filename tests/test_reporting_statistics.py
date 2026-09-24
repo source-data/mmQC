@@ -21,8 +21,13 @@ from soda_mmqc.reporting.aggregate import (
     NON_RESPONSE_COLUMNS,
     LAYER1_COUNTS_COLUMNS,
     LAYER_S_COUNTS_COLUMNS,
+    LAYER1_BY_EXAMPLE_COLUMNS,
+    LAYER_S_BY_EXAMPLE_COLUMNS,
     layer1_counts,
     layer_s_counts,
+    layer1_counts_by_example,
+    layer_s_counts_by_example,
+    rate_contrast,
     arm_contrast,
     arm_levels,
     non_response_counts,
@@ -954,3 +959,281 @@ class TestLayerCounts:
             ]
         )
         assert set(layer_s_counts(runs)["outcome"]) == {"correct_row"}
+
+
+class TestLayerCountsByExample:
+    """The same counts, with the example left on the row.
+
+    `layer_s_counts` and `layer1_counts` sum examples within a leaf,
+    which is right for a report and wrong for a paired interval: an
+    experiment comparing two arms pairs them by example, so the example
+    has to survive. Both quantities are counts and counts are additive,
+    so the summed frames must equal what the pooling functions already
+    return -- that equality is what lets the per-example frame become
+    the primitive without moving any existing number.
+    """
+
+    def test_layer_s_by_example_keeps_the_example(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record_with_layers("doc-a", {"p1": 1.0}, {"correct_row": 3}),
+                        _record_with_layers("doc-b", {"p1": 1.0}, {"correct_row": 4}),
+                    ],
+                )
+            ]
+        )
+
+        frame = layer_s_counts_by_example(runs)
+
+        assert list(frame.columns) == list(LAYER_S_BY_EXAMPLE_COLUMNS)
+        by_example = frame.set_index("example")["count"]
+        assert by_example["doc-a"] == 3
+        assert by_example["doc-b"] == 4
+
+    def test_summing_layer_s_by_example_reproduces_the_pooled_frame(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record_with_layers(
+                            "doc-a",
+                            {"p1": 1.0},
+                            {"correct_row": 3, "missing_row": 1},
+                        ),
+                        _record_with_layers(
+                            "doc-b",
+                            {"p1": 1.0},
+                            {"correct_row": 4, "spurious_row": 2},
+                        ),
+                    ],
+                )
+            ]
+        )
+
+        pooled = layer_s_counts(runs).set_index("outcome")["count"].to_dict()
+        summed = (
+            layer_s_counts_by_example(runs)
+            .groupby("outcome")["count"]
+            .sum()
+            .to_dict()
+        )
+
+        assert summed == pooled
+
+    def test_layer1_by_example_keeps_the_example(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record("doc-a", {"p1": 1.0, "p2": 0.5}),
+                        _record("doc-b", {"p1": 0.0, "p2": None}),
+                    ],
+                )
+            ]
+        )
+
+        frame = layer1_counts_by_example(runs)
+
+        assert list(frame.columns) == list(LAYER1_BY_EXAMPLE_COLUMNS)
+        assert set(frame["example"]) == {"doc-a", "doc-b"}
+        applicable = frame[
+            (frame["example"] == "doc-b") & (frame["layer1"] == "correct_NA")
+        ]
+        assert applicable["count"].sum() == 1
+
+    def test_summing_layer1_by_example_reproduces_the_pooled_frame(self):
+        runs = FlatRuns(
+            [
+                _run(
+                    arm="pinned",
+                    replicate=0,
+                    records=[
+                        _record("doc-a", {"p1": 1.0, "p2": 0.5}),
+                        _record("doc-b", {"p1": 0.0, "p2": None}),
+                    ],
+                )
+            ]
+        )
+
+        pooled = (
+            layer1_counts(runs)
+            .groupby(["property", "layer1"])["count"]
+            .sum()
+            .to_dict()
+        )
+        summed = (
+            layer1_counts_by_example(runs)
+            .groupby(["property", "layer1"])["count"]
+            .sum()
+            .to_dict()
+        )
+
+        assert summed == pooled
+
+
+def _counts_frame(rows) -> pd.DataFrame:
+    """A per-example counts frame, in the shape the layer frames emit."""
+    return pd.DataFrame(
+        rows,
+        columns=["arm", "replicate", "example", "list_key", "outcome", "count"],
+    )
+
+
+class TestRateContrast:
+    """Paired rate differences, for the count-based layers.
+
+    Layer S and layer 1 are rates over rows, not means over properties,
+    so `arm_contrast` cannot compute them. The pairing rule is the same
+    one it uses -- average replicates per (arm, example), then difference
+    within an example -- because an example is the clustering unit: rows
+    inside one figure share a figure, a caption and a curator.
+    """
+
+    def test_it_pairs_by_example_and_averages_the_differences(self):
+        """Each example weighs the same, whatever its panel count."""
+        frame = _counts_frame(
+            [
+                ("pinned", 0, "doc-a", "outputs", "correct_row", 8),
+                ("pinned", 0, "doc-a", "outputs", "missing_row", 2),
+                ("v2", 0, "doc-a", "outputs", "correct_row", 6),
+                ("v2", 0, "doc-a", "outputs", "missing_row", 4),
+                ("pinned", 0, "doc-b", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-b", "outputs", "correct_row", 9),
+                ("v2", 0, "doc-b", "outputs", "missing_row", 1),
+            ]
+        )
+
+        contrast = rate_contrast(
+            frame,
+            baseline="pinned",
+            variant="v2",
+            category="outcome",
+            numerator=("correct_row",),
+            denominator=("correct_row", "missing_row"),
+            group=("list_key",),
+        ).iloc[0]
+
+        # doc-a: 0.6 - 0.8 = -0.2;  doc-b: 0.9 - 1.0 = -0.1;  mean = -0.15
+        assert contrast["difference"] == pytest.approx(-0.15)
+        assert contrast["n_examples"] == 2
+
+    def test_replicates_are_averaged_before_pairing(self):
+        """A replicate is a resample: it reduces noise, it is not a row."""
+        frame = _counts_frame(
+            [
+                ("pinned", 0, "doc-a", "outputs", "correct_row", 10),
+                ("pinned", 1, "doc-a", "outputs", "correct_row", 8),
+                ("pinned", 1, "doc-a", "outputs", "missing_row", 2),
+                ("v2", 0, "doc-a", "outputs", "correct_row", 10),
+                ("v2", 1, "doc-a", "outputs", "correct_row", 10),
+                ("pinned", 0, "doc-b", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-b", "outputs", "correct_row", 10),
+            ]
+        )
+
+        contrast = rate_contrast(
+            frame,
+            baseline="pinned",
+            variant="v2",
+            category="outcome",
+            numerator=("correct_row",),
+            denominator=("correct_row", "missing_row"),
+            group=("list_key",),
+        ).iloc[0]
+
+        # doc-a baseline averages 1.0 and 0.8 -> 0.9; variant 1.0. doc-b: 0.
+        assert contrast["difference"] == pytest.approx(0.05)
+        assert contrast["n_examples"] == 2
+
+    def test_an_example_only_one_arm_scored_is_dropped_and_announced(self):
+        frame = _counts_frame(
+            [
+                ("pinned", 0, "doc-a", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-a", "outputs", "correct_row", 10),
+                ("pinned", 0, "doc-b", "outputs", "correct_row", 10),
+                ("pinned", 0, "doc-c", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-c", "outputs", "correct_row", 10),
+            ]
+        )
+
+        contrast = rate_contrast(
+            frame,
+            baseline="pinned",
+            variant="v2",
+            category="outcome",
+            numerator=("correct_row",),
+            denominator=("correct_row", "missing_row"),
+            group=("list_key",),
+        ).iloc[0]
+
+        assert contrast["n_examples"] == 2
+        assert contrast["n_baseline_only"] == 1
+        assert contrast["paired_fraction"] == pytest.approx(2 / 3)
+
+    def test_the_bootstrap_interval_is_reproducible_from_its_seed(self):
+        """A preregistered interval a reader cannot recompute is no interval."""
+        frame = _counts_frame(
+            [
+                (arm, 0, f"doc-{i}", "outputs", "correct_row", n)
+                for i, (a, b) in enumerate([(9, 8), (10, 9), (7, 7), (10, 6)])
+                for arm, n in (("pinned", a), ("v2", b))
+            ]
+            + [
+                (arm, 0, f"doc-{i}", "outputs", "missing_row", 10 - n)
+                for i, (a, b) in enumerate([(9, 8), (10, 9), (7, 7), (10, 6)])
+                for arm, n in (("pinned", a), ("v2", b))
+            ]
+        )
+        kwargs = dict(
+            baseline="pinned",
+            variant="v2",
+            category="outcome",
+            numerator=("correct_row",),
+            denominator=("correct_row", "missing_row"),
+            group=("list_key",),
+        )
+
+        first = rate_contrast(frame, seed=17, **kwargs).iloc[0]
+        again = rate_contrast(frame, seed=17, **kwargs).iloc[0]
+
+        assert first["ci_low"] == again["ci_low"]
+        assert first["ci_high"] == again["ci_high"]
+        assert first["ci_low"] < first["difference"] < first["ci_high"]
+
+    def test_groups_are_never_pooled(self):
+        """plot-axis-units evaluates four row sets; pooling them would add
+        one list's spurious rows to another's."""
+        frame = _counts_frame(
+            [
+                ("pinned", 0, "doc-a", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-a", "outputs", "correct_row", 5),
+                ("v2", 0, "doc-a", "outputs", "missing_row", 5),
+                ("pinned", 0, "doc-a", "explanation", "correct_row", 10),
+                ("v2", 0, "doc-a", "explanation", "correct_row", 10),
+                ("pinned", 0, "doc-b", "outputs", "correct_row", 10),
+                ("v2", 0, "doc-b", "outputs", "correct_row", 10),
+                ("pinned", 0, "doc-b", "explanation", "correct_row", 10),
+                ("v2", 0, "doc-b", "explanation", "correct_row", 10),
+            ]
+        )
+
+        contrast = rate_contrast(
+            frame,
+            baseline="pinned",
+            variant="v2",
+            category="outcome",
+            numerator=("correct_row",),
+            denominator=("correct_row", "missing_row"),
+            group=("list_key",),
+        ).set_index("list_key")
+
+        assert contrast.loc["outputs", "difference"] == pytest.approx(-0.25)
+        assert contrast.loc["explanation", "difference"] == pytest.approx(0.0)
