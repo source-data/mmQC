@@ -368,11 +368,14 @@ def validate_skills(checklist_dir: Path) -> Dict[str, Dict[str, Skill]]:
     * every name in ``requires`` is a skill of this checklist, and is not the
       skill itself;
     * the graph is acyclic;
-    * every name in ``requires`` also appears in the prose body, in a block
-      that also tells the agent to use the ``Skill`` tool -- a declared edge
-      that no sentence asks for would never fire at runtime, and a bare mention
-      is not a call. The check is per requirement, so a leaf with two
-      requirements has to instruct the agent twice;
+    * every name in ``requires`` also appears in the prose body -- a declared
+      edge that no sentence asks for would never fire at runtime. Naming the
+      skill is enough: skills are selected from context and descriptions, and
+      nothing in the SDK requires a leaf to spell out the tool it will be
+      reached with. Demanding that phrase would also put words into the
+      delegating version of a skill that its monolithic version has no reason
+      to carry, which matters when the two are meant to differ only in where
+      an instruction lives;
     * no skill mentioned in the prose is missing from ``requires`` -- an
       undeclared edge is invisible to the DAG documentation.
 
@@ -390,7 +393,6 @@ def validate_skills(checklist_dir: Path) -> Dict[str, Dict[str, Skill]]:
         for version in sorted(skills[name]):
             skill = skills[name][version]
             declared = set(skill.requires)
-            blocks = _prose_blocks(skill.body)
 
             for requirement in skill.requires:
                 if requirement == name:
@@ -406,22 +408,11 @@ def validate_skills(checklist_dir: Path) -> Dict[str, Dict[str, Skill]]:
                     )
                     continue
 
-                asking = [
-                    block for block in blocks if _mentions(block, requirement)
-                ]
-                if not asking:
+                if not _mentions(skill.body, requirement):
                     problems.append(
                         f"{skill.path}: declares requires: {requirement!r} but "
                         "never asks for it in the prose; frontmatter documents "
                         "the graph, prose runs it"
-                    )
-                elif not any(
-                    _mentions(block, SKILL_TOOL) for block in asking
-                ):
-                    problems.append(
-                        f"{skill.path}: mentions {requirement!r} but never "
-                        f"tells the agent to use the {SKILL_TOOL!r} tool on "
-                        "it; a bare mention is not a call"
                     )
 
             for invoked in sorted(invoked_skills(skill, known) - declared):

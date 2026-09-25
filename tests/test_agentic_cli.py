@@ -1638,9 +1638,16 @@ class TestProseAndFrontmatterAgree:
         with pytest.raises(ValueError, match=r"missing from requires"):
             validate_skills(tmp_path)
 
-    def test_a_requirement_without_a_skill_tool_instruction_fails(
+    def test_a_requirement_named_in_prose_needs_no_skill_tool_phrase(
         self, tmp_path: Path
     ):
+        """Naming the skill is enough; the harness needs no magic words.
+
+        Skills are selected from context and descriptions -- nothing in the
+        SDK requires a leaf to spell out the tool it will be reached with, and
+        demanding the phrase put words into the delegating versions of a skill
+        that the monolithic version has no reason to carry.
+        """
         _write_skill(tmp_path, "root", "v1", _skill_md("root"))
         _write_skill(
             tmp_path,
@@ -1649,20 +1656,19 @@ class TestProseAndFrontmatterAgree:
             _skill_md(
                 "leaf",
                 requires=("root",),
-                body="# leaf\n\nThe `root` inventory is needed first.\n",
+                body="# leaf\n\nGet the inventory by calling the `root` skill.\n",
             ),
         )
-        with pytest.raises(ValueError, match=r"never\s+tells the agent to use"):
-            validate_skills(tmp_path)
+        validate_skills(tmp_path)  # must not raise
 
-    def test_a_second_requirement_cannot_ride_on_the_first_ones_call(
+    def test_a_second_requirement_cannot_ride_on_the_first_one(
         self, tmp_path: Path
     ):
-        """The Skill-tool check is per requirement, not per file.
+        """The check is per requirement, not per file.
 
-        Every Group B leaf will declare two requirements. One real call plus
-        one bare mention must not validate just because the word `Skill`
-        appears somewhere in the file.
+        A leaf that declares two requirements and names only one has a
+        declared edge nothing asks for, and naming the first must not vouch
+        for the second.
         """
         _write_skill(tmp_path, "root", "v1", _skill_md("root"))
         _write_skill(tmp_path, "other", "v1", _skill_md("other"))
@@ -1673,16 +1679,12 @@ class TestProseAndFrontmatterAgree:
             _skill_md(
                 "leaf",
                 requires=("root", "other"),
-                body=(
-                    "# leaf\n\n"
-                    "Call the `root` skill with the `Skill` tool.\n\n"
-                    "The `other` classification is also relevant.\n"
-                ),
+                body="# leaf\n\nGet the inventory from the `root` skill.\n",
             ),
         )
-        with pytest.raises(ValueError, match=r"mentions 'other'") as excinfo:
+        with pytest.raises(ValueError, match=r"'other'") as excinfo:
             validate_skills(tmp_path)
-        assert "mentions 'root'" not in str(excinfo.value)
+        assert "'root'" not in str(excinfo.value)
 
     def test_each_requirement_may_be_called_in_its_own_bullet(
         self, tmp_path: Path
