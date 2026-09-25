@@ -1,0 +1,34 @@
+# Pinned skill versions for fig-checklist-exp02.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# These pins are the **baseline arm**: every check at v1, the monolith that
+# carries panel identification, panel classification and the check itself in
+# one skill. The experiment asks whether splitting that monolith degrades it,
+# so the unsplit version is what the others are measured against.
+#
+# The four arrangements, and how each is reached:
+#
+#   A|B|C        these pins                       (the baseline)
+#   A <- B|C     --unpin <check>          -> v2
+#   A|B <- C     --unpin <check>          -> v3   (classify-panels at v1)
+#   A <- B <- C  --unpin <check> and --unpin classify-panels -> v3, v2
+#
+# where A is panel identification, B panel classification, C the check.
+#
+# `classify-panels` is pinned at v1, the version that identifies panels
+# itself. Nothing calls it in the baseline, so the pin is idle there -- but it
+# decides what an unpinned <check>@v3 means on its own, and v1 keeps that the
+# two-layer A|B <- C rather than silently the three-layer chain.
+skills:
+  # Shared skills. Called by leaves through prose, never by the runner.
+  classify-panels: v1
+  identify-panels: v1
+
+  # Checks. Each owns schema.json, benchmark.json and eval-manifest.json,
+  # which sit above the version directories so every arrangement of one check
+  # is scored against the same contract.
+  error-bars-defined: v1
+  individual-data-points: v1
+  micrograph-scale-bar: v1

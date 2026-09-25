@@ -1,0 +1,55 @@
+# This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp02 --write` instead. `graph fig-checklist-exp02` fails when it and the skills disagree.
+checklist: fig-checklist-exp02
+skill_set: f3411f53b59e2fee40f2d8296ebbb384964b7f91f42d2b9251dd12b94f51a3ff
+skills:
+- name: classify-panels
+  version: v1
+  content_hash: 9b06faad370918c2e81184ee752cd54b1cdd50692672a801ec718c50fa14b974
+  kind: shared
+  description: 'Name what kind of content each figure panel holds: micrograph, plot,
+    blot, molecular or protein structure, sequence, schematic, photograph, table,
+    or something else. Use this whenever a task needs to know what sort of thing a
+    panel is before deciding whether a check applies to it. Reports observations only
+    — it does not decide whether a panel qualifies for any particular check, because
+    different checks answer that differently.'
+  calls: []
+  produces:
+  - panel_classes
+- name: error-bars-defined
+  version: v1
+  content_hash: 48b23e144fdcfa1f49a5ea06bbd36e6f9cd73b4a15ab61c5aaeda8cd9a89eddb
+  kind: check
+  description: Check that error bars, and box or violin plot elements, are explained
+    in the caption.
+  calls: []
+  produces:
+  - error-bars-defined
+- name: identify-panels
+  version: v1
+  content_hash: ca24a5d03ab4f50fa878aced13ec207f6a45d847ab39b52f4d69577c63f51987
+  kind: shared
+  description: Identify every panel of a scientific figure and locate the caption
+    text that describes each one. Use this first, whenever a task needs the list of
+    panels, their labels, or which part of the caption applies to which panel. Makes
+    no judgement about what a panel contains.
+  calls: []
+  produces:
+  - panels
+- name: individual-data-points
+  version: v1
+  content_hash: 0967f0d2cc0b8cf93d1e992f4c8e696ca088ef97bc1916a65c134ce8b55aff3c
+  kind: check
+  description: Check that a plot showing averages also shows the individual data points
+    behind them.
+  calls: []
+  produces:
+  - individual-data-points
+- name: micrograph-scale-bar
+  version: v1
+  content_hash: 667de3f82da7a896b6de65376bb6582f1d604a651abc8f063b24af724ecd8972
+  kind: check
+  description: Check that every micrograph panel carries a scale bar, and that its
+    length is stated on the image or in the caption.
+  calls: []
+  produces:
+  - micrograph-scale-bar
