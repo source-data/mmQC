@@ -9,9 +9,9 @@
       "n_reported": "yes",
       "n_value_min": 141,
       "replicate_type_reported": "yes",
-      "replicate_type": "samples (individual measurements) across cell line models/subtypes",
+      "replicate_type": "samples (individual measurements, across cell line models)",
       "decision": "PASS",
-      "explanation": "The caption reports the total number of samples (n = 141) plotted as individual measurements, giving both a count and the unit of replication (samples)."
+      "explanation": "The panel reports both the number (n = 141) and the nature (individual sample measurements) of the data points shown; since raw individual measurements are plotted rather than an average, this is sufficient."
     },
     {
       "panel_label": "B",
@@ -23,23 +23,23 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (n=2) each with technical triplicates/duplicates, per reporter/cell line",
+      "replicate_type": "biological replicates (n=2) each with technical triplicates/duplicates, yielding 6 samples per reporter (n=5 for HCC1806 Per2-Luc); n=3 technical replicates from a single experiment for MCF10A and MDAMB468-Per2-Luc",
       "decision": "PASS",
-      "explanation": "The legend explicitly states the number of biological replicates and technical replicates (or duplicates), with exceptions clearly enumerated (HCC1806 n=5; MCF10A/MDAMB468 n=3, single experiment)."
+      "explanation": "The caption explicitly states the number of biological and technical replicates underlying each mean ± s.d., including exceptions, fully satisfying the reporting requirement."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "(n = 1–4 cell lines models per subtype, see legends of (A) and (B) for exact numbers).",
+        "n = 1–4 cell lines models per subtype, see legends of (A) and (B) for exact numbers).",
         "Before calculating subtype averages, all available replicates per cell model were averaged (n = 3–6, see (B) for exact numbers) and used as input."
       ],
       "n_reported": "yes",
       "n_value_min": 1,
       "replicate_type_reported": "yes",
-      "replicate_type": "cell line models per subtype, each averaged from replicates (n=3-6, see panel B for biological/technical replicate breakdown)",
+      "replicate_type": "cell line models per subtype, each itself an average of 3–6 replicates per cell model (detailed in panel B)",
       "decision": "PASS",
-      "explanation": "The caption gives the number of cell line models used per subtype and clarifies that per-model averages were first computed from replicates, cross-referencing panel B for the exact replicate composition."
+      "explanation": "The panel discloses the number of cell line models contributing to each subtype average and explicitly points to panel B for the underlying replicate counts per cell model, providing traceable, transparent reporting."
     },
     {
       "panel_label": "D",
@@ -50,9 +50,9 @@
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "yes",
-      "replicate_type": "samples per cell line (biological/technical replicates as defined in panel B)",
+      "replicate_type": "samples per cell line (ridge measurements), with exact per-cell-line n cross-referenced to panel B",
       "decision": "PASS",
-      "explanation": "The number of samples per cell line is stated as a range with a cross-reference to panel B for exact composition and replicate type."
+      "explanation": "The boxplot's underlying sample size range and its type (samples per cell line) are stated, satisfying the replication reporting requirement."
     },
     {
       "panel_label": "E",
@@ -64,22 +64,22 @@
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "Bmal1-Per2 signal-pair combinations averaged across replicates, per cell line",
+      "replicate_type": "Bmal1-Per2 signal combinations per cell line, averaged across replicates",
       "decision": "PASS",
-      "explanation": "Exact n values are listed per cell line in the legend, and the unit being counted (Bmal1-Per2 combinations) is explicitly named."
+      "explanation": "Exact n values per cell line and the type of replicate (Bmal1-Per2 combinations) are explicitly listed in the panel legend."
     },
     {
       "panel_label": "F",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "(n = 1–4 cell line models, see (E) for exact numbers)."
+        "n = 1–4 cell line models, see (E) for exact numbers."
       ],
       "n_reported": "yes",
       "n_value_min": 1,
       "replicate_type_reported": "yes",
-      "replicate_type": "cell line models per subtype, referencing panel E for underlying replicate counts",
+      "replicate_type": "cell line models per subtype, each an average of Bmal1-Per2 combinations detailed in panel E",
       "decision": "PASS",
-      "explanation": "The number of cell line models contributing to each subtype average is given as a range, with a cross-reference to panel E for exact per-cell-line replicate numbers."
+      "explanation": "The number and type of replicates (cell line models, cross-referenced to the underlying combination counts in panel E) are clearly disclosed."
     },
     {
       "panel_label": "G",
@@ -90,21 +90,20 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "This panel is a schematic/illustrative example of the fitting model applied to a single trace, not a summary of replicated data, so replicate reporting is not applicable."
+      "explanation": "This panel is a schematic/illustrative example of the fitting method applied to a single representative trace, not a summary of replicated data, so replicate reporting is not required."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Relationship between initial signal amplitudes and amplitude decay rates across samples of different cell line models (n = 117 samples).",
-        "Error bars represent the standard deviation of the fitted parameters, reflecting their uncertainty as determined by the fitting process."
+        "n = 117 samples"
       ],
       "n_reported": "yes",
       "n_value_min": 117,
       "replicate_type_reported": "yes",
-      "replicate_type": "samples (individual measurements across cell line models)",
+      "replicate_type": "samples across cell line models",
       "decision": "PASS",
-      "explanation": "The caption states the total number of samples plotted (n = 117), giving both count and the unit represented (samples), consistent with panel A."
+      "explanation": "The number and type of replicates (117 samples across cell line models) are stated; error bars are separately explained as fit-parameter uncertainty rather than replicate variability, which is appropriately described."
     }
   ]
 }

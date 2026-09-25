@@ -10,59 +10,24 @@ needs: []
 # plot-gap-labeling
 
 ## Summary
-You are a scientific technical editor specializing in the quality control of scientific figures and data presentation. Your task is to check whether any axis discontinuities in quantitative plots are properly marked with visual indicators. An unmarked axis break can seriously mislead readers about the relationship between data points.
 
-## Logic
-IF panel is not a quantitative plot:
-    SET is_a_plot = "no"
-    SET tick_sequence_anomaly = "not_applicable"
-    SET gap_visually_marked = "not_applicable"
-    SET decision = "N/A"
-    SET explanation = ""
-    CONTINUE to next panel
+You are a scientific technical editor specializing in the quality control of scientific figures and data presentation. Your task is to check whether any axis discontinuities in quantitative plots are properly marked with visual indicators. An unmarked axis break can seriously mislead readers about the relationship between data points — for example, a y-axis that jumps from 30 to 500 without any break marker creates a false impression of the data distribution.
 
-SET is_a_plot = "yes"
 
-# Step 1: Check tick label sequence on each axis
-IF tick labels on all axes form a consistent numerical sequence
-(evenly spaced, logarithmic, or otherwise regular):
-    SET tick_sequence_anomaly = "no"
-    SET gap_visually_marked = "not_applicable"
-    SET decision = "PASS"
-    SET explanation = ""
-    CONTINUE to next panel
-Note: Categorical axes (e.g. treatment groups, sample names, time points as discrete categories) do not have a numerical sequence and should never be flagged as anomalies.
+## Guidelines
 
-# Step 2: Anomaly detected — is it visually marked?
-IF any axis shows anomalous tick label jump or skip
-(e.g. 0, 10, 20, 30, 500):
-    SET tick_sequence_anomaly = "yes"
+**Step 1 — Is this a numerical plot?**
+Determine whether the panel contains a quantitative plot with labeled axes. Bar charts, line plots, scatter plots, box plots, and similar visualizations qualify. Micrographs, schematics, western blots, and representative images do not. Set `is_a_plot` to `"yes"` or `"no"` accordingly. For all `"no"` panels, set `tick_sequence_anomaly` and `gap_visually_marked` to `"not_applicable"`, `decision` to `"N/A"`, and `explanation` to an empty string.
 
-    IF axis break is visually marked
-    (diagonal lines, zigzag marks, or similar indicators):
-        SET gap_visually_marked = "yes"
-        SET decision = "PASS"
-        SET explanation = ""
+**Step 2 — Do the axis tick labels form a consistent sequence?**
+For each axis of a quantitative plot, examine the tick labels carefully. A consistent sequence is one that is evenly spaced, follows a logarithmic scale, or is otherwise numerically regular. Look specifically for anomalous jumps or skips in the tick label values — for example, labels reading 0, 10, 20, 30, 500 where the final value is disproportionately large relative to the preceding intervals. Categorical axes (e.g. treatment groups, sample names, time points as discrete categories) do not have a numerical sequence and should never be flagged as anomalies — this check applies to continuous numerical axes only. If all axes appear consistent and/or are of categorical nature, set `tick_sequence_anomaly` to `"no"`, `gap_visually_marked` to `"not_applicable"`, and `decision` to `"PASS"`.
 
-    ELSE:
-        SET gap_visually_marked = "no"
-        SET decision = "FAIL"
-        SET explanation = "describe which axis and what the sequence anomaly is"
+**Step 3 — If an anomaly is detected, is it visually marked?**
+If any axis shows an anomalous tick label jump or skip, set `tick_sequence_anomaly` to `"yes"` and then check whether the discontinuity is explicitly marked with a visual indicator. In scientific practice, axis breaks are typically indicated by two parallel diagonal or oblique lines intersecting the axis, zigzag marks, or similar clearly visible symbols.
 
-## Examples
+- If the break is visually marked → set `gap_visually_marked` to `"yes"` and `decision` to `"PASS"`
+- If the break is not marked → set `gap_visually_marked` to `"no"`, `decision` to `"FAIL"`, and describe the anomaly in `explanation`
 
-#### Example 1 — Unlabeled gap detected (FAIL)
-```json
-```
-
-#### Example 2 — Gap present and properly marked (PASS)
-```json
-```
-
-#### Example 3 — No anomaly detected (PASS)
-```json
-```
-
-#### Example 4 — Non-plot panel (N/A)
-```json
-```
+## Please note
+- Include all panels visible in the figure, even those that are not quantitative plots.
+- A logarithmic axis is not an anomaly and should be treated as a consistent sequence.

@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a schematic diagram of the protocol; it does not involve replicated experimental measurements, so replicate reporting is not applicable."
+      "explanation": "Panel A is a schematic of the differentiation protocol; it does not present experimental data and therefore replicate reporting does not apply."
     },
     {
       "panel_label": "B",
@@ -20,10 +20,10 @@
       ],
       "n_reported": "yes",
       "n_value_min": 2,
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The panel shows two Western blot experiments labeled 'Exp. 1' and 'Exp. 2', indicating n = 2, but neither the panel nor the legend states what kind of replicate these represent (e.g., biological vs. technical repeats)."
+      "replicate_type_reported": "yes",
+      "replicate_type": "Two labeled experiments (Exp. 1, Exp. 2) shown side-by-side on the blot",
+      "decision": "PASS",
+      "explanation": "The blot itself directly displays two labeled experiments (Exp. 1 and Exp. 2) for each condition; since this is raw blot data rather than a statistical summary, n=2 is acceptable, and the replicate count/type is conveyed directly on the panel."
     },
     {
       "panel_label": "C",
@@ -36,31 +36,32 @@
       "replicate_type_reported": "yes",
       "replicate_type": "independent biological experiments",
       "decision": "PASS",
-      "explanation": "The legend explicitly reports n = 3–4 independent biological experiments for panel C, satisfying both number and type of replicate."
+      "explanation": "The caption explicitly states that panel C data are mean ± SEM from n = 3–4 independent biological experiments, satisfying both count and type requirements."
     },
     {
       "panel_label": "D",
       "involves_replicates": "unclear",
       "replicate_statements": [],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Panel D shows representative live-imaging snapshots at different timepoints without quantification, so no replicate number is expected to be reported."
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The caption for panel D ('Live imaging of SOX17-Tom and NKX2-5-GFP at 3 timepoints of differentiation') does not state that the images are representative of repeated experiments, nor does it give a number or type of replicate, so it cannot be determined whether/how many times these observations were repeated."
     },
     {
       "panel_label": "E",
-      "involves_replicates": "unclear",
+      "involves_replicates": "yes",
       "replicate_statements": [
-        "Representative flow cytometric analyses..."
+        "Representative flow cytometric analyses of surface markers PDGFRα and CD235, together with SOX17-Tom and NKX2-5-GFP at 2 timepoints of differentiation with the indicated concentrations of SB and DMH1.",
+        "Data are represented as mean ± SEM (n = 3–4) independent biological experiments for (C, F, G)."
       ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "The caption explicitly describes the flow cytometry plots as 'representative,' indicating a single representative example rather than a quantification requiring replicate reporting."
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "Panel E is explicitly labeled 'Representative', confirming the underlying flow experiment was repeated, but neither the number nor the type of replicates is stated for E itself; the only n statement in the legend (n = 3–4 independent biological experiments) is explicitly attributed only to panels C, F and G, not E."
     },
     {
       "panel_label": "F",
@@ -73,7 +74,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "independent biological experiments",
       "decision": "PASS",
-      "explanation": "The legend explicitly reports n = 3–4 independent biological experiments for panel F, satisfying both number and type of replicate."
+      "explanation": "The caption explicitly states panel F values are mean ± SEM from n = 3–4 independent biological experiments."
     },
     {
       "panel_label": "G",
@@ -86,20 +87,18 @@
       "replicate_type_reported": "yes",
       "replicate_type": "independent biological experiments",
       "decision": "PASS",
-      "explanation": "The legend explicitly reports n = 3–4 independent biological experiments for panel G, satisfying both number and type of replicate."
+      "explanation": "The caption explicitly states panel G values are mean ± SEM from n = 3–4 independent biological experiments."
     },
     {
       "panel_label": "H",
       "involves_replicates": "unclear",
-      "replicate_statements": [
-        "Immunostaining of whole mount EBs stained for FOXA2 (red) at day 4, and α-actinin (red) and WT1 (green) at day 12."
-      ],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Panel H shows representative immunostaining images without quantification, so no replicate number is expected to be reported."
+      "replicate_statements": [],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "not_reported",
+      "decision": "FAIL",
+      "explanation": "The caption for panel H ('Immunostaining of whole mount EBs stained for FOXA2...and α-actinin...and WT1...') does not state that images are representative of repeated experiments or give any replicate number or type."
     },
     {
       "panel_label": "I",
@@ -112,20 +111,21 @@
       "replicate_type_reported": "yes",
       "replicate_type": "independent biological experiments",
       "decision": "PASS",
-      "explanation": "The legend explicitly states n = 3 independent biological experiments for the RNA-seq boxplot quantifications in panel I."
+      "explanation": "The caption explicitly states the boxplots in panel I represent n = 3 independent biological experiments."
     },
     {
       "panel_label": "J",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Hierarchical clustering of cell type and lineage markers based on RNA-seq data from the 8 populations. Expression levels are represented as Z-score normalized log2 FC differences."
+        "Hierarchical clustering of cell type and lineage markers based on RNA-seq data from the 8 populations.",
+        "The boxplots follow standard Tukey representations (n = 3 independent biological experiments)"
       ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "Panel J presents a heatmap derived from RNA-seq data across replicated biological samples, but the legend does not state how many replicates underlie the log2FC values shown or what type of replicate they are."
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "independent biological experiments (same RNA-seq dataset of the 8 sorted populations as in panel I)",
+      "decision": "PASS",
+      "explanation": "Panel J is derived from the same RNA-seq dataset of the 8 sorted populations described for panel I, for which the caption states n = 3 independent biological experiments; this replicate information reasonably extends to the shared dataset used for the clustering in J."
     }
   ]
 }

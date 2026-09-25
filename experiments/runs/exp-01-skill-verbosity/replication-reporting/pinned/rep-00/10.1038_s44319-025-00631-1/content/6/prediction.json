@@ -9,21 +9,21 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel shows representative ex vivo bright-field and ICG fluorescence images without quantification or statistics; nothing to report."
+      "explanation": "Panel A shows representative ex vivo bright-field and ICG fluorescence images without quantification or statistics; it is a representative image panel, so replicate reporting is not required at the panel level (quantification with n is provided separately in panel B)."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of mean ICG fluorescence intensity (control n = 5 mice; Ad-Cre n = 3 mice, biological replicates)",
+        "control n = 5 mice; Ad-Cre n = 3 mice, biological replicates",
         "Unpaired t test with Welch's correction was used for the analysis, P = 0.0281"
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates",
+      "replicate_type": "biological replicates (mice)",
       "decision": "PASS",
-      "explanation": "Both n-numbers (5 and 3 mice) and replicate type (biological replicates) are stated; minimum n=3 is adequate for the statistical comparison shown."
+      "explanation": "The legend reports the number of mice per group (n=5 control, n=3 Ad-Cre) and explicitly labels them as biological replicates. The minimum reported n (3) is greater than 2, and individual data points plus a statistical test are shown, satisfying reporting requirements."
     },
     {
       "panel_label": "C",
@@ -34,13 +34,12 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel presents a representative H&E/ICG/RNAscope image series and spatial transcript maps without quantification or statistics; no replicate reporting required."
+      "explanation": "Panel C shows a single representative H&E/ICG/RNAscope section with spatial expression overlays; no summary statistics, error bars, or statistical test are presented, so this is treated as a representative image panel not requiring replicate reporting."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Gene set enrichment analysis (GSEA) of immune cell pathways from the low pH versus high pH spatial transcriptomics data with normalized enrichment scores (NES), false discovery rate (FDR) and p values",
         "statistical significance was determined by bootstrapping with 1000 permutations"
       ],
       "n_reported": "no",
@@ -48,34 +47,33 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel reports NES, FDR and p values from a statistical enrichment analysis but does not state how many biological samples/sections/mice underlie the low pH versus high pH spatial transcriptomics comparison, nor the replicate type."
+      "explanation": "GSEA plots report NES, FDR, and p values derived from comparing low pH versus high pH spatial transcriptomics data, constituting a statistical analysis, but the legend does not state the number or type of underlying biological/sample replicates (e.g., number of sections, mice, or regions) used to generate the low pH vs high pH comparison; only the number of permutations for the statistical resampling procedure is given, which is not a replicate count."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Bar graph representing top M2-like/TAM genes from the differential gene expression (DEG) analysis of low pH versus high pH spatial transcriptomics data",
-        "corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction"
+        "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction"
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel shows fold-change bars with p-values from a statistical DEG comparison, but the caption does not state the number or type of replicates (e.g., samples, sections, or mice) underlying the low pH versus high pH comparison."
+      "explanation": "This bar graph reports p values from a statistical comparison (Wilcoxon rank-sum test) between low pH and high pH spatial transcriptomics regions, but the legend does not report the number of samples/sections/spots or replicate type underlying the comparison."
     },
     {
       "panel_label": "F",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "The staining was repeated with lung sections from different mice (n = 2, biological replicates)."
+        "The staining was repeated with lung sections from different mice (n = 2, biological replicates)"
       ],
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates",
+      "replicate_type": "biological replicates (different mice)",
       "decision": "PASS",
-      "explanation": "Panel shows representative ICG and IHC images with no quantification/statistics; n = 2 biological replicates is explicitly stated, which is acceptable for representative-only data."
+      "explanation": "The legend states n = 2 biological replicates (different mice) for the representative ICG/IHC images. Since this panel shows only representative images with no summary statistics or error bars, an n of 2 is acceptable for representative data per the decision rules."
     }
   ]
 }

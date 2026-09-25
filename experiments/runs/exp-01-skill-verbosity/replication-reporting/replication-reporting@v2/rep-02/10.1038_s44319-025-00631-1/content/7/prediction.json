@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a schematic of the experimental pipeline (created in BioRender); it does not present replicated experimental data, so replicate reporting does not apply."
+      "explanation": "Panel A is a schematic diagram of the experimental pipeline; it does not present replicated experimental data, so replicate reporting is not applicable."
     },
     {
       "panel_label": "B",
@@ -22,33 +22,33 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The images are described as \"Representative,\" implying they were selected from a larger set of samples, but the caption does not state how many mice/sections/tumors this is representative of, nor the replicate type (e.g., biological replicate animals)."
+      "explanation": "The images are described as 'representative,' which implies the observation was made across multiple samples/sections, but the caption never states how many mice, sections, or regions were examined, nor whether these were biological or technical replicates."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 7–11 regions per group from a total of 2 mice, biological replicates"
+        "Quantification of lactate concentration (pg/μm2) in SNL lung tissues; normal, LUADs and LUSCs (n = 7–11 regions per group from a total of 2 mice, biological replicates)."
       ],
       "n_reported": "yes",
-      "n_value_min": 7,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (regions per group from a total of 2 mice)",
-      "decision": "PASS",
-      "explanation": "The caption reports the number of regions analyzed per group (n = 7–11) and the number of source mice (2), explicitly identifying them as biological replicates."
+      "replicate_type": "regions per group from a total of 2 mice, biological replicates",
+      "decision": "FAIL",
+      "explanation": "The caption does report both a number and a type of replicate (7–11 regions pooled from 2 mice, described as biological replicates), which is commendably transparent. However, the actual biological replicate unit underlying the group means, error bars, and one-way ANOVA is only 2 mice, which is below the generally required minimum of >2 independent biological replicates for valid summary statistics/statistical testing."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 12–20 regions per group from a total of two mice, biological replicates"
+        "Quantification of lactate concentration (pg/μm2) in the regions of low acidity (high pH) and high acidity (low pH), in the SNL lung tissues (n = 12–20 regions per group from a total of two mice, biological replicates)."
       ],
       "n_reported": "yes",
-      "n_value_min": 12,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (regions per group from a total of two mice)",
-      "decision": "PASS",
-      "explanation": "The caption reports the number of regions analyzed per group (n = 12–20) and the number of source mice (two), explicitly identifying them as biological replicates."
+      "replicate_type": "regions per group from a total of two mice, biological replicates",
+      "decision": "FAIL",
+      "explanation": "Although the number of regions (12–20) and their designation as biological replicates from mice are stated, the true biological replicate unit is only 2 mice, which is insufficient (generally n>2 required) to support the mean/95% CI bar plot and statistical test shown."
     },
     {
       "panel_label": "E",
@@ -59,7 +59,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel E is a schematic illustration (created in BioRender) of the proposed immunosuppressive niche model; it does not present replicated experimental data."
+      "explanation": "Panel E is a schematic/conceptual illustration summarizing the proposed model; it does not present replicated experimental data, so replicate reporting is not applicable."
     }
   ]
 }

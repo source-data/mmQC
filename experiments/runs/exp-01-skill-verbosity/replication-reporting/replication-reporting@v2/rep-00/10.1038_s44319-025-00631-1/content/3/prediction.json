@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel shows a single spatial transcriptomic cluster map from one SNL lung section with no averaging, quantification, or statistical comparison across replicates, so replicate number/type reporting is not applicable."
+      "explanation": "This panel is a single representative spatial-cluster image of one lung section; it does not present averaged, summary-statistic, or statistically tested data that would require replicate reporting."
     },
     {
       "panel_label": "B",
@@ -20,7 +20,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel shows H&E and manual annotation of the same single lung section from panel A; it is a descriptive image without quantitative/statistical data requiring replicate reporting."
+      "explanation": "This panel shows a representative H&E image and its manual region annotation from the same single section shown in A; no quantitative/statistical data are presented that would require replicate reporting."
     },
     {
       "panel_label": "C",
@@ -31,36 +31,34 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel shows spatial expression maps for individual mRNAs overlaid on the same single tissue section; no quantification or statistics across replicates is presented."
+      "explanation": "This panel shows representative H&E and spatial mRNA-expression maps from the same single section; it is descriptive/representative imaging, not a summary statistic requiring replicate reporting."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Gene set enrichment analysis (GSEA) from T11b-high versus low squamous tumors (S1&S2 versus S3) with normalized enrichment scores (NES), false discovery rate (FDR) and P values for the indicated gene signatures.",
         "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme.",
-        "statistical significance was determined by bootstrapping with 1000 permutations."
+        "Gene sets were evaluated based on the default normalized enrichment score method, and statistical significance was determined by bootstrapping with 1000 permutations."
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "GSEA statistically compares T11b-high (S1&S2) versus T11b-low (S3) tumor regions with NES/FDR/P values, implying replicated observations (e.g., spatial spots and/or biological samples) underlying the ranked gene list, but the caption never states how many spots, sections, or animals contributed to each group, nor the type of replicate compared."
+      "explanation": "This panel reports NES, FDR and P values from a GSEA comparison of T11b-high (S1&S2) versus T11b-low (S3) squamous tumor regions, i.e., a statistical comparison. The caption describes the permutation method (1000 permutations) used to compute significance but does not state the number of underlying observations/spots being compared per group (S1, S2, S3) or clarify what constitutes a replicate/sample in this analysis, so neither the n-number nor the replicate type is reported."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Bar graph representing top squamous genes/oncogenes from differential gene expression (DEG) analysis of Tmprss11b-high versus low LUSC spatial transcriptomics data.",
-        "Differential gene expression was calculated using Seurat's FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat's FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction."
+        "Differential gene expression was calculated using Seurat’s FindAllMarkers function, and direct comparisons between two classes and corresponding P values were obtained using Seurat’s FindMarkers function with the Wilcoxon rank-sum test with Bonferroni P value correction."
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The DEG bar graph reports fold changes and Wilcoxon-test-derived P values between Tmprss11b-high and -low groups, implying a statistically compared set of replicated measurements (e.g., number of spatial spots per group), but the caption does not state the number or type of replicates (spots, sections, or animals) used in the comparison."
+      "explanation": "The bar graph reports fold changes and p-values from a Wilcoxon rank-sum test comparing Tmprss11b-high versus low LUSC spatial transcriptomics data, which is a statistical comparison requiring a defined sample size. The caption names the statistical test but does not report how many spots/observations were compared in each group, nor what type of replicate (e.g., spots, regions, sections) these represent."
     }
   ]
 }

@@ -11,7 +11,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "This panel is a conservation logo built from an alignment of 120 distinct homologous protein sequences, not repeated experimental measurements/replicates, so replicate reporting does not apply."
+      "explanation": "This panel is a sequence conservation logo built from a set of distinct protein sequences (n=120), not from replicated experimental observations (biological/technical replicates); replicate reporting is not applicable here."
     },
     {
       "panel_label": "B",
@@ -25,26 +25,23 @@
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "FAIL",
-      "explanation": "The type of replicate (biological replicates) is named, but the exact number of replicates for panel B is not stated in the legend itself; it is deferred to a supplementary table (Table EV6) that is not part of the figure."
+      "explanation": "The panel presents mean ± SEM derived from biological replicates (with individual dots shown), and the replicate type is named, but the actual number of replicates is not stated in the figure legend itself; the caption only refers readers to Table EV6 for that number."
     },
     {
       "panel_label": "C",
       "involves_replicates": "unclear",
-      "replicate_statements": [
-        "Epifluorescence microscopy images of live M. smegmatis strains carrying a genome-integrative vector expressing the indicated M. tuberculosis genes under the control of their native promoter, cultivated with or without 100 nM CdSO4. Insets represent enlarged regions indicated by arrows."
-      ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The caption gives no indication of whether these representative images derive from repeated (biological or technical) experiments, nor any number of replicates/cells shown."
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Panel C shows representative live-cell epifluorescence images without any quantification, averaging, or explicit statement claiming the images represent a specific number of replicate experiments/cells, so no replicate-number reporting is required for this qualitative image panel."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Mean fluorescence intensity (gray values) quantified in ImageJ from 8-bit grayscale images of cells of the indicated strains.",
         "Results are shown as means ± SEM from individual cells, represented by yellow or blue dots.",
         "Exact p values and biological replicate numbers presented in this figure are reported in Table EV6."
       ],
@@ -53,13 +50,14 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "The unit of replication (individual cells) is named, but no numeric count of cells or of underlying biological replicates is given in the legend; the exact numbers are only said to be in Table EV6, not shown here."
+      "explanation": "The panel reports means ± SEM based on individual cells, and the replicate unit (cells) is named, but no explicit number of cells/replicates quantified is stated in the legend; the reader is only pointed to Table EV6 for that information."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Results are shown as means ± SEM from individual cells, represented by yellow or blue dots.",
+        "Statistical analyses were conducted on ln-transformed data for (E).",
         "Exact p values and biological replicate numbers presented in this figure are reported in Table EV6."
       ],
       "n_reported": "no",
@@ -67,7 +65,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells",
       "decision": "FAIL",
-      "explanation": "As with panel D, the replicate unit (individual cells) is named but no exact number is stated in the legend; the number is only referenced as being available in Table EV6."
+      "explanation": "As with panel D, means ± SEM are computed from individual cells and the replicate type is named, but no explicit number of cells/replicates is given in the caption itself, only a reference to Table EV6."
     },
     {
       "panel_label": "F",
@@ -75,18 +73,17 @@
       "replicate_statements": [
         "Representative images are shown from dozens of analyzed cells."
       ],
-      "n_reported": "no",
+      "n_reported": "yes",
       "n_value_min": "not_reported",
       "replicate_type_reported": "yes",
-      "replicate_type": "analyzed cells",
-      "decision": "FAIL",
-      "explanation": "The legend names the replicate unit (analyzed cells) but only gives a vague quantity (\"dozens\") rather than an exact number of cells or independent experiments."
+      "replicate_type": "individual M. smegmatis cells (dozens analyzed)",
+      "decision": "PASS",
+      "explanation": "The caption states that the representative super-resolution images derive from dozens of analyzed cells, providing both the type of replicate (cells) and an approximate quantity, which is sufficient for a qualitative representative-image panel."
     },
     {
       "panel_label": "G",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of (G) the number of PacL2 clusters per cell ... determined via cluster segmentation of single-molecule localizations using the PoCA software platform.",
         "Results are presented as means ± SEM from individual cells (G, I) or individual clusters (H), represented by gray dots, pooled from n = 3 independent biological replicates."
       ],
       "n_reported": "yes",
@@ -94,13 +91,12 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "Both the data-point unit (individual cells) and the number/type of underlying biological replicates (n = 3 independent biological replicates) are explicitly stated."
+      "explanation": "The caption explicitly states that the plotted individual-cell data (dots) were pooled from n = 3 independent biological replicates, clearly reporting both the number and type of replicates."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of ... (H) cluster sizes ... determined via cluster segmentation of single-molecule localizations using the PoCA software platform.",
         "Results are presented as means ± SEM from individual cells (G, I) or individual clusters (H), represented by gray dots, pooled from n = 3 independent biological replicates."
       ],
       "n_reported": "yes",
@@ -108,13 +104,12 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual clusters pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "The data-point unit (individual clusters) and the number/type of biological replicates (n = 3 independent biological replicates) are both clearly stated."
+      "explanation": "The caption explicitly states that cluster-size data (dots) were pooled from n = 3 independent biological replicates, clearly reporting both the number and type of replicates."
     },
     {
       "panel_label": "I",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of ... (I) the proportion of molecules localized within a cluster per cell, determined via cluster segmentation of single-molecule localizations using the PoCA software platform.",
         "Results are presented as means ± SEM from individual cells (G, I) or individual clusters (H), represented by gray dots, pooled from n = 3 independent biological replicates."
       ],
       "n_reported": "yes",
@@ -122,7 +117,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "individual cells pooled from n = 3 independent biological replicates",
       "decision": "PASS",
-      "explanation": "The data-point unit (individual cells) and the number/type of biological replicates (n = 3 independent biological replicates) are both clearly stated."
+      "explanation": "The caption explicitly states that the plotted individual-cell data (dots) were pooled from n = 3 independent biological replicates, clearly reporting both the number and type of replicates."
     }
   ]
 }

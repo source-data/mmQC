@@ -11,90 +11,75 @@
       "replicate_type_reported": "yes",
       "replicate_type": "samples represented as individual measurements",
       "decision": "PASS",
-      "explanation": "The panel reports both the number (n=141) and the type (individual sample measurements across cell line models) of data points shown."
+      "explanation": "Panel shows individual data points (not averages), and the total number and type ('samples') are explicitly reported."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Data represents the mean ± s.d. of 6 samples per reporter (n = 2 biological replicates á technical triplicates or duplicates [HCC1806 Per2-Luc, n = 5]).",
-        "n = 3 for MCF10A and MDAMB468-Per2-Luc (single experiment)."
+        "Data represents the mean ± s.d. of 6 samples per reporter (n = 2 biological replicates á technical triplicates or duplicates [HCC1806 Per2-Luc, n = 5])",
+        "n = 3 for MCF10A and MDAMB468-Per2-Luc (single experiment)"
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates á technical triplicates or duplicates",
       "decision": "PASS",
-      "explanation": "Both the n-numbers (6, with exceptions of 5 and 3) and the replicate structure (2 biological replicates x technical triplicate/duplicate) are explicitly stated, meeting reporting requirements for a mean±SD plot."
+      "explanation": "Error bars (mean ± s.d.) are shown, and both the number of replicates (n = 3–6) and their type (biological × technical replicates) are explicitly reported; the minimum reported n (3) exceeds 2."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
         "n = 1–4 cell lines models per subtype, see legends of (A) and (B) for exact numbers",
-        "Before calculating subtype averages, all available replicates per cell model were averaged (n = 3–6, see (B) for exact numbers) and used as input."
+        "Before calculating subtype averages, all available replicates per cell model were averaged (n = 3–6, see (B) for exact numbers) and used as input"
       ],
       "n_reported": "yes",
       "n_value_min": 1,
       "replicate_type_reported": "yes",
-      "replicate_type": "cell line models per subtype (averaged from n = 3–6 replicates per cell model)",
+      "replicate_type": "cell line models per subtype",
       "decision": "FAIL",
-      "explanation": "Although n and replicate type are stated, the panel shows subtype-averaged density/summary distributions where some subtypes are based on only n = 1 cell line model, too low to justify a summary distribution representation."
+      "explanation": "The subtype-averaged normal distributions are summary statistics, but the caption states that some subtypes are based on as few as n = 1 cell line model, which is below the minimum of >2 required for reporting averaged/summary data."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 4–12 samples per cell line (see (B) for exact numbers)."
+        "n = 4–12 samples per cell line (see (B) for exact numbers)"
       ],
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "yes",
       "replicate_type": "samples per cell line",
       "decision": "PASS",
-      "explanation": "The boxplot panel reports the n-range (4-12) and the replicate type (samples per cell line, cross-referenced to panel B), with n above the minimum threshold for summary statistics."
+      "explanation": "Boxplot summary statistics are shown with the number (n = 4–12) and type (samples per cell line) of replicates explicitly reported; minimum n exceeds 2."
     },
     {
       "panel_label": "E",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "The number n of Bmal1-Per2-combinations per cell line is indicated next to the cell line name.",
-        "HCC1143 (n=36)",
-        "HCC1937 (n=30)",
-        "HCC38 (n=16)",
-        "MDAMB468 (n=18)",
-        "HCC1806 (n=15)",
-        "HCC70 (n=15)",
-        "SUM149PT (n=3)",
-        "BT549 (n=15)",
-        "CAL51 (n=27)",
-        "MDAMB231 (n=8)",
-        "MDAMB436 (n=15)",
-        "HCC1428 (n=6)",
-        "MCF7 (n=25)",
-        "T47D (n=36)",
-        "U2OS (n=36)",
-        "MCF10A (n=9)"
+        "The number n of Bmal1-Per2-combinations per cell line is indicated next to the cell line name",
+        "HCC1143 (n=36), HCC1937 (n=30), HCC38 (n=16), MDAMB468 (n=18), HCC1806 (n=15), HCC70 (n=15), SUM149PT (n=3), BT549 (n=15), CAL51 (n=27), MDAMB231 (n=8), MDAMB436 (n=15), HCC1428 (n=6), MCF7 (n=25), T47D (n=36), U2OS (n=36), MCF10A (n=9)"
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
       "replicate_type": "Bmal1-Per2-combinations per cell line",
       "decision": "PASS",
-      "explanation": "Explicit per-cell-line n-values and their replicate type (Bmal1-Per2 combinations) are provided directly on the panel; the lowest value (n=3, SUM149PT) is above the minimum threshold for a polar histogram summary."
+      "explanation": "Averaged polar histograms report both the number and type (Bmal1-Per2 combinations) of replicates per cell line; the lowest reported n (3) exceeds 2."
     },
     {
       "panel_label": "F",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 1–4 cell line models, see legends of (E) for exact numbers"
+        "n = 1–4 cell line models, see (E) for exact numbers"
       ],
       "n_reported": "yes",
       "n_value_min": 1,
       "replicate_type_reported": "yes",
-      "replicate_type": "cell line models (averaged, see panel E for per-cell-line n)",
+      "replicate_type": "cell line models per subtype",
       "decision": "FAIL",
-      "explanation": "The subtype-averaged polar histogram is a summary representation, but some subtypes are averaged from as little as n = 1 cell line model, too low to support the summary shown."
+      "explanation": "The subtype-averaged polar histogram is a summary statistic, but at least one subtype is based on only n = 1 cell line model, below the required minimum of >2 for averaged data."
     },
     {
       "panel_label": "G",
@@ -105,21 +90,20 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel is a representative illustrative example of the exponential decay sinusoidal fitting model, with no quantification or replicated data requiring reporting."
+      "explanation": "Panel is an illustrative example of a single fitted signal, not quantified or replicated data requiring replicate reporting."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "n = 117 samples",
-        "Error bars represent the standard deviation of the fitted parameters, reflecting their uncertainty as determined by the fitting process."
+        "n = 117 samples"
       ],
       "n_reported": "yes",
       "n_value_min": 117,
       "replicate_type_reported": "yes",
-      "replicate_type": "samples (individual fitted measurements)",
+      "replicate_type": "samples",
       "decision": "PASS",
-      "explanation": "The panel states the total number of samples (n=117) and clarifies that error bars reflect fitting uncertainty rather than biological/technical replicate variance, meeting reporting requirements."
+      "explanation": "Panel shows individual sample-level data points with error bars reflecting fit uncertainty (not replicate averaging); the total number and type of samples are explicitly reported."
     }
   ]
 }

@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a representative spatial-transcriptomics cluster image from a single lung section with no quantification, error bars, or statistical test; no replicate reporting is required."
+      "explanation": "Panel A shows a representative spatial transcriptomic cluster map from a single lung section with no quantification, averaging, or statistical comparison, so replicate reporting is not applicable."
     },
     {
       "panel_label": "B",
@@ -20,7 +20,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel B shows a representative H&E image with manual region annotation (single section); no quantification or statistics are presented, so replicate reporting is not applicable."
+      "explanation": "Panel B is a representative H&E image with manual region annotation from the same single section; no quantitative or statistical data requiring replicate reporting is shown."
     },
     {
       "panel_label": "C",
@@ -31,14 +31,13 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel C shows representative H&E and spatial mRNA expression maps from a single annotated section without quantification or statistical comparison; no replicate reporting needed."
+      "explanation": "Panel C shows representative spatial expression maps overlaid on the H&E image from the same single section; it is descriptive/representative rather than a quantitative summary requiring replicate information."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Gene set enrichment analysis (GSEA) from T11b-high versus low squamous tumors (S1&S2 versus S3) with normalized enrichment scores (NES), false discovery rate (FDR) and P values for the indicated gene signatures.",
-        "The nominal P and FDR values were obtained from the \"GSEA Preranked\" tool (from Broad Institute) using a weighted scoring scheme.",
         "statistical significance was determined by bootstrapping with 1000 permutations"
       ],
       "n_reported": "no",
@@ -46,7 +45,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel D reports NES, FDR and P values from a GSEA comparison, which requires replicate information, but the legend only describes the permutation parameter of the statistical test (1000 permutations) without stating how many biological/technical replicates (e.g., sections, animals, or spots per group) underlie the T11b-high vs -low comparison, nor their type."
+      "explanation": "This panel reports statistical significance (NES, FDR, P values) comparing T11b-high vs low regions, which implies replicated observations (e.g., spots/samples), but the caption does not state how many replicates/units were compared or what they represent (e.g., number of spots, sections, or animals)."
     },
     {
       "panel_label": "E",
@@ -59,7 +58,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel E presents a bar graph with P values from a statistical comparison (Wilcoxon rank-sum test) of Tmprss11b-high vs -low LUSC spots, but the legend does not state the number of replicates (e.g., spots, sections, or animals) compared in each group, nor explicitly names their type."
+      "explanation": "The bar graph presents log2 fold-change values with associated P values from a statistical comparison (Wilcoxon rank-sum test) between Tmprss11b-high and low tumor regions, but the number and type of underlying replicates/units (e.g., number of spots or samples per group) are not reported."
     }
   ]
 }

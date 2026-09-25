@@ -3,13 +3,15 @@
     {
       "panel_label": "A",
       "involves_replicates": "unclear",
-      "replicate_statements": [],
+      "replicate_statements": [
+        "H&E image of the lung section from 3 A), annotated with regions of LUSC and LUAD, (left) and corresponding spatial plots depicting the distribution of the indicated mRNAs."
+      ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel A shows an H&E image and spatial transcriptomic plots from a single lung section (referenced from Fig. 3A). No statement is given as to whether this section/mouse is representative of a larger set of replicates, nor how many sections or animals were analyzed, so replicate number and type cannot be determined from the caption."
+      "explanation": "The panel shows a single H&E-annotated lung section and corresponding spatial transcriptomics plots, but the caption does not state how many sections/animals this image is representative of, nor what kind of replicate (biological/technical) underlies it."
     },
     {
       "panel_label": "B",
@@ -20,36 +22,36 @@
       "n_reported": "yes",
       "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (different mice)",
+      "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly states the RNAscope staining was repeated in lung sections from 2-3 different mice, reported as biological replicates."
+      "explanation": "The caption explicitly states the number (n = 2–3) and type (biological replicates, different mice) of replicates used for the RNAscope/H&E staining shown."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC..."
+        "Tmprss11b transcript abundance in LUSC patient tumors (n = 500) relative to LUAD tumors (n = 512) (data obtained from TCGA-GDC ...)."
       ],
       "n_reported": "yes",
       "n_value_min": 500,
       "replicate_type_reported": "yes",
-      "replicate_type": "patient tumor samples (LUSC n=500, LUAD n=512) from TCGA-GDC dataset",
+      "replicate_type": "patient tumors (LUSC n=500, LUAD n=512)",
       "decision": "PASS",
-      "explanation": "The number of patient tumor samples analyzed for each group (LUSC n=500, LUAD n=512) is clearly stated, along with the type of replicate (independent patient tumor samples)."
+      "explanation": "The caption reports both the number and the type (patient tumor samples) of the underlying observations for each group plotted."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Plot represents mean ± SD; n = 3 (technical replicates) per group",
+        "Plot represents mean ± SD; n = 3 (technical replicates) per group, ****P < 0.0001.",
         "The experiment was repeated two times to confirm the observations."
       ],
       "n_reported": "yes",
       "n_value_min": 3,
       "replicate_type_reported": "yes",
-      "replicate_type": "technical replicates (n=3), with the whole experiment repeated two independent times",
+      "replicate_type": "technical replicates (n = 3 per group), experiment repeated two independent times",
       "decision": "PASS",
-      "explanation": "The caption reports n = 3 technical replicates per group for the qRT-PCR data and additionally notes the experiment was independently repeated two times, covering both replicate number and type."
+      "explanation": "The caption states the number (n = 3) and type (technical replicates) of replicates plotted, and additionally notes the experiment was repeated twice independently."
     }
   ]
 }

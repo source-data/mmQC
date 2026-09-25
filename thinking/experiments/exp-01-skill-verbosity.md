@@ -225,3 +225,111 @@ refinement is in interpretation, and only in one direction — it makes a
 
 This is a limitation of the measurement, not of the run, and more sessions
 would not fix it.
+
+---
+
+## Addendum, 2026-09-24: two checks rebuilt and re-run
+
+**The preregistered hypothesis and decision criteria above are unchanged and
+stand as written.** This records a defect in how two of the eleven *arms* were
+built, found after the run, and the correction made to it. No threshold moved,
+no endpoint changed, and nothing here was decided by looking at a result.
+
+### What was wrong
+
+`plot-gap-labeling` and `replication-reporting` were converted from prompts
+written as **pseudocode rather than narrative**:
+
+```
+IF panel is not a quantitative plot:
+    SET is_a_plot = "no"
+    SET tick_sequence_anomaly = "not_applicable"
+    ...
+    CONTINUE to next panel
+```
+
+24 such lines in `plot-gap-labeling`'s `v1`, 30 in `replication-reporting`'s,
+each under a `## Logic` heading. Both files also carried example headings whose
+JSON blocks were **empty** — 4 of 4 and 3 of 3 — so the skill announced worked
+examples and then showed none.
+
+This is a defect in constructing the **detailed** arm. exp-01 contrasts a skill
+that spells out its procedure against one that states only what it is for. A
+`v1` that is a register error is not the thing the hypothesis names, so the
+contrast it produced was not the contrast this note preregistered — for these
+two checks only.
+
+It is worth being precise about what the error was **not**. Both checks were
+converted from the version `production.json` pins, so this was not a
+wrong-version mistake; the pinned prompts are themselves the pseudocode ones.
+Nine of the eleven checks are unaffected, and a check of all eleven found no
+other `v1` with empty example blocks.
+
+### What changed
+
+| check | was | now |
+|---|---|---|
+| `plot-gap-labeling` | prompt.1, pseudocode | **prompt.2, narrative** |
+| `replication-reporting` | prompt.3, pseudocode | **prompt.1, narrative** |
+
+The inline JSON block was removed from both: the schema is enforced as
+structured output, so an inline example is a second and unenforced statement of
+the same contract. `v2` was re-truncated from the new `v1` in each case, so the
+arms stay nested — `v2` is a prefix of `v1`, as the design requires, and the
+frontmatter stays identical between them.
+
+### Choosing narrative over the pinned prompt is deliberate
+
+Neither new source is the production pin. That is a choice, not an oversight,
+and it is made with the next experiment in view.
+
+The work that follows decomposes these prompts into a DAG of shared skills —
+panel identification, panel classification, and a check-specific remainder.
+**Prose can be cut at its seams.** A paragraph that explains how to find the
+panels of a figure can be lifted into a skill of its own, called from where it
+used to sit, and read by a model as the same instruction in a different place.
+
+**Pseudocode cannot be cut that way.** `IF ... SET is_a_plot = "no"` binds a
+control-flow step to a field assignment in one indivisible line; moving the
+panel-finding half into a shared skill leaves a fragment that assigns to a
+field the shared skill does not own, and a remainder that branches on a
+variable nothing set. The decomposition the next experiment measures would not
+be expressible, and any result would be about the mangling rather than about
+the split.
+
+So the register is not cosmetic here. Narrative prose is a precondition for the
+question the next experiment asks, and these two checks are being brought to
+the same footing as the other nine before that question is put.
+
+### What was re-run
+
+Both arms of both checks, three replicates: **456 sessions**. The other nine
+checks were not re-run, and their predictions remain the ones frozen at
+`7a816e5e`.
+
+### One consequence to read beside the result
+
+The narrative prompts name **fewer schema fields** than the pseudocode they
+replace. `replication-reporting`'s new `v1` no longer names `decision`,
+`n_reported` or `replicate_type_reported`, describing those judgements in words
+instead ("Return `PASS` if …", "mark the number as not reported").
+
+That follows from the register rather than from carelessness: pseudocode
+assigns to fields by name, prose describes the judgement. The schema still
+enforces all nine fields, so the model must fill them — but it now has to infer
+which sentence governs which field. `n_reported` is the field to watch, being
+the second-noisiest property the replicate exploration measured. It is recorded
+here rather than corrected, because naming fields in brackets would partly undo
+the register change this correction exists to make.
+
+`plot-gap-labeling` has no such consequence: its field coverage is identical
+before and after, at five of six, with `panel_label` named in neither.
+
+### Also found, and not repaired: `stat-test`
+
+The same audit found that `stat-test`'s `v1` was built from prompt.1 while
+`production.json` pins prompt.3, and that the two are structurally different
+documents rather than revisions of one another. This is **not** a register
+defect — prompt.1 there is narrative — so that arm was left exactly as it ran.
+It is recorded because a reader is entitled to know that the detailed arm is
+not uniformly "the production prompt" across all eleven checks.

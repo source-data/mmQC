@@ -9,7 +9,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A is a schematic workflow diagram illustrating the experimental pipeline; it does not present quantitative or replicated data, so replicate reporting is not applicable."
+      "explanation": "Panel A is a schematic of the experimental workflow, not quantitative replicated data."
     },
     {
       "panel_label": "B",
@@ -20,35 +20,35 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel B shows representative fluorescence, H&E, and bright-field images used to illustrate the LMD region selection, without quantification, so replicate reporting is not required."
+      "explanation": "Panel B shows representative fluorescence, H&E, and bright-field images with no quantification or statistics, so replicate reporting is not required."
     },
     {
       "panel_label": "C",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of lactate concentration (pg/μm2) in SNL lung tissues; normal, LUADs and LUSCs (n = 7–11 regions per group from a total of 2 mice, biological replicates).",
-        "Ordinary one-way ANOVA with Dunnett’s multiple comparisons test was used for the statistical analysis, P = 0.0057."
+        "n = 7–11 regions per group from a total of 2 mice, biological replicates",
+        "Ordinary one-way ANOVA with Dunnett's multiple comparisons test was used for the statistical analysis, P = 0.0057"
       ],
       "n_reported": "yes",
-      "n_value_min": 7,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (n = 7–11 regions per group from a total of 2 mice)",
-      "decision": "PASS",
-      "explanation": "The caption reports both the n-number (7–11 regions per group) and the replicate type (biological replicates, from a total of 2 mice), satisfying the reporting requirements for this quantified, statistically tested bar plot."
+      "replicate_type": "biological replicates (regions from a total of 2 mice)",
+      "decision": "FAIL",
+      "explanation": "The panel shows means with 95% CI and an ANOVA statistical test, but the data are explicitly stated to derive from a total of only 2 mice (biological replicates), with 7-11 regions per group sampled from those animals. Since the true biological replicate n is 2, which is at or below the threshold of >2 required for summary statistics/statistical tests, this panel fails the check despite the higher region-level n."
     },
     {
       "panel_label": "D",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Quantification of lactate concentration (pg/μm2) in the regions of low acidity (high pH) and high acidity (low pH), in the SNL lung tissues (n = 12–20 regions per group from a total of two mice, biological replicates).",
-        "Ordinary one-way ANOVA with Dunnett’s multiple comparisons test was used for the statistical analysis, P = 0.0013."
+        "n = 12–20 regions per group from a total of two mice, biological replicates",
+        "Ordinary one-way ANOVA with Dunnett's multiple comparisons test was used for the statistical analysis, P = 0.0013"
       ],
       "n_reported": "yes",
-      "n_value_min": 12,
+      "n_value_min": 2,
       "replicate_type_reported": "yes",
-      "replicate_type": "biological replicates (n = 12–20 regions per group from a total of two mice)",
-      "decision": "PASS",
-      "explanation": "The caption reports both the n-number (12–20 regions per group) and the replicate type (biological replicates, from a total of two mice), satisfying the reporting requirements for this quantified, statistically tested bar plot."
+      "replicate_type": "biological replicates (regions from a total of two mice)",
+      "decision": "FAIL",
+      "explanation": "Means with 95% CI and a statistical test are shown, but the underlying biological replicate count is only 2 mice, even though 12-20 regions per group were sampled from those animals. With n=2 for the actual biological replicate, this falls at or below the >2 threshold required when presenting summary statistics/statistical tests."
     },
     {
       "panel_label": "E",
@@ -59,7 +59,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel E is a schematic/model diagram summarizing the proposed immunosuppressive niche; it does not present replicated experimental data."
+      "explanation": "Panel E is a schematic/model diagram summarizing the proposed immunosuppressive niche, not quantitative replicated data."
     }
   ]
 }

@@ -9,33 +9,29 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Schematic illustration of corneal anatomy; no experimental data or replicates involved."
+      "explanation": "Schematic illustration of corneal anatomy (Ep/St/En); no experimental data or replicates are involved, so replicate reporting does not apply."
     },
     {
       "panel_label": "B",
-      "involves_replicates": "unclear",
-      "replicate_statements": [
-        "The mRNA microarray dataset GSE241715 from the GEO database was used in the comparison."
-      ],
+      "involves_replicates": "no",
+      "replicate_statements": [],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Venn diagram summarizes gene-overlap counts derived from a publicly deposited microarray dataset (accession given); it does not display individual replicate-level values requiring n-reporting in this legend."
+      "explanation": "Venn diagram of differentially expressed gene counts derived from a publicly deposited microarray dataset (GSE241715); it is a bioinformatic comparison, not a new replicated experiment requiring an n statement in this legend."
     },
     {
       "panel_label": "C",
-      "involves_replicates": "yes",
-      "replicate_statements": [
-        "Heatmap showing genes differentially regulated in the centrosome (P < 0.05, log2foldchange > +1)."
-      ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "The heatmap displays multiple sample columns per disease group (implying multiple biological samples from the GSE241715 dataset), but the caption does not state how many samples/replicates are shown per group or what they represent."
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "not_applicable",
+      "decision": "PASS",
+      "explanation": "Heatmap of centrosome-related genes derived from the same public microarray dataset (GSE241715); this is a re-analysis of existing deposited data, not a new experiment requiring replicate reporting here."
     },
     {
       "panel_label": "D",
@@ -48,7 +44,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Described as 'representative,' implying observations were made across multiple mice, but no number of animals or experiments is given."
+      "explanation": "The panel is described as \"representative,\" implying multiple animals/experiments were examined, but the caption never states how many animals or experiments the image represents."
     },
     {
       "panel_label": "E",
@@ -61,10 +57,10 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Histology images from an animal experiment; no number of animals/sections or independent experiments is reported."
+      "explanation": "H&E images are shown without any statement of the number of animals or sections examined, so replicate number and type are not reported."
     },
     {
-      "panel_label": "F",
+      "panel_label": "F, G",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Immunoblotting (F) and quantification (G, n = 3 independent experiments) showing the level of HDAC6 in corneas from healthy and BK (P. aeruginosa) mice."
@@ -74,20 +70,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "independent experiments",
       "decision": "PASS",
-      "explanation": "Representative blot (F) is explicitly paired in the caption with its quantification (G), which reports n = 3 independent experiments, covering both panels."
-    },
-    {
-      "panel_label": "G",
-      "involves_replicates": "yes",
-      "replicate_statements": [
-        "quantification (G, n = 3 independent experiments) showing the level of HDAC6..."
-      ],
-      "n_reported": "yes",
-      "n_value_min": 3,
-      "replicate_type_reported": "yes",
-      "replicate_type": "independent experiments",
-      "decision": "PASS",
-      "explanation": "Number and type of replicates (n = 3 independent experiments) are explicitly stated."
+      "explanation": "The quantification in G explicitly reports n = 3 independent experiments, which also covers the representative blot shown in F; both number and type of replicate are stated."
     },
     {
       "panel_label": "H",
@@ -100,62 +83,36 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Standalone immunoblot validating overexpression; no accompanying quantification and no stated number/type of replicates."
+      "explanation": "A single, unquantified immunoblot is shown with no accompanying statement of the number of animals or independent experiments performed."
     },
     {
-      "panel_label": "I",
+      "panel_label": "I, J",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "H&E staining images (I) and quantification of the thickness of the epithelium (J, n = 30 images from three independent experiments) from control or HDAC6 adenovirus-injected mice."
+        "quantification of the thickness of the epithelium (J, n = 30 images from three independent experiments) from control or HDAC6 adenovirus-injected mice."
       ],
       "n_reported": "yes",
       "n_value_min": 30,
       "replicate_type_reported": "yes",
       "replicate_type": "images from three independent experiments",
       "decision": "PASS",
-      "explanation": "Representative images (I) are paired with quantification (J), which reports n = 30 images from three independent experiments."
+      "explanation": "The legend explicitly reports n = 30 images from three independent experiments, providing both the count and the type of replicate for the paired H&E images (I) and quantification (J)."
     },
     {
-      "panel_label": "J",
+      "panel_label": "K, L",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "quantification of the thickness of the epithelium (J, n = 30 images from three independent experiments)"
-      ],
-      "n_reported": "yes",
-      "n_value_min": 30,
-      "replicate_type_reported": "yes",
-      "replicate_type": "images from three independent experiments",
-      "decision": "PASS",
-      "explanation": "Number and type of replicates explicitly stated (30 images from three independent experiments)."
-    },
-    {
-      "panel_label": "K",
-      "involves_replicates": "yes",
-      "replicate_statements": [
-        "Immunofluorescence images (K) and quantification of the ZO-1 junctional signals (L, n = 60 cells from three independent experiments) of the cornea from control or HDAC6 adenovirus-injected mice."
+        "quantification of the ZO-1 junctional signals (L, n = 60 cells from three independent experiments) of the cornea from control or HDAC6 adenovirus-injected mice"
       ],
       "n_reported": "yes",
       "n_value_min": 60,
       "replicate_type_reported": "yes",
       "replicate_type": "cells from three independent experiments",
       "decision": "PASS",
-      "explanation": "Representative IF images (K) are paired with quantification (L), which reports n = 60 cells from three independent experiments."
+      "explanation": "The legend states n = 60 cells from three independent experiments, giving a clear replicate count and type for the immunofluorescence images (K) and their quantification (L)."
     },
     {
-      "panel_label": "L",
-      "involves_replicates": "yes",
-      "replicate_statements": [
-        "quantification of the ZO-1 junctional signals (L, n = 60 cells from three independent experiments)"
-      ],
-      "n_reported": "yes",
-      "n_value_min": 60,
-      "replicate_type_reported": "yes",
-      "replicate_type": "cells from three independent experiments",
-      "decision": "PASS",
-      "explanation": "Number and type of replicates explicitly stated (60 cells from three independent experiments)."
-    },
-    {
-      "panel_label": "M",
+      "panel_label": "M, N",
       "involves_replicates": "yes",
       "replicate_statements": [
         "Transmission electron microscopy images of the longitudinal sections of corneal epithelial cells (M) and cell junctions at the base of the corneal epithelium (N) in control and HDAC6 adenovirus-injected mice."
@@ -165,20 +122,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "TEM images from an animal experiment presented without any stated number of animals, sections, or independent experiments."
-    },
-    {
-      "panel_label": "N",
-      "involves_replicates": "yes",
-      "replicate_statements": [
-        "Transmission electron microscopy images of the longitudinal sections of corneal epithelial cells (M) and cell junctions at the base of the corneal epithelium (N) in control and HDAC6 adenovirus-injected mice."
-      ],
-      "n_reported": "no",
-      "n_value_min": "not_reported",
-      "replicate_type_reported": "no",
-      "replicate_type": "not_reported",
-      "decision": "FAIL",
-      "explanation": "TEM images presented without any stated number/type of replicates."
+      "explanation": "No quantification is provided and the caption gives no information on the number of animals, sections, or independent experiments imaged by TEM."
     },
     {
       "panel_label": "O",
@@ -189,7 +133,7 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Schematic illustration; no experimental data or replicates involved."
+      "explanation": "Schematic illustration of basal cell junctions; no experimental replicates are involved."
     },
     {
       "panel_label": "P",
@@ -202,21 +146,10 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Histology images presented as a standalone panel with no accompanying quantification and no stated number/type of replicates."
+      "explanation": "This standalone image panel is described without any statement of the number of animals, sections, or experiments it represents, even though the images likely depict repeated observations."
     },
     {
-      "panel_label": "Q",
-      "involves_replicates": "no",
-      "replicate_statements": [],
-      "n_reported": "not_applicable",
-      "n_value_min": "not_applicable",
-      "replicate_type_reported": "not_applicable",
-      "replicate_type": "not_applicable",
-      "decision": "PASS",
-      "explanation": "Schematic illustration; no experimental data or replicates involved."
-    },
-    {
-      "panel_label": "R",
+      "panel_label": "Q, R",
       "involves_replicates": "yes",
       "replicate_statements": [
         "quantification (R, n = 15 mitotic cells from three independent experiments) of normal and misoriented cell division in the corneal epithelium from control or HDAC6 adenovirus-injected mice."
@@ -226,7 +159,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "mitotic cells from three independent experiments",
       "decision": "PASS",
-      "explanation": "Number and type of replicates explicitly stated (15 mitotic cells from three independent experiments)."
+      "explanation": "The legend explicitly reports n = 15 mitotic cells from three independent experiments, clearly stating both the replicate count and type for the schematic (Q) and quantification (R)."
     }
   ]
 }

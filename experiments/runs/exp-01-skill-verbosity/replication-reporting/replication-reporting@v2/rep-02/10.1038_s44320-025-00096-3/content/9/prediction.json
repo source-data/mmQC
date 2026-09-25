@@ -11,7 +11,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The IP-efficiency western blots (FT/E lanes per antibody) are presented as single images with no statement of how many times the IP/blot was performed or on how many animals/tissue samples, so it is unclear whether this represents a single experiment or replicated observations, and no n or replicate type is given."
+      "explanation": "The western blots showing IP efficiency for each antibody are presented as single blots/lanes with no statement of whether they are representative of multiple independent IP experiments. Neither the number nor the type of replicates underlying this antibody screen is reported."
     },
     {
       "panel_label": "B",
@@ -24,7 +24,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Bar values are shown without error bars or individual data points and without any stated number of replicate blots/experiments underlying each bar, so replication is neither indicated nor described."
+      "explanation": "Bars show densitometry values with no error bars, dots, or statement of how many independent blots/experiments were quantified or averaged. It is not possible to tell if this reflects a single measurement or replicated data, and no n or replicate type is given."
     },
     {
       "panel_label": "C",
@@ -36,12 +36,12 @@
       "n_value_min": 2,
       "replicate_type_reported": "yes",
       "replicate_type": "two biological replicates",
-      "decision": "PASS",
-      "explanation": "The caption explicitly states the heatmap values are the log2 average of two biological replicates per genotype/condition, giving both the number and type of replicate."
+      "decision": "FAIL",
+      "explanation": "The caption reports that heatmap values are averages of two biological replicates per condition. Both the number and type of replicate are stated, but an average/summary statistic based on only n=2 replicates is generally considered insufficient to reliably represent variability, so the panel fails on adequacy of replication even though it is reported."
     },
     {
       "panel_label": "D",
-      "involves_replicates": "yes",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "Violin plot of log2 enrichment ratio (HTT IP vs mIgG IP) distribution for proteins co-isolated with HTT Q20 or Q140 from the striatum (8 weeks) using antibodies EPR5526, 2B7-4C9 pair, 4E10-3E10 pair, and D7F7."
       ],
@@ -50,7 +50,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The violin plots show distributions of enrichment ratios but the legend does not state how many biological/technical replicates underlie each value (unlike panel C or E, no n or replicate type is given for this panel)."
+      "explanation": "The violin plots summarize enrichment-ratio distributions per condition, implying an underlying set of replicate IP-MS measurements, but the caption does not state how many biological or technical replicates were used to compute each protein's enrichment ratio for this striatal comparison."
     },
     {
       "panel_label": "E",
@@ -61,26 +61,24 @@
       "n_reported": "yes",
       "n_value_min": 4,
       "replicate_type_reported": "yes",
-      "replicate_type": "n = 4 (individual 8-week-old mice), mean ± SD",
+      "replicate_type": "n = 4 independent IPs from 8-week-old mouse striatum (biological replicates)",
       "decision": "PASS",
-      "explanation": "The legend explicitly states n = 4 with mean ± SD, and the surrounding text (IPs from striatum of 8 weeks old mice) clarifies that the replicates are individual mice."
+      "explanation": "The caption explicitly states n = 4 with mean ± SD, and identifies the biological source (striatum of 8-week-old mice) providing sufficient context on replicate number and type; individual data points are also shown in the plot."
     },
     {
       "panel_label": "F",
       "involves_replicates": "no",
-      "replicate_statements": [
-        "Sequence alignment of Htt N17, corresponding to the EPR5526 epitope region, and Synj1 (aa. 399–408). The predicted crystal structure (AlphaFold 2.0) is shown..."
-      ],
+      "replicate_statements": [],
       "n_reported": "not_applicable",
       "n_value_min": "not_applicable",
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "This panel is a sequence alignment and a computationally predicted structure (AlphaFold), not a measurement derived from experimental replicates, so replicate reporting does not apply."
+      "explanation": "This panel presents a sequence alignment and a single predicted (AlphaFold) structural model, not data derived from experimental replicates, so replicate reporting does not apply."
     },
     {
       "panel_label": "G",
-      "involves_replicates": "yes",
+      "involves_replicates": "unclear",
       "replicate_statements": [
         "Scatterplot comparisons of co-isolated (prey) protein log2 enrichment ratios (HTT vs mIgG IP) in Q20 vs Q140 for N-terminal (left) and Central (right) antibody sets."
       ],
@@ -89,20 +87,20 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "The scatterplots present enrichment ratios derived from IP-MS data, but the legend does not state the number or type of replicates used to compute each protein's ratio for this panel."
+      "explanation": "The enrichment ratios plotted here presumably derive from replicated IP-MS measurements, but the caption gives no number or type of replicates (e.g., biological replicates, mice) underlying each data point."
     },
     {
       "panel_label": "H",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "Scatterplot of log10 abundance (MS summed intensity) for HTT vs. HAP40 showing high correlation in all individual IP-MS experiments by tissue."
+        "Scatterplot comparisons of log10 abundance (MS summed intensity) for HTT vs. HAP40 showing high correlation in all individual IP-MS experiments by tissue."
       ],
       "n_reported": "no",
       "n_value_min": "not_reported",
       "replicate_type_reported": "yes",
-      "replicate_type": "individual IP-MS experiments",
+      "replicate_type": "individual IP-MS experiments (by tissue)",
       "decision": "FAIL",
-      "explanation": "The legend identifies the data points as individual IP-MS experiments (replicate type given) but never states how many such experiments/replicates are plotted per tissue, so the replicate number is missing."
+      "explanation": "The caption indicates each point represents an individual IP-MS experiment (replicate type given), but does not state how many such experiments/replicates are plotted per tissue or overall."
     },
     {
       "panel_label": "I",
@@ -115,7 +113,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Each point in the PCA plot presumably represents an individual IP-MS sample/replicate, but the legend does not state how many replicates/samples per antibody set and tissue are included."
+      "explanation": "The PCA plot contains many individual points implying multiple independent IP-MS experiments across tissues and antibody sets, but the caption does not report how many replicate experiments/samples are represented or their type."
     },
     {
       "panel_label": "J",
@@ -128,7 +126,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "As in panel I, individual points likely represent replicate samples, but the number and type of replicates per group are not stated anywhere in the legend."
+      "explanation": "As in panel I, this PCA plot shows multiple data points per condition (tissue x polyQ length x antibody set) implying replicate experiments, but no number or type of replicate is stated in the caption."
     }
   ]
 }

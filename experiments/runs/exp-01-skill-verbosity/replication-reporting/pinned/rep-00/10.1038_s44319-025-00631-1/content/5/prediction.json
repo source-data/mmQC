@@ -9,20 +9,21 @@
       "replicate_type_reported": "not_applicable",
       "replicate_type": "not_applicable",
       "decision": "PASS",
-      "explanation": "Panel A shows representative spatial deconvolution plots (one representative tissue section per group) without its own quantification or statistics; no replicate reporting is required for this representative image panel."
+      "explanation": "Panel A shows representative spatial deconvolution plots for a single LUSC and a single LUAD sample, illustrating spatial distribution of cell populations without averaged statistics. No replication is required for this representative display."
     },
     {
       "panel_label": "B",
       "involves_replicates": "yes",
       "replicate_statements": [
-        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis (T11b-high LUSC n = 344, LUAD n = 1148, biological replicates)"
+        "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates",
+        "A two-sided Mann–Whitney–Wilcoxon test was used for the statistical analysis"
       ],
       "n_reported": "yes",
       "n_value_min": 344,
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The caption explicitly reports the n-number for each group (n = 344 for LUSC, n = 1148 for LUAD) and states these represent biological replicates, satisfying the requirement."
+      "explanation": "The panel reports box plots with a statistical test, and the caption explicitly states the n-numbers (n = 344 and n = 1148) and identifies them as biological replicates, both well above the minimum threshold of 2."
     },
     {
       "panel_label": "C",
@@ -36,7 +37,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel C presents GSEA enrichment plots with NES, FDR and p-values (a statistical test), but the caption only describes the permutation-based statistical method and does not state the underlying number or type of biological/technical replicates for this comparison."
+      "explanation": "Panel C presents GSEA enrichment scores, NES, FDR, and P values comparing T11b-high LUSC vs LUAD spatial transcriptomics data, which is a statistical comparison based on underlying biological samples. However, the caption for this panel does not state how many biological samples/spots or independent datasets underlie the comparison, nor the replicate type; only permutation-based statistical methodology is described, which is not the same as reporting the number of biological replicates."
     },
     {
       "panel_label": "D",
@@ -49,7 +50,7 @@
       "replicate_type_reported": "no",
       "replicate_type": "not_reported",
       "decision": "FAIL",
-      "explanation": "Panel D reports p-values for differential gene expression between groups, but neither the number nor the type of replicates underlying this comparison (e.g., spots, sections, or animals) is stated in the caption for this panel."
+      "explanation": "Panel D shows a bar graph of log2 fold-change values with associated p-values from a differential gene expression analysis comparing two groups, but the caption does not state the number or type of biological/sample replicates underlying this comparison."
     },
     {
       "panel_label": "E",
@@ -62,7 +63,7 @@
       "replicate_type_reported": "yes",
       "replicate_type": "biological replicates",
       "decision": "PASS",
-      "explanation": "The caption states the staining was repeated in n = 3–4 mice, explicitly identified as biological replicates, which is sufficient for this representative-image panel."
+      "explanation": "Panel E shows representative H&E and IHC images without quantification, and the caption states the staining was repeated in n = 3–4 mice, explicitly identified as biological replicates, which is sufficient for representative image panels."
     }
   ]
 }
