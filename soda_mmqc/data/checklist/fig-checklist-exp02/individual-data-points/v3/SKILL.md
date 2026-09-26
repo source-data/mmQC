@@ -18,7 +18,7 @@ Showing individual data points alongside summary statistics is important because
 
 ## Classify figure panels
 
-Classify panels based on content type with your `classify-panels` skill.
+To decide when the check is applicable or not, invoke the `classify-panels` skill to classify panels based on content type before you do anything else.
 
 ## Does this plot type require individual data points?
 
@@ -32,6 +32,7 @@ But not all plots require individual data points to be overlaid. The following p
 - Pie charts, Venn diagramms - do not need individual data points
 - Scatter plots — individual points are the data
 
+Cross-check with the panel classification to avoid common mistakes. 
 
 ## Are individual data points shown?
 For applicable plots, check whether the individual data points are overlaid on the summary visualization — typically as dots, circles, or similar markers.

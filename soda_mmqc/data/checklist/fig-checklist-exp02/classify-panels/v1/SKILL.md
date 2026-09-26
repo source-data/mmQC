@@ -1,13 +1,9 @@
 ---
 name: classify-panels
 description: >-
-  Name what kind of content each figure panel holds: micrograph, plot, blot,
-  molecular or protein structure, sequence, schematic, photograph, table, or
-  something else. Use this
-  whenever a task needs to know what sort of thing a panel is before deciding
-  whether a check applies to it. Reports observations only — it does not decide
-  whether a panel qualifies for any particular check, because different checks
-  answer that differently.
+  Classify panels by labelling them with the kind of content it shows (micrograph, plot,
+  blot, molecular or protein structure, sequence, schematic, photograph,
+  table). Use when a check applies to only some kinds of panel.
 requires: []
 produces:
   - panel_classes

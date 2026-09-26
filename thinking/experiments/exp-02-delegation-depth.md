@@ -36,26 +36,38 @@ this checklist, so nothing here transfers to a chained DAG."* This is that.
 
 ## Hypothesis
 
-**Depth 2 and depth 3 are each non-inferior to depth 1** on layer S, on layer 1
-and on layer 2 — and each delegates as instructed, which is a precondition for
+**Each split arrangement is non-inferior to the monolith** on layer S, on layer
+1 and on layer 2 — and each delegates as instructed, which is a precondition for
 those three meaning anything.
 
-| | chain | skills |
+Every check is made of three blocks: **A** panel identification, **B** panel
+classification, **C** the check itself. The arrangements differ only in how many
+skills those blocks are spread across.
+
+| arrangement | skills | what is delegated |
 |---|---|---|
-| **depth 1** | check, everything inline | 1 |
-| **depth 2** | check → `identify-panels` | 2 |
-| **depth 3** | check → `classify-panels` → `identify-panels` | 3 |
+| **A\|B\|C** | 1 | nothing — the monolith, and the baseline |
+| **A ← B\|C** | 2 | identification only |
+| **A\|B ← C** | 2 | identification *and* classification, as one skill |
+| **A ← B ← C** | 3 | both, as a chain |
 
-No improvement is predicted. An arm that scores *better* is reported as
-observed, but it is not what this experiment tests and it may not be relabelled
-afterwards as though it were.
+Three comparisons, each against the monolith. No improvement is predicted. An
+arm that scores *better* is reported as observed, but it is not what this
+experiment tests and it may not be relabelled afterwards as though it were.
 
-What would count as being wrong: either deeper arm degrading by more than the
-margin below at any gate. That is a live possibility, and there are two distinct
-mechanisms for it. Delegation can lose information at the boundary — the leaf
-works from what the shared skill reported rather than from the figure. And the
-shared skill necessarily serves three callers, so it carries the union of what
-they need, which is more than any one of them asked for.
+**Two arrangements at two skills, not one, is the point of the design.** They
+split the same monolith at different seams: `A ← B|C` moves only panel
+identification out, `A|B ← C` moves everything except the check. If splitting
+costs something, comparing those two says *where* it costs — at the
+identification boundary or the classification one — which a single two-skill
+arrangement could not. And `A ← B ← C` then asks whether a second hop costs
+more than the first, holding the same blocks fixed.
+
+What would count as being wrong: any arrangement degrading by more than the
+margin below at any gate. That is a live possibility, and the mechanism is that
+delegation can lose information at the boundary — the leaf works from what the
+shared skill reported rather than from the figure, and each additional boundary
+is another place for that to happen.
 
 ## Decision criteria
 
@@ -72,7 +84,7 @@ to mean anything.
 
 | # | endpoint | statistic | what it catches |
 |---|---|---|---|
-| **0** | **skill invocation** | fraction of sessions whose `skill_trace.json` shows the expected chain | an arm that silently did not delegate is not the arm it claims to be |
+| **0** | **skill invocation** | fraction of sessions whose `skill_trace.json` shows the expected chain | how often delegation actually happens — **reported, not a gate** |
 | **1** | **layer S** | `correct_row` as a fraction of gold rows, per check per `list_key` | panel enumeration moving out into `identify-panels` |
 | **2** | **layer 1** | `correct_applicable` + `correct_NA` as a fraction of all profiled instances, per check | classification moving out into `classify-panels` |
 | **3** | **layer 2** | `mean_score` per property, on applicable instances, paired by example | the check-specific prose that stayed in the leaf |
@@ -133,7 +145,7 @@ effect.** This is worth stating explicitly because the first version of this
 note got it wrong, and the error was not conservative.
 
 The statistic at every gate is, per example,
-`d_e = rate(depth k) − rate(depth 1)`. Its variance across examples has two
+`d_e = rate(arrangement) − rate(monolith)`. Its variance across examples has two
 components: the noise in measuring each arm, and the genuine heterogeneity of
 the effect between examples. Under this experiment's hypothesis the effect is
 zero, so only the first component survives, and it is estimable **from one arm
@@ -165,7 +177,7 @@ The comparison between exp-01's arms is the answer to exp-01's question and is
 immaterial to this one.
 
 **The assumption this rests on**, stated so it can be checked against the
-result: that depth 2 and depth 3 are no noisier than depth 1. A longer chain has
+result: that the split arrangements are no noisier than the monolith. A longer chain has
 more places to vary, so if delegation raises the per-example variance the real
 intervals will be wider than planned here, and a gate may return inconclusive
 where this sizing said it would not. exp-02 reports its own observed
@@ -188,22 +200,47 @@ stacked count plot shows, where a twelve-panel figure counts twelve times a
 one-panel figure. Only the per-example form has an example-level interval, and
 only it matches what `arm_contrast` does at gate 3.
 
-- **Non-inferior** if the lower bound of the 95% CI on (depth *k* − depth 1)
+- **Non-inferior** if the lower bound of the 95% CI on (arrangement − monolith)
   lies above **−δ** for that gate's δ.
 - **Degraded** if a CI lies entirely below −δ.
 - **Inconclusive** if a CI straddles −δ — including the case where the interval
   is simply wider than the margin. A reportable result, not a failure.
 
-Two comparisons, **depth 2 vs depth 1** and **depth 3 vs depth 1**, each runs
-the sequence independently. They are two separate claims, not a family from
-which the better one is chosen, so nothing is corrected across them.
+Three comparisons — **A ← B|C**, **A|B ← C** and **A ← B ← C**, each against
+the monolith — and each runs the gate sequence independently. They are three
+separate claims about three different ways of splitting one skill, not a family
+from which the best is chosen, so nothing is corrected across them. What would
+license a correction is picking the winner among them and reporting that; this
+note commits to reporting all three whatever they say.
 
-At gate 0 the margin is not used: an arm whose expected chain is invoked in
-fewer than **95%** of its sessions is reported as not having been run as
-specified, and its scores are reported but carry that caveat. Invocation is an
-endpoint in its own right and not merely a precondition, because whether a model
-reliably calls a skill it was told to call is the mechanism every deeper
-topology depends on.
+#### Gate 0 reports, it does not invalidate
+
+An earlier draft made gate 0 a **precondition**: an arm invoking its chain in
+under 95% of sessions was "not run as specified", and its scores carried that
+caveat. The pilot below showed why that is the wrong shape. Invocation is
+partial, it varies by check for an understandable reason, and treating it as a
+validity threshold would throw away three arrangements' worth of data over the
+very thing worth measuring.
+
+So **invocation rate is a reported endpoint, per arm and per check**, and it is
+read *alongside* the score endpoints rather than in front of them. The
+interpretation is fixed here, before any run, because it is the part that could
+otherwise be chosen to suit the result:
+
+| | scores non-inferior | scores degraded |
+|---|---|---|
+| **invocation high** | decomposition is safe | decomposition costs accuracy |
+| **invocation partial** | **decomposition is safe but optional** — the model routes around a shared skill its own prose makes redundant, at no cost | delegation is both unreliable and costly |
+
+The bottom-left cell is the one a 95% floor could not express, and on the pilot
+evidence it is a likely outcome. It is a result, not a failed run: it says the
+DAG's value is in maintaining one copy of a shared instruction rather than in
+what the model does with it at inference time.
+
+Two things follow. A non-inferior arm with partial invocation is reported as
+**safe but optional**, never relabelled as though the chain had fired every
+time. And an arm that degrades is read *with* its invocation rate, since an arm
+that mostly did not delegate is weak evidence that delegating is what hurt.
 
 ### Every property clears the noise floor, at five replicates
 
@@ -252,16 +289,21 @@ itself a finding, reported whatever the scores say.
 | | |
 |---|---|
 | Starting point | `fig-checklist-exp01`'s detailed (`v1`) prose, edited to compose — not preserved verbatim |
-| Checklist | `fig-checklist-exp02`, built by `experiments/exp-02-delegation-depth/build_checklist.py` |
+| Checklist | `fig-checklist-exp02`, authored |
 | Checks | `micrograph-scale-bar`, `individual-data-points`, `error-bars-defined` |
-| Arms | `pinned` (v1, depth 1), `<check>@v2` (depth 2), `<check>@v3` (depth 3) |
+| Arms | `pinned` (A\|B\|C), `<check>@v2` (A ← B\|C), `<check>@v3` (A\|B ← C), `<check>@v3` + `classify-panels@v2` (A ← B ← C) |
 | Held fixed | contracts (`schema.json`, `benchmark.json`, `eval-manifest.json`), gold, examples, model, provider |
 | Model | `claude-sonnet-5`, pinned by exact name, not the `sonnet` alias |
 | Provider | `claude-sdk` |
 | Replicates | 5 — see below |
 | Examples | 38 per check, 114 example-checks per arm |
-| Sessions | 1,710 |
+| Sessions | 2,280 |
 | Runner | `experiments/exp-02-delegation-depth/run.py` |
+
+Three versions of each check and two of `classify-panels` give four
+arrangements rather than the four versions a naive encoding would need: `v3`
+delegates to `classify-panels`, so which version of *that* is pinned decides
+whether the arrangement has two skills or three.
 
 The independent variable in one sentence: **how many skills the same
 instructions are spread across.**
@@ -286,29 +328,43 @@ aside. At five, δ_S tightens to 0.0125 and nothing is set aside. Seven would bu
 a further 0.0015 of half-width for another 684 sessions, which is where the
 returns stop being worth it.
 
-### How the three depths are built
+### How the four arrangements are built
 
-The three depths are **compositions of the same authored blocks**, and a builder
-script is what makes that true rather than aspirational. Hand-writing three
-versions of eleven files and hoping the wording matches is exactly the thing
-that cannot be verified afterwards; generating them from one source can be.
+Every version is a composition of the same three authored blocks:
 
 | block | what it is |
 |---|---|
-| **P** | panel identification — labels, locations, caption mapping |
-| **C** | panel classification — what kind of content each panel holds |
-| **L** | the check-specific remainder |
+| **A** | panel identification — labels, sub-panels, caption mapping |
+| **B** | panel classification — what kind of content each panel holds |
+| **C** | the check-specific remainder |
 
-| depth | inline | delegated |
-|---|---|---|
-| 1 | P + C + L | — |
-| 2 | C + L | P |
-| 3 | L | C, then P |
+| arrangement | skills, and what each holds |
+|---|---|
+| **A\|B\|C** | `<check>` v1 = A + B + C |
+| **A ← B\|C** | `<check>` v2 = B + C, calling `identify-panels` v1 = A |
+| **A\|B ← C** | `<check>` v3 = C, calling `classify-panels` v1 = A + B |
+| **A ← B ← C** | `<check>` v3 = C, calling `classify-panels` v2 = B, calling `identify-panels` v1 = A |
 
-The same instructions are present at every depth; what moves is **where they
-live**. The evaluation contracts sit above the version directories, which makes
-the control structural rather than asserted: three versions of one skill cannot
-be scored by different rulers.
+The same instructions are present in every arrangement; what moves is **where
+they live**. The evaluation contracts sit above the version directories, so
+every arrangement of one check is scored by the same schema, the same manifest
+and the same gold — the control is structural rather than asserted.
+
+**The conservation is checked, not asserted.** The versions were authored by
+hand rather than generated, so the claim that the blocks are word-identical
+across arrangements is one that had to be verified afterwards. Comparing the
+sections, ignoring heading level (which legitimately shifts when a block is
+embedded one level deeper):
+
+* the **A** block is identical in `identify-panels` v1, in `classify-panels` v1
+  and in all three monoliths — 1,039 characters, the same in five places;
+* the **B** block is identical across all seven files that carry it;
+* each check's **C** block is identical across its three versions;
+* each check's summary is identical across its three versions.
+
+Anyone can re-run that comparison against the committed checklist. It is the
+one thing that, if wrong, would make a difference between arrangements a
+difference in wording rather than in structure.
 
 ### The blocks are authored for exp-02, not inherited
 
@@ -349,16 +405,31 @@ of dead weight the paragraph above avoids. This is narrower than the shipped
 `plot_types` and a free-text note for a micrograph, so it has nothing to say to
 `micrograph-scale-bar` and cannot serve as `C`.
 
-Because `C` is identical at every depth, depth 3 differs from depth 1 in exactly
-one respect: the classification prose is reached through a call instead of being
-read in place.
+Because `B` is identical wherever it sits, an arrangement that delegates it
+differs from the monolith in exactly one respect: the classification prose is
+reached through a call instead of being read in place. `classify-panels` carries
+it in two versions — `v1` with the `A` block inline, `v2` calling
+`identify-panels` for it — which is what lets the same `C` leaf sit at the end
+of either a two-skill or a three-skill chain.
 
 ### What the split unavoidably perturbs
 
-A skill that delegates must say so, so depths 2 and 3 carry call instructions
-that depth 1 does not, and the shared skills carry their own frontmatter and a
-short section saying how to state what they found. The wording of `P`, `C` and
-`L` is identical across depths; the connective tissue around them cannot be.
+A skill that delegates must say so, so the split arrangements carry call
+instructions the monolith does not, and the shared skills carry their own
+frontmatter and a short section saying how to state what they found. The
+wording of `A`, `B` and `C` is identical across arrangements; the connective
+tissue around them cannot be.
+
+One consequence is deliberate and worth naming. The glue is held **constant
+across arrangements rather than minimal in the baseline**: every version,
+monolith included, opens its classification section with "To decide when the
+check is applicable or not, classify panels based on content type before you do
+anything else." That sentence is delegation-shaped framing sitting in an arm
+that delegates nothing. The alternative — an unadorned monolith — would have
+made the baseline differ from the split arrangements in wording as well as in
+structure, which is the confound this experiment exists to avoid. Constant glue
+in all four is the lesser evil, and it is stated here rather than left for a
+reader to notice.
 
 Two things were tightened before this experiment so that the perturbation is as
 small as it can be. The session now has **one tool, `Skill`** — the `Read` tool
@@ -421,44 +492,98 @@ already visible, which is the one thing preregistration exists to prevent.
 
 | # | artefact | path | state |
 |---|---|---|---|
-| P1 | Per-example counts, `rate_contrast` | `soda_mmqc/reporting/aggregate.py` | **done**, 9 tests, suite green |
+| P1 | Per-example counts, `rate_contrast` | `soda_mmqc/reporting/aggregate.py` | **done**, tests green |
 | P2–P3 | Margin sizing | this note, gates 1 and 2 | **done**, fixed from exp-01 data |
 | A | `Read` removed; `Skill` is the only tool | `soda_mmqc/config.py`, `agentic/` | **done** |
 | B | Leaf ⇔ owns `schema.json`; intermediates own nothing | `soda_mmqc/config.py` | **done** |
-| 1 | Block **C**, `classify-panels` | `…/fig-checklist-exp02/classify-panels/v1/` | **drafted**, at the gate |
-| 2 | Block **P**, `identify-panels` | `…/fig-checklist-exp02/identify-panels/v1/` | to author from exp-01 prose |
-| 3 | Blocks **L** | `experiments/exp-02-delegation-depth/leaves/<check>.md` | to author from exp-01 prose |
-| 4 | Builder | `experiments/exp-02-delegation-depth/build_checklist.py` | to write |
-| 5 | Leaf versions `v1`/`v2`/`v3` + contracts | `…/fig-checklist-exp02/<check>/` | generated by the builder |
-| 6 | Runner | `experiments/exp-02-delegation-depth/run.py` | to write, from exp-01's |
-| 7 | Runs | `experiments/runs/exp-02-delegation-depth/` | — |
-| 8 | Analysis | `notebooks/experiments/exp-02-delegation-depth.ipynb` | to write |
+| C | A required skill need only be *named* in prose | `soda_mmqc/agentic/skills.py` | **done** |
+| 1 | The checklist: 3 checks × 3 versions, 2 shared skills × 1–2 versions, contracts, manifest, DAG | `…/fig-checklist-exp02/` | **done**, validates in sync |
+| 2 | Pilot: does delegation actually happen? | `experiments/runs/exp-02-delegation-depth/smoke/` | **done**, 30 sessions, 80% |
+| 3 | Runner | `experiments/exp-02-delegation-depth/run.py` | **done**, `--smoke` and `--dry-run` |
+| 4 | Runs | `experiments/runs/exp-02-delegation-depth/` | — |
+| 5 | Analysis | `notebooks/experiments/exp-02-delegation-depth.ipynb` | to write |
 | — | Note | `thinking/experiments/exp-02-delegation-depth.md` | this file |
 
-The checklist lives in `soda_mmqc/data/checklist/fig-checklist-exp02/`, beside
-`fig-checklist-exp01`, because that is where a checklist belongs. The two shared
-skills are **authored there directly** — they are the source of truth for `P`
-and `C`, and the builder reads their bodies to inline at the shallower depths,
-so each block exists once. Only the per-check `L` blocks live under
-`experiments/`, as build inputs rather than checklist artefacts.
+The checklist is **authored**, not generated. An earlier draft of this note
+planned a builder script that would compose the versions from one copy of each
+block, on the reasoning that hand-written versions cannot be shown to match.
+The versions were written by hand instead, and the matching was verified
+afterwards rather than guaranteed in advance — see the conservation check
+above. That is a weaker guarantee bought back by an explicit test, and the
+test is the thing a reader should look at.
 
-**Contracts come from `fig-checklist-exp01`**, not from `fig-checklist`. The
-margins in this note were estimated from exp-01 predictions scored against
-exp-01's `schema.json` and `eval-manifest.json`, so inheriting those same
-contracts is what keeps the estimates applicable to what exp-02 measures.
+**Contracts come from `fig-checklist-exp01`**, not from `fig-checklist`, and
+all nine files are byte-identical to it. The margins in this note were
+estimated from exp-01 predictions scored against exp-01's `schema.json` and
+`eval-manifest.json`, so inheriting those same contracts is what keeps the
+estimates applicable to what exp-02 measures.
 
-The runner generalises from exp-01's with one change: `unpin={check: ("v1",
-"v2", "v3")}` instead of two versions.
+### The pilot, 2026-09-26: delegation works, partially
+
+Before committing 2,280 sessions, 30 were spent asking whether a leaf naming
+another skill actually causes that skill to be invoked. Nothing had ever tested
+it: exp-01 was leaf-only by construction, and the 100 traces committed with the
+replicate exploration show exactly one skill invoked per session.
+
+Two rounds of 15 sessions each, on `A <- B <- C` only, five examples per check,
+one replicate, reading `skill_trace.json` afterwards:
+
+| check | round 1 | round 2 |
+|---|---|---|
+| `micrograph-scale-bar` | 5/5 | 5/5 |
+| `individual-data-points` | 1/5 | 4/5 |
+| `error-bars-defined` | 1/5 | 3/5 |
+| **overall** | **7/15 (47%)** | **12/15 (80%)** |
+
+**The mechanism works.** When the chain fires it fires all the way — the trace
+shows `<check>` then `classify-panels` then `identify-panels`. There is no
+partial chain in any session, which was a failure mode worth ruling out.
+
+**Invocation is check-dependent, and the reason is legible.** In round 1 the
+delegation instruction was word-identical across the three checks, so the
+difference is not the calling prose. It tracks how much panel-type reasoning
+each check's own `C` block already carries:
+
+| check | panel-type terms in its own C block | round 1 |
+|---|---|---|
+| `micrograph-scale-bar` | 1 | 5/5 |
+| `error-bars-defined` | 5 | 1/5 |
+| `individual-data-points` | 8 | 1/5 |
+
+`micrograph-scale-bar` gates on a type it does not have — "if and only if it is
+a micrograph" — so it must ask. The other two carry their own taxonomy, so by
+the time the model reaches the call the question is already answered and the
+shared skill is redundant. **A shared skill is invoked when the caller cannot
+proceed without it, and skipped when the caller's own text suffices.**
+
+Round 2 changed the wording: the call became imperative with a stated purpose,
+and each check gained a line inviting it to cross-check its own judgement
+against the classification. That moved the two redundant checks from 1/5 to 4/5
+and 3/5. Two things changed at once, so this does not separate "stronger call"
+from "reason to call"; and at five sessions per check the direction is clearer
+than the magnitude.
+
+**The detailed taxonomies stay.** They encode each check's own rule about what
+its check applies to, which `classify-panels` deliberately does not decide —
+that is the whole reason the shared skill reports observations rather than
+verdicts. Removing them to force delegation would be optimising the experiment
+into agreement with its own hypothesis.
+
+80% is where the wording was left. Chasing 95% would mean more iteration, and
+each round makes the glue less like the monolith's. The rate is measured again
+at scale as endpoint 0, and read against the scores rather than as a threshold.
 
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
-| | all three | `python experiments/exp-02-delegation-depth/run.py` | est. $100–140 | `experiments/runs/exp-02-delegation-depth/` |
+| | smoke | `run.py --limit 2 --replicates 1` | < $1 | — |
+| | all four | `python experiments/exp-02-delegation-depth/run.py` | est. $135–180 | `experiments/runs/exp-02-delegation-depth/` |
 
-1,710 sessions, estimated from exp-01's actual $130 over 2,616 sessions
+2,280 sessions, estimated from exp-01's actual $130 over 2,616 sessions
 (≈ $0.05 each), with headroom because delegation adds turns and re-reads
-context.
+context. Four arrangements rather than three is what takes it past 2,000; the
+monolith is a quarter of that cost and the three split arrangements the rest.
 
 ## Findings
 
@@ -467,12 +592,19 @@ context.
 ## Threats to validity
 
 - **Splitting and calling are measured together.** Depths 2 and 3 carry call
-  instructions depth 1 does not, and the shared skills carry their own
+  instructions the monolith does not, and the shared skills carry their own
   frontmatter and output sections. `P`, `C` and `L` are word-identical across
   depths, but the connective tissue cannot be, so the effect estimated here is
   decomposition *plus* the calls that make it work. Nothing separates them,
   because nothing can: a DAG without the calls is not a DAG.
-- **`C` is one shared skill serving three callers**, which is only unproblematic
+- **Two of three checks can answer the classification themselves.** The pilot
+  showed `individual-data-points` and `error-bars-defined` skipping
+  `classify-panels` when their own taxonomy already settled the question, and
+  invoking it once the prose gave them a reason to. So an arrangement labelled
+  `A <- B <- C` is, in some fraction of sessions, a monolith that never called
+  anything. Endpoint 0 measures that fraction rather than assuming it away, and
+  no score is read without it.
+- **`B` is one shared skill serving three callers**, which is only unproblematic
   because its single job — naming the panel's content type — is one all three
   checks consume. Had it carried axis description as well, the two plot checks
   would have used it and `micrograph-scale-bar` would have carried it for
@@ -491,8 +623,8 @@ context.
 - **`micrograph-scale-bar` sits near the ceiling** — layer S 0.994, layer 1
   0.988 on exp-01. It can lose and can barely gain. Non-inferiority is the right
   test for a ceiling, but the check contributes little sensitivity.
-- **Every half-width here assumes depth 2 and depth 3 are no noisier than depth
-  1.** The variances are measured on exp-01's detailed arm, because that is the
+- **Every half-width here assumes the split arrangements are no noisier than
+  the monolith.** The variances are measured on exp-01's detailed arm, because that is the
   arm whose prose exp-02 inherits and because a null-hypothesis interval needs
   only one arm. But a longer chain has more places to vary: if delegation raises
   the per-example variance, the real intervals are wider than planned and a gate
@@ -507,7 +639,7 @@ context.
   replicates. That is thin enough that the real run could land outside it, in
   which case that property is reported as uninformative rather than counted.
 - **Depth 1 is a reconstruction, not production.** The shipped `fig-checklist`
-  leaves already delegate; depth 1 is built by inlining them back. A number here
+  leaves already delegate; the monolith is built by inlining them back. A number here
   is not a number about production.
 - **Bootstrapping over 38 examples** is itself noisy at that n, so interval
   coverage is approximate rather than exact.
@@ -516,17 +648,25 @@ context.
   did not. Layer 1 is gate 2 here, so that noise sits on a primary endpoint.
 - **One model, one provider, one point in time.** Pinned by exact name so the
   result stays attributable, but it is one model's response to being split.
-- **Skills derived by one person, who holds the hypothesis.** The builder
-  composes from baseline prose rather than from fresh drafts, which limits the
-  freedom to write an arm into winning, but it was not blind.
+- **Skills authored by one person, who holds the hypothesis.** They start from
+  the baseline prose rather than from fresh drafts, which limits the freedom to
+  write an arm into winning, but it was not blind. The versions were also
+  written by hand rather than generated, so the blocks matching across
+  arrangements is a verified fact rather than a guaranteed one.
 
 ## Status and next
 
-Planned, not yet preregistered, not yet run. **P1–P3 are done**: the per-example
-frames and `rate_contrast` exist and are tested, the paired intervals for layers
-S and 1 have been measured on exp-01's committed data, and every margin in this
-note is fixed. What remains before a run is the builder, the checklist it
-generates, and the runner. Preregistration is the commit order, so after that
+Planned, not yet preregistered, not yet run. The preparation is done: the
+per-example frames and `rate_contrast` exist and are tested, the paired
+intervals for layers S and 1 have been measured on exp-01's committed data,
+every margin in this note is fixed, and `fig-checklist-exp02` is authored and
+validates in sync with its generated views.
+
+The pilot is done and the runner is written. **Everything this note commits to
+is now fixed**: four arrangements, five replicates, the margins, the gate
+sequence, and gate 0 as a reported endpoint rather than a validity floor.
+
+Preregistration is the commit order, so after that
 
 ```bash
 git log --oneline --reverse -- \

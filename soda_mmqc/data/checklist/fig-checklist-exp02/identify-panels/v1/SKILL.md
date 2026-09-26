@@ -1,10 +1,8 @@
 ---
 name: identify-panels
 description: >-
-  Identify every panel of a scientific figure and locate the caption text that
-  describes each one. Use this first, whenever a task needs the list of panels,
-  their labels, or which part of the caption applies to which panel. Makes no
-  judgement about what a panel contains.
+  Find every labelled panel in a figure and the caption text that describes it.
+  Use before any per-panel check.
 requires: []
 produces:
   - panels

@@ -17,12 +17,11 @@ Proceed step-by-step and establish a systematical structured strategy to be very
 
 ## Classify figure panels
 
-Classify panels based on content type. Proceed step-by-step and be accurate.
+To decide when the check is applicable or not, classify panels based on content type before you do anything else. Proceed step-by-step and be accurate.
 
 ### 1. Get the panels
 
-Before you classify anything, get the panel inventory for this figure by calling
-the `identify-panels` skill.
+To first obtain an accurate and complete list of panels, invoke the `identify-panels` skill.
 
 ### 2. Name every content type in the panel
 
@@ -76,7 +75,11 @@ entry per panel, in label order. Each entry carries three things:
 
 
 ## Determine if the panel contains error bars or box-plot elements to define
-Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image. For each panel in the figure:
+Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image. 
+
+Cross-check with the panel classification to avoid common mistakes. 
+
+For each panel in the figure:
 - Determine if the plot contains error bars (lines extending from data points indicating variability). These are typically on bar charts, line charts, and sometimes scatter plots.
 - *Box plots* and *violin plots*: whiskers and median/mean lines are not classical error bars, but lines, box and whisker elements still require a caption definition (e.g., IQR, percentiles, confidence intervals). For box plots and violin plots, set `error_bar_on_figure` to "yes" and check whether the caption defines the lines,  boxes and whiskers. If undefined, use FAIL.
 

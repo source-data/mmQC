@@ -17,12 +17,11 @@ Proceed step-by-step and establish a systematical strategy to be very accurate a
 
 ## Classify figure panels
 
-Classify panels based on content type. Proceed step-by-step and be accurate.
+To decide when the check is applicable or not, classify panels based on content type before you do anything else. Proceed step-by-step and be accurate.
 
 ### 1. Get the panels
 
-Before you classify anything, get the panel inventory for this figure by calling
-the `identify-panels` skill.
+To first obtain an accurate and complete list of panels, invoke the `identify-panels` skill.
 
 ### 2. Name every content type in the panel
 

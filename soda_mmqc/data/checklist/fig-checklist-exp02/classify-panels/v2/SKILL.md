@@ -1,13 +1,9 @@
 ---
 name: classify-panels
 description: >-
-  Name what kind of content each figure panel holds: micrograph, plot, blot,
-  molecular or protein structure, sequence, schematic, photograph, table, or
-  something else. Use this
-  whenever a task needs to know what sort of thing a panel is before deciding
-  whether a check applies to it. Reports observations only — it does not decide
-  whether a panel qualifies for any particular check, because different checks
-  answer that differently.
+  Classify panels by labelling them with the kind of content it shows (micrograph, plot,
+  blot, molecular or protein structure, sequence, schematic, photograph,
+  table). Use when a check applies to only some kinds of panel.
 requires:
   - identify-panels
 produces:
@@ -21,8 +17,7 @@ Classify panels based on content type. Proceed step-by-step and be accurate.
 
 ## 1. Get the panels
 
-Before you classify anything, get the panel inventory for this figure by calling
-the `identify-panels` skill.
+To first obtain an accurate and complete list of panels, invoke the `identify-panels` skill.
 
 ## 2. Name every content type in the panel
 

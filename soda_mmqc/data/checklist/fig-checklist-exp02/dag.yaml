@@ -1,23 +1,20 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp02 --write` instead. `graph fig-checklist-exp02` fails when it and the skills disagree.
 checklist: fig-checklist-exp02
-skill_set: f3411f53b59e2fee40f2d8296ebbb384964b7f91f42d2b9251dd12b94f51a3ff
+skill_set: 08066e7c41b2b098875d13b2b84631c66866ec1290b47f2e26003a955ae06879
 skills:
 - name: classify-panels
   version: v1
-  content_hash: 9b06faad370918c2e81184ee752cd54b1cdd50692672a801ec718c50fa14b974
+  content_hash: 52880fc5cf351cfbb516e7f31752109542a8ea19e14c7e8effd3f0616ab08de6
   kind: shared
-  description: 'Name what kind of content each figure panel holds: micrograph, plot,
-    blot, molecular or protein structure, sequence, schematic, photograph, table,
-    or something else. Use this whenever a task needs to know what sort of thing a
-    panel is before deciding whether a check applies to it. Reports observations only
-    — it does not decide whether a panel qualifies for any particular check, because
-    different checks answer that differently.'
+  description: Classify panels by labelling them with the kind of content it shows
+    (micrograph, plot, blot, molecular or protein structure, sequence, schematic,
+    photograph, table). Use when a check applies to only some kinds of panel.
   calls: []
   produces:
   - panel_classes
 - name: error-bars-defined
   version: v1
-  content_hash: 48b23e144fdcfa1f49a5ea06bbd36e6f9cd73b4a15ab61c5aaeda8cd9a89eddb
+  content_hash: 67736306e8e0d838cad432e7bb6e42d48e1fbb2775833782b1baaa1e4e49b468
   kind: check
   description: Check that error bars, and box or violin plot elements, are explained
     in the caption.
@@ -26,18 +23,16 @@ skills:
   - error-bars-defined
 - name: identify-panels
   version: v1
-  content_hash: ca24a5d03ab4f50fa878aced13ec207f6a45d847ab39b52f4d69577c63f51987
+  content_hash: a77ab351a23fda4cd78a0ef95034635ccd52f77334acd37f5320a580da6a703f
   kind: shared
-  description: Identify every panel of a scientific figure and locate the caption
-    text that describes each one. Use this first, whenever a task needs the list of
-    panels, their labels, or which part of the caption applies to which panel. Makes
-    no judgement about what a panel contains.
+  description: Find every labelled panel in a figure and the caption text that describes
+    it. Use before any per-panel check.
   calls: []
   produces:
   - panels
 - name: individual-data-points
   version: v1
-  content_hash: 0967f0d2cc0b8cf93d1e992f4c8e696ca088ef97bc1916a65c134ce8b55aff3c
+  content_hash: 827be27336960fb08de3624326d1c1cdc833f2f29678c70ec4889597cc27a0f7
   kind: check
   description: Check that a plot showing averages also shows the individual data points
     behind them.
@@ -46,7 +41,7 @@ skills:
   - individual-data-points
 - name: micrograph-scale-bar
   version: v1
-  content_hash: 667de3f82da7a896b6de65376bb6582f1d604a651abc8f063b24af724ecd8972
+  content_hash: ff7dd180a53791cb76c98b97eaa29364447e6a13e6ab282a3657f67f63edebbc
   kind: check
   description: Check that every micrograph panel carries a scale bar, and that its
     length is stated on the image or in the caption.

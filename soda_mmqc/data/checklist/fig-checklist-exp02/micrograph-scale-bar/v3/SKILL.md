@@ -17,7 +17,7 @@ Proceed step-by-step and establish a systematical strategy to be very accurate a
 
 ## Classify figure panels
 
-Classify panels based on content type with your `classify-panels` skill.
+To decide when the check is applicable or not, invoke the `classify-panels` skill to classify panels based on content type before you do anything else.
 
 ## Check for scale bars on microscopy images
 For each panel in the figure:
