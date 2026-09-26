@@ -4,7 +4,7 @@
 
 3 check(s) and 2 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
 
-- **SkillSet digest:** `08066e7c41b2b098875d13b2b84631c66866ec1290b47f2e26003a955ae06879`
+- **SkillSet digest:** `767cb2665a6deb5d95219e9dfd804353ada196ba8f318949e3994bef71dae14a`
 
 A check is a skill that owns the evaluation contracts (schema.json, benchmark.json). Nothing else distinguishes a check from a shared skill: the hierarchy below is carried entirely by what each skill's own prose asks for, never by where its directory sits.
 

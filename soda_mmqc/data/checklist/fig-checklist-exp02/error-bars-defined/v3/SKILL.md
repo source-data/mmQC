@@ -10,7 +10,7 @@ needs: []
 
 # error-bars-defined
 
-## Summary 
+## Summary
 Analyze a scientific figure and its caption to check for the presence of error bars and whether they are properly defined.
 
 Proceed step-by-step and establish a systematical structured strategy to be very accurate and avoid mistakes.
@@ -20,9 +20,9 @@ Proceed step-by-step and establish a systematical structured strategy to be very
 To decide when the check is applicable or not, invoke the `classify-panels` skill to classify panels based on content type before you do anything else.
 
 ## Determine if the panel contains error bars or box-plot elements to define
-Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image. 
+Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image.
 
-Cross-check with the panel classification to avoid common mistakes. 
+Cross-check with the panel classification to avoid common mistakes.
 
 For each panel in the figure:
 - Determine if the plot contains error bars (lines extending from data points indicating variability). These are typically on bar charts, line charts, and sometimes scatter plots.
@@ -40,7 +40,7 @@ For each panel, provide `Decision_and_explanation` as a single short string with
 - Use `"not needed"` for `Decision_and_explanation` when `error_bar_on_figure` is "no".
 - Use FAIL when error bars or box-plot whiskers are present but not adequately defined in the caption.
 
-## Please note: 
+## Please note:
 - If the caption defines error bars for multiple panels, include the same definition for each relevant panel.
 
 - For panels without error bars or box-plot elements to define, set `error_bar_defined_in_caption`,`from_the_caption`, and `Decision_and_explanation` to "not needed".

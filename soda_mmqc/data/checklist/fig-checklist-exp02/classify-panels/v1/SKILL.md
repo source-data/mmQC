@@ -28,14 +28,14 @@ some other kinds of images, a scheme.
 - Record the label without its brackets, so that `(a)` is reported as `a`.
   Report the labels the figure actually carries: do not invent, reorder or
   renumber them.
-- Sometimes one panel can include several images. For example, a panel can include both a microscopy image and a plot that typically displays a 
+- Sometimes one panel can include several images. For example, a panel can include both a microscopy image and a plot that typically displays a
 quantification of some features shown on the image.
 
 You must analyze each labeled panel independently, even if panels are related.
 
 ## 2. Name every content type in the panel
 
-Classify each panel using the following types: 
+Classify each panel using the following types:
 
 | type | what it covers |
 |---|---|
@@ -51,10 +51,10 @@ violin, histogram, pie, donut charts, heatmaps |
 | `other` | anything the list above does not cover. Say what it is in `evidence` |
 
 
-Note of caution: **A plot drawn inside a schematic, for illustration rather than to 
+Note of caution: **A plot drawn inside a schematic, for illustration rather than to
   present data, is not a plot.** An idealised curve in a model diagram, a sketched bar
   chart in an experimental-design cartoon: report `schematic` alone and say so
-  in `evidence`. 
+  in `evidence`.
 
 ## 3. A panel can hold several things
 
@@ -77,7 +77,7 @@ it from that decision. A panel you cannot classify at all gets `other` and an
 
 ## 5. How to report it
 
-State the classification in your own reply, as a comma-separated list with one 
+State the classification in your own reply, as a comma-separated list with one
 entry per panel, in label order. Each entry carries three things:
 
 - the panel's label, exactly as the inventory gave it;

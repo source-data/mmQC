@@ -10,7 +10,7 @@ needs: []
 
 # error-bars-defined
 
-## Summary 
+## Summary
 Analyze a scientific figure and its caption to check for the presence of error bars and whether they are properly defined.
 
 Proceed step-by-step and establish a systematical structured strategy to be very accurate and avoid mistakes.
@@ -25,7 +25,7 @@ To first obtain an accurate and complete list of panels, invoke the `identify-pa
 
 ### 2. Name every content type in the panel
 
-Classify each panel using the following types: 
+Classify each panel using the following types:
 
 | type | what it covers |
 |---|---|
@@ -41,10 +41,10 @@ violin, histogram, pie, donut charts, heatmaps |
 | `other` | anything the list above does not cover. Say what it is in `evidence` |
 
 
-Note of caution: **A plot drawn inside a schematic, for illustration rather than to 
+Note of caution: **A plot drawn inside a schematic, for illustration rather than to
   present data, is not a plot.** An idealised curve in a model diagram, a sketched bar
   chart in an experimental-design cartoon: report `schematic` alone and say so
-  in `evidence`. 
+  in `evidence`.
 
 ### 3. A panel can hold several things
 
@@ -67,7 +67,7 @@ it from that decision. A panel you cannot classify at all gets `other` and an
 
 ### 5. How to report it
 
-State the classification in your own reply, as a comma-separated list with one 
+State the classification in your own reply, as a comma-separated list with one
 entry per panel, in label order. Each entry carries three things:
 
 - the panel's label, exactly as the inventory gave it;
@@ -75,9 +75,9 @@ entry per panel, in label order. Each entry carries three things:
 
 
 ## Determine if the panel contains error bars or box-plot elements to define
-Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image. 
+Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image.
 
-Cross-check with the panel classification to avoid common mistakes. 
+Cross-check with the panel classification to avoid common mistakes.
 
 For each panel in the figure:
 - Determine if the plot contains error bars (lines extending from data points indicating variability). These are typically on bar charts, line charts, and sometimes scatter plots.
@@ -95,7 +95,7 @@ For each panel, provide `Decision_and_explanation` as a single short string with
 - Use `"not needed"` for `Decision_and_explanation` when `error_bar_on_figure` is "no".
 - Use FAIL when error bars or box-plot whiskers are present but not adequately defined in the caption.
 
-## Please note: 
+## Please note:
 - If the caption defines error bars for multiple panels, include the same definition for each relevant panel.
 
 - For panels without error bars or box-plot elements to define, set `error_bar_defined_in_caption`,`from_the_caption`, and `Decision_and_explanation` to "not needed".

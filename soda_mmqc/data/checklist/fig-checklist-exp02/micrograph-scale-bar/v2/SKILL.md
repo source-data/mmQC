@@ -25,7 +25,7 @@ To first obtain an accurate and complete list of panels, invoke the `identify-pa
 
 ### 2. Name every content type in the panel
 
-Classify each panel using the following types: 
+Classify each panel using the following types:
 
 | type | what it covers |
 |---|---|
@@ -41,10 +41,10 @@ violin, histogram, pie, donut charts, heatmaps |
 | `other` | anything the list above does not cover. Say what it is in `evidence` |
 
 
-Note of caution: **A plot drawn inside a schematic, for illustration rather than to 
+Note of caution: **A plot drawn inside a schematic, for illustration rather than to
   present data, is not a plot.** An idealised curve in a model diagram, a sketched bar
   chart in an experimental-design cartoon: report `schematic` alone and say so
-  in `evidence`. 
+  in `evidence`.
 
 ### 3. A panel can hold several things
 
@@ -67,7 +67,7 @@ it from that decision. A panel you cannot classify at all gets `other` and an
 
 ### 5. How to report it
 
-State the classification in your own reply, as a comma-separated list with one 
+State the classification in your own reply, as a comma-separated list with one
 entry per panel, in label order. Each entry carries three things:
 
 - the panel's label, exactly as the inventory gave it;
@@ -75,15 +75,15 @@ entry per panel, in label order. Each entry carries three things:
 
 ## Check for scale bars on microscopy images
 For each panel in the figure:
-- If and only if it is a micrograph or microscopic image, check whether there is a scale bar in the image. A scale bar is a visual reference element added to scientific micrographs (microscopic images) that indicates the actual size of the objects being depicted. It typically appears as a line or bar of defined length. 
+- If and only if it is a micrograph or microscopic image, check whether there is a scale bar in the image. A scale bar is a visual reference element added to scientific micrographs (microscopic images) that indicates the actual size of the objects being depicted. It typically appears as a line or bar of defined length.
 
 ## Identify if scale bar is defined in the image itsself or in the figure caption
 In some cases the defined length of the scale bar is written in the image itsself and displayed as label such as "10 μm" or "500 nm" or it is defined only in the figure caption. For each microscopy image identified in step 2 check:
-- If the scale bar is defined in the image itsself. This would be indicated with a number and a unit next to the scale bar.  
-- If the scale bar is defined in the figure caption. 
+- If the scale bar is defined in the image itsself. This would be indicated with a number and a unit next to the scale bar.
+- If the scale bar is defined in the figure caption.
 
 ## Extract scale bar information
-- If the scale bar is defined in the image itsself, extract the scale bar information from the image. This encompasses the number and the unit, for example "500 nm". 
+- If the scale bar is defined in the image itsself, extract the scale bar information from the image. This encompasses the number and the unit, for example "500 nm".
 - If the scale bar is described in the text, extract the exact text from the caption that defines the scale bar.
 *IMPORTANT:* When extracting the text from the caption, *ONLY* include the specific text that describes the scale bar. Do NOT include general descriptions of the figure or panel content.
 

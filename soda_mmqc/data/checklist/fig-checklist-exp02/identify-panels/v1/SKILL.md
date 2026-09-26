@@ -26,7 +26,7 @@ some other kinds of images, a scheme.
 - Record the label without its brackets, so that `(a)` is reported as `a`.
   Report the labels the figure actually carries: do not invent, reorder or
   renumber them.
-- Sometimes one panel can include several images. For example, a panel can include both a microscopy image and a plot that typically displays a 
+- Sometimes one panel can include several images. For example, a panel can include both a microscopy image and a plot that typically displays a
 quantification of some features shown on the image.
 
 You must analyze each labeled panel independently, even if panels are related.
