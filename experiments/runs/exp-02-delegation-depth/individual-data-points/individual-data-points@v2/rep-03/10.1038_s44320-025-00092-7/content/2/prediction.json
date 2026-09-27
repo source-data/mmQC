@@ -1,0 +1,60 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Scatter plot where each marker is one of the n=141 individual samples ('n = 141 samples represented as individual measurements'); marginal histograms show the raw distribution of these same individual measurements rather than an average. Individual data points are directly displayed."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Each plotted marker represents the mean ± s.d. of 6 replicate samples per reporter (or 3-5 for some cell lines), i.e. an averaged value with an error bar, not a raw individual measurement. No overlay of the underlying individual replicate values is shown, so the spread behind each average cannot be assessed beyond the s.d. bar."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a density/line plot showing fitted normal distributions of subtype-averaged periods and amplitudes. Line/density plots are exempt from requiring overlaid individual points, as overlay would be unreadable and the shape already conveys distribution/spread information at the subtype level."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots are inherently exempt from this check since they display the data distribution (quartiles, whiskers, outliers). Additionally, the panel already overlays individual sample data points (Per2-Luc and Bmal1-Luc dots) on top of each box."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Polar histograms display the probability-normalized distribution of phase differences per cell line; histograms of this kind are not required to carry an additional overlay of individual data points."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Polar histogram summarizing subtype-level phase differences (averaged across 1-4 cell line models per subtype, as detailed in panel E); as a histogram-type plot it is exempt from requiring individual point overlays."
+    },
+    {
+      "panel_label": "G",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel shows a single illustrative example fit (original trace, fitted curve, and decay envelope) to explain the fitting method, not an averaged summary statistic across multiple samples, so individual data point overlay is not applicable."
+    },
+    {
+      "panel_label": "H",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each marker represents one of the n=117 individual samples (not an average across samples); the error bars reflect fitting uncertainty for that individual sample's parameters rather than inter-replicate variability. As a scatter plot of individual measurements, it is exempt/already compliant."
+    }
+  ]
+}

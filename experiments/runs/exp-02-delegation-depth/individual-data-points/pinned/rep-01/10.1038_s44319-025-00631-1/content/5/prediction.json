@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are spatial deconvolution heatmaps showing per-spot values overlaid on tissue images (each spot is an individual data point in itself). Heatmap-type visualizations are exempt from requiring additional overlaid individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot showing quartiles/median/min/max as described in the caption. Box plots are exempt from the individual-data-points requirement since they already convey the distribution; the figure additionally shows scattered points overlaid on the boxes."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are GSEA enrichment score line plots. Line plots are exempt from the individual-data-points requirement as overlaying points would not be meaningful/readable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a bar chart showing log2 fold-change values (a derived/aggregate statistic per gene) from differential expression analysis across many spatial spots/samples, with only a single bar per gene and no individual data points (e.g., per-sample or per-spot values) overlaid."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel consists of H&E and IHC micrograph images, not a plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

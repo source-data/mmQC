@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial plots display a per-spot color-coded value overlaid on tissue images (heatmap-like representation), where every spot is itself an individual data point rather than an aggregated summary statistic; heatmaps are exempt from requiring an additional overlay of individual points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The box plots quantifying immune cell fractions show individual data points (dots for each biological replicate/spot) overlaid on the box plots, in addition to the summary statistics (median, quartiles, min/max)."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are GSEA enrichment line plots, a plot type exempt from the individual-data-points requirement because overlaying points would make them unreadable and the running-score line itself conveys the underlying ranked data."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The bar graph shows a single derived statistic per gene (log2 fold change from a differential expression analysis with associated p-value), not a mean/median computed across a small number of biological replicates whose individual values could be meaningfully overlaid; it is analogous to other statistical-output bar charts that are not expected to carry individual data points."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrograph images, not a plot showing averaged/aggregated data, so the individual-data-points check does not apply."
+    }
+  ]
+}

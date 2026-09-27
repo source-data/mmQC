@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a stacked bar chart where each bar shows the median state frequency of promoters within a Pol II ChIP-seq bin (n=5912 promoters total, many per bin). Only the median is plotted; the underlying individual promoter values are not overlaid, so the spread/variability behind each median is not visible."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel is a single-molecule stack where each row already represents one individual DNA molecule (raw data), not an averaged/aggregated summary statistic, so overlay of individual points is not applicable."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Same construction as panel A: a stacked bar chart of median state frequencies per Pol II ChIP-seq bin across 6122 mouse promoters, with no individual promoter data points shown."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Like panel B, each row in this single-molecule stack is itself an individual data point (a single DNA molecule), so no additional overlay is needed."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot showing the distribution of PIC occupancy per group; box plots already convey the data distribution and are exempt from requiring an additional individual-points overlay. Outlier points are also shown as dots."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot showing the distribution of Pol II occupancy per group; box plots already convey the data distribution and are exempt from requiring an additional individual-points overlay. Outlier points are also shown as dots."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows an H&E histology image alongside spatial transcriptomics heatmap overlays on tissue sections (Log2 expression color scale), not a bar/summary plot of averaged data requiring individual point overlay."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B consists of H&E and RNAscope fluorescence micrographs; it is not a plot of averaged data, so the individual-data-points check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C is a scatter/dot plot in which every individual patient tumor value (n=512 LUAD, n=500 LUSC) is plotted, with median and 95% CI overlaid. Scatter plots inherently show individual data points, so this is exempt from requiring additional overlay."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel D is a bar chart showing mean ± SD of Tmprss11b expression, but individual data points (n=3 replicates per group) are overlaid as dots on each bar, satisfying the requirement to show underlying individual measurements."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a spatial transcriptomics cluster map image (micrograph/spatial plot showing cluster assignments per spot), not a summary plot of averaged data; individual spots are already displayed."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E histology images with manual region annotations; not a plot of averaged/aggregated quantitative data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E image plus spatial gene expression heatmap overlays showing per-spot expression levels; these already show individual spot values, not an averaged summary statistic."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots (running enrichment score curves); line plots are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar graph showing log2 fold change (a derived/averaged value from differential expression analysis) for each gene, with p-values annotated but no individual data points (e.g., per-spot or per-replicate expression values) overlaid on the bars."
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The spatial expression panels are heatmap-style overlays (log2 expression intensity per spatial spot) on tissue images, not mean-based bar charts; heatmaps are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B consists of H&E and RNAscope/immunofluorescence micrographs, not a plot of averaged data, so the check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel C is a scatter/dot plot showing median with 95% CI; every individual patient tumor value (n=512 LUAD, n=500 LUSC) is plotted as a dot, so individual data points are already shown."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel D is a bar chart showing mean ± SD, but individual replicate values (n=3 dots per group) are overlaid on each bar, satisfying the requirement to show individual data points."
+    }
+  ]
+}

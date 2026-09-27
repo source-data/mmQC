@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows spatial deconvolution heatmaps overlaid on tissue images (micrographs), not a plot of averaged data requiring individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a box plot showing distribution statistics (median, quartiles, min/max) with individual data points (dots) overlaid for each group, satisfying the requirement."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C consists of GSEA enrichment line plots, which are exempt from requiring individual data points since overlaying points would make the line plot unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel D is a bar chart showing log2 fold change values for individual genes from DEG analysis with associated p-values, but no individual data points (e.g., per-spot or per-replicate values) are overlaid on the bars, so the underlying variability behind each fold-change estimate cannot be assessed."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrograph/photograph images, not a plot of averaged data, so individual data points are not applicable."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial plots show per-spot deconvolution scores overlaid on tissue as a heatmap-style visualization (each dot already represents an individual spot value); heatmap/spatial feature plots are exempt from requiring additional individual point overlay."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots are exempt as they already show data distribution, and here individual data points (dots for each biological replicate/spot) are additionally overlaid on the boxes."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are GSEA enrichment (line) plots; line plots are exempt from the individual-data-points requirement since overlaying points would make them unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a bar chart showing log2 fold-change values (a summary statistic derived from many biological replicates/spots) for each gene, but no individual data points are overlaid on the bars to show the underlying spread of values."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrographs, not a plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

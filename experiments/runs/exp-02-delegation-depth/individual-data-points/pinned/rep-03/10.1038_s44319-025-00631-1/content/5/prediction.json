@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution maps are heatmap-style overlays on tissue images showing cell-type fraction per spot; heatmaps are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots are exempt from this check by default, but here individual data points (dots for each biological replicate/spot) are additionally overlaid on the box plots for all four immune cell populations."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; line plots are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar graph of log2 fold-change per gene derived from DEG analysis is shown as single bars with only p-values annotated; no individual data points (e.g., per-spot/per-sample values) are overlaid, and this plot type is not on the exemption list."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrographs, not a plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial clustering map (categorical Seurat cluster assignments overlaid on tissue) is a spatial/heatmap-style visualization, not a bar chart of averaged replicate data; individual data points are not applicable."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E histology image with manual region annotations; no averaged/summary data is plotted, so the individual-data-points check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Continuous spatial gene-expression (Log2 Exp) maps are heatmap-style visualizations overlaid on tissue, which are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots (running enrichment score curves), a plot type exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar graph showing log2 fold change per gene (derived from group comparisons via Seurat FindMarkers) displays only single summary bars with no overlaid individual data points (e.g., per-spot expression values), and this plot type is not among the exempt categories (box/violin, heatmap, line, pie/Venn, scatter)."
+    }
+  ]
+}

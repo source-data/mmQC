@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial transcriptomic cluster image is a micrograph/spatial overlay, not a plot of averaged data."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E images with manual annotation are micrographs, not a plot showing averages."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial expression maps are heatmap-style visualizations overlaid on tissue images, not averaged bar/summary plots requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots showing running enrichment score, which are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a bar graph showing log2 fold change values for each gene (derived from differential expression analysis across many spots/cells) without any individual data points overlaid, obscuring the underlying variability of the aggregated measurements."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are spatial heatmap plots overlaid on tissue images, where each colored spot already represents an individual spatial measurement rather than an aggregated mean across replicates, so there is no separate average to unpack into individual points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot (25th–75th percentile boxes with median), a plot type exempt from this check since box plots already convey the distribution of the underlying data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are GSEA enrichment line plots, a plot type exempt from this check since overlaying individual points on a line plot is not meaningful/would make it unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This bar chart shows a single computed log2 fold-change value per gene from a DEG analysis (each bar is a derived summary statistic, not a mean of multiple discrete biological replicate measurements), so there are no individual data points to overlay."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrograph/photograph images, not a plot of averaged quantitative data, so this check does not apply."
+    }
+  ]
+}

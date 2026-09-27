@@ -1,0 +1,60 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "This is a scatter plot in which each of the 141 markers represents one individual sample measurement (rhythmicity index vs. period), so individual data points are inherently displayed rather than only an average."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Each marker plots the mean ± s.d. of 6 replicate samples per reporter/cell line; only the averaged value and error bar are shown, with no overlay of the individual replicate data points behind each mean."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "These are smoothed density (line) plots of subtype-averaged periods and amplitudes; line/density plots are exempt from requiring overlaid individual points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots are exempt from this check since they already convey distribution/spread, and in this panel individual sample points (colored dots per reporter) are additionally overlaid on the boxes."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Polar histograms display the distribution of phase-difference values over time/bins rather than a single averaged summary statistic, so overlaying individual points is not applicable/needed."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a polar histogram showing the distribution of subtype-averaged phase differences across bins; histogram-type plots are exempt from requiring individual point overlays."
+    },
+    {
+      "panel_label": "G",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel is an illustrative example of a single signal fit to a decaying sinusoidal model (a line plot/schematic), not an averaged summary across samples, so the check does not apply."
+    },
+    {
+      "panel_label": "H",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each of the 117 markers is an individual sample's fitted amplitude and decay rate; the error bars reflect fitting uncertainty for that single sample rather than variability across averaged replicates, so the plotted markers already constitute individual data points."
+    }
+  ]
+}

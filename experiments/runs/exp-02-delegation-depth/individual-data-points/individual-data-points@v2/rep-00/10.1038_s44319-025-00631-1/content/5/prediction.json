@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows spatial heatmap-style plots (deconvolution scores mapped as colored spots over tissue sections). Heatmaps are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a box plot quantifying immune cell fractions, and the underlying individual data points (jittered dots for each spot) are overlaid on top of the box plots, satisfying the requirement."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C consists of GSEA enrichment line plots. Line plots are exempt from the individual-data-points requirement since overlaying points would make them unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel D is a bar graph showing log2 fold-change values (derived from aggregated DEG analysis across many spatial spots) for each gene, but no individual underlying data points are overlaid on the bars, and bar charts are not among the exempt plot types."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrograph images, not a plot of averaged/aggregated data, so the individual-data-points check does not apply."
+    }
+  ]
+}

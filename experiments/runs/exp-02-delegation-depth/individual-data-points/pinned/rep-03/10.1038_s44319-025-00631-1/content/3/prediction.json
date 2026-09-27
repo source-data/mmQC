@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a spatial tissue image (micrograph) with cluster color-coding overlay, not a plot of averaged data; individual-data-points check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E micrographs with manual region annotations; not a quantitative plot of averaged values."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Contains H&E micrographs plus spatial expression maps (heatmap-style color coding of Log2 expression per spot). Heatmaps are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots, which are exempt from the individual-data-points requirement since overlaying points would not be meaningful/readable."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Bar graph shows log2 fold-change values per gene derived from a differential expression test (Seurat FindMarkers, Wilcoxon rank-sum), each bar annotated with its associated p-value. This represents a single computed test statistic per gene rather than an average across biological replicates, so there are no discrete individual data points to overlay."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution plots display per-spot values as a heatmap over the tissue image; each spot is already an individual data point, so overlaying additional individual data points is not applicable."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots of immune cell fractions have individual data points (colored dots for each biological replicate) overlaid on the boxes, in addition to being a distribution-showing plot type that is inherently exempt."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; overlaying individual data points on this plot type is not applicable/would not be meaningful."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Bar graph shows a single computed statistic (log2 fold change from DEG analysis) per gene rather than an average of individual replicate measurements, so there are no underlying individual data points to overlay."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of H&E and IHC micrographs, not a plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

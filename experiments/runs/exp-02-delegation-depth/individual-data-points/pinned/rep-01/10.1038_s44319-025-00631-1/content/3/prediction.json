@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a spatial transcriptomics tissue image with cluster-colored spots overlaid on the section; it is a spatial map/micrograph, not a bar/summary plot requiring individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B shows H&E histology images with manual region annotations, a micrograph/photograph type, not a plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C includes H&E images alongside spatial gene-expression heatmaps overlaid on tissue; heatmap-type visualizations are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D shows GSEA enrichment line plots (running enrichment score curves); line plots are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a bar graph of log2 fold-change values for individual genes derived from differential expression analysis across spots; it shows only summary bars with p-values and does not overlay the underlying individual data points/spot-level values."
+    }
+  ]
+}

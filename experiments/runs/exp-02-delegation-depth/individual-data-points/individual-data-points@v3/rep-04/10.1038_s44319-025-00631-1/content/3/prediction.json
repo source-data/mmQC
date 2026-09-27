@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial cluster image overlaid on tissue section; not a bar/box/violin plot of averaged data, so the check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E histology images with manual region annotations; not a quantitative summary plot, so the check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E images and spatial gene expression heat-map overlays showing per-spot expression levels; this is akin to a heatmap, not a bar chart of averages, so individual points are not applicable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots, which are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Bar graph shows log2 fold-change values derived from differential gene expression analysis (Seurat FindMarkers, Wilcoxon test) across thousands of spatial spots per gene, not a simple mean of a small number of replicates; each bar is a single computed statistic (fold change with associated p-value) rather than an average with underlying discrete data points that could be meaningfully overlaid."
+    }
+  ]
+}

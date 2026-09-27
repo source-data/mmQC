@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows photographic ex vivo lung images (bright-field and ICG fluorescence), not a plot of averaged data, so this check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a bar chart of mean ICG fluorescence intensity ± SD, and the individual data points for each mouse (blue and red dots) are overlaid on the bars."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C includes micrographs (H&E, ICG, RNAscope) and spatial heatmap-style plots showing Log2 expression of Cd68 and Spp1 across tissue spots; heatmaps are exempt from requiring individual data point overlays."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D contains GSEA enrichment line plots, which are exempt from the individual-data-points requirement since overlaying points on running-sum line plots is not meaningful."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a bar chart showing Log2 fold-change values (an aggregate/summary statistic) for a set of genes from DEG analysis, but no individual underlying data points (e.g., per-spot or per-cell expression values) are overlaid on the bars."
+    },
+    {
+      "panel_label": "F",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel F shows fluorescence and IHC micrograph images, not a plot of averaged data, so this check does not apply."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a stacked bar chart across Pol II ChIP-seq bins where each bar shows the median promoter-state frequency of the promoters within that bin (caption: 'the median frequency of each of the promoter state was calculated. Each bar in the plot represents the median state frequencies'). No individual promoter data points are overlaid to show the underlying spread of state frequencies within each bin."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The main element of this panel is a single-molecule stack (a heatmap-like display) where every row is an individual DNA molecule, directly showing the raw individual data. Heatmap-type displays are exempt from requiring additional overlaid points, and the color sidebar simply encodes the per-molecule state already visible in the stack."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Same representation as panel A: a stacked bar chart of median promoter-state frequencies per Pol II ChIP-seq bin (mouse data), without any individual promoter data points shown."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same representation as panel B (mouse Skp1 locus): a single-molecule heatmap-like stack showing every individual molecule, which is exempt from requiring additional overlaid individual points."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot (median, IQR, whiskers as described in the caption) comparing PIC occupancy across groups. Box plots are exempt from the individual-data-point requirement since they already convey the distribution; outlier points are additionally visible."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot comparing Pol II occupancy across groups, exempt from the individual-data-point requirement as it already displays the distribution (median, IQR, whiskers), with outlier points visible."
+    }
+  ]
+}

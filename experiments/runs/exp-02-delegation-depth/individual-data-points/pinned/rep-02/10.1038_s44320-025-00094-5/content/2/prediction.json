@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a stacked area/bar chart showing median state frequencies across continuous log2 Pol II ChIP-seq bins (n=5912 promoters aggregated into many bins). Given the continuous binning and stacked-area rendering, it behaves like a line/area plot rather than a discrete few-category bar chart; overlaying thousands of individual promoter values would make it unreadable, so it falls under the line-plot style exemption."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a single-molecule stack (heatmap-like raster) where each row represents an individual DNA molecule's methylation pattern. The state frequency percentages shown on the sidebar are directly derived from and displayed alongside these individual single-molecule data, so individual data points are effectively shown."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Same representation as panel A (mouse data): a stacked area/bar chart of median state frequencies over continuous Pol II ChIP-seq bins, exempt for the same reasons as panel A."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Same representation as panel B (mouse Skp1 locus): individual single molecules are shown as rows in the stack, providing the individual data underlying the summary percentages."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E is a box plot comparing PIC occupancy across groups; box plots already display the data distribution (median, IQR, whiskers, and outlier points), so this is exempt from requiring additional overlaid individual points."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel F is a box plot comparing Pol II occupancy across groups; box plots already convey distribution information and are exempt from the individual-data-points requirement."
+    }
+  ]
+}
