@@ -170,14 +170,20 @@ soda_mmqc/data/evaluation/*
 # analyses come to 86 MB against 6 MB of predictions.
 experiments/runs/**/analysis.json
 
-# The per-session debug sidecars go too, for the same reason one step
-# further out: no figure can depend on one. `load_predictions` globs
-# prediction.json and ignores everything beside it, so tool_audit.json,
-# skill_trace.json and skill_set.json answer "why did this session do
-# that", which is a question for the machine that ran it. They are 13 MB
-# against the predictions' 6 MB in exp-01 -- twice the cost of the thing
-# they annotate, for output nothing reads back.
-experiments/runs/**/intermediates/
+# The per-session debug sidecars go too, with one exception.
+# `load_predictions` globs prediction.json and ignores everything beside
+# it, so tool_audit.json and skill_set.json answer "why did this session
+# do that", which is a question for the machine that ran it. They are
+# most of the 13 MB the sidecars came to in exp-01, against the
+# predictions' 6 MB -- twice the cost of the thing they annotate.
+#
+# skill_trace.json is the exception: it is a result, not a debug aid.
+# exp-02's endpoint 0 reads it to say whether delegation happened at all,
+# and like a prediction it comes from the model and cannot be recomputed.
+# Ignore the directory's contents rather than the directory, because git
+# cannot re-include a file inside a directory it has excluded.
+experiments/runs/**/intermediates/*
+!experiments/runs/**/intermediates/skill_trace.json
 
 # exp-02 pilot output: 30 sessions used to check that delegation fires at all.
 # Its numbers are recorded in thinking/experiments/exp-02-delegation-depth.md;
