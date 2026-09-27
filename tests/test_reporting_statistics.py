@@ -20,10 +20,12 @@ from soda_mmqc.reporting.aggregate import (
     SCORES_FRAME_COLUMNS,
     NON_RESPONSE_COLUMNS,
     LAYER1_COUNTS_COLUMNS,
+    LAYER2_COUNTS_COLUMNS,
     LAYER_S_COUNTS_COLUMNS,
     LAYER1_BY_EXAMPLE_COLUMNS,
     LAYER_S_BY_EXAMPLE_COLUMNS,
     layer1_counts,
+    layer2_counts,
     layer_s_counts,
     layer1_counts_by_example,
     layer_s_counts_by_example,
@@ -908,6 +910,31 @@ class TestLayerCounts:
         )
         frame = layer1_counts(runs).groupby("layer1")["count"].sum()
         assert frame["correct_applicable"] == 4
+
+    def test_layer2_counts_are_tidy_per_property(self):
+        """Only what layer 1 let through is counted, labels kept as given."""
+        record = FlatRecord(
+            doc_id="doc-a",
+            metadata={"source": "doc-a"},
+            analysis={
+                "instances": [
+                    {"leaf_property": "p1", "score": 1.0,
+                     "layer1": APPLICABLE, "layer2": "TP"},
+                    {"leaf_property": "p1", "score": 0.0,
+                     "layer1": APPLICABLE, "layer2": "FN"},
+                    {"leaf_property": "p2", "score": 1.0,
+                     "layer1": APPLICABLE, "layer2": "match"},
+                    {"leaf_property": "p2", "score": 1.0,
+                     "layer1": NOT_APPLICABLE},
+                ],
+                "by_list": {},
+            },
+        )
+        runs = FlatRuns([_run(arm="pinned", replicate=0, records=[record])])
+        frame = layer2_counts(runs)
+        assert list(frame.columns) == list(LAYER2_COUNTS_COLUMNS)
+        counts = frame.set_index(["property", "layer2"])["count"].to_dict()
+        assert counts == {("p1", "FN"): 1, ("p1", "TP"): 1, ("p2", "match"): 1}
 
     def test_layer_s_counts_keep_the_list_they_came_from(self):
         """plot-axis-units evaluates four row sets, not one."""

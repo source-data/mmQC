@@ -763,6 +763,17 @@ LAYER1_COUNTS_COLUMNS = (
     "count",
 )
 
+#: Columns of :func:`layer2_counts`, in order.
+LAYER2_COUNTS_COLUMNS = (
+    "check",
+    "model",
+    "arm",
+    "replicate",
+    "property",
+    "layer2",
+    "count",
+)
+
 #: Columns of :func:`layer_s_counts`, in order.
 LAYER_S_COUNTS_COLUMNS = (
     "check",
@@ -809,6 +820,39 @@ def layer1_counts(runs: FlatRuns) -> pd.DataFrame:
                     }
                 )
     return pd.DataFrame(rows, columns=list(LAYER1_COUNTS_COLUMNS))
+
+
+def layer2_counts(runs: FlatRuns) -> pd.DataFrame:
+    """Match outcomes per run leaf, by layer-2 label.
+
+    The layer-2 counterpart of :func:`layer1_counts`, at the same grain
+    and summable for the same reason: a count of mismatches is not a
+    mean over properties. Only instances layer 1 judged applicable
+    reach layer 2, so these totals are smaller than layer 1's.
+
+    The labels come in two vocabularies -- ``TP``/``TN``/``FP``/``FN``
+    for binary properties, ``match``/``mismatch`` for multiclass and
+    graded ones -- and both land in the one ``layer2`` column. Split on
+    the label before stacking: a stack mixing them sums a ``TN`` with a
+    ``match``, which are different questions.
+    """
+    rows: list[dict[str, Any]] = []
+    for run in runs:
+        summary = aggregate_run(run)
+        for leaf_property, rollup in summary.by_property.items():
+            for label, count in sorted(rollup.layer2_counts.items()):
+                rows.append(
+                    {
+                        "check": run.check,
+                        "model": run.model,
+                        "arm": run.arm,
+                        "replicate": run.replicate,
+                        "property": leaf_property,
+                        "layer2": label,
+                        "count": int(count),
+                    }
+                )
+    return pd.DataFrame(rows, columns=list(LAYER2_COUNTS_COLUMNS))
 
 
 def layer_s_counts(runs: FlatRuns) -> pd.DataFrame:
