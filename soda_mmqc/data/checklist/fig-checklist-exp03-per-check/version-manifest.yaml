@@ -1,0 +1,23 @@
+# Pinned skill versions for fig-checklist-exp03-per-check, the controls.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# The same skills as fig-checklist-exp03, byte for byte, minus the entry
+# skill: each check is dispatched on its own and owns its exp-02 contract,
+# copied unchanged. These are exp-02's `pinned` and `<check>@v3` arms, re-run
+# within exp-03 without `identify-panels`.
+#
+#   A|B|C_i       these pins                       (the check at v1)
+#   A|B <- C_i    --unpin <check> -> v3            (classify-panels at v1)
+#
+# `identify-panels` is deliberately absent, as in fig-checklist-exp03.
+skills:
+  # Shared skill. Called by the checks at v3 through prose; idle at v1.
+  classify-panels: v1
+
+  # Checks. Each owns schema.json, benchmark.json and eval-manifest.json,
+  # byte-identical to fig-checklist-exp02.
+  error-bars-defined: v1
+  individual-data-points: v1
+  micrograph-scale-bar: v1

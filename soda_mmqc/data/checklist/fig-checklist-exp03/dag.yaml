@@ -1,0 +1,52 @@
+# This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp03 --write` instead. `graph fig-checklist-exp03` fails when it and the skills disagree.
+checklist: fig-checklist-exp03
+skill_set: bd48e15ceb9b5e66ee3694abe4612903965511d1b2bae6a5b88a899ff4b20093
+skills:
+- name: classify-panels
+  version: v1
+  content_hash: 134518abca41fba9c7a89c2e76ffd38da890fc15404af88dd3468cc4f501873b
+  kind: shared
+  description: Classify panels by labelling them with the kind of content it shows
+    (micrograph, plot, blot, molecular or protein structure, sequence, schematic,
+    photograph, table). Use when a check applies to only some kinds of panel.
+  calls: []
+  produces:
+  - panel_classes
+- name: do-fig-checklist
+  version: v1
+  content_hash: 88e720e26a1725ac8aa1020be3a9c79e5ccceeed702526e6d3201ee606392cb1
+  kind: check
+  description: Run the whole figure checklist on a figure.
+  calls:
+  - error-bars-defined
+  - individual-data-points
+  - micrograph-scale-bar
+  produces:
+  - do-fig-checklist
+- name: error-bars-defined
+  version: v1
+  content_hash: ccc5ed95141a74d591ef2511c262f0f4f7f75b4298e37d95328331d5458faa32
+  kind: shared
+  description: Check that error bars, and box or violin plot elements, are explained
+    in the caption.
+  calls: []
+  produces:
+  - error-bars-defined
+- name: individual-data-points
+  version: v1
+  content_hash: b5527248e315f332dc3aa8abacea8e02bc35b2ab7cae9f35ec47629981555627
+  kind: shared
+  description: Check that a plot showing averages also shows the individual data points
+    behind them.
+  calls: []
+  produces:
+  - individual-data-points
+- name: micrograph-scale-bar
+  version: v1
+  content_hash: 4e75c482f3503c6bf67d932187c3160fe1c63f2696550f557658d31f5df6e647
+  kind: shared
+  description: Check that every micrograph panel carries a scale bar, and that its
+    length is stated on the image or in the caption.
+  calls: []
+  produces:
+  - micrograph-scale-bar

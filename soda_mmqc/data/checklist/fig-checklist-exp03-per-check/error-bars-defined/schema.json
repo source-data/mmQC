@@ -1,0 +1,52 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "error-bars-defined",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "error_bar_on_figure": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether error bars are present"
+                            },
+                            "error_bar_defined_in_caption": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not needed"],
+                                "description": "Whether error bars are defined in caption"
+                            },
+                            "from_the_caption": {
+                                "type": "string",
+                                "description": "Text from caption describing error bars, when error bars are present, leave empty if no definition is found, or 'not needed' if error bars are not applicable"
+                            },
+                            "Decision_and_explanation": {
+                                "type": "string",
+                                "description": "Panel-level verdict and brief rationale (PASS or FAIL) on whether error bars or box-plot whiskers are adequately defined; use 'not needed' when error_bar_on_figure is 'no'"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "error_bar_on_figure",
+                            "error_bar_defined_in_caption",
+                            "from_the_caption",
+                            "Decision_and_explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

@@ -1,0 +1,32 @@
+# Pinned skill versions for fig-checklist-exp03, the fan-out arms.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# `do-fig-checklist` is the entry point and the only leaf: it owns the one
+# contract, which combines the three checks' exp-02 contracts under their
+# names. The checks beneath it own no contract here.
+#
+# The two arms, and how each is reached:
+#
+#   A|B|C_i <- D      these pins                      (checks at v1)
+#   A|B <- C_i <- D   --unpin all three checks -> v3  (classify-panels at v1)
+#
+# where A is panel identification, B panel classification, C_i a check and D
+# the entry skill. Their controls are the same two arrangements dispatched per
+# check, in fig-checklist-exp03-per-check.
+#
+# `identify-panels` is deliberately absent. No arrangement here calls A on
+# its own, and exp-02 showed that its description alone drew calls in 5-12% of
+# A|B <- C sessions. It is absent from the controls too.
+skills:
+  # Entry point. Owns schema.json, benchmark.json and eval-manifest.json.
+  do-fig-checklist: v1
+
+  # Shared skill. Called by the checks at v3 through prose; idle at v1.
+  classify-panels: v1
+
+  # Checks, called by do-fig-checklist through prose.
+  error-bars-defined: v1
+  individual-data-points: v1
+  micrograph-scale-bar: v1

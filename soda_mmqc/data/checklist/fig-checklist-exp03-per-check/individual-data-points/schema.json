@@ -1,0 +1,54 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "individual-data-points",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "plot": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel is a plot"
+
+                            },
+                            "individual_values": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not needed"],
+                                "description": "Whether the panel displays individual data points"
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL"],
+                                "description": "Panel-level pass/fail verdict on whether individual data points are shown where average values are displayed"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Short explanation of the decision"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "plot",
+                            "individual_values",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

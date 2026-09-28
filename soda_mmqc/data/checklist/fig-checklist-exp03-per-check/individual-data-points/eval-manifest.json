@@ -1,0 +1,36 @@
+{
+  "checklist": "individual-data-points",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].individual_values": {
+      "na_values": ["not needed"],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].decision": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].explanation": {
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}
