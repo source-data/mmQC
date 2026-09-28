@@ -74,6 +74,7 @@ from soda_mmqc.agentic.runner import (
     run_check_mock,
 )
 from soda_mmqc.agentic.runtime import (
+    ASSEMBLY_ALL,
     EXAMPLE_GOLD_SUBDIR,
     assemble_runtime,
     describe_permission_profile,
@@ -103,11 +104,13 @@ from soda_mmqc.agentic.skills import (
     SKILL_TOOL,
     _prose_blocks,
     build_graph,
+    call_closure,
     find_cycle,
     invoked_skills,
     load_skill,
     load_skills,
     resolve_check_dir,
+    select_versions,
     validate_skills,
 )
 from soda_mmqc.agentic.views import (
@@ -2367,14 +2370,76 @@ class TestRuntimeSkillPlacement:
         for name in ("identify-panels", PILOT_LEAF):
             assert (skills_root / name / SKILL_FILENAME).is_file()
 
-    def test_every_skill_of_the_checklist_is_present(self, assembled):
-        """The runner preselects nothing: all descriptions must compete."""
-        expected = set(load_skills(FIG_CHECKLIST_DIR))
+    def test_only_the_entry_points_closure_is_present(self, assembled):
+        """A session holds what its entry point's prose reaches, no more.
+
+        Assembling the whole checklist offered the model redundant copies of
+        instructions -- a monolith was still offered the shared skill whose
+        text it carries inline -- which is no configuration a modular
+        checklist would ship.
+        """
         present = {
             p.parent.name
             for p in assembled.skills_root.rglob(SKILL_FILENAME)
         }
-        assert present == expected
+        assert present == {PILOT_LEAF, SHARED_SKILL}
+        assert present < set(load_skills(FIG_CHECKLIST_DIR))
+
+    def test_a_sibling_check_is_not_assembled(self, assembled):
+        assert not (
+            assembled.skills_root / "error-bars-defined" / SKILL_FILENAME
+        ).exists()
+
+    def test_closure_is_transitive(self, tmp_path: Path):
+        """error-bars-defined reaches identify-panels both directly and
+        through classify-plot-panels; both hops are assembled."""
+        layout = assemble_runtime(
+            "fig-checklist", "error-bars-defined", SUBPANEL_FIGURE,
+            root=tmp_path / "runtime",
+        )
+        present = {
+            p.parent.name for p in layout.skills_root.rglob(SKILL_FILENAME)
+        }
+        assert present == {
+            "error-bars-defined", "classify-plot-panels", SHARED_SKILL,
+        }
+
+    def test_closure_follows_the_pinned_version(self):
+        """The same check at v1 (monolith) and v3 (delegating) must assemble
+        different runtimes: only v3 reaches classify-panels."""
+        checklist_dir = CHECKLIST_DIR / "fig-checklist-exp03-per-check"
+        skills = validate_skills(checklist_dir)
+        pins = checklist_pins(checklist_dir)
+        monolith = call_closure(
+            "micrograph-scale-bar", select_versions(skills, pins)
+        )
+        delegating = call_closure(
+            "micrograph-scale-bar",
+            select_versions(skills, {**pins, "micrograph-scale-bar": "v3"}),
+        )
+        assert monolith == {"micrograph-scale-bar"}
+        assert delegating == {"micrograph-scale-bar", "classify-panels"}
+
+    def test_assembly_all_reproduces_the_whole_checklist(
+        self, tmp_path: Path
+    ):
+        """Kept so that runs made before closure became the default can be
+        reproduced exactly."""
+        layout = assemble_runtime(
+            "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
+            root=tmp_path / "runtime", assembly=ASSEMBLY_ALL,
+        )
+        present = {
+            p.parent.name for p in layout.skills_root.rglob(SKILL_FILENAME)
+        }
+        assert present == set(load_skills(FIG_CHECKLIST_DIR))
+
+    def test_an_unknown_assembly_mode_is_refused(self, tmp_path: Path):
+        with pytest.raises(ValueError, match=r"assembly must be one of"):
+            assemble_runtime(
+                "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
+                root=tmp_path / "runtime", assembly="everything",
+            )
 
     def test_the_shared_skill_is_not_pruned_to_the_named_check(
         self, assembled
@@ -2710,11 +2775,14 @@ class TestPermissionProfile:
         assert options["setting_sources"] == ["project"]
 
     def test_every_assembled_skill_stays_invocable(self, assembled):
-        """Delegated discovery is the premise; pruning ours would test our own
-        control flow instead of the prose. So every assembled skill is listed
-        -- but only ours."""
+        """What was assembled is exactly what the Skill tool may invoke:
+        the entry point's closure, and nothing of the installation's."""
         listed = session_options(assembled)["skills"]
-        assert set(listed) == set(load_skills(FIG_CHECKLIST_DIR))
+        present = {
+            p.parent.name
+            for p in assembled.skills_root.rglob(SKILL_FILENAME)
+        }
+        assert set(listed) == present == {PILOT_LEAF, SHARED_SKILL}
 
     def test_the_named_pool_names_only_ours(self, assembled):
         """The pool is named explicitly rather than left as "all".
@@ -2961,7 +3029,7 @@ class TestAgentSession:
             p.parent.name
             for p in assembled.skills_root.rglob(SKILL_FILENAME)
         }
-        assert present == set(load_skills(FIG_CHECKLIST_DIR))
+        assert present == {PILOT_LEAF, SHARED_SKILL}
         # every assembled skill is invocable -- and nothing else is
         assert set(captured["options"]["skills"]) == present
 
@@ -4233,6 +4301,10 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
         )
         assert recorded["digest"] == expected.digest
         assert {s["name"] for s in recorded["skills"]} == set(expected.pins)
+        # What the arm pinned and what the session held are recorded apart:
+        # under closure assembly the second is the smaller.
+        assert recorded["assembly"] == "closure"
+        assert set(recorded["assembled"]) == {PILOT_LEAF, SHARED_SKILL}
 
     def test_the_session_runs_the_pinned_version(
         self, tmp_path: Path, stub_session

@@ -266,6 +266,38 @@ def build_graph(
     return graph
 
 
+def call_closure(entry: str, selected: Mapping[str, Skill]) -> Set[str]:
+    """The entry point and every skill its pinned prose reaches, transitively.
+
+    Unlike :func:`build_graph`, this follows the **selected** version of each
+    skill, not the union over versions: which skills a session can reach
+    depends on what it was pinned to, and a v3 that delegates and a v1 that
+    does not must assemble different runtimes.
+
+    ``requires`` is the edge set because validation already holds it equal to
+    the skills a body names in prose, so this is the same graph the generated
+    views draw.
+
+    Raises:
+        ValueError: If the entry point, or anything it requires, is not among
+            ``selected``.
+    """
+    reached: Set[str] = set()
+    frontier = [entry]
+    while frontier:
+        name = frontier.pop()
+        if name in reached:
+            continue
+        if name not in selected:
+            raise ValueError(
+                f"{name!r} is reached from {entry!r} but no version of it "
+                f"was selected"
+            )
+        reached.add(name)
+        frontier.extend(selected[name].requires)
+    return reached
+
+
 def find_cycle(graph: Mapping[str, Set[str]]) -> Optional[List[str]]:
     """Return one cycle in ``graph`` as a list of names, or None if acyclic.
 

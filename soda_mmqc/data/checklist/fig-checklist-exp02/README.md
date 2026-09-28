@@ -28,7 +28,7 @@ Each entry is one check and the skills its prose asks for, transitively.
 
 ### Called by no check
 
-These are pinned and assembled -- every skill's description competes in every session -- but no check's prose asks for them today.
+These are pinned, but no check's prose reaches them today. Under closure assembly -- the default since exp-03 -- a session holds its entry point and what that prose reaches, so none holds these. Runs made with `assembly="all"`, as exp-01 and exp-02 were, had them in every session.
 
 - `classify-panels`
 - `identify-panels`

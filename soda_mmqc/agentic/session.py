@@ -28,6 +28,7 @@ from soda_mmqc.config import (
 from soda_mmqc.agentic.pinning import SkillSet, checklist_pins
 from soda_mmqc.agentic.render import render_anthropic
 from soda_mmqc.agentic.runtime import (
+    ASSEMBLY_CLOSURE,
     RuntimeLayout,
     _leaf_schema,
     assemble_runtime,
@@ -96,6 +97,7 @@ def runtime_session(
     root: Optional[Path] = None,
     keep: bool = False,
     pins: Optional[Mapping[str, str]] = None,
+    assembly: str = ASSEMBLY_CLOSURE,
 ) -> Iterator[RuntimeLayout]:
     """Assemble a runtime, yield it, and remove it afterwards.
 
@@ -106,7 +108,7 @@ def runtime_session(
     which is when it is most wanted.
     """
     layout = assemble_runtime(
-        checklist, check, example, root=root, pins=pins
+        checklist, check, example, root=root, pins=pins, assembly=assembly
     )
     try:
         yield layout

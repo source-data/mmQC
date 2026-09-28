@@ -31,6 +31,7 @@ from soda_mmqc.agentic.pinning import (
     load_model_defaults,
 )
 from soda_mmqc.agentic.runtime import (
+    ASSEMBLY_CLOSURE,
     effective_session_options,
     RuntimeLayout,
     _leaf_schema,
@@ -95,6 +96,8 @@ def _write_prediction(
     skill_set: Optional[SkillSet] = None,
     arm: str = "pinned",
     replicate: int = 0,
+    assembled: Optional[SkillSet] = None,
+    assembly: Optional[str] = None,
 ) -> Path:
     """Write one example's leaf JSON plus its trace sidecar."""
     example_dir = predictions_dir / example
@@ -124,6 +127,19 @@ def _write_prediction(
                             skill_set.entries, key=lambda e: e.name
                         )
                     ],
+                    # `skills` is what the arm pinned; this is what the
+                    # session actually held. Under closure assembly they
+                    # differ, and only the second says what the model saw.
+                    **(
+                        {
+                            "assembly": assembly,
+                            "assembled": sorted(
+                                e.name for e in assembled.entries
+                            ),
+                            "assembled_digest": assembled.digest,
+                        }
+                        if assembled is not None else {}
+                    ),
                 },
                 indent=2,
             ) + "\n",
@@ -287,6 +303,7 @@ def run_check_live(
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
     replicates: int = 1,
     force: bool = False,
+    assembly: str = ASSEMBLY_CLOSURE,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -300,6 +317,10 @@ def run_check_live(
     each gets its own arm directory named after what it changed, so two
     versions of one skill can be scored against the same gold with the same
     shared ``eval-manifest.json``.
+
+    ``assembly`` is ``"closure"`` by default: each session holds the entry
+    point and what its pinned prose reaches, and nothing else. ``"all"``
+    assembles every skill of the checklist, as runs before exp-03 did.
 
     Every run writes ``<root>/<arm>/rep-NN/<example>/``, with no exception for
     a single arm or a single replicate: one shape means one reader, and a run
@@ -376,7 +397,7 @@ def run_check_live(
                 try:
                     with runtime_session(
                         checklist, check, relative_source_path,
-                        keep=keep_runtime, pins=versions,
+                        keep=keep_runtime, pins=versions, assembly=assembly,
                     ) as layout:
                         options = effective_session_options(
                             layout, skills, defaults=defaults
@@ -419,6 +440,8 @@ def run_check_live(
                             skill_set,
                             arm=label,
                             replicate=replicate,
+                            assembled=runtime_skill_set(layout, versions),
+                            assembly=assembly,
                         )
                         _copy_sidecar(
                             audit.path,

@@ -50,6 +50,7 @@ from soda_mmqc.agentic.skills import (
     SKILL_FILENAME,
     _read_json,
     Skill,
+    call_closure,
     resolve_check_dir,
     select_versions,
     validate_skills,
@@ -64,8 +65,19 @@ __all__ = [
     "runtime_skill_set",
     "session_cache_key",
     "EXAMPLE_INPUT_SUBDIR",
+    "ASSEMBLY_CLOSURE",
+    "ASSEMBLY_ALL",
     "_leaf_schema",
 ]
+
+#: Assemble the entry point and what its pinned prose reaches, transitively.
+#: The default: a session holds one copy of each instruction it can use, and
+#: no skill it has no route to.
+ASSEMBLY_CLOSURE = "closure"
+#: Assemble every skill of the checklist, reached or not. Kept for
+#: reproducing runs made before closure became the default (exp-01, exp-02).
+ASSEMBLY_ALL = "all"
+ASSEMBLY_MODES = (ASSEMBLY_CLOSURE, ASSEMBLY_ALL)
 
 
 
@@ -214,15 +226,25 @@ def assemble_runtime(
     *,
     root: Optional[Path] = None,
     pins: Optional[Mapping[str, str]] = None,
+    assembly: str = ASSEMBLY_CLOSURE,
 ) -> RuntimeLayout:
     """Assemble a sealed runtime directory for one example.
 
-    The result contains **every** skill of the checklist -- so that all of
-    their descriptions compete for the agent's attention, which is the thing
-    Milestone 4 measures -- exactly one version of each, the named check as
-    the entry point, and the one example's inputs. It contains no evaluation
-    contract, no gold, no other example, no sibling version, and no link of
-    any kind back to the repository.
+    The result contains the named check as the entry point and **every skill
+    its pinned prose reaches, transitively** -- exactly one version of each --
+    and the one example's inputs. It contains no evaluation contract, no gold,
+    no other example, no sibling version, and no link of any kind back to the
+    repository.
+
+    **Closure, not the whole checklist, is the default.** Assembling every
+    skill put redundant copies of instructions in front of the model: a
+    monolith that carries classification inline was still offered
+    `classify-panels`, and a check that calls one shared skill was offered
+    another it had no use for. That tested nothing a modular checklist is
+    meant to be -- one maintained copy of each instruction -- and the stray
+    calls it drew (up to 7% of sessions in exp-02) blurred the arrangement a
+    run was labelled with. ``assembly="all"`` restores the old behaviour, for
+    reproducing runs made under it.
 
     Assembly is atomic: the runtime is built in a staging directory and moved
     into place only once complete, so a failure leaves nothing half-built.
@@ -236,6 +258,7 @@ def assemble_runtime(
         pins: Optional ``{skill: version}``. Defaults to the checklist's
             ``version-manifest.yaml``, and -- only when there is none -- to
             the highest version of each skill.
+        assembly: ``"closure"`` (default) or ``"all"``.
 
     Raises:
         FileNotFoundError: If the checklist, check or example is absent.
@@ -258,6 +281,13 @@ def assemble_runtime(
         if pins is not None:
             validate_version_manifest(skills, pins, checklist_dir)
     selected = select_versions(skills, pins)
+    if assembly == ASSEMBLY_CLOSURE:
+        reached = call_closure(check, selected)
+        selected = {n: s for n, s in selected.items() if n in reached}
+    elif assembly != ASSEMBLY_ALL:
+        raise ValueError(
+            f"assembly must be one of {ASSEMBLY_MODES}, got {assembly!r}"
+        )
     input_dir = _resolve_example_input_dir(example)
     staged_example = _resolve_example(checklist, check, example)
 
@@ -320,8 +350,8 @@ def assemble_runtime(
         raise
 
     logger.info(
-        "Assembled runtime for %s/%s at %s (%d skills)",
-        checklist, check, root, len(selected),
+        "Assembled runtime for %s/%s at %s (%d skills, %s)",
+        checklist, check, root, len(selected), assembly,
     )
     return layout
 
