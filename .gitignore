@@ -185,7 +185,18 @@ experiments/runs/**/analysis.json
 experiments/runs/**/intermediates/*
 !experiments/runs/**/intermediates/skill_trace.json
 
+# exp-03 makes tool_audit.json a result too, for its runs only: its cost and
+# time endpoint reads `usage` -- cost, turns, duration, tokens -- from it, and
+# like the trace that comes from the session and cannot be recomputed. About
+# 3 KB a session, 5 MB over exp-03's 1,520.
+!experiments/runs/exp-03-checklist-entry/**/intermediates/tool_audit.json
+
 # exp-02 pilot output: 30 sessions used to check that delegation fires at all.
 # Its numbers are recorded in thinking/experiments/exp-02-delegation-depth.md;
 # the sessions themselves are not experiment data and are not committed.
 experiments/runs/exp-02-delegation-depth/smoke/
+
+# exp-03 smoke test: 24 sessions used to check that D dispatches at all.
+# Its numbers are recorded in thinking/experiments/exp-03-checklist-entry.md;
+# the sessions themselves are not experiment data and are not committed.
+experiments/runs/exp-03-checklist-entry/smoke/
