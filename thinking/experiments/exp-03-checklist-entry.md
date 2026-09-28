@@ -284,8 +284,45 @@ borrowing exp-02's arms would have left.
 
 The two checklists hold only what a condition pins — each check at v1 and v3,
 `classify-panels` v1 — and every one of those files is a byte copy of its
-exp-02 original, checked with `cmp`. The skill pools differ by exactly one
-description: D's.
+exp-02 original, checked with `cmp`.
+
+### Amendment, 2026-09-28: each session holds its closure, not the checklist
+
+*Made after the first full run had started and before any of its data was
+kept; see* Runs.
+
+Until this amendment the runtime assembled **every skill of the checklist**
+into every session, so that "all descriptions compete". That was a deliberate
+design, inherited from the harness's first milestone — and it is the wrong
+default for a question about modular skills. It offered the model redundant
+copies of instructions: exp-02's monolith was offered `classify-panels` while
+carrying the same text inline, and a check calling one shared skill was offered
+another it had no use for. No checklist maintained for modularity would ship
+that, so it tests nothing this line of experiments is about. It also blurred the
+arrangements: exp-02's stray calls — **11/570** `classify-panels` in `A ← B|C`,
+**40/570** `identify-panels` in `A|B ← C`, none in the monolith — were possible
+only because the unnamed skill was there to be found.
+
+So **a session now holds the call-graph closure of its entry point**: the entry
+skill and every skill its pinned prose reaches, transitively, following
+`requires` on the pinned version. This is the harness default from this date
+(`assembly="closure"`), and `run.py` names it explicitly.
+
+| condition | session holds |
+|---|---|
+| `A\|B\|C_i` | the check (v1) |
+| `A\|B ← C_i` | the check (v3), `classify-panels` |
+| `A\|B\|C_i ← D` | D, the three checks (v1) |
+| `A\|B ← C_i ← D` | D, the three checks (v3), `classify-panels` |
+
+Two consequences. The per-check controls no longer see the other two checks,
+so a control is now a check genuinely dispatched **alone**. And the fan-out
+differs from its control in the skill pool by exactly what the fan-out
+*requires*: D and the two other checks — no idle skill on either side.
+
+exp-01 and exp-02 were run under the old assembly, and their results stand as
+results about it; the harness keeps `assembly="all"` so that they can be
+reproduced.
 
 ### One contract, owned by D
 
@@ -370,7 +407,8 @@ subagents, which run in isolated contexts and in parallel
 Measured against its per-check control, a fan-out session differs in:
 
 - **the entry point** — the request names `do-fig-checklist`, not the check;
-- **D's description** in the pool, beside the four the control also has;
+- **the skill pool** — D and the two other checks, which the fan-out needs and
+  the control, assembled as its own closure, does not hold;
 - **two other checks** in the same context, before or after this one;
 - **the output contract** — the check answers as one part of a combined object
   rather than as the whole of its own.
@@ -411,6 +449,9 @@ error-bars-defined: (v3,)}` — a product of singletons, so exactly one SkillSet
 Each control is `{<check>: (v1, v3)}`, the pin and the delegating version.
 
 ### The smoke test, 2026-09-27: D dispatches, nested delegation mostly does not
+
+*Run under the old whole-checklist assembly, before the amendment above; the
+closure smoke test follows.*
 
 24 sessions — every condition, the first 3 examples, one replicate — all
 completed, none failed. The notebook ran end to end on them.
@@ -454,12 +495,38 @@ The delegating arm's larger saving is partly the skipped `classify-panels`
 calls, not only the figure sent once. Against per-check sessions run in
 parallel, the fan-out takes two to three times as long.
 
+### The closure smoke test, 2026-09-28: the same picture, with nothing idle
+
+The same 24 sessions under closure assembly, $1.27, all completed, none failed.
+Every session held exactly its closure — 1, 2, 4 and 5 skills for the four
+conditions, recorded in each `skill_set.json` — so no skill was available that
+a condition does not name.
+
+**D dispatched to all three checks in 6/6 sessions**, in the listed order every
+time, as before.
+
+**Nested delegation is as reluctant without the idle skills as with them.**
+
+| condition | check invocations that reached `classify-panels` |
+|---|---|
+| `A\|B ← C_i`, per check | **8/9** — `individual-data-points` 2/3, the others 3/3 |
+| `A\|B ← C_i ← D`, fan-out | **2/9** — both `error-bars-defined`; `micrograph-scale-bar` 0/3 again |
+
+So the reluctance is not a side effect of the whole-checklist pool: it survives
+a pool holding only what the arrangement needs.
+
+**Cost** per figure, fan-out ÷ per-check, mean of 3 examples: **0.82** for
+`A|B|C_i ← D` and **0.67** for `A|B ← C_i ← D`, close to the first smoke test's
+0.83 and 0.60.
+
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
-| 2026-09-27 | smoke | `run.py --smoke` | $1.33 | `experiments/runs/exp-03-checklist-entry/smoke/` |
-| | all four | `python experiments/exp-03-checklist-entry/run.py` | est. $90–110 | `experiments/runs/exp-03-checklist-entry/` |
+| 2026-09-27 | smoke, whole-checklist assembly | `run.py --smoke` | $1.33 | superseded by the closure smoke test |
+| 2026-09-28 | all four, whole-checklist assembly | `run.py` | ≈ $15 | **stopped** after 153 `A\|B\|C_i ← D` sessions; moved to `experiments/runs/exp-03-superseded/` (not committed), not experiment data — see *Amendment* |
+| 2026-09-28 | smoke, closure assembly | `run.py --smoke` | $1.27 | `experiments/runs/exp-03-checklist-entry/smoke/` |
+| | all four, closure assembly | `python experiments/exp-03-checklist-entry/run.py` | est. $90–110 | `experiments/runs/exp-03-checklist-entry/` |
 
 1,520 sessions. exp-02 averaged about $0.04 per session over 2,280, which puts
 the 1,140 control sessions near $45 and the per-check cost of a figure near
@@ -487,11 +554,18 @@ less is what the cost endpoint measures — so 380 sessions near $45–60.
 - **Failures are correlated across checks.** One failed fan-out session removes
   all three of its checks, so the three checks' failure counts are not
   independent and should not be summed as though they were.
-- **Descriptions compete.** exp-02 showed `identify-panels` drawing calls from its
-  description alone, which is why it is gone. D adds one description to the
-  fan-out's pool and, more importantly, puts the three checks' descriptions in
-  front of a session that is working on all of them; a check can be reached by
-  discovery as well as by D.
+- **Descriptions still compete, within a closure.** Closure assembly removes
+  every skill a session has no route to, which is what drew exp-02's stray
+  calls. It cannot remove competition among skills that *are* reached: the
+  fan-out puts all three checks' descriptions in front of a session working on
+  all of them, so a check can be reached by discovery as well as by D.
+- **The assembly changed after the run began.** The first full run was stopped
+  after 153 `A|B|C_i ← D` sessions, made under the old whole-checklist
+  assembly, when that assembly was judged to test the wrong thing. Those
+  sessions were moved out of the run root and are not experiment data. The
+  change was made on design grounds before any of them was scored, and the
+  amendment is committed before the rerun — but it was a change made with a
+  run in progress, and it is recorded as one.
 - **The combined contract is derived, not native.** The pairing depends on it
   scoring each check exactly as the per-check contract does. That is verified
   on 228 exp-02 scorings, not on exp-03's own predictions, whose shapes could in
@@ -528,9 +602,10 @@ less is what the cost endpoint measures — so 380 sessions near $45–60.
 
 ## Status and next
 
-Preregistered. Both checklists, D's contract and gold, the runner and the
-notebook are built, the smoke test has run, D is frozen as it stands, and the
-margins are fixed. This note is committed before any full run, so
+Preregistered, and amended on 2026-09-28 to closure assembly before any kept
+data. Both checklists, D's contract and gold, the runner and the notebook are
+built, the smoke test has run under the amended assembly, D is frozen as it
+stands, and the margins are fixed. This note is committed before any full run, so
 
 ```bash
 git log --oneline --reverse -- \

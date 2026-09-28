@@ -17,6 +17,11 @@ and, in each, the two arrangements exp-02 found worth carrying forward:
 where A is panel identification, B classification, C_i a check. Neither
 checklist carries `identify-panels`: nothing here calls A on its own.
 
+Every session is assembled as the **closure** of its entry point: the skills
+its pinned prose reaches, and nothing else. So `A|B|C_i` holds the check
+alone, `A|B <- C_i` the check and `classify-panels`, `A|B|C_i <- D` holds D
+and the three checks, and `A|B <- C_i <- D` all five skills.
+
 **The controls are run here, not borrowed from exp-02.** exp-02's controls had
 `identify-panels` in their skill pool, and its description alone drew calls in
 5-12% of `A|B <- C` sessions. Re-running them without it keeps the fan-out and
@@ -57,6 +62,7 @@ sys.path.insert(0, str(REPO))
 
 from soda_mmqc import logger                                  # noqa: E402
 from soda_mmqc.agentic.runner import run_check_live           # noqa: E402
+from soda_mmqc.agentic.runtime import ASSEMBLY_CLOSURE        # noqa: E402
 from soda_mmqc.agentic.skills import resolve_check_dir        # noqa: E402
 
 FAN_OUT = "fig-checklist-exp03"
@@ -70,6 +76,13 @@ MODEL = "claude-sonnet-5"
 PROVIDER = "claude-sdk"
 
 RUNS = REPO / "experiments" / "runs" / "exp-03-checklist-entry"
+
+#: Named rather than left to the default, so that a later change of default
+#: cannot change what this preregistered run assembles. Closure: each session
+#: holds its entry point and what that prose reaches -- a monolith is not
+#: offered `classify-panels`, and a per-check control is not offered the
+#: other two checks.
+ASSEMBLY = ASSEMBLY_CLOSURE
 
 
 def fan_out_unpins() -> List[Optional[Mapping[str, Sequence[str]]]]:
@@ -134,6 +147,7 @@ def run_part(part: str, root: Path, *, replicates: int, limit: Optional[int],
             replicates=replicates,
             unpin=unpin,
             force=force,
+            assembly=ASSEMBLY,
         )
         for entry in report:
             if entry["status"] == "failed":
