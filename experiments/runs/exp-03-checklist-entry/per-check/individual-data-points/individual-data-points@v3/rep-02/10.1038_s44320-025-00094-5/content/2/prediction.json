@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a stacked bar/area chart where each bar shows the median state frequency across many promoters within a Pol II ChIP-seq bin (n=5912 promoters total). Since bars represent medians of an underlying distribution of promoter values, individual data points (e.g., per-promoter frequencies) should be shown but are not; only the aggregated median composition is plotted."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel is a single-molecule raster/heatmap-style plot in which each row already represents an individual DNA molecule's methylation pattern. It displays raw individual data rather than an average, so overlaying additional individual points is not applicable."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Same representation as panel A (mouse data): bars show median state frequencies per Pol II ChIP-seq bin aggregated across n=6122 promoters, without displaying the individual per-promoter data points underlying each median."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Like panel B, this is a single-molecule raster plot where each row is an individual molecule's methylation trace, i.e., raw individual data rather than an averaged summary, so the individual-points requirement does not apply."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a boxplot showing the distribution (median, IQR, whiskers, and outlier points) of PIC occupancy frequencies. Boxplots are exempt from the individual-data-points requirement as they already convey distributional spread, and outlier points are additionally shown."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a boxplot showing the distribution of Pol II occupancy frequencies. Boxplots inherently display distribution/spread and are exempt from requiring overlaid individual data points; outlier points are also shown."
+    }
+  ]
+}

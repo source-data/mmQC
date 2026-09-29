@@ -1,0 +1,123 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "no",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "Scale:10μm"
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "20μm"
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A consists of fluorescence micrographs of transfected cells, not a quantitative plot."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The bar charts (JC-1 relative intensity, anti-HMGB1 intensity, n=20) show only mean bars with error bars; no individual data points are overlaid."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C is a Western blot image, not a quantitative plot."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The 'Signal intensity' bar charts for SDH and COX staining show group means with error bars and N values but no individual data points overlaid."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The FACS panels are cell-count histograms (distribution/line plots), a plot type exempt from the individual-data-point requirement."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel A contains only micrographs, no error bars."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - Bar charts show error bars (n=20, significance thresholds given) but the caption never states what the error bars represent (e.g., SD or SEM)."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Western blot image, no error bars."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - Signal intensity bar charts display error bars and sample sizes, and the caption describes the statistical test (Tukey's/ANOVA) but does not define what the error bars represent (e.g., SD or SEM)."
+    },
+    {
+      "panel_label": "E",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - FACS histograms show cell count distributions without error bars."
+    }
+  ]
+}

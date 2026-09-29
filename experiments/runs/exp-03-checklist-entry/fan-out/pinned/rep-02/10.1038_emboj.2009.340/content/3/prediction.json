@@ -1,0 +1,54 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar 10 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a set of pseudocoloured micrographs (time-lapse confocal images), not a plot showing averaged data, so individual data points are not applicable."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The main graphs are scatter plots showing individual normalized-intensity measurements over time (points are the raw data), and the insets are line/scatter plots of averaged early time-point responses with error bars; both scatter and line plots are exempt from requiring an additional overlay of individual data points."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel A contains only micrographs with no error bars or box-plot elements."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "Insets represent average early time points responses measured in euchromatin and heterochromatin (red and green data sets, respectively) to emphasize on the initial plateau in heterochromatin.",
+      "Decision_and_explanation": "FAIL - Error bars are visible on the inset data points (averaged early time-point responses) but the caption does not specify what they represent (e.g., SD, SEM, or CI, or the number of replicates averaged)."
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "session": {
+    "tools": [
+      "Skill",
+      "StructuredOutput"
+    ],
+    "skills": [
+      "individual-data-points",
+      "deep-research",
+      "design-sync",
+      "dataviz",
+      "update-config",
+      "verify",
+      "debug",
+      "code-review",
+      "simplify",
+      "batch",
+      "fewer-permission-prompts",
+      "doctor",
+      "loop",
+      "claude-api",
+      "workflow-authoring",
+      "run",
+      "run-skill-generator"
+    ],
+    "model": "claude-sonnet-5",
+    "permissionMode": "dontAsk",
+    "cwd": "/private/var/folders/96/p4_g4fsx0fdd80t9ly5mhdrc0000gq/T/soda-mmqc-agentic-d27y49ow"
+  },
+  "usage": {
+    "total_cost_usd": 0.0343597,
+    "num_turns": 4,
+    "duration_ms": 18365,
+    "usage": {
+      "input_tokens": 4,
+      "cache_creation_input_tokens": 5463,
+      "cache_read_input_tokens": 6106,
+      "output_tokens": 1791,
+      "output_tokens_details": {
+        "thinking_tokens": 1033
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 5463
+      },
+      "inference_geo": "global",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1738,
+          "cache_read_input_tokens": 4767,
+          "cache_creation_input_tokens": 2035,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 2035,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    }
+  },
+  "calls": [
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "individual-data-points"
+      },
+      "tool_use_id": "toolu_01GbLX5FdoRif4fXyY1Uoj8T",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-09-29T00:04:33.936205+00:00"
+    },
+    {
+      "tool": "StructuredOutput",
+      "input": {
+        "elided": {
+          "bytes": 1528,
+          "keys": [
+            "outputs"
+          ]
+        }
+      },
+      "tool_use_id": "toolu_01XAMi99mwz9wbZuaQJ7RFN5",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-09-29T00:04:50.288944+00:00"
+    }
+  ]
+}

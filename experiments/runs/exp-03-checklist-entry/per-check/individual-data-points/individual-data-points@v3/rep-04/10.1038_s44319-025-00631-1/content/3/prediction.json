@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a spatial cluster map (micrograph-type image), not a plot showing averaged data; the check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B shows H&E histology images with manual annotations, not a quantitative plot; the check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C shows an H&E image and spatial expression heatmap overlays on tissue sections; these are spatial visualizations, not bar/scatter plots of averaged data, so the check does not apply."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D consists of GSEA enrichment line plots. Line plots are exempt from the individual-data-points requirement as overlaying points would make them unreadable."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a bar chart showing log2 fold-change values (derived from group-level differential expression comparisons) for several genes, but no individual data points (e.g., per-spot expression values) are overlaid on the bars, so the underlying variability cannot be assessed."
+    }
+  ]
+}

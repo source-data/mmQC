@@ -1,0 +1,106 @@
+{
+  "session": {
+    "tools": [
+      "Skill",
+      "StructuredOutput"
+    ],
+    "skills": [
+      "classify-panels",
+      "individual-data-points",
+      "deep-research",
+      "design-sync",
+      "dataviz",
+      "update-config",
+      "verify",
+      "debug",
+      "code-review",
+      "simplify",
+      "batch",
+      "fewer-permission-prompts",
+      "doctor",
+      "loop",
+      "claude-api",
+      "workflow-authoring",
+      "run",
+      "run-skill-generator"
+    ],
+    "model": "claude-sonnet-5",
+    "permissionMode": "dontAsk",
+    "cwd": "/private/var/folders/96/p4_g4fsx0fdd80t9ly5mhdrc0000gq/T/soda-mmqc-agentic-lgaq9pva"
+  },
+  "usage": {
+    "total_cost_usd": 0.046285599999999996,
+    "num_turns": 6,
+    "duration_ms": 17378,
+    "usage": {
+      "input_tokens": 6,
+      "cache_creation_input_tokens": 9110,
+      "cache_read_input_tokens": 17908,
+      "output_tokens": 1778,
+      "output_tokens_details": {
+        "thinking_tokens": 386
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 9110
+      },
+      "inference_geo": "global",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 1416,
+          "cache_read_input_tokens": 8638,
+          "cache_creation_input_tokens": 1811,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 1811,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    }
+  },
+  "calls": [
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "individual-data-points"
+      },
+      "tool_use_id": "toolu_01ES7KuHgp6zTzdPDKQBaaT4",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-09-29T00:45:05.517702+00:00"
+    },
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "classify-panels"
+      },
+      "tool_use_id": "toolu_01ASe1A8bfyhWf1SrCnYiVz9",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-09-29T00:45:09.514073+00:00"
+    },
+    {
+      "tool": "StructuredOutput",
+      "input": {
+        "elided": {
+          "bytes": 2369,
+          "keys": [
+            "outputs"
+          ]
+        }
+      },
+      "tool_use_id": "toolu_01ATN6afm1yShsUDKeBnCdQT",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-09-29T00:45:20.840653+00:00"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "no",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 100 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution heatmaps display per-spot values across the tissue section, not an averaged summary statistic requiring overlaid individual points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B is a box plot, which already displays the distribution of the data (quartiles, median, min/max); box/violin plots are exempt from this check."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; overlaying individual points is not applicable/would be unreadable, so line plots are exempt."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The bar graph shows a single computed log2 fold-change statistic per gene from a DEG analysis (not an average of multiple replicate measurements), so individual data points are not applicable."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrographs, not a quantitative plot of averaged values."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel A is a spatial heatmap plot with no error bars or box/whisker elements."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "The box plots represent the distribution of values for each group, extending from the 25th percentile to the 75th percentile; T11b-high LUSC: Classical monocyte (minima=0.00035, median=0.32265, maxima=1, Q1 = 0.16193, Q3 = 0.52806)... [and corresponding values for other groups]",
+      "Decision_and_explanation": "PASS - The caption explicitly defines the box (25th-75th percentile / Q1-Q3) and reports the exact minima, median, and maxima for every group, adequately defining all box-plot elements including the whiskers."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Enrichment plots show single running-score curves with NES/FDR/P values annotated; no error bars are present."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - The bar graph shows single log2 fold-change values per gene with p-values annotated; no error bars are drawn on the bars."
+    },
+    {
+      "panel_label": "E",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel E consists of representative micrographs (H&E/IHC), not a quantitative plot with error bars."
+    }
+  ]
+}

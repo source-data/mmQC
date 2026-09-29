@@ -1,0 +1,123 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "no",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "Scale:10μm"
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "20μm"
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is composed only of micrograph images (GFP, DsRed, MitoTracker, Merge); there is no plot of averaged data."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The two bar charts (JC-1 relative intensity, anti-HMGB1 intensity, n=20) show only group means with error bars; no individual data points are overlaid on the bars."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C is a western blot image only, with no accompanying quantification plot."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The SDH and COX signal-intensity bar charts show only means with error bars and sample-size numbers (N) inside the bars; individual data points are not displayed."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The FACS panels are histogram/distribution plots (cell counts vs TMRM intensity) that already display the full underlying data distribution, so overlaying individual points is not applicable; the top-right idealized curve is a schematic illustration, not a data plot."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel A contains only micrographs, no error bars."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - The JC-1 and anti-HMGB1 bar charts show error bars (with n=20 and significance annotations), but the caption text does not state what the error bars represent (e.g., SD or SEM)."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel C is a western blot with no plotted error bars."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - The SDH and COX signal-intensity bar charts display error bars, but the caption does not specify whether they represent SD, SEM, or another measure of variability."
+    },
+    {
+      "panel_label": "E",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - The FACS histograms and schematic panels do not contain error bars."
+    }
+  ]
+}

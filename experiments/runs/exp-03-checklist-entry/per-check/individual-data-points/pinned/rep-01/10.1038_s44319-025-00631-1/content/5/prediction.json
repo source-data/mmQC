@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The spatial plots are heatmap-style overlays on tissue micrographs showing deconvolution scores per spot; heatmaps are exempt from requiring individual data point overlays."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot showing distribution of fraction-of-cells values across biological replicates; box/violin plots are exempt from the individual-points requirement (and individual points are in fact also overlaid here)."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; overlaying individual data points on a running enrichment score line plot is not applicable and this plot type is exempt."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a bar graph showing log2 fold change (an aggregate/summary statistic) for each gene without any overlaid individual data points; bar charts of averaged/aggregated values require individual data points unless exempt, and this does not fall into an exempt category (box/violin/heatmap/line/pie/scatter)."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrographs/photomicrographs, not a plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

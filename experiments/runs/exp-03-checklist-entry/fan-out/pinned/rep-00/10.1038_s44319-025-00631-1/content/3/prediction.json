@@ -1,0 +1,123 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Spatial transcriptomics image is essentially a scatter-type map showing every individual spot/cluster assignment directly on the tissue; no averaging is performed, so overlaying additional points is not applicable."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel shows H&E histology images with manual region annotations, not a quantitative plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The spatial mRNA expression panels are heatmap-style visualizations showing expression at every individual spot on the tissue; heatmaps are exempt from the individual-points requirement."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots; line plots are exempt from the individual-data-point requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar chart displays log2 fold-change values for each gene (derived from many spots) but shows no individual data points or a measure of variability behind each bar."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel is a spatial cluster map with no error bars or box-plot elements."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel shows H&E images only, no error bars."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel shows H&E image and spatial expression heatmaps, no error bars."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - GSEA enrichment plots show a single running enrichment score line with no error bars."
+    },
+    {
+      "panel_label": "E",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - bar chart bars have no visible error bars, only p-values are annotated."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A is a spatial tissue image with cluster overlays (micrograph), not a plot of averaged data, so the individual-data-points check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B shows H&E histology images with manual region annotations (micrographs), not a plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C shows H&E micrographs with spatial gene-expression overlays; these are spatial maps/micrographs, not summary bar/line plots requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D consists of GSEA enrichment line plots. Line plots are exempt from the individual-data-points requirement since overlaying points would make them unreadable."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Panel E is a bar graph showing log2 fold-change values (a summary statistic) for each gene, comparing Tmprss11b-high vs low tumors, but no individual data points are overlaid on the bars."
+    }
+  ]
+}

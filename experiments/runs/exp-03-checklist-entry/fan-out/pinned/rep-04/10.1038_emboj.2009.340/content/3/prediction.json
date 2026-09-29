@@ -1,0 +1,54 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar 10 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A consists of pseudocoloured micrographs (photoactivation time-lapse images), not a plot of averaged data, so the individual-data-points requirement does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The main graphs plot individual normalized-intensity measurements (scattered data markers) over time with a fitted model curve overlaid, so the underlying individual data points are shown rather than only a summary curve."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel A shows micrographs with no error bars or plotted statistics."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - the insets in panel B display averaged early time-point responses with visible error bars, but the caption ('Insets represent average early time points responses measured in euchromatin and heterochromatin...to emphasize on the initial plateau in heterochromatin.') does not state what the error bars represent (e.g., SD, SEM, or n)."
+    }
+  ]
+}

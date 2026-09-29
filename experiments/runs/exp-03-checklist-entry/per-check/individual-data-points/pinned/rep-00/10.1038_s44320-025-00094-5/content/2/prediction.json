@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a stacked bar chart in which each bar shows the median promoter-state frequency for the promoters falling into that Pol II ChIP-seq bin (n = 5912 promoters aggregated into bins). Since it displays a summary statistic (median) over many underlying promoters per bin without showing the spread/individual promoter values, it is a bar-of-averages plot that requires individual data points, and none are overlaid."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The stacked color sidebar summarizing state frequencies is a direct visual summary of the single-molecule stack shown in the same panel, where every individual molecule (row) is already displayed with its methylation pattern. The underlying individual data points are thus already shown alongside the summary, so no additional overlay is needed."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Same type of stacked bar chart as panel A but for mouse promoters (n = 6122): each bar shows the median state frequency per Pol II ChIP-seq bin without displaying the individual promoter-level values that were aggregated to compute the median."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Analogous to panel B, the sidebar frequency summary corresponds to the individual single molecules already displayed in the same panel's molecule stack, so the underlying data points are effectively already shown."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Boxplots already display the distribution of the underlying data (median, IQR, whiskers, and outlier points), so individual data point overlays are not required."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Boxplots already display the distribution of the underlying data (median, IQR, whiskers, and outlier points), so individual data point overlays are not required."
+    }
+  ]
+}

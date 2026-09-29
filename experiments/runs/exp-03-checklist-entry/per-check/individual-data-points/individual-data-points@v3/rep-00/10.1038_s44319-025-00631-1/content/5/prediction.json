@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows spatial deconvolution maps (heatmap-style color overlays on tissue sections) representing per-spot values across the tissue, not averaged/aggregated bar or summary data. Heatmap-type visualizations are exempt from requiring individual data point overlays."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B is a box plot showing quartiles/median (25th-75th percentile boxes) for each immune cell population, with individual data points (dots) overlaid on top of the boxes for each sample, satisfying the requirement even though box plots alone are already exempt."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C shows GSEA enrichment plots, which are line plots of running enrichment score. Line plots are exempt from requiring individual data point overlays as this would make them unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel D is a bar chart of log2 fold change values per gene derived from a differential gene expression (DEG) statistical test comparing two conditions. Each bar represents a single computed fold-change/statistic from the DEG analysis rather than an average across replicate measurements, so there are no discrete individual data points to overlay."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel E consists of representative H&E and IHC micrographs, not a quantitative plot of averaged data, so the individual-data-points check does not apply."
+    }
+  ]
+}

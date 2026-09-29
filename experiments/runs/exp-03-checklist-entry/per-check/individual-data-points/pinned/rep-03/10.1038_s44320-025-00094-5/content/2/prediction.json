@@ -1,0 +1,46 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This is a stacked bar chart showing, for each Pol II ChIP-seq bin, the median frequency of each promoter state across the underlying promoters in that bin. Since medians are displayed as bars, the underlying individual promoter-level data points are not shown anywhere in the panel, and no overlay of individual values is present."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The main plot is a single-molecule stack where each row is an individual DNA molecule (2952 molecules), so the individual data points underlying the state-frequency sidebar are already displayed directly in the panel."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Same representation as panel A (stacked bar chart of median state frequencies per Pol II ChIP-seq bin for mouse promoters), with no individual promoter data points shown."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Same representation as panel B (single-molecule stack of 2871 individual molecules), so individual data points are already displayed in the panel."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot, which already conveys the distribution (median, IQR, whiskers, outliers) of the underlying PIC occupancy data; box plots are exempt from requiring an additional overlay of individual points."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a box plot, which already conveys the distribution of the underlying Pol II occupancy data; box plots are exempt from requiring an additional overlay of individual points."
+    }
+  ]
+}

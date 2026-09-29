@@ -1,0 +1,100 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 50 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The spatial expression sub-images are heatmap-type overlays on tissue; heatmaps are exempt from the individual-data-point requirement."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel B contains only micrographs (H&E and RNAscope fluorescence images), no averaged plot is present."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a scatter/dot plot in which every patient tumor value is already plotted individually (n=500 and n=512 points); scatter plots are exempt from the requirement as the points themselves are the data."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "The bar chart of mean ± SD has individual replicate values (n=3 per group) overlaid as dots on top of each bar."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - no error bars or averaged summary statistic is present; panel shows spatial gene-expression heatmaps."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel contains only representative micrographs, no quantitative plot with error bars."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "Plot represents median with 95% CI.",
+      "Decision_and_explanation": "PASS - the median and 95% CI shown on the plot are explicitly defined in the caption."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "Plot represents mean +/- SD",
+      "Decision_and_explanation": "PASS - the error bars (mean +/- SD) on the bar chart are explicitly defined in the caption."
+    }
+  ]
+}

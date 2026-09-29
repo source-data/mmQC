@@ -1,0 +1,54 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar 10 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A shows micrographs (pseudocoloured confocal images), not a plot of averaged data, so this check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Panel B consists of scatter/line plots of normalized intensity over time (raw measured data points fitted with a model curve) and insets showing averaged time-course responses as discrete data points rather than bar charts; scatter/line plots are exempt from requiring additional overlay of individual points since the plotted points are themselves the individual measurements."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - Panel A contains micrographs with no error bars."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - The insets in panel B display data points with visible error bars (average early time point responses), but the caption does not state what these error bars represent (e.g., SD, SEM, or confidence interval)."
+    }
+  ]
+}

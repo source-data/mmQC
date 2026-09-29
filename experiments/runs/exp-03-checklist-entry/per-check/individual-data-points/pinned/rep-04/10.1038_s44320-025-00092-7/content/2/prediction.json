@@ -1,0 +1,60 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "This is a scatter plot in which every one of the n = 141 samples is plotted as an individual marker (distinguished by shape/color); the marginal histograms show the raw count distribution of these individual measurements rather than group averages. Scatter plots are exempt from requiring additional overlay of individual points since the points themselves are the individual data."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Each marker represents the mean ± s.d. of 6 samples per reporter, but the panel is a scatter plot (points positioned by x/y coordinates), a plot type that is exempt from the individual-data-point requirement per the check's rules."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Subtype-averaged periods and amplitudes are shown as fitted normal/density curves (a line plot). Line plots are exempt from requiring overlaid individual data points, as overlaying raw points would make the density curves unreadable."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "This is a box plot (exempt type showing quartiles, median, and outliers), and it additionally has individual sample points (pink/purple dots) overlaid on each box, so individual values are directly visible."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each subtype's polar histogram is color-coded by the individual cell lines that make up that subtype, so the contribution of each individual cell-line replicate-average is visible within the aggregated histogram rather than being collapsed into a single opaque average."
+    },
+    {
+      "panel_label": "F",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "This polar histogram averages phase-difference data across 1-4 cell line models per subtype and displays only a single color per subtype, with no breakdown of the individual cell-line values that were averaged (unlike panel E, which retains cell-line-level color coding). The underlying individual data points/contributions are not shown."
+    },
+    {
+      "panel_label": "G",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This panel shows a single example trace with its fitted decaying-sinusoid model for illustrative purposes, not an average computed across multiple samples/replicates, so the individual-data-point requirement does not apply."
+    },
+    {
+      "panel_label": "H",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Each point represents a fitted parameter (A0, gamma) for an individual sample with error bars reflecting fitting uncertainty; the panel is a scatter plot, an exempt type where the plotted points are themselves the data of interest."
+    }
+  ]
+}

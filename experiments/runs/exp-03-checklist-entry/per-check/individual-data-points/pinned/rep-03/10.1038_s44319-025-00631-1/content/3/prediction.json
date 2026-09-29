@@ -1,0 +1,39 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This is a spatial image of a tissue section overlaid with cluster color-coding (micrograph/photograph type), not a plot of averaged quantitative data. The individual-data-points check does not apply."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "H&E micrographs with manual region annotations (left and right). These are images, not plots of averaged data, so the check does not apply."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The panel combines an H&E micrograph with spatial gene-expression heatmap overlays (Tmprss11b, Trp63, Hnf4a) on the tissue section. Heatmap-type visualizations are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots showing running enrichment scores; line plots are exempt from the individual-data-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "This bar graph shows log2 fold-change values per gene derived from a differential expression (Wilcoxon rank-sum) test comparing pooled spatial-transcriptomics spots between Tmprss11b-high and -low regions. Each bar is a single computed statistic (fold change with associated p-value) from a large-scale spot-level comparison rather than a mean across discrete biological replicates, so there is no natural set of individual data points to overlay on the fold-change bars."
+    }
+  ]
+}

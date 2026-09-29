@@ -1,0 +1,123 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "no",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "Scale:10μm"
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "yes",
+      "from_the_image": "20μm"
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "",
+      "scale_bar_defined_in_caption": "",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel A contains only fluorescence micrographs (GFP, DsRed, MitoTracker, Merge) with no averaged/summary plot."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The bar graphs (JC-1 relative intensity Green/Red and anti-HMGB1 intensity, n=20) show only mean +/- error bars without overlaid individual data points."
+    },
+    {
+      "panel_label": "C",
+      "plot": "no",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "Panel C is a Western blot image with no accompanying quantification plot."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "The signal intensity bar graphs for SDH and COX staining show means with error bars and sample sizes indicated in the bars, but no individual data points are overlaid."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not needed",
+      "decision": "PASS",
+      "explanation": "The FACS panels are histograms of cell counts vs TMRM intensity, showing the full measured distribution rather than an averaged summary statistic, so individual point overlay is not applicable."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel A shows micrographs only, no error bars present."
+    },
+    {
+      "panel_label": "B",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - bar graphs display error bars (JC-1 relative intensity and anti-HMGB1 intensity, n=20) but the caption gives only p-value thresholds and does not state what the error bars represent (e.g., SD or SEM)."
+    },
+    {
+      "panel_label": "C",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel C is a blot with no plotted error bars."
+    },
+    {
+      "panel_label": "D",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "Decision_and_explanation": "FAIL - bar graphs of SDH/COX signal intensity show error bars, but the caption only states the statistical test (Tukey's, one-way ANOVA) and sample sizes, without defining what the error bars represent."
+    },
+    {
+      "panel_label": "E",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "not needed",
+      "Decision_and_explanation": "not needed - panel E shows raw FACS histograms with no error bars."
+    }
+  ]
+}
