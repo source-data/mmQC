@@ -1,7 +1,7 @@
 ---
 title: exp-03 — does running the checks through one entry skill degrade them?
 date: 2026-09-27
-status: planned        # planned | running | done | abandoned
+status: done           # planned | running | done | abandoned
 kind: experiment
 extends: exp-02
 tags: [experiment, skills, dag, entry-point, non-inferiority]
@@ -535,7 +535,146 @@ less is what the cost endpoint measures — so 380 sessions near $45–60.
 
 ## Findings
 
-*Not yet run.*
+Run 2026-09-28/29 under closure assembly: 1,520 sessions, **none failed**,
+all 38 examples × 5 replicates in every condition. Analysis in
+`notebooks/experiments/exp-03-checklist-entry.ipynb`; runs committed in
+`dd902c828`.
+
+### Numbers
+
+**Endpoint 0 — dispatch.**
+
+| | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` |
+|---|---|---|
+| all three checks invoked | 189/190 | 189/190 |
+| order | the listed one, 189/189 | the listed one, 189/189 |
+| `classify-panels` reached, per check | — | `error-bars-defined` 37%, `individual-data-points` 0%, `micrograph-scale-bar` 0% |
+| `classify-panels` calls per session | 0 in 190 | 0 in 118, **1** in 72, never more |
+
+Per check, `A|B ← C_i` reached `classify-panels` in 95%, 86% and 99% of sessions
+(`error-bars-defined`, `individual-data-points`, `micrograph-scale-bar`). No
+skill was invoked that a condition did not name, on either side. The one session
+per fan-out arm that did not dispatch invoked D and then answered all three
+checks **without invoking any check skill** — the failure mode named in advance.
+
+**Non-response.** One empty answer in 1,520: `micrograph-scale-bar`, per-check
+`A|B ← C_i`, one session.
+
+**Gate 1 — layer S**, fan-out − control, δ_S = 0.0125:
+
+| check | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` |
+|---|---|---|
+| `micrograph-scale-bar` | −0.0059 [−0.0132, 0.0000] **inconclusive** | −0.0020 [−0.0137, 0.0129] **inconclusive** *(pre-declared uninformative)* |
+| `individual-data-points` | −0.0050 [−0.0112, 0.0000] **non-inferior** | −0.0010 [−0.0086, 0.0061] **non-inferior** |
+| `error-bars-defined` | −0.0050 [−0.0112, 0.0000] **non-inferior** | −0.0055 [−0.0131, 0.0000] **inconclusive** |
+
+Row outcomes behind it, summed over examples and replicates (1,490 gold rows per
+check and condition):
+
+| check | `A\|B\|C_i` | `A\|B\|C_i ← D` | `A\|B ← C_i` | `A\|B ← C_i ← D` |
+|---|---|---|---|---|
+| `micrograph-scale-bar` | 0 missing, 15 spurious | 8, **28** | 9, 10 | 8, **21** |
+| `individual-data-points` | 0, 3 | 7, **25** | 6, 10 | 6, **15** |
+| `error-bars-defined` | 0, 3 | 7, **25** | 0, 0 | 6, **15** |
+
+**Gate 2 — layer 1**, δ₁ = 0.02:
+
+| check | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` |
+|---|---|---|
+| `micrograph-scale-bar` | −0.0025 [−0.0067, 0.0005] non-inferior | −0.0036 [−0.0105, 0.0025] non-inferior |
+| `individual-data-points` | −0.0022 [−0.0092, 0.0039] non-inferior | +0.0008 [−0.0057, 0.0074] non-inferior |
+| `error-bars-defined` | **−0.0620 [−0.0782, −0.0459] degraded** | **−0.0473 [−0.0624, −0.0326] degraded** |
+
+**Gate 3 — layer 2**, δ₂ = 0.02. No property degraded. Of the properties per
+check and condition, all were non-inferior except:
+
+| condition | property | difference [95% CI] | half-width |
+|---|---|---|---|
+| both | `micrograph-scale-bar · from_the_image` | −0.014 / −0.038 | 0.039 / 0.040 — **uninformative** (10 examples) |
+| both | `micrograph-scale-bar · scale_bar_defined_in_image` | −0.007 [−0.021, 0.007] | 0.014 — inconclusive |
+| `A\|B ← C_i ← D` | `individual-data-points · explanation` | −0.013 [−0.025, −0.001] | 0.012 — inconclusive |
+| `A\|B\|C_i ← D` | `error-bars-defined · from_the_caption` | −0.015 [−0.026, −0.005] | 0.011 — inconclusive |
+| `A\|B ← C_i ← D` | `error-bars-defined · from_the_caption` | −0.020 [−0.032, −0.009] | 0.011 — inconclusive |
+
+**Through the fixed sequence**, each comparison stops at its first gate that
+does not return non-inferior:
+
+| check | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` |
+|---|---|---|
+| `micrograph-scale-bar` | stops at layer S (inconclusive) | stops at layer S (pre-declared uninformative) |
+| `individual-data-points` | **non-inferior at all three gates** | S and 1 non-inferior; layer 2 inconclusive on one property |
+| `error-bars-defined` | S non-inferior; **degraded at layer 1** | stops at layer S (inconclusive); layer 1 degraded |
+
+Later gates past a stop are reported above as description, not as claims.
+
+**Secondary — difference-in-differences** of the delegation contrast, fan-out
+against per check: every interval includes 0 (layer S −0.001 to +0.004; layer 1
+−0.001 to +0.015, the largest `error-bars-defined` at +0.0147 [−0.0005, 0.0308]).
+
+**Cost and time** per figure, fan-out ÷ per-check, mean of 38 per-figure ratios:
+
+| | cost | input tokens | output tokens | turns | time vs sum | time vs max |
+|---|---|---|---|---|---|---|
+| `A\|B\|C_i ← D` | **0.77** [0.74, 0.79] | 0.65 | 1.07 | 0.83 | 0.93 | 2.18 |
+| `A\|B ← C_i ← D` | **0.66** [0.63, 0.69] | 0.45 | 1.10 | 0.61 | 0.90 | 2.38 |
+
+About $0.086 against $0.113 per figure for `A|B|C_i`, and $0.075 against $0.114
+for `A|B ← C_i`. The predicted direction — cost and input tokens below 1 —
+holds in both arms.
+
+**Observed against planned half-widths.** Layer S intervals came out wider than
+P2 planned: 0.0056–0.0073 where exp-02's variance predicted ≤ 0.0033, except
+`micrograph-scale-bar`'s delegating arm, planned at 0.0253 and observed at
+0.0133. The assumption that neither side would be noisier than exp-02's arms did
+not hold at layer S; it is why three layer-S cells return inconclusive with
+differences near −0.005.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**D works as a dispatcher.** It reached all three checks in 99.5% of sessions,
+so the fan-out conditions are the conditions they are labelled as — at the level
+of the checks.
+
+**Below the checks, delegation is optional, and the model treats the shared step
+as belonging to the figure.** Under D, `classify-panels` was reached far less
+than when each check ran alone, and when it was reached it was reached **once
+per session, never once per check**. The layer-S row counts say the same from
+the other side: under D, `individual-data-points` and `error-bars-defined` have
+**identical** missing and spurious counts in both arms (7 / 25 and 6 / 15), and
+`micrograph-scale-bar` is close. That reads as one panel inventory made once and
+copied into each check's list. By the preregistered interpretation, the
+delegating fan-out arm is **safe but optional** for the checks where it holds:
+the arrangement labelled `A|B ← C_i ← D` mostly ran without its B skill.
+
+**The fan-out costs `error-bars-defined` its applicability judgement**, in both
+arms, by more than twice the margin. That is the one clear degradation, and it
+is not explained by the skipped classification: it appears as strongly in
+`A|B|C_i ← D`, where every check carries A and B inline and nothing is skipped.
+It is consistent with interference — a check that runs last, after two others
+have already read the figure, deciding applicability from their reading rather
+than its own. Order was never varied (189/189 in the listed order), so position
+and identity are confounded, as the threats anticipated: this cannot say whether
+`error-bars-defined` degrades because it is that check or because it runs third.
+
+**The spurious rows are small in rate and large in ratio.** Layer S moves by
+about 0.005 at most, but spurious rows rise from 3 to 25 for two checks. They
+matter less for layer S, which counts gold rows found, than as evidence of how
+the model builds its answer under D.
+
+**The saving is real and partly work not done.** The fan-out is 23% cheaper in
+the monolith arm, where nothing is skipped — the cleaner estimate of what
+sending the figure once saves — and 34% cheaper in the delegating arm, where part
+of the saving is `classify-panels` not being called. Against per-check sessions
+run in parallel, the fan-out is 2.2–2.4× slower.
+
+**What it settles**: a single entry point dispatches reliably and is cheaper,
+and it holds accuracy for `individual-data-points`. **What it does not**: it
+does not hold for `error-bars-defined` at layer 1, and `micrograph-scale-bar`'s
+layer S is too noisy to call. The pattern — a shared step done once per figure,
+restated per check in the contract — motivates
+[exp-04](exp-04-panel-major.md), which makes the contract share it too.
 
 ## Threats to validity
 
@@ -602,10 +741,9 @@ less is what the cost endpoint measures — so 380 sessions near $45–60.
 
 ## Status and next
 
-Preregistered, and amended on 2026-09-28 to closure assembly before any kept
-data. Both checklists, D's contract and gold, the runner and the notebook are
-built, the smoke test has run under the amended assembly, D is frozen as it
-stands, and the margins are fixed. This note is committed before any full run, so
+Done. Preregistered, amended on 2026-09-28 to closure assembly before any kept
+data, run in full, and read in *Findings*. The preregistration and its amendment
+were committed before the runs, so
 
 ```bash
 git log --oneline --reverse -- \
