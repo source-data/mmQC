@@ -772,3 +772,98 @@ its DAG at no loss of accuracy, which is the configuration it would ship in —
 and, from the cost endpoint, what that configuration saves per figure. What it
 opens if it does not: whether the cost is interference between checks — which
 the order and reuse endpoints would point at — or the entry point itself.
+
+## Addendum 2026-09-30 — `error-bars-defined`'s layer 1: a format failure, not a judgement failure *(post-hoc)*
+
+**This is exploratory with respect to the preregistration above.** It was done
+after the findings were read, to see which panels drove the one clear
+degradation. The preregistered verdict — `error-bars-defined` **degraded** at
+layer 1 in both fan-out arms — stands as scored and is not revised here. What
+changes is what that verdict means.
+
+### What drives it
+
+Every layer-1 instance of `error-bars-defined`, in all four conditions, traced
+back to its figure, panel and field (5 replicates, 38 figures):
+
+| | `A\|B\|C_i` | `A\|B\|C_i ← D` | `A\|B ← C_i` | `A\|B ← C_i ← D` |
+|---|---|---|---|---|
+| spurious "applicable", `Decision_and_explanation` | 239 | **630** | 199 | **508** |
+| … of which the answer begins "not needed" | 234 | 624 | 195 | 504 |
+| spurious "applicable", all other fields together | 5 | 6 | 6 | 4 |
+| withheld "applicable", all fields | 16 | 41 | 18 | 34 |
+
+The degradation sits almost entirely in **one field**. On a panel without error
+bars, the skill asks three times for `Decision_and_explanation` to be exactly
+`"not needed"`, and the schema description says so again. Under D the model
+writes instead `not needed - micrograph panel with no error bars.` The manifest
+treats a field as not applicable only on an exact `na_values` match (`""`,
+`"not needed"`), so an annotated "not needed" is scored as an applicable answer
+— a spurious applicability call — although the judgement it expresses is right.
+
+Counting an answer that begins "not needed" as not applicable — which the
+manifest does not do, and which is not a preregistered rule — the pooled layer-1
+correct rate becomes:
+
+| | `A\|B\|C_i` | `A\|B\|C_i ← D` | `A\|B ← C_i` | `A\|B ← C_i ← D` |
+|---|---|---|---|---|
+| as scored | 0.9651 | 0.9091 | 0.9701 | 0.9267 |
+| "not needed …" read as not applicable | 0.9965 | 0.9929 | 0.9962 | 0.9944 |
+
+About 94% of the gap disappears: from −0.056 to −0.004, inside δ₁ = 0.02
+(pooled over instances, not the gate's per-figure mean). The field that decides
+applicability, `error_bar_on_figure`, is essentially unchanged; its handful of
+withheld instances come from missing rows, not wrong answers.
+
+### Where
+
+It is spread, not concentrated: 162 panels in 35 of 38 figures. Some figures flip
+completely — in `s41592-023-01987/content/4` all seven micrograph panels are
+annotated in 5 of 5 fan-out replicates and in 0 of 5 per check. By panel type
+(from the other checks' gold), annotated answers rise under `A|B|C_i ← D` from 76
+to 252 on micrograph panels, 72 to 173 on plots, 91 to 205 on other panels. The
+annotation often names the panel's type — "micrograph panel", "schematic
+panel" — which is what `micrograph-scale-bar`, always dispatched first, has just
+established.
+
+The per-panel table is committed as
+`experiments/exp-03-checklist-entry/error-bars-defined-layer1-by-panel.csv`: one
+row per figure, panel, field and error type, with counts per condition and an
+example prediction.
+
+### Reading
+
+The fan-out does not break `error-bars-defined`'s applicability judgement. It
+**erodes compliance with a fixed token inside a free-text field**, and the model
+fills the space with what an earlier check in the same context decided. That is
+interference, as the findings suggested — but in the *format* of the answer, not
+in the decision.
+
+It is also not specific to exp-03. The same field, in every committed run:
+
+| experiment | arm | "not needed" written with an annotation |
+|---|---|---|
+| exp-01 | `pinned` (detailed) | 22% |
+| exp-01 | `error-bars-defined@v2` (minimal) | **100%** |
+| exp-02 | `pinned` | 18% |
+| exp-02 | `error-bars-defined@v2` | 50% |
+| exp-02 | `error-bars-defined@v3` | 27% |
+| exp-02 | `classify-panels@v2-error-bars-defined@v3` | 35% |
+| exp-03 | per check, `pinned` / `@v3` | 27% / 22% |
+| exp-03 | fan-out, `pinned` / `all@v3` | **72% / 58%** |
+
+So this artifact contributes to every `error-bars-defined` layer-1 comparison
+made so far — including exp-01's 0.094 detailed-versus-minimal movement, which
+exp-02 cited when sizing its margins, and in which the minimal arm annotated
+every "not needed" it wrote.
+
+### What follows
+
+- **The contract is the defect**: a field scored for applicability against a
+  fixed token should be an enum, not free text. A verdict and its explanation
+  in one string invite exactly this. The fix — a separate enum field for the
+  decision, with the explanation as its own free-text field — changes the
+  contract, so it belongs to the next experiment ([exp-04](exp-04-panel-major.md)),
+  not to a re-scoring of this one.
+- **A contract audit across every check** — schema against manifest — is being
+  done alongside, since the same omission may exist elsewhere.
