@@ -153,8 +153,7 @@ changes forced by the contract:
 | 3 | reuse exp-03's runs as references | yes |
 | 4 | `panel_classes`: scored, derived, or left out | **left out of scoring** for exp-04 — see below |
 | 5 | vary D's check order | not here; see below |
-| 6 | how an explanation field is scored beside an enum decision | settle with the contract audit, above |
-| 7 | one convention for "not applicable" in exp-04's contract | NA value at layer 1, as `error-bars-defined` uses |
+| 6 | how an explanation field is scored beside an enum decision | settled in the contract cleanup (C3) |
 
 **On `panel_classes`.** There is no gold for it: the per-check golds carry
 yes/no flags (`micrograph`, `plot`, …), not a content-type label. Curating it is
@@ -171,61 +170,18 @@ exp-03's degradation rather than about the contract. It fits better as its own
 small follow-up — or as a fourth condition, if the panel-major contract does not
 restore layer 1 and position becomes the leading explanation.
 
-## Contract audit, 2026-09-30
+## Depends on the contract cleanup
 
 exp-03's addendum traced `error-bars-defined`'s layer-1 degradation to a
-contract defect: a not-applicable token (`"not needed"`) inside a free-text
-field, which the manifest scores by exact match, so an annotated
-`not needed - micrograph panel …` counts as an applicable answer. The same
-artifact runs through exp-01 and exp-02 at 18–100% by arm.
+contract defect, and an audit of every contract found more. That work is
+separate from exp-04 and comes first:
+[`plans/2026-09-30-contract-cleanup.md`](../plans/2026-09-30-contract-cleanup.md).
+**exp-04 does not start until it is done.**
 
-Every check's schema was then audited against its manifest —
-`python -m soda_mmqc.scripts.audit_contracts --runs`. Nine distinct problems,
-repeated across the checklist copies:
-
-| field | rule | what goes wrong | evidence in committed runs |
-|---|---|---|---|
-| `error-bars-defined · Decision_and_explanation` | NA token in free text | verdict and explanation share a string; an annotated "not needed" scores as applicable | **2,900 annotated** of 13,713 per-check values |
-| `replication-reporting · n_value_min` | **no manifest entry** | inherits the default yes/no polarity while it holds integers or `not_reported` / `not_applicable`; its `not_applicable` is not treated as NA | 0 of 1,066 values can match a polarity token — **this field has never been scored as intended** |
-| `error-bars-defined · from_the_caption` | NA token in free text | same shape as above | 7,696 exact, 0 annotated — compliant so far |
-| `replication-reporting · replicate_type` | NA token in free text | same shape | 544 exact, 0 annotated — compliant so far |
-| `stat-significance-level · symbol_definition` | NA token in free text | same shape, in an array | no runs to count |
-| `plot-axis-units`, `plot-gap-labeling`, `stat-significance-level` · `decision` | enum value `N/A` scored as a class | not applicable is judged at layer 2 here, at layer 1 for `error-bars-defined` — one idea, two layers | enum-constrained, so no format failures |
-| `doc-checklist · AB-target-reagent-consistency · severity` | enum value `none` scored as a class | as above | no runs |
-
-Run counts pool every committed experiment that ran the check.
-
-### What this means for exp-04
-
-- **Applicability is its own enum field.** In the panel-major contract, each
-  check's verdict becomes an enum — for `error-bars-defined`,
-  `decision: PASS | FAIL | not needed` — and any explanation a separate
-  free-text field. No field scored against a fixed token is free text.
-- **An explanation field must not re-open the problem.** If it is free text and
-  its gold is empty on not-applicable panels, a model that explains itself there
-  is scored as a spurious applicable answer again. Either the explanation is not
-  scored, or its applicability follows the decision field — which the scorer
-  does not support today (layer 1 is judged per field, from that field's own
-  value). *Decision to settle.*
-- **One convention for "not applicable".** Either it is always an NA value,
-  judged at layer 1 — the convention `error-bars-defined` uses — or always a
-  class, judged at layer 2. For exp-04's three checks this is decided once,
-  in the contract builder, rather than inherited check by check.
-- **The audit becomes a gate.** Every contract exp-04 builds must pass
-  `audit_contracts` with no finding before it is run.
-
-### Outside exp-04
-
-- **`n_value_min` is a manifest bug in the production checklist** and in
-  `fig-checklist-exp01`: `replication-reporting`'s layer 1 and layer 2 for that
-  field, in exp-01, measure something other than intended. Fixing the manifest
-  and re-scoring is cheap — scoring spends nothing — but it changes a committed
-  experiment's numbers and is recorded as an addendum to exp-01 when done.
-- **The `N/A` convention across all checks** is a decision about the whole
-  checklist, not about exp-04.
-- **exp-01's and exp-02's `error-bars-defined` layer-1 results** carry the
-  annotated-"not needed" artifact; their notes should say so when next touched,
-  and exp-02-closure should run on a fixed contract.
+What exp-04 takes from it: one `not_applicable` token, always scored as NA;
+no fixed token inside free text, so each check's verdict is an enum and any
+explanation a separate field; free text scored semantically; and a clean audit
+as a precondition for every contract exp-04 builds.
 
 ## Prep work (draft)
 
@@ -256,6 +212,6 @@ Run counts pool every committed experiment that ran the check.
 
 ## Status and next
 
-Draft. Next: settle the seven decisions, run P1–P4, draft the skills one at a
+Draft, **blocked on the contract cleanup**. Then: settle the decisions, run P1–P4, draft the skills one at a
 time for review (P5), pass the contract audit (P6), smoke-test (P7), then
 preregister in exp-03's format.

@@ -13,6 +13,10 @@ applicable answer (exp-03, addendum of 2026-09-30).
 
 Rules, one per way the halves can disagree:
 
+``invisible`` a schema field the scorer's own discovery does not see -- it is
+              never scored, and nothing says so. A field typed only through
+              ``anyOf`` is the known case (`replication-reporting ·
+              n_value_min`)
 ``default``   a field with no manifest entry inherits a default metric whose
               tokens do not fit the schema's values -- it is scored by a rule
               nobody chose for it
@@ -33,11 +37,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
+
+from soda_mmqc.core.schema_discovery import discover_schema  # noqa: E402
 CHECKLISTS = REPO / "soda_mmqc" / "data" / "checklist"
 RUNS = REPO / "experiments" / "runs"
 
@@ -84,9 +92,19 @@ def audit_check(checklist: str, check_dir: Path) -> List[Dict[str, Any]]:
     manifest = json.loads((check_dir / "eval-manifest.json").read_text())
     schema = json.loads((check_dir / "schema.json").read_text())["format"]["schema"]
     defaults = manifest.get("defaults", {})
+    visible = {spec.pattern for spec in discover_schema(schema)}
     findings = []
     for pattern, node in leaves(schema):
         if pattern.endswith("panel_label"):
+            continue
+        if pattern not in visible:
+            findings.append({
+                "checklist": checklist, "check": check_dir.name, "field": pattern,
+                "rule": "invisible",
+                "detail": "not discovered by the scorer, so never scored "
+                          f"(schema node has no 'type': {sorted(node)})",
+                "tokens": [],
+            })
             continue
         own = manifest.get("fields", {}).get(pattern)
         profile = {**defaults, **(own or {})}
