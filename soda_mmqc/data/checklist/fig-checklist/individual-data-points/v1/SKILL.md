@@ -43,27 +43,29 @@ check is about.
 
 ## 3. Are individual values shown, or not required?
 
-For a plot panel, decide `individual_values`:
+For a plot panel, decide if `individual_values` are shown:
 
 - `yes` — the individual measurements are plotted, as dots, points or an
   overlaid scatter alongside the summary.
 - `no` — the panel summarises data, for instance a bar chart of means with
   error bars, and the individual measurements are not shown.
-- `not needed` — the plot type does not require them. **Box plots, violin
-  plots, line graphs, scatter plots, heatmaps, Kaplan-Meier curves and pie
-  charts are automatic PASS**; put `not needed` for these. The plot description
+- `not_required` — the plot type does not require them. **Box plots, violin
+  plots, line graphs, scatter plots, Venn diagrams, heatmaps, Kaplan-Meier curves and pie
+  charts are automatic PASS**; put `not_required` for these. The plot description
   names the type, so use it rather than re-deciding from the image.
 
-For a panel that is not a plot, set `individual_values` to `not needed`.
+For a panel that is not a plot, set `individual_values` to `not_applicable`.
 
 ## 4. Your verdict
 
-Put `PASS` or `FAIL` in `decision`, with a brief reason in `explanation`.
+Put `PASS`, `FAIL` or `not_applicable` in `decision`, with a brief reason in
+`explanation`.
 
-- `individual_values` of `yes` or `not needed` is a PASS.
-- `individual_values` of `no` is a FAIL: the panel should show its individual
+- if `individual_values` is `yes` or `not_required` then `decision` is PASS.
+- if `individual_values` is `no` then `decision` is a FAIL: the panel should show its individual
   data points and does not.
-- A panel that is not a plot is a PASS.
+- If a panel is not a plot then the `decision` is `not_applicable`: the check does not apply
+  to it, so it neither passes nor fails.
 
 ## Output
 

@@ -12,8 +12,8 @@ Please return your analysis result in the following json out format for each and
         {
         "panel_label": "A",
         "plot": "yes/no",
-        "individual_values": "yes/no/not needed",
-        "decision": "PASS/FAIL",
+        "individual_values": "yes/no/not_required/not_applicable",
+        "decision": "PASS/FAIL/not_applicable",
         "explanation": "..."
         }
     ]
@@ -22,10 +22,10 @@ Please return your analysis result in the following json out format for each and
 ## Guidelines
 
 ### Is this a numerical plot?
-For each panel, first determine whether it contains a plot of quantitative data. Bar charts, line plots, scatter plots, box plots, and similar visualizations qualify. Micrographs, schematics, western blots, and other non-quantitative panels are not relevant for this check. Set "plot" to "yes" or "no" accordingly. For all "no" panels, set "individual_values" to "not needed" and "decision" to "PASS".
+For each panel, first determine whether it contains a plot of quantitative data. Bar charts, line plots, scatter plots, box plots, and similar visualizations qualify. Micrographs, schematics, western blots, and other non-quantitative panels are not relevant for this check. Set "plot" to "yes" or "no" accordingly. For all "no" panels, set "individual_values" to "not_applicable" and "decision" to "not_applicable": the check does not apply to them, so they neither pass nor fail.
 
 ### Does this plot type require individual data points?
-Not all plots require individual data points to be overlaid. The following plot types are exempt — set "individual_values" to "not needed" and "decision" to "PASS":
+Not all plots require individual data points to be overlaid. The following plot types are exempt — set "individual_values" to "not_required" and "decision" to "PASS":
 
 - Box plots and violin plots — these already display the data distribution
 - Heatmaps — individual points are not meaningful in this context
@@ -71,29 +71,29 @@ json{
     ]
 }
 
-### Example 3 — Box plot (PASS, not needed)
+### Example 3 — Box plot (PASS, not_required)
 
 json{
     "outputs": [
         {
             "panel_label": "C",
             "plot": "yes",
-            "individual_values": "not needed",
+            "individual_values": "not_required",
             "decision": "PASS",
             "explanation": "Box plot already displays data distribution — individual points not required."
         }
     ]
 }
 
-Example 4 — Non-plot panel (PASS, not needed)
+Example 4 — Non-plot panel (not_applicable)
 
 json{
     "outputs": [
         {
             "panel_label": "F",
             "plot": "no",
-            "individual_values": "not needed",
-            "decision": "PASS",
+            "individual_values": "not_applicable",
+            "decision": "not_applicable",
             "explanation": "Panel is a representative micrograph — check does not apply."
         }
     ]
