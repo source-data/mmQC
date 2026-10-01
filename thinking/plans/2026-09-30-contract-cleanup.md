@@ -96,21 +96,27 @@ explanations.
 
 ## Conventions to adopt
 
-*Decisions — each is a human gate below. Recommendations are marked.*
+*C1, C2, C4 and C5, and the gold-migration approach, were decided at G1 on
+2026-10-01; C3's scoring of the explanation is still open. See the decisions
+record.*
 
 ### C1 — One token for "not applicable", always NA
 
-**Recommended: `not_applicable`**, snake case, used for every field and every
-check where the check does not apply to the panel, and **always** listed in the
-manifest's `na_values`, so applicability is judged at layer 1 everywhere.
+**`not_applicable`**, snake case, used for every field and every check where the
+check does not apply to the panel — **in the schema, the manifest, the skill
+prose and the gold alike** — and **always** listed in the manifest's
+`na_values`, so applicability is judged at layer 1 everywhere.
 
 - `not needed`, `not_needed`, `N/A` and `not a plot` are retired.
 - `not_applicable` over `not needed` because it names the concept — "needed"
   suggests an obligation, not applicability — and because four checks already use
   it.
-- `N/A` in the three `decision` enums becomes `not_applicable` **and moves to
-  layer 1**. That changes what those checks' layer 2 measures, which is the point:
-  a verdict on a panel the check does not apply to is not a verdict.
+- `N/A` in the three `decision` enums (`plot-axis-units`, `plot-gap-labeling`,
+  `stat-significance-level`) means not applicable; its absence from their
+  manifests' `na_values` was an oversight, not a design. It becomes
+  `not_applicable` **and moves to layer 1**. That changes what those checks'
+  layer 2 measures, which is the point: a verdict on a panel the check does not
+  apply to is not a verdict.
 
 ### C2 — "Not applicable" and "not reported" stay distinct
 
@@ -122,8 +128,25 @@ states it so that `not_reported` is not normalised away with the rest.
 
 Every field scored against a fixed token is an **enum**. A field that combines a
 verdict and its reason is split into an enum field and a free-text field. For
-`error-bars-defined`: `decision: PASS | FAIL | not_applicable` and
-`explanation: <free text>`.
+`error-bars-defined`, whose skill lumped the two together:
+`decision: PASS | FAIL | not_applicable` and `explanation: <free text>`.
+
+**The split's gold is mechanical, and verified.** In the 38 benchmark figures all
+298 `Decision_and_explanation` values parse, and agree exactly with
+`error_bar_on_figure`: 174 bare `not needed` (every one with
+`error_bar_on_figure: no`), 113 `PASS: <reason>` and 11 `FAIL: <reason>` (every
+one `yes`). So `decision` is the leading token and `explanation` the text after
+it — empty when not applicable. The migration script checks that every row
+parses, that the decision agrees with `error_bar_on_figure`, and that the two
+fields rejoin into the original string.
+
+**Not adopted: widening `na_values`** to catch annotated variants. It is an
+exact-match list, and the annotations are open-ended (`not needed - micrograph
+panel …`, `not needed: …`), so a list would chase the model's wording and still
+miss. A single **prefix rule** — the NA token, a separator, then anything —
+recovers 99% of the annotated cases in exp-03, and is kept for one purpose only:
+**exploratory re-scores of exp-01 to exp-03**, labelled as such. It is never a
+way to keep a lumped field in a new contract.
 
 **Open for C3:** how the free-text companion is scored on a panel where the
 decision is `not_applicable`. If it is scored on its own value, a session that
@@ -161,35 +184,48 @@ warning; a field deliberately left unscored is listed as such in the manifest.
 | W2 | Scorer: type `anyOf` / union nodes, and **refuse** a schema leaf it cannot type (C5) | `soda_mmqc/core/schema_discovery.py` | tests; no published number moves except fields that were invisible |
 | W3 | Decide C1–C5 | this plan | **human gate G1** |
 | W4 | Field-by-field fix list for every check: new enum, token, metric, gold rewrite rule, skill-prose change | this plan, appendix | **human gate G2** |
-| W5 | Migrate gold to the new vocabulary with a script: token rewrites only, verified that nothing else changes and every rewritten gold validates against its new schema | `experiments/` or `soda_mmqc/scripts/` | **human gate G3** — the diff is reviewed before commit |
+| W5a | Tag `gold-v1`; add the `SODA_MMQC_EXAMPLES_DIR` override; pin the exp-01–03 notebooks to `gold-v1` and record it in their notes | `config.py`, notebooks, `thinking/experiments/` | tests; each frozen notebook reproduces its committed findings against `gold-v1` |
+| W5 | Migrate gold to the new vocabulary with a script: token rewrites, and the `error-bars-defined` split — verified that every row parses, decisions agree with `error_bar_on_figure`, split fields rejoin to the original, nothing else changes, and every rewritten gold validates against its new schema | `soda_mmqc/scripts/` | **human gate G3** — the diff is reviewed before commit; **W5a first** |
 | W6 | Update schemas and manifests of the production checklist | `…/fig-checklist/`, `…/doc-checklist/` | audit clean |
 | W7 | Update skill prose to the new tokens and split fields — **one skill at a time, reviewed** | `…/SKILL.md` | **human gate G4**, per skill |
 | W8 | Manifests for `data-checklist`, or declare it out of scope | `…/data-checklist/` | G2 |
 | W9 | Make the audit a test: every contract of the production checklist passes with no finding | `tests/` | CI |
-| W10 | Addenda to exp-01 and exp-02: the `error-bars-defined` artifact, `n_value_min` unscored, and — as exploratory re-scores — what their layer-1 numbers become under the fixed contracts | `thinking/experiments/` | — |
+| W10 | Addenda to exp-01 and exp-02: the `error-bars-defined` artifact, `n_value_min` unscored, and — as **exploratory** re-scores, kept apart from the preregistered numbers — what their layer-1 numbers become under the prefix rule and under the new gold | `thinking/experiments/` | — |
 
-### The historical-runs problem, to settle at G1
+### Where the rewritten gold lives, and how the frozen experiments stay reproducible
 
-**Gold is shared across checklists**: it lives per check in the examples tree,
-not per checklist. Rewriting a gold token to `not_applicable` therefore changes
-how every committed run of that check re-scores, including exp-01–03, whose
-predictions say `not needed`.
+*Decided at G1.*
 
-Options:
+**Gold is rewritten in place**, in `soda_mmqc/data/examples/`, and committed on
+this branch. It is not copied to a parallel folder: the scorer, the runner's
+staging and the curation UI all resolve gold at
+`examples/<figure>/checks/<check>/expected_output.json`, by check name, and a
+second tree would need a switch in every reader — and would drift, since a
+curator's fix would land in one of the two. Git already versions all 1,586 gold
+files.
 
-1. **Rewrite gold; keep legacy aliases in the scorer.** The scorer maps legacy
-   tokens (`not needed`, `not_needed`, `N/A`) to `not_applicable` on both gold
-   and prediction before comparing, so committed runs re-score as before for
-   exact tokens. One documented alias table, retired when no committed run needs
-   it. *Recommended.*
-2. **Rewrite gold; freeze experiment checklists with legacy-aware manifests.**
-   Each historical checklist's manifest lists the legacy tokens in `na_values`.
-   More edits, and it touches files the preregistrations hold fixed.
-3. **Version gold** per contract version. Most faithful, most machinery.
+**The hazard it creates.** Experiment analyses are not committed; they are
+recomputed from predictions and gold. After the rewrite, re-running the exp-01–03
+notebooks at head would score their predictions (`not needed`, `N/A`) against
+the new gold (`not_applicable`) and change their numbers without saying so —
+the exp-03 notebook would even trigger it, since it re-scores whenever gold is
+newer than an analysis.
 
-Whatever is chosen, the experiment checklists (`fig-checklist-exp01` … `-exp03`)
-are **not edited**: they are what their runs were scored against. Re-scoring
-them under the new contracts is exploratory, and recorded as addenda (W10).
+**So, before the rewrite:**
+
+1. **Tag the last commit before it** — `gold-v1` — and write into each
+   experiment note which gold it was scored against.
+2. **Make the gold location overridable** — a `SODA_MMQC_EXAMPLES_DIR`
+   environment variable read by `config.py`, whose comment already promises a
+   data-directory override that nothing implements. A frozen experiment's
+   notebook then scores against a `git worktree` of `gold-v1`, while its code and
+   runs stay at head.
+3. **Point each frozen experiment's notebook at `gold-v1`**, and make it refuse
+   to score against any other gold unless told to.
+
+**Re-scores under the new gold are exploratory**, and kept separate from the
+preregistered numbers: recorded as addenda, never as revisions. The experiment
+checklists (`fig-checklist-exp01` … `-exp03`) are not edited.
 
 ### Order
 
@@ -197,7 +233,8 @@ them under the new contracts is exploratory, and recorded as addenda (W10).
    every field.
 2. G1 — conventions, including the historical-runs option.
 3. W4 → G2 — the fix list.
-4. W5 → G3, W6, W7 → G4 — gold, contracts, prose.
+4. W5a, then W5 → G3, W6, W7 → G4 — protect the frozen experiments, then gold,
+   contracts, prose.
 5. W8, W9 — coverage and the standing test.
 6. W10 — what it changes for the experiments already run.
 7. Then exp-04, on clean contracts, and exp-02-closure.
@@ -208,7 +245,7 @@ them under the new contracts is exploratory, and recorded as addenda (W10).
 
 | gate | decision | date | by |
 |---|---|---|---|
-| G1 | | | |
+| G1 | C1 `not_applicable` everywhere, gold included; `N/A` treated as not applicable; C2; C3 split of `error-bars-defined`'s field, no widened `na_values`, prefix rule for exploratory re-scores only; C4; C5. Gold rewritten in place, after tagging `gold-v1` and adding a gold-location override; new-gold re-scores exploratory and separate. **Open:** how the explanation is scored beside a `not_applicable` decision (C3) | 2026-10-01 | Thomas Lemberger |
 | G2 | | | |
 | G3 | | | |
 | G4 | | | |
