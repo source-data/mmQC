@@ -22,13 +22,13 @@
                             },
                             "individual_values": {
                                 "type": "string",
-                                "enum": ["yes", "no", "not needed"],
-                                "description": "Whether the panel displays individual data points"
+                                "enum": ["yes", "no", "not_required", "not_applicable"],
+                                "description": "Whether the panel displays individual data points: not_required for a plot type that does not require them, not_applicable for a panel that is not a plot"
                             },
                             "decision": {
                                 "type": "string",
-                                "enum": ["PASS", "FAIL"],
-                                "description": "Panel-level pass/fail verdict on whether individual data points are shown where average values are displayed"
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict on whether individual data points are shown where average values are displayed; not_applicable for a panel that is not a plot"
                             },
                             "explanation": {
                                 "type": "string",
