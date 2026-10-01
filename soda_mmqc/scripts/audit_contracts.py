@@ -1,35 +1,40 @@
-"""Audit every check's output schema against its eval manifest.
+"""Audit every check's output schema against its eval manifest and its gold.
 
-    python -m soda_mmqc.scripts.audit_contracts            # contracts only
-    python -m soda_mmqc.scripts.audit_contracts --runs     # and what the runs wrote
+    python -m soda_mmqc.scripts.audit_contracts                       # every checklist
+    python -m soda_mmqc.scripts.audit_contracts --checklist fig-checklist
+    python -m soda_mmqc.scripts.audit_contracts --runs                # and what runs wrote
 
-A contract has two halves that must agree: the schema says what a session may
-write, the manifest says how each field is scored. Where they disagree, a
-correct judgement can be scored as a wrong one. The case that prompted this:
-`error-bars-defined · Decision_and_explanation` is free text, the manifest
-treats only the exact token "not needed" as not applicable, and a session that
-writes "not needed - micrograph panel with no error bars." is scored as an
-applicable answer (exp-03, addendum of 2026-09-30).
+A contract has halves that must agree: the schema says what a session may
+write, the manifest says how each field is scored, and the gold is what it is
+scored against. Where they disagree, a correct judgement can be scored as a
+wrong one. The case that prompted this: `error-bars-defined ·
+Decision_and_explanation` is free text, the manifest treats only the exact
+token "not needed" as not applicable, and a session writing "not needed -
+micrograph panel with no error bars." is scored as an applicable answer
+(exp-03, addendum of 2026-09-30). The conventions the rules enforce are in
+thinking/plans/2026-09-30-contract-cleanup.md (C1-C5).
 
-Rules, one per way the halves can disagree:
+Rules:
 
-``invisible`` a schema field the scorer's own discovery does not see -- it is
-              never scored, and nothing says so. A field typed only through
-              ``anyOf`` is the known case (`replication-reporting ·
-              n_value_min`)
-``default``   a field with no manifest entry inherits a default metric whose
-              tokens do not fit the schema's values -- it is scored by a rule
-              nobody chose for it
-``na-text``   a field whose not-applicable tokens are free text: nothing stops
-              the model writing the token with an annotation
-``polar-text`` a field scored as a yes/no polarity whose schema is free text
-``enum-na``   an enum offering a not-applicable-looking value the manifest
-              scores as an ordinary class -- applicability then moves from
-              layer 1 to layer 2, unlike checks that treat it as NA
-``enum-gap``  an enum missing a token the manifest scores against
+``no-manifest``   a check with a schema and no manifest
+``untyped``       a field the scorer cannot type, and so cannot score (C5)
+``default``       a field with no manifest entry inherits a default polarity
+                  that does not fit the schema's values -- scored by a rule
+                  nobody chose for it
+``na-text``       a not-applicable token in a free-text field (C3)
+``polar-text``    a field scored as a yes/no polarity whose schema is free text
+``enum-na``       an enum value meaning "not applicable" that the manifest
+                  scores as an ordinary class, at layer 2 (C1)
+``enum-gap``      an enum missing a token the manifest scores against
+``legacy-token``  a not-applicable spelling other than ``not_applicable``, in
+                  the schema, the manifest or the gold (C1)
+``orphan-token``  a manifest token that neither the schema nor the gold uses
+``text-metric``   free text not scored semantically, unless declared an
+                  identifier in IDENTIFIERS (C4)
 
-``--runs`` counts, for every flagged field, how often committed predictions
-wrote a token exactly, wrote it with an annotation, or wrote something else.
+The experiment checklists are frozen copies of the contracts their runs were
+scored against, so they keep their legacy findings by design; scope the audit
+with ``--checklist`` to the contracts that are meant to be clean.
 """
 
 from __future__ import annotations
@@ -39,24 +44,53 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Mapping, Optional, Sequence, Set, Tuple
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
-from soda_mmqc.core.schema_discovery import discover_schema  # noqa: E402
-CHECKLISTS = REPO / "soda_mmqc" / "data" / "checklist"
-RUNS = REPO / "experiments" / "runs"
-
-#: Values that read as "not applicable" in a schema enum or description.
-NA_LIKE = re.compile(
-    r"^(not[ _]?(needed|applicable)|n/?a|none)$", re.IGNORECASE
+from soda_mmqc.core.schema_discovery import (  # noqa: E402
+    SchemaTypingError,
+    discover_schema,
 )
 
+CHECKLISTS = REPO / "soda_mmqc" / "data" / "checklist"
+EXAMPLES = REPO / "soda_mmqc" / "data" / "examples"
+RUNS = REPO / "experiments" / "runs"
+
+#: The one not-applicable token (C1).
+CANONICAL_NA = "not_applicable"
+
+#: Spellings that mean "not applicable". `not_reported` and `unclear` are real
+#: answers (C2) and deliberately absent.
+NA_LIKE = re.compile(
+    r"^(not[ _-]?(needed|applicable)|n/?a|not[ _-]?a[ _-]?plot)$", re.IGNORECASE
+)
+
+#: Free-text fields scored exactly on purpose, because they are identifiers --
+#: a symbol, URL, accession or section name -- not prose (C4). Keyed by
+#: (check, field pattern), each with its reason. Filled at gate G2.
+IDENTIFIERS: Dict[Tuple[str, str], str] = {}
+
+
+@dataclass(frozen=True)
+class Finding:
+    checklist: str
+    check: str
+    field: str
+    rule: str
+    detail: str
+    tokens: Tuple[str, ...] = ()
+
+
+# ---------------------------------------------------------------------------
+# Schema helpers
+# ---------------------------------------------------------------------------
 
 def leaves(node: Mapping[str, Any], prefix: str = "") -> Iterator[Tuple[str, Mapping]]:
-    """(manifest pattern, schema node) for every scored leaf."""
+    """(manifest pattern, schema node) for every leaf, typed or not."""
     kind = node.get("type")
     kind = kind[0] if isinstance(kind, list) else kind
     if kind == "object":
@@ -73,71 +107,149 @@ def leaves(node: Mapping[str, Any], prefix: str = "") -> Iterator[Tuple[str, Map
         yield prefix, node
 
 
-def enum_of(node: Mapping[str, Any]) -> Optional[List[str]]:
-    """The fixed values a node allows, including through ``anyOf``."""
+def enum_of(node: Mapping[str, Any]) -> Optional[List[Any]]:
+    """The fixed values a node allows, including through ``anyOf``/``oneOf``."""
     if "enum" in node:
         return list(node["enum"])
-    found = [v for alt in node.get("anyOf", []) for v in alt.get("enum", [])]
+    alternatives = node.get("anyOf") or node.get("oneOf") or []
+    found = [v for alt in alternatives for v in alt.get("enum", [])]
     return found or None
 
 
 def is_free_text(node: Mapping[str, Any]) -> bool:
     if enum_of(node):
         return False
-    kinds = [node.get("type")] + [a.get("type") for a in node.get("anyOf", [])]
-    return "string" in kinds
+    alternatives = node.get("anyOf") or node.get("oneOf") or []
+    return "string" in [node.get("type")] + [a.get("type") for a in alternatives]
 
 
-def audit_check(checklist: str, check_dir: Path) -> List[Dict[str, Any]]:
-    manifest = json.loads((check_dir / "eval-manifest.json").read_text())
-    schema = json.loads((check_dir / "schema.json").read_text())["format"]["schema"]
+def gold_values(gold_root: Path, check: str) -> Dict[str, Counter]:
+    """Every string the gold holds, per row field, across all of a check's gold."""
+    values: Dict[str, Counter] = defaultdict(Counter)
+    for path in gold_root.glob(f"**/checks/{check}/expected_output.json"):
+        try:
+            gold = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for row in gold.get("outputs", []) if isinstance(gold, dict) else []:
+            if not isinstance(row, dict):
+                continue
+            for key, value in row.items():
+                for item in value if isinstance(value, list) else [value]:
+                    if isinstance(item, str):
+                        values[f"outputs[].{key}"][item] += 1
+    return values
+
+
+# ---------------------------------------------------------------------------
+# The audit
+# ---------------------------------------------------------------------------
+
+def audit_check(
+    checklist: str,
+    check_dir: Path,
+    gold_root: Path = EXAMPLES,
+    identifiers: Mapping[Tuple[str, str], str] = IDENTIFIERS,
+) -> List[Finding]:
+    """Every finding for one check's contract."""
+    check = check_dir.name
+    out: List[Finding] = []
+
+    def add(pattern: str, rule: str, detail: str, tokens: Iterable[str] = ()) -> None:
+        out.append(Finding(checklist, check, pattern, rule, detail, tuple(sorted(tokens))))
+
+    manifest_path = check_dir / "eval-manifest.json"
+    if not manifest_path.is_file():
+        add("", "no-manifest", "schema.json without eval-manifest.json")
+        return out
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    envelope = json.loads((check_dir / "schema.json").read_text(encoding="utf-8"))
+    schema = envelope.get("format", {}).get("schema", envelope)
     defaults = manifest.get("defaults", {})
-    visible = {spec.pattern for spec in discover_schema(schema)}
-    findings = []
+    gold = gold_values(gold_root, check)
+
+    try:
+        visible = {spec.pattern for spec in discover_schema(schema)}
+    except SchemaTypingError as exc:
+        add("", "untyped", str(exc))
+        visible = None
+
     for pattern, node in leaves(schema):
         if pattern.endswith("panel_label"):
             continue
-        if pattern not in visible:
-            findings.append({
-                "checklist": checklist, "check": check_dir.name, "field": pattern,
-                "rule": "invisible",
-                "detail": "not discovered by the scorer, so never scored "
-                          f"(schema node has no 'type': {sorted(node)})",
-                "tokens": [],
-            })
+        if visible is not None and pattern not in visible:
+            add(pattern, "untyped", f"not discovered by the scorer (keys {sorted(node)})")
             continue
         own = manifest.get("fields", {}).get(pattern)
         profile = {**defaults, **(own or {})}
         metric = profile.get("matching_metric")
         na = [v for v in profile.get("na_values", []) if v != ""]
-        polar = [profile.get("positive_value"), profile.get("negative_value")]
+        polar = [v for v in (profile.get("positive_value"), profile.get("negative_value")) if v]
+        scored_tokens = set(na) | (set(polar) if metric == "binary_polarity" else set())
         values = enum_of(node)
-        rules = []
+        free = is_free_text(node)
+        seen_gold = gold.get(pattern, Counter())
+
         if own is None and metric == "binary_polarity" and (
             values is None or not set(values) <= set(polar) | set(na) | {""}
         ):
-            rules.append(("default", f"inherits binary_polarity {polar}; schema allows "
-                                     f"{values or node.get('type') or 'anyOf'}"))
-        if na and is_free_text(node):
-            rules.append(("na-text", f"not-applicable token(s) {na} in a free-text field"))
-        if metric == "binary_polarity" and own is not None and is_free_text(node):
-            rules.append(("polar-text", f"scored as {polar} but free text"))
+            add(pattern, "default",
+                f"inherits binary_polarity {polar}; schema allows {values or node.get('type') or 'a union'}",
+                polar)
+        if na and free:
+            add(pattern, "na-text", f"not-applicable token(s) {na} in a free-text field", na)
+        if metric == "binary_polarity" and own is not None and free:
+            add(pattern, "polar-text", f"scored as {polar} but free text", polar)
         if values:
-            na_like = [v for v in values if NA_LIKE.match(str(v)) and v not in na]
-            if na_like:
-                rules.append(("enum-na", f"enum value(s) {na_like} scored as a class, not as NA"))
+            unscored_na = [v for v in values if NA_LIKE.match(str(v)) and v not in na]
+            if unscored_na:
+                add(pattern, "enum-na", f"{unscored_na} scored as a class, not as NA", unscored_na)
             if metric == "binary_polarity":
-                missing = [t for t in polar + na if t and t not in values]
+                missing = [t for t in polar + na if t not in values]
                 if missing:
-                    rules.append(("enum-gap", f"enum lacks {missing}"))
-        for rule, detail in rules:
-            findings.append({
-                "checklist": checklist, "check": check_dir.name, "field": pattern,
-                "rule": rule, "detail": detail,
-                "tokens": sorted(set(na) | ({t for t in polar if t} if metric == "binary_polarity" else set())),
-            })
+                    add(pattern, "enum-gap", f"enum lacks {missing}", missing)
+
+        legacy: Set[str] = set()
+        for source, tokens in (("schema enum", values or []), ("manifest", na),
+                               ("gold", seen_gold)):
+            for token in tokens:
+                if isinstance(token, str) and NA_LIKE.match(token) and token != CANONICAL_NA:
+                    legacy.add(f"{token!r} in {source}")
+        if legacy:
+            add(pattern, "legacy-token", f"use {CANONICAL_NA!r}: " + ", ".join(sorted(legacy)))
+
+        for token in sorted(scored_tokens):
+            in_schema = token in (values or []) or token in node.get("description", "")
+            if not in_schema and token not in seen_gold:
+                add(pattern, "orphan-token",
+                    f"manifest scores {token!r}, which neither the schema nor the gold uses",
+                    [token])
+
+        if free and not (metric == "graded_string" and profile.get("string_compare") == "semantic"):
+            reason = identifiers.get((check, pattern))
+            if reason is None:
+                add(pattern, "text-metric",
+                    f"free text scored {metric}/{profile.get('string_compare')}: "
+                    f"make it semantic, an enum, or declare it an identifier")
+    return out
+
+
+def audit(checklists: Optional[Sequence[str]] = None,
+          checklist_root: Path = CHECKLISTS,
+          gold_root: Path = EXAMPLES) -> List[Finding]:
+    findings: List[Finding] = []
+    for checklist in sorted(c for c in checklist_root.iterdir() if c.is_dir()):
+        if checklists and checklist.name not in checklists:
+            continue
+        for check_dir in sorted(p for p in checklist.iterdir() if p.is_dir()):
+            if (check_dir / "schema.json").is_file():
+                findings += audit_check(checklist.name, check_dir, gold_root)
     return findings
 
+
+# ---------------------------------------------------------------------------
+# What committed runs wrote
+# ---------------------------------------------------------------------------
 
 def run_values(checks: Sequence[str]) -> Dict[Tuple[str, str], Counter]:
     """Every string a committed prediction wrote, per (check, row field)."""
@@ -171,27 +283,26 @@ def annotated(value: str, token: str) -> bool:
 
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--checklist", action="append", default=None,
+                        help="Audit only this checklist; repeatable. Default: all")
     parser.add_argument("--runs", action="store_true",
                         help="Also count what committed predictions wrote in each flagged field")
     args = parser.parse_args(argv)
 
-    findings: List[Dict[str, Any]] = []
-    for checklist in sorted(c for c in CHECKLISTS.iterdir() if c.is_dir()):
-        for check_dir in sorted(checklist.iterdir()):
-            if (check_dir / "schema.json").is_file() and (check_dir / "eval-manifest.json").is_file():
-                findings += audit_check(checklist.name, check_dir)
-
-    seen = run_values(sorted({f["check"] for f in findings})) if args.runs else {}
+    findings = audit(args.checklist)
+    seen = run_values(sorted({f.check for f in findings})) if args.runs else {}
     for f in findings:
-        line = f"{f['rule']:<10} {f['checklist']}/{f['check']} · {f['field']}: {f['detail']}"
-        values = seen.get((f["check"], f["field"].replace(f"{f['check']}[]", "outputs[]")))
-        if args.runs and values and f["tokens"]:
+        where = f"{f.checklist}/{f.check}" + (f" · {f.field}" if f.field else "")
+        line = f"{f.rule:<13} {where}: {f.detail}"
+        values = seen.get((f.check, f.field))
+        if values and f.tokens:
             total = sum(values.values())
-            exact = sum(n for v, n in values.items() if v in f["tokens"])
-            ann = sum(n for v, n in values.items() if any(annotated(v, t) for t in f["tokens"]))
-            line += f"  [runs: {total} values, {exact} exact token, {ann} annotated token]"
+            exact = sum(n for v, n in values.items() if v in f.tokens)
+            ann = sum(n for v, n in values.items() if any(annotated(v, t) for t in f.tokens))
+            line += f"  [runs: {total} values, {exact} exact, {ann} annotated]"
         print(line)
-    print(f"\n{len(findings)} finding(s)")
+    by_rule = Counter(f.rule for f in findings)
+    print(f"\n{len(findings)} finding(s)" + (": " + ", ".join(f"{r} {n}" for r, n in sorted(by_rule.items())) if findings else ""))
     return 1 if findings else 0
 
 
