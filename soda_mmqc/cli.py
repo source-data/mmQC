@@ -277,8 +277,14 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Regenerate the views instead of checking them",
     )
 
-    subparsers.add_parser(
+    curate = subparsers.add_parser(
         "curate", help="Launch the curation interface (Streamlit)",
+    )
+    curate.add_argument("checklist", help="Checklist to curate, e.g. fig-checklist")
+    curate.add_argument(
+        "--local-prompts",
+        action="store_true",
+        help="Load prompts from local files only (disable Langfuse)",
     )
     subparsers.add_parser(
         "report", help="Launch the evaluation reporting app (Streamlit)",
@@ -418,7 +424,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         # internally, so the `or 0` is defensive rather than load-bearing.
         from soda_mmqc.scripts.curate import main as curate_main
 
-        return curate_main() or 0
+        # The launcher parses its own arguments; hand it ours, so it does not
+        # read `curate` itself from the process's command line as the checklist.
+        forwarded = [args.checklist] + (["--local-prompts"] if args.local_prompts else [])
+        return curate_main(forwarded) or 0
 
     if args.command == "report":
         from soda_mmqc.scripts.report import main as report_main

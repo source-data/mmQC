@@ -7,7 +7,7 @@ from pathlib import Path
 import argparse
 
 
-def main():
+def main(argv=None):
     # Set environment variables before importing streamlit
     os.environ["STREAMLIT_SERVER_RUN_ON_SAVE"] = "false"
     os.environ["STREAMLIT_BROWSER_GATHER_USAGE_STATS"] = "false"
@@ -28,7 +28,9 @@ def main():
         action="store_true",
         help="Load prompts from local files only (disable Langfuse)",
     )
-    args = parser.parse_args()
+    # `argv` is passed by `mmqc curate`; run directly, it falls back to the
+    # process's own arguments.
+    args = parser.parse_args(argv)
 
     if args.local_prompts:
         # Empty values block load_dotenv() from re-loading Langfuse keys from .env
