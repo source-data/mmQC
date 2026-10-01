@@ -180,10 +180,11 @@ warning; a field deliberately left unscored is listed as such in the manifest.
 
 | # | item | where | gate |
 |---|---|---|---|
-| W1 | Extend `audit_contracts` with the rules still missing: manifest token absent from schema and gold (`not_needed`); free text scored non-semantically without an identifier declaration; missing manifest; vocabulary outside C1 | `soda_mmqc/scripts/audit_contracts.py` | tests; runs clean on the fixed contracts |
-| W2 | Scorer: type `anyOf` / union nodes, and **refuse** a schema leaf it cannot type (C5) | `soda_mmqc/core/schema_discovery.py` | tests; no published number moves except fields that were invisible |
+| W1 | Extend `audit_contracts` with the rules still missing: manifest token absent from schema and gold (`not_needed`); free text scored non-semantically without an identifier declaration; missing manifest; vocabulary outside C1; gold outside its own enum | `soda_mmqc/scripts/audit_contracts.py` | **done** 2026-10-01, `6164c51ff`, `0c32ce7a0`; 19 rule tests |
+| W2 | Scorer: type `anyOf` / union nodes, and **refuse** a schema leaf it cannot type (C5) | `soda_mmqc/core/schema_discovery.py` | **done** 2026-10-01, `2b4983b4b` |
+| W2b | Manifest: a field can be **declared unscored** (`"scored": false`) — today an unlisted field inherits the default polarity, so C3's unscored explanation is impossible | `soda_mmqc/core/eval_manifest.py`, evaluation | tests; after G2 |
 | W3 | Decide C1–C5 | this plan | **human gate G1** |
-| W4 | Field-by-field fix list for every check: new enum, token, metric, gold rewrite rule, skill-prose change | this plan, appendix | **human gate G2** |
+| W4 | Field-by-field fix list for every check: new enum, token, metric, gold rewrite rule, skill-prose change | this plan, appendix | **drafted** 2026-10-01 — **human gate G2** |
 | W5a | Tag `gold-v1`; add the `SODA_MMQC_EXAMPLES_DIR` override; pin the exp-01–03 notebooks to `gold-v1` and record it in their notes | `config.py`, notebooks, `thinking/experiments/` | tests; each frozen notebook reproduces its committed findings against `gold-v1` |
 | W5 | Migrate gold to the new vocabulary with a script: token rewrites, and the `error-bars-defined` split — verified that every row parses, decisions agree with `error_bar_on_figure`, split fields rejoin to the original, nothing else changes, and every rewritten gold validates against its new schema | `soda_mmqc/scripts/` | **human gate G3** — the diff is reviewed before commit; **W5a first** |
 | W6 | Update schemas and manifests of the production checklist | `…/fig-checklist/`, `…/doc-checklist/` | audit clean |
@@ -249,3 +250,97 @@ checklists (`fig-checklist-exp01` … `-exp03`) are not edited.
 | G2 | | | |
 | G3 | | | |
 | G4 | | | |
+
+
+---
+
+## Appendix — W4, the field-by-field fix list *(for gate G2)*
+
+Drafted 2026-10-01 from `audit_contracts --checklist fig-checklist
+--checklist doc-checklist` (39 findings) and the gold. **Mechanical** gold
+rewrites follow a rule a script applies and verifies; **curation** needs a
+person's judgement and goes to the curation UI, not a script. Counts are over
+every gold file of the check, benchmark or not. Skill prose: line numbers in
+the pinned `v1/SKILL.md`, changed one skill at a time at G4.
+
+### `error-bars-defined` — prose lines 70, 72, 77, 84
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `Decision_and_explanation` | **split** into `decision: PASS \| FAIL \| not_applicable` and `explanation: string` (C3) | `decision`: multiclass, `na_values [not_applicable]`; `explanation`: **unscored** (needs W2b) | mechanical, verified: `not needed` → `decision not_applicable`, `explanation ""` (178); `PASS: …` / `FAIL: …` → token + reason (124 in the benchmark) |
+| `error_bar_defined_in_caption` | enum `not needed` → `not_applicable` | `na_values [not_applicable]` | mechanical: 254 |
+| `from_the_caption` | free text keeps no token: not applicable is `""` — applicability is carried by `error_bar_defined_in_caption` (C3) | `na_values [""]`, semantic | mechanical: `not needed` → `""` (174). `""` already means "no definition found" (88), and both stay NA, as today |
+
+### `individual-data-points` — prose lines 52, 54, 57, 63, 66
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `individual_values` | enum `not needed` → `not_applicable` | `na_values [not_applicable]` | mechanical: 379 |
+| `decision` | enum gains `not_applicable` | multiclass, `na_values [not_applicable]` | **mixed**. Mechanical: `plot: no` → `not_applicable` (223 now `PASS`, 53 now `""`). **Curation**: 50 plots with a blank decision; 30 plots with `individual_values: no` marked `PASS`, beside 31 marked `FAIL` — the rule is not the gold's |
+
+The blank gold matters already: under a `PASS \| FAIL` enum no session can
+answer `""`, so all 103 blanks have been forced layer-2 mismatches, in every
+experiment, equally in every arm.
+
+### `plot-axis-units` — prose lines 62, 78, 82, 89
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `decision` | enum `N/A` → `not_applicable` | multiclass, `na_values [not_applicable]` — **moves to layer 1** | mechanical: 283 |
+| `units_provided[].answer` | enum `not needed` → `not_applicable` | `na_values [not_applicable]` | mechanical: 409 |
+
+### `plot-gap-labeling` — prose lines 42, 57, 68, 73
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `decision` | enum `N/A` → `not_applicable` | multiclass, `na_values [not_applicable]` — **moves to layer 1** | mechanical: 274 |
+
+Its other fields already use `not_applicable`.
+
+### `replication-reporting` — prose line 67
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `n_value_min` | none — the union is now typed (W2) | **new entry**: multiclass (an integer matches exactly), `na_values [not_applicable]`; `not_reported` stays a class (C2) | none |
+| `replicate_type` | free text keeps no token: `""` when nothing to extract — applicability and "not reported" are carried by `replicate_type_reported` (C3) | `na_values [""]`, semantic | mechanical: `not_applicable` → `""` (137), `not_reported` → `""` (31) |
+| `n_reported`, `replicate_type_reported`, `decision` | — | — | **curation**: one row blank in all three |
+
+### `stat-significance-level` — prose lines 65, 70, 77
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `decision` | enum `N/A` → `not_applicable` | multiclass, `na_values [not_applicable]` — **moves to layer 1** | mechanical: 418 |
+| `symbol_definition` | — | `na_values` drops the orphan `not_needed`, keeps `""` | none |
+| `significance_level_symbols_on_image` | — | stays exact: **declared an identifier** (`*`, `**`, `ns` are different answers) | none |
+| `is_a_plot` | — | — | **curation**: 4 blank |
+
+### `stat-test` — prose lines 49, 65
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `statistical_test_mentioned` | enum `not needed` → `not_applicable` | `na_values [not_applicable]` | mechanical: 405 |
+
+### `doc-checklist`
+
+| field | change | manifest | gold |
+|---|---|---|---|
+| `author-contribution-in-ms · statement_type` | free text scored as multiclass → **enum** `free_text \| CRediT \| contribution_roles \| not_applicable` (from its description; gold uses `not_applicable` 14, `free_text` 2) | multiclass, `na_values [not_applicable]` | none |
+| URLs in `external-data-url-validation` and `-agentic` (2 fields) | — | stay exact: **declared identifiers** | none |
+| section names in `section-order` and `section-order-alt` (8 fields) | — | stay exact: **declared identifiers** | none |
+
+### `data-checklist`
+
+`SD-mapping` (25 gold files), `panel-data-replication-validation` (5) and
+`western-blot-matching-SD` (36) have schemas, benchmarks and gold, and **no
+manifest**. *Proposed:* in scope — W8 drafts their manifests under C1–C5 after
+G2, for review then.
+
+### Totals
+
+| | |
+|---|---|
+| mechanical gold rewrites | about 3,700 values across 7 checks |
+| curation | `individual-data-points · decision` (80 rows), `replication-reporting` (1 row), `stat-significance-level · is_a_plot` (4) |
+| new scorer feature | W2b, an unscored declaration |
+| skills to edit at G4 | 7 |
+| identifiers to declare | 11 fields |
