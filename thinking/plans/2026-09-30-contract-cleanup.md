@@ -97,8 +97,8 @@ explanations.
 ## Conventions to adopt
 
 *C1, C2, C4 and C5, and the gold-migration approach, were decided at G1 on
-2026-10-01; C3's scoring of the explanation is still open. See the decisions
-record.*
+2026-10-01, and C3's scoring of the explanation on 2026-10-01. See the
+decisions record.*
 
 ### C1 — One token for "not applicable", always NA
 
@@ -154,8 +154,8 @@ explains itself there is again a spurious applicable answer. Options: (a) the
 explanation is **not scored**; (b) its applicability **follows the decision
 field**, which the scorer cannot express today (layer 1 is judged per field, from
 that field's own value) and would need a manifest feature such as
-`applicable_when`. *Recommended: (a) now, (b) as a scorer feature if explanations
-turn out to be worth scoring.*
+`applicable_when`. **Decided: (a), the explanation is not scored**; (b) remains a
+possible scorer feature if explanations turn out to be worth scoring.
 
 ### C4 — Free text is scored semantically; identifiers exactly
 
@@ -245,7 +245,7 @@ checklists (`fig-checklist-exp01` … `-exp03`) are not edited.
 
 | gate | decision | date | by |
 |---|---|---|---|
-| G1 | C1 `not_applicable` everywhere, gold included; `N/A` treated as not applicable; C2; C3 split of `error-bars-defined`'s field, no widened `na_values`, prefix rule for exploratory re-scores only; C4; C5. Gold rewritten in place, after tagging `gold-v1` and adding a gold-location override; new-gold re-scores exploratory and separate. **Open:** how the explanation is scored beside a `not_applicable` decision (C3) | 2026-10-01 | Thomas Lemberger |
+| G1 | C1 `not_applicable` everywhere, gold included; `N/A` treated as not applicable; C2; C3 split of `error-bars-defined`'s field, no widened `na_values`, prefix rule for exploratory re-scores only; C4; C5. Gold rewritten in place, after tagging `gold-v1` and adding a gold-location override; new-gold re-scores exploratory and separate. C3: the explanation is **not scored** | 2026-10-01 | Thomas Lemberger |
 | G2 | | | |
 | G3 | | | |
 | G4 | | | |
