@@ -168,3 +168,14 @@ def test_a_declared_identifier_may_be_scored_exactly(tmp_path):
     findings = audit_check("toy", check_dir, gold,
                            identifiers={("toy-check", "outputs[].url"): "a URL"})
     assert "text-metric" not in _rules(findings)
+
+
+def test_gold_outside_the_schema_enum(tmp_path):
+    """The individual-data-points case: blank gold under a PASS/FAIL enum."""
+    check_dir, gold = _contract(
+        tmp_path, {"decision": {"type": "string", "enum": ["PASS", "FAIL"]}},
+        {"outputs[].decision": {"matching_metric": "multiclass"}},
+        gold_rows=[{"panel_label": "A", "decision": ""},
+                   {"panel_label": "B", "decision": "PASS"}])
+    found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-off-enum"]
+    assert found and "''" in found[0].detail

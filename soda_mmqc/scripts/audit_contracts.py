@@ -31,6 +31,8 @@ Rules:
 ``orphan-token``  a manifest token that neither the schema nor the gold uses
 ``text-metric``   free text not scored semantically, unless declared an
                   identifier in IDENTIFIERS (C4)
+``gold-off-enum`` gold holding a value its own schema's enum does not allow --
+                  an answer no strict session can give, so a forced mismatch
 
 The experiment checklists are frozen copies of the contracts their runs were
 scored against, so they keep their legacy findings by design; scope the audit
@@ -208,6 +210,13 @@ def audit_check(
                 missing = [t for t in polar + na if t not in values]
                 if missing:
                     add(pattern, "enum-gap", f"enum lacks {missing}", missing)
+
+        if values:
+            off = {v: n for v, n in seen_gold.items() if v not in values}
+            if off:
+                add(pattern, "gold-off-enum",
+                    f"gold holds {dict(sorted(off.items()))} outside the enum {values}",
+                    off)
 
         legacy: Set[str] = set()
         for source, tokens in (("schema enum", values or []), ("manifest", na),
