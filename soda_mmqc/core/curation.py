@@ -25,19 +25,22 @@ try:
 except Exception:
     # python-dotenv not installed, rely on os.environ
     pass
-# Optional Langfuse SDK integration for fetching prompts
-try:
-    if not os.environ.get("LANGFUSE_PUBLIC_KEY"):
-        # No public key configured; skip importing Langfuse entirely
-        langfuse_client = None
+# Prompts come from the local checklist files unless the launcher asked for
+# Langfuse (`mmqc curate <checklist> --langfuse`). A Langfuse request that
+# cannot be met falls back to local files and says so in red, once, at the top.
+PROMPT_SOURCE = os.environ.get("SODA_MMQC_PROMPT_SOURCE", "local")
+langfuse_client = None
+langfuse_problem = None
+if PROMPT_SOURCE == "langfuse":
+    missing = [k for k in ("LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY") if not os.environ.get(k)]
+    if missing:
+        langfuse_problem = f"{' and '.join(missing)} not set"
     else:
-        from langfuse import get_client as _get_langfuse_client
         try:
+            from langfuse import get_client as _get_langfuse_client
             langfuse_client = _get_langfuse_client()
-        except Exception:
-            langfuse_client = None
-except Exception:
-    langfuse_client = None
+        except Exception as exc:  # noqa: BLE001 - any failure means local files
+            langfuse_problem = f"the Langfuse client could not start: {exc}"
 
 # Set page config for wider layout
 st.set_page_config(
@@ -55,6 +58,17 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
+if langfuse_problem:
+    st.error(
+        f"Langfuse was requested but {langfuse_problem}. Prompts are loaded from "
+        f"the local checklist files instead."
+    )
+else:
+    st.caption(
+        "Prompts: Langfuse" if langfuse_client is not None
+        else "Prompts: local checklist files (pass --langfuse to fetch from Langfuse)"
+    )
 
 
 def _extract_body_html(document_content):
@@ -412,7 +426,11 @@ def load_checklist(checklist_dir):
                 prompt_text = langfuse_client.get_prompt(prompt_key)
                 if prompt_text:
                     prompt_filename = f"{check_dir.name}.txt"
-                    checklist[check_dir.name]["prompts"][prompt_filename] = prompt_text.name
+                    # The prompt client's text is `.prompt`; `.name` is the
+                    # key it was fetched by, which is all this used to show.
+                    checklist[check_dir.name]["prompts"][prompt_filename] = (
+                        getattr(prompt_text, "prompt", None) or str(prompt_text)
+                    )
                 else:
                     _load_local_prompts(check_dir, checklist[check_dir.name]["prompts"])
             except Exception as e:

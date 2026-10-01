@@ -23,19 +23,26 @@ def main(argv=None):
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("checklist", type=str, help="Name of the checklist to curate")
-    parser.add_argument(
+    source = parser.add_mutually_exclusive_group()
+    source.add_argument(
+        "--langfuse",
+        action="store_true",
+        help="Fetch prompts from Langfuse instead of the local checklist files",
+    )
+    source.add_argument(
         "--local-prompts",
         action="store_true",
-        help="Load prompts from local files only (disable Langfuse)",
+        help="Load prompts from the local checklist files (the default; kept for old habits)",
     )
     # `argv` is passed by `mmqc curate`; run directly, it falls back to the
     # process's own arguments.
     args = parser.parse_args(argv)
 
-    if args.local_prompts:
-        # Empty values block load_dotenv() from re-loading Langfuse keys from .env
-        os.environ["LANGFUSE_PUBLIC_KEY"] = ""
-        os.environ["LANGFUSE_SECRET_KEY"] = ""
+    # Local files are the default. `.env` carries Langfuse keys, and the app
+    # loads `.env` itself, so keying the choice on whether those variables are
+    # set made Langfuse the default on any machine with a `.env` -- and every
+    # launch needed --local-prompts. The source is now asked for, not inferred.
+    os.environ["SODA_MMQC_PROMPT_SOURCE"] = "langfuse" if args.langfuse else "local"
     
     # Prepare streamlit arguments
     sys.argv = [

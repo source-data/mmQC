@@ -281,10 +281,16 @@ def _build_parser() -> argparse.ArgumentParser:
         "curate", help="Launch the curation interface (Streamlit)",
     )
     curate.add_argument("checklist", help="Checklist to curate, e.g. fig-checklist")
-    curate.add_argument(
+    source = curate.add_mutually_exclusive_group()
+    source.add_argument(
+        "--langfuse",
+        action="store_true",
+        help="Fetch prompts from Langfuse instead of the local checklist files",
+    )
+    source.add_argument(
         "--local-prompts",
         action="store_true",
-        help="Load prompts from local files only (disable Langfuse)",
+        help="Load prompts from the local checklist files (the default)",
     )
     subparsers.add_parser(
         "report", help="Launch the evaluation reporting app (Streamlit)",
@@ -426,7 +432,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         # The launcher parses its own arguments; hand it ours, so it does not
         # read `curate` itself from the process's command line as the checklist.
-        forwarded = [args.checklist] + (["--local-prompts"] if args.local_prompts else [])
+        forwarded = [args.checklist] + (["--langfuse"] if args.langfuse else [])
         return curate_main(forwarded) or 0
 
     if args.command == "report":
