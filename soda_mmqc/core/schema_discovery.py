@@ -24,6 +24,16 @@ class LeafKind(str, Enum):
 PRIMITIVE_TYPES = frozenset({"string", "number", "integer", "boolean"})
 
 
+class SchemaTypingError(ValueError):
+    """A schema node the scorer cannot type, and so cannot score.
+
+    Raised rather than skipped. A silently skipped node is a field that is never
+    scored and that nothing reports: `replication-reporting · n_value_min`,
+    typed only through ``anyOf``, went unscored that way from the day its
+    manifest was generated until the contract audit of 2026-09-30.
+    """
+
+
 @dataclass(frozen=True)
 class LeafPropertySpec:
     """One leaf property pattern from schema traversal."""
@@ -121,6 +131,13 @@ def _walk_node(
                 object_list_name=object_list_name,
             )
         )
+        return
+
+    raise SchemaTypingError(
+        f"Cannot type the schema node at {prefix or '<root>'!r}: give it a "
+        f"'type', or an 'anyOf' / 'oneOf' of primitive types. Found keys "
+        f"{sorted(node)}."
+    )
 
 
 def _walk_object_lists(
@@ -172,6 +189,16 @@ def _walk_object_lists(
 
 
 def _primary_type(node: Mapping[str, Any]) -> Optional[str]:
+    """The node's type, reading ``anyOf`` / ``oneOf`` unions of primitives.
+
+    A union of primitives -- an integer, or one of two string tokens -- is a
+    primitive leaf. It is reported as ``string`` when any alternative is a
+    string, which is only a placement decision: such a leaf carries no
+    ``enum_values`` (see :func:`_enum_values`), so it is scored by its
+    manifest profile, which handles integers and strings alike. A union
+    mixing primitives with objects or arrays has no single placement and is
+    left untyped, for the walker to refuse.
+    """
     raw = node.get("type")
     if isinstance(raw, str):
         return raw
@@ -179,6 +206,12 @@ def _primary_type(node: Mapping[str, Any]) -> Optional[str]:
         for candidate in raw:
             if candidate != "null":
                 return candidate
+    alternatives = node.get("anyOf") or node.get("oneOf")
+    if isinstance(alternatives, list) and alternatives:
+        kinds = [_primary_type(alt) for alt in alternatives if isinstance(alt, Mapping)]
+        kinds = [kind for kind in kinds if kind and kind != "null"]
+        if kinds and all(kind in PRIMITIVE_TYPES for kind in kinds):
+            return "string" if "string" in kinds else kinds[0]
     return None
 
 
