@@ -217,9 +217,127 @@ def ebd_verify(row: Mapping[str, Any]) -> Optional[str]:
     return None if ok else f"on_figure {on_figure!r}, defined {defined!r}, decision {decision!r}"
 
 
+# ---------------------------------------------------------------------------
+# plot-axis-units, plot-gap-labeling, stat-significance-level
+# ---------------------------------------------------------------------------
+#
+# Their decision held N/A, scored as a class; it becomes not_applicable (C1).
+# The prose (v1/SKILL.md, 2026-10-02) gives each rule below.
+
+_NA = ("N/A", "not_applicable")
+
+
+def _verdict(row, derived: str, reason: str) -> Optional[RowResult]:
+    """A judgement if the gold's decision is neither blank nor the derived one."""
+    current = row.get("decision")
+    current = "not_applicable" if current in _NA else current
+    if current not in (None, "", derived):
+        return RowResult("judgement", dict(row), f"decision {row.get('decision')!r}, but {reason} gives {derived}")
+    return None
+
+
+def _settle(row, new) -> RowResult:
+    if row.get("decision") in (None, ""):
+        return RowResult("blank", new, f"blank decision; the rule gives {new['decision']}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
+def pau_rule(row: Mapping[str, Any]) -> RowResult:
+    """plot-axis-units: not a plot, or a plot with no axes, is not_applicable;
+    a plot fails if any axis lacks its unit.
+
+    units_provided[].answer "not needed" -- an axis that needs no unit -- is
+    not_required, a real answer; a plot with no axes, such as a pie chart, has
+    nothing to check (both decided 2026-10-02).
+    """
+    plot, units = row.get("is_a_plot"), row.get("units_provided") or []
+    if plot == "yes" and not units and not row.get("unit_definition_as_provided"):
+        derived = "not_applicable"
+        new = {**row}
+    elif plot == "no":
+        if units or row.get("unit_definition_as_provided") or row.get("explanation"):
+            return RowResult("judgement", dict(row), "not a plot, but its axis lists are not empty")
+        derived = "not_applicable"
+        new = {**row}
+    elif plot == "yes":
+        answers = [u.get("answer") for u in units]
+        if any(a not in ("yes", "no", "not needed", "not_required") for a in answers):
+            return RowResult("judgement", dict(row), f"axis answers {answers}")
+        derived = "FAIL" if "no" in answers else "PASS"
+        new = {**row, "units_provided": [
+            {**u, "answer": "not_required" if u.get("answer") == "not needed" else u.get("answer")}
+            for u in units]}
+    else:
+        return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
+    stop = _verdict(row, derived, f"is_a_plot {plot!r} and the axis answers")
+    if stop:
+        return stop
+    new["decision"] = derived
+    return _settle(row, new)
+
+
+def pau_verify(row: Mapping[str, Any]) -> Optional[str]:
+    plot, units = row.get("is_a_plot"), row.get("units_provided") or []
+    answers = [u.get("answer") for u in units]
+    if plot == "no" or (plot == "yes" and not units):
+        ok = row.get("decision") == "not_applicable" and not units
+    else:
+        ok = (plot == "yes" and units and all(a in ("yes", "no", "not_required") for a in answers)
+              and row.get("decision") == ("FAIL" if "no" in answers else "PASS"))
+    return None if ok else f"is_a_plot {plot!r}, answers {answers}, decision {row.get('decision')!r}"
+
+
+def pgl_rule(row: Mapping[str, Any]) -> RowResult:
+    """plot-gap-labeling: not a plot is not_applicable; FAIL only for an unmarked jump."""
+    plot, anomaly, marked = row.get("is_a_plot"), row.get("tick_sequence_anomaly"), row.get("gap_visually_marked")
+    if plot == "no":
+        if anomaly != "not_applicable" or marked != "not_applicable":
+            return RowResult("judgement", dict(row), f"not a plot, but anomaly {anomaly!r}, marked {marked!r}")
+        derived = "not_applicable"
+    elif plot == "yes" and anomaly == "no" and marked == "not_applicable":
+        derived = "PASS"
+    elif plot == "yes" and anomaly == "yes" and marked in ("yes", "no"):
+        derived = "PASS" if marked == "yes" else "FAIL"
+    else:
+        return RowResult("judgement", dict(row), f"is_a_plot {plot!r}, anomaly {anomaly!r}, marked {marked!r}")
+    stop = _verdict(row, derived, f"anomaly {anomaly!r}, marked {marked!r}")
+    return stop or _settle(row, {**row, "decision": derived})
+
+
+def pgl_verify(row: Mapping[str, Any]) -> Optional[str]:
+    return None if pgl_rule(row).kind == "unchanged" else f"decision {row.get('decision')!r} breaks the rule"
+
+
+def ssl_rule(row: Mapping[str, Any]) -> RowResult:
+    """stat-significance-level: not a plot, or no symbols, is not_applicable (decided 2026-10-02)."""
+    plot = row.get("is_a_plot")
+    symbols, defined = row.get("significance_level_symbols_on_image") or [], row.get("symbols_defined") or []
+    if plot == "no":
+        if symbols or defined:
+            return RowResult("judgement", dict(row), "not a plot, but it lists symbols")
+        derived = "not_applicable"
+    elif plot == "yes" and not symbols:
+        derived = "not_applicable"
+    elif plot == "yes":
+        if len(defined) != len(symbols) or any(d not in ("yes", "no") for d in defined):
+            return RowResult("judgement", dict(row), f"{len(symbols)} symbols but symbols_defined {defined}")
+        derived = "FAIL" if "no" in defined else "PASS"
+    else:
+        return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
+    stop = _verdict(row, derived, f"is_a_plot {plot!r} and {len(symbols)} symbol(s)")
+    return stop or _settle(row, {**row, "decision": derived})
+
+
+def ssl_verify(row: Mapping[str, Any]) -> Optional[str]:
+    return None if ssl_rule(row).kind == "unchanged" else f"decision {row.get('decision')!r} breaks the rule"
+
+
 RULES: Dict[str, Tuple[Callable, Callable]] = {
     "individual-data-points": (idp_rule, idp_verify),
     "error-bars-defined": (ebd_rule, ebd_verify),
+    "plot-axis-units": (pau_rule, pau_verify),
+    "plot-gap-labeling": (pgl_rule, pgl_verify),
+    "stat-significance-level": (ssl_rule, ssl_verify),
 }
 
 
@@ -243,6 +361,9 @@ CURATED_FIELDS = {
     "individual-data-points": ("plot", "individual_values", "decision"),
     "error-bars-defined": ("error_bar_on_figure", "error_bar_defined_in_caption",
                            "from_the_caption", "decision", "explanation"),
+    "plot-axis-units": ("is_a_plot", "decision"),
+    "plot-gap-labeling": ("is_a_plot", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
+    "stat-significance-level": ("is_a_plot", "decision"),
 }
 
 Overrides = Dict[Tuple[str, str], Dict[str, str]]

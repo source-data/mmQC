@@ -245,3 +245,61 @@ def test_write_keeps_each_files_own_layout(tmp_path, indent, newline, escaped):
     assert out.endswith("\n") == newline
     assert out.split("\n")[1].startswith(" " * indent + '"')
     assert ("\\u2014" in out) == escaped
+
+
+# --- plot-axis-units, plot-gap-labeling, stat-significance-level --------------------
+
+AX = lambda *answers: [{"axis": a, "answer": v} for a, v in zip("xyz", answers)]
+
+
+@pytest.mark.parametrize("row, decision, answers", [
+    ({"is_a_plot": "no", "units_provided": [], "decision": "N/A"}, "not_applicable", []),
+    ({"is_a_plot": "yes", "units_provided": [], "decision": "N/A"}, "not_applicable", []),   # pie chart
+    ({"is_a_plot": "yes", "units_provided": AX("yes", "not needed"), "decision": "PASS"},
+     "PASS", ["yes", "not_required"]),
+    ({"is_a_plot": "yes", "units_provided": AX("no", "yes"), "decision": "FAIL"}, "FAIL", ["no", "yes"]),
+])
+def test_plot_axis_units_rule(row, decision, answers):
+    result = m.pau_rule({"panel_label": "A", "unit_definition_as_provided": [], "explanation": [], **row})
+    assert result.kind in ("mechanical", "unchanged")
+    assert result.new["decision"] == decision
+    assert [u["answer"] for u in result.new["units_provided"]] == answers
+    assert m.pau_verify(result.new) is None
+
+
+def test_plot_axis_units_a_verdict_against_the_rule_is_a_judgement():
+    row = {"panel_label": "A", "is_a_plot": "yes", "units_provided": AX("no"), "decision": "PASS",
+           "unit_definition_as_provided": [], "explanation": []}
+    assert m.pau_rule(row).kind == "judgement"
+
+
+@pytest.mark.parametrize("plot, anomaly, marked, decision", [
+    ("no", "not_applicable", "not_applicable", "not_applicable"),
+    ("yes", "no", "not_applicable", "PASS"),
+    ("yes", "yes", "yes", "PASS"),
+    ("yes", "yes", "no", "FAIL"),
+])
+def test_plot_gap_labeling_rule(plot, anomaly, marked, decision):
+    row = {"panel_label": "A", "is_a_plot": plot, "tick_sequence_anomaly": anomaly,
+           "gap_visually_marked": marked, "decision": "N/A" if decision == "not_applicable" else decision}
+    result = m.pgl_rule(row)
+    assert result.new["decision"] == decision and m.pgl_verify(result.new) is None
+
+
+@pytest.mark.parametrize("plot, symbols, defined, decision", [
+    ("no", [], [], "not_applicable"),
+    ("yes", [], [], "not_applicable"),          # no symbols: nothing to check
+    ("yes", ["*"], ["yes"], "PASS"),
+    ("yes", ["*", "**"], ["yes", "no"], "FAIL"),
+])
+def test_stat_significance_level_rule(plot, symbols, defined, decision):
+    row = {"panel_label": "A", "is_a_plot": plot, "significance_level_symbols_on_image": symbols,
+           "symbols_defined": defined, "decision": "N/A" if decision == "not_applicable" else decision}
+    result = m.ssl_rule(row)
+    assert result.new["decision"] == decision and m.ssl_verify(result.new) is None
+
+
+def test_stat_significance_level_blank_is_a_plot_is_a_judgement():
+    row = {"panel_label": "", "is_a_plot": "", "significance_level_symbols_on_image": [],
+           "symbols_defined": [], "decision": "N/A"}
+    assert m.ssl_rule(row).kind == "judgement"
