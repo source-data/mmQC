@@ -185,7 +185,7 @@ warning; a field deliberately left unscored is listed as such in the manifest.
 | W2b | Manifest: a field can be **declared unscored** (`"scored": false`) — today an unlisted field inherits the default polarity, so C3's unscored explanation is impossible | `soda_mmqc/core/eval_manifest.py`, evaluation | tests; after G2 |
 | W3 | Decide C1–C5 | this plan | **human gate G1** |
 | W4 | Field-by-field fix list for every check: new enum, token, metric, gold rewrite rule, skill-prose change | this plan, appendix | **drafted** 2026-10-01 — **human gate G2** |
-| W5a | Tag `gold-v1`; add the `SODA_MMQC_EXAMPLES_DIR` override; pin the exp-01–03 notebooks to `gold-v1` and record it in their notes | `config.py`, notebooks, `thinking/experiments/` | tests; each frozen notebook reproduces its committed findings against `gold-v1` |
+| W5a | Tag the gold each frozen experiment used; add a gold override; pin the exp-01–03 notebooks and record it in their notes | `config.py`, `soda_mmqc/gold.py`, notebooks, `thinking/experiments/` | **done** 2026-10-02 — see below |
 | W5 | Migrate gold to the new vocabulary with a script: token rewrites, and the `error-bars-defined` split — verified that every row parses, decisions agree with `error_bar_on_figure`, split fields rejoin to the original, nothing else changes, and every rewritten gold validates against its new schema | `soda_mmqc/scripts/` | **human gate G3** — the diff is reviewed before commit; **W5a first** |
 | W6 | Update schemas and manifests of the production checklist | `…/fig-checklist/`, `…/doc-checklist/` | audit clean |
 | W7 | Update skill prose to the new tokens and split fields — **one skill at a time, reviewed** | `…/SKILL.md` | **human gate G4**, per skill |
@@ -227,6 +227,23 @@ newer than an analysis.
 **Re-scores under the new gold are exploratory**, and kept separate from the
 preregistered numbers: recorded as addenda, never as revisions. The experiment
 checklists (`fig-checklist-exp01` … `-exp03`) are not edited.
+
+### W5a as built, 2026-10-02
+
+- **Two tags, not one.** exp-01 and exp-02 were scored before the 2026-09-28
+  label fix, exp-03 after it: `gold-v0` (`c96c8f8de`) and `gold-v1`
+  (`cfbaa91c5`). Pinning exp-01 to `gold-v1` would have been off by that row.
+- **The override pins gold, not the examples tree**: `SODA_MMQC_GOLD_DIR`, read
+  by `config.gold_root()` when gold is read. A snapshot is the gold files only,
+  extracted from the tag with `git archive` into `.gold-snapshots/<tag>/`
+  (gitignored, ~8 MB) — the full tree with its figures would be 3.4 GB per tag,
+  and the inputs are not what changes. Saving gold is refused while a pin is set.
+- **The exp-01–03 notebooks** pin themselves in a first cell, and exp-03's
+  `build_contract.py` reads `gold-v1` and refuses to write gold.
+- **Verified**: re-scoring committed leaves — exp-01 `error-bars-defined` and
+  `individual-data-points`, exp-03 per-check `individual-data-points` and the
+  fan-out — against their tags reproduces the original analyses instance for
+  instance; against the live gold, the three per-check leaves differ.
 
 ### Order
 

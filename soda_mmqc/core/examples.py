@@ -4,10 +4,11 @@ from typing import Dict, Any, Optional, Type, List, Tuple
 import hashlib
 import io
 import json
+import os
 import logging
 import base64
 import mimetypes
-from soda_mmqc.config import EXAMPLES_DIR
+from soda_mmqc.config import EXAMPLES_DIR, GOLD_DIR_ENV, gold_root
 from mmqc_utils import convert_to_bounded_jpeg, document_to_html
 from mmqc_utils.exceptions import DocumentConversionError
 try:
@@ -92,10 +93,14 @@ class Example(ABC):
             Path to the expected output file 
         """
 
-        expected_output_path = (
-            self.source_path / "checks" / check_name /
-            "expected_output.json"
+        # Unpinned, gold sits beside the example's inputs, as it always has.
+        # Pinned (SODA_MMQC_GOLD_DIR), it is read from the snapshot, which
+        # holds gold only -- the inputs stay where source_path says.
+        base = (
+            gold_root() / Path(self.relative_source_path)
+            if os.environ.get(GOLD_DIR_ENV) else self.source_path
         )
+        expected_output_path = base / "checks" / check_name / "expected_output.json"
         if expected_output_path.exists():     
             with open(expected_output_path, "r", encoding="utf-8") as f:
                 expected_output_json = json.load(f)
@@ -199,6 +204,9 @@ class Example(ABC):
     ) -> Path:
         """Save an expected output for this example.
 
+        Refused while the gold is pinned to a snapshot: a snapshot is the gold a
+        frozen experiment was scored against, and is read-only.
+
         Args:
             output: The output to save
             check_name: Name of the check
@@ -207,6 +215,11 @@ class Example(ABC):
         Returns:
             Path to the saved expected output file
         """
+        if os.environ.get(GOLD_DIR_ENV):
+            raise RuntimeError(
+                f"The gold is pinned ({GOLD_DIR_ENV}={os.environ[GOLD_DIR_ENV]}); "
+                f"a pinned snapshot is read-only. Unset it to curate the live gold."
+            )
         # Create expected output directory
         expected_output_dir = self.source_path / "checks" / check_name
         expected_output_dir.mkdir(parents=True, exist_ok=True)

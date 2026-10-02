@@ -57,7 +57,13 @@ from soda_mmqc.core.evaluation import FlatEvaluator                # noqa: E402
 CHECKLISTS = REPO / "soda_mmqc" / "data" / "checklist"
 SOURCE = CHECKLISTS / "fig-checklist-exp03-per-check"
 TARGET = CHECKLISTS / "fig-checklist-exp03" / "do-fig-checklist"
-EXAMPLES = REPO / "soda_mmqc" / "data" / "examples"
+from soda_mmqc.gold import snapshot                            # noqa: E402
+
+#: exp-03 is frozen: its gold is the gold at the tag `gold-v1`, read from a
+#: gold-only snapshot (soda_mmqc/gold.py), not the live tree, which the
+#: contract cleanup has since migrated to a new vocabulary.
+GOLD_TAG = "gold-v1"
+EXAMPLES = snapshot(GOLD_TAG)
 EXP02_RUNS = REPO / "experiments" / "runs" / "exp-02-delegation-depth"
 
 ENTRY = "do-fig-checklist"
@@ -335,6 +341,11 @@ def main(argv: List[str] | None = None) -> int:
             outputs[EXAMPLES / example / "checks" / ENTRY / "expected_output.json"] = (
                 dump(combine(gold_for(example, src)))
             )
+
+    if args.gold and not args.check:
+        # The merged gold is part of exp-03's frozen gold, at GOLD_TAG. Writing
+        # it again would write into the snapshot, which git rebuilds from the tag.
+        parser.error(f"exp-03's gold is frozen at {GOLD_TAG}; use --gold --check to verify it")
 
     stale = [p for p, text in outputs.items()
              if not p.is_file() or p.read_text(encoding="utf-8") != text]

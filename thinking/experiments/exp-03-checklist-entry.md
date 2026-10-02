@@ -739,6 +739,10 @@ restated per check in the contract — motivates
   one model and one provider; skills authored by the person who holds the
   hypothesis.
 
+## Gold this was scored against
+
+**`gold-v1`** — the gold as of `cfbaa91c5`, 2026-09-28. The contract cleanup migrated `individual-data-points`' gold to `not_applicable` / `not_required` on 2026-10-02, after it. Its notebook pins the scorer to this tag (`soda_mmqc/gold.py`), so re-running it reproduces these numbers; re-scoring under the current gold is exploratory and recorded separately. Verified 2026-10-02: re-scoring a committed leaf against `gold-v1` reproduces its original analysis instance for instance.
+
 ## Status and next
 
 Done. Preregistered, amended on 2026-09-28 to closure assembly before any kept

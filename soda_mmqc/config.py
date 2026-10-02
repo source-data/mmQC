@@ -86,6 +86,23 @@ CACHE_DIR = Path(os.getenv("SODA_MMQC_CACHE_DIR", DATA_DIR / "cache"))
 # Subdirectories
 CHECKLIST_DIR = DATA_DIR / "checklist"
 EXAMPLES_DIR = DATA_DIR / "examples"
+
+#: Environment variable that pins the gold to a snapshot -- see soda_mmqc/gold.py.
+GOLD_DIR_ENV = "SODA_MMQC_GOLD_DIR"
+
+
+def gold_root() -> Path:
+    """Where gold (``<example>/checks/<check>/expected_output.json``) is read.
+
+    The live examples tree, unless ``SODA_MMQC_GOLD_DIR`` pins a snapshot of the
+    gold at a git tag. A frozen experiment scores against the gold its findings
+    used, not the gold as later curated (contract cleanup, W5a). Read when the
+    gold is read, not at import, so a notebook's first cell can still set it.
+    Only gold is redirected: an example's inputs are always read from
+    ``EXAMPLES_DIR``.
+    """
+    pinned = os.environ.get(GOLD_DIR_ENV)
+    return Path(pinned) if pinned else EXAMPLES_DIR
 EVALUATION_DIR = DATA_DIR / "evaluation"
 
 # A checklist subdirectory is a check when it owns these files. Everything

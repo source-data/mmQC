@@ -164,6 +164,10 @@ by different rulers.
 - **Skills authored by one person**, who also holds the hypothesis. The prose
   was written before this note and not adjusted to it, but it was not blind.
 
+## Gold this was scored against
+
+**`gold-v0`** — the gold as of `c96c8f8de`, 2026-09-18. The 2026-09-28 fix of one `error-bars-defined` label (`B ` → `B`) came after; scoring against the live gold since then differs by that row. Its notebook pins the scorer to this tag (`soda_mmqc/gold.py`), so re-running it reproduces these numbers; re-scoring under the current gold is exploratory and recorded separately. Verified 2026-10-02: re-scoring a committed leaf against `gold-v0` reproduces its original analysis instance for instance.
+
 ## Status and next
 
 Preregistered, not yet run. The note is committed before any runs, so

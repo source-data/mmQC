@@ -654,6 +654,10 @@ monolith is a quarter of that cost and the three split arrangements the rest.
   written by hand rather than generated, so the blocks matching across
   arrangements is a verified fact rather than a guaranteed one.
 
+## Gold this was scored against
+
+**`gold-v0`** — the gold as of `c96c8f8de`, 2026-09-18. The 2026-09-28 fix of one `error-bars-defined` label (`B ` → `B`) came after its runs. Its notebook pins the scorer to this tag (`soda_mmqc/gold.py`), so re-running it reproduces these numbers; re-scoring under the current gold is exploratory and recorded separately. Verified 2026-10-02: re-scoring a committed leaf against `gold-v0` reproduces its original analysis instance for instance.
+
 ## Status and next
 
 Planned, not yet preregistered, not yet run. The preparation is done: the
