@@ -150,19 +150,26 @@ def _ebd_row(row: Mapping[str, Any], decision: str, explanation: str, **fields) 
     """The row with Decision_and_explanation replaced, in place, by its two halves."""
     out: Dict[str, Any] = {}
     for key, value in row.items():
-        if key == "Decision_and_explanation":
+        if key in ("Decision_and_explanation", "decision"):
+            # Either the lumped field or an already split decision: in both
+            # cases the derived values go here, in this position.
             out["decision"], out["explanation"] = decision, explanation
-        elif key not in ("decision", "explanation"):
+        elif key != "explanation":
             out[key] = fields.get(key, value)
-        else:
-            out[key] = value
-    out.update({k: v for k, v in fields.items() if k in out})
     if "decision" not in out:
         out["decision"], out["explanation"] = decision, explanation
     return out
 
 
 def ebd_rule(row: Mapping[str, Any]) -> RowResult:
+    """error-bars-defined, as of 2026-10-02: a plot is checked.
+
+    Not a plot: not_applicable. A plot without error bars has nothing to
+    define: error_bar_defined_in_caption not_required, decision PASS. A plot
+    with error bars: PASS if the caption defines them, FAIL if not.
+    is_a_plot is filled from individual-data-points' gold by ENRICH below.
+    """
+    plot = row.get("is_a_plot")
     on_figure = row.get("error_bar_on_figure")
     defined = row.get("error_bar_defined_in_caption")
     caption = row.get("from_the_caption")
@@ -174,47 +181,73 @@ def ebd_rule(row: Mapping[str, Any]) -> RowResult:
         verdict, explanation = split
     else:
         verdict, explanation = row.get("decision") or "", row.get("explanation") or ""
+    verdict = "not_applicable" if verdict in ("N/A", "not needed") else verdict
+    empty_caption = caption in ("", "not needed", None)
 
-    if on_figure == "no":
-        if defined not in ("not needed", "not_applicable"):
-            return RowResult("judgement", dict(row),
-                             f"no error bars, but defined_in_caption is {defined!r}")
-        if caption not in ("", "not needed", None):
-            return RowResult("judgement", dict(row),
-                             f"no error bars, but from_the_caption holds text")
-        if verdict not in ("", "not_applicable"):
-            return RowResult("judgement", dict(row), f"no error bars, but the verdict is {verdict!r}")
-        new = _ebd_row(row, "not_applicable", explanation,
-                       error_bar_defined_in_caption="not_applicable", from_the_caption="")
-        kind = "blank" if verdict == "" else None
+    if plot not in ("yes", "no"):
+        return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
+    if plot == "no":
+        if on_figure != "no":
+            return RowResult("judgement", dict(row), "not a plot, but error bars are marked present")
+        derived, fields = "not_applicable", {"error_bar_defined_in_caption": "not_applicable",
+                                             "from_the_caption": ""}
+        accepted = ("", "not_applicable")
+    elif on_figure == "no":
+        derived, fields = "PASS", {"error_bar_defined_in_caption": "not_required", "from_the_caption": ""}
+        # Was not_applicable: a plot without error bars, now a PASS as a class.
+        accepted = ("", "not_applicable", "PASS")
     elif on_figure == "yes":
         if defined not in ("yes", "no"):
             return RowResult("judgement", dict(row),
                              f"error bars present, but defined_in_caption is {defined!r}")
-        derived = "PASS" if defined == "yes" else "FAIL"
-        if verdict not in ("", derived):
-            return RowResult("judgement", dict(row),
-                             f"verdict {verdict!r}, but defined_in_caption {defined!r} gives {derived}")
-        new = _ebd_row(row, derived, explanation)
-        kind = "blank" if verdict == "" else None
+        derived, fields = ("PASS" if defined == "yes" else "FAIL"), {}
+        accepted = ("", derived)
     else:
         return RowResult("judgement", dict(row), f"error_bar_on_figure is {on_figure!r}")
 
-    if kind == "blank":
-        return RowResult("blank", new, f"blank verdict; the rule gives {new['decision']}")
+    if on_figure == "no":
+        if defined not in ("not needed", "not_applicable", "not_required"):
+            return RowResult("judgement", dict(row),
+                             f"no error bars, but defined_in_caption is {defined!r}")
+        if not empty_caption:
+            return RowResult("judgement", dict(row), "no error bars, but from_the_caption holds text")
+    if verdict not in accepted:
+        return RowResult("judgement", dict(row), f"the verdict is {verdict!r}, but the rule gives {derived}")
+
+    new = _ebd_row(row, derived, explanation, **fields)
+    if verdict == "":
+        return RowResult("blank", new, f"blank verdict; the rule gives {derived}")
     return RowResult("unchanged" if new == dict(row) else "mechanical", new)
 
 
 def ebd_verify(row: Mapping[str, Any]) -> Optional[str]:
     if "Decision_and_explanation" in row:
         return "Decision_and_explanation is still present"
-    on_figure, defined, decision = (row.get("error_bar_on_figure"),
-                                    row.get("error_bar_defined_in_caption"), row.get("decision"))
-    ok = ((on_figure == "no" and defined == "not_applicable" and decision == "not_applicable"
-           and row.get("from_the_caption") == "")
-          or (on_figure == "yes" and defined == "yes" and decision == "PASS")
-          or (on_figure == "yes" and defined == "no" and decision == "FAIL"))
-    return None if ok else f"on_figure {on_figure!r}, defined {defined!r}, decision {decision!r}"
+    result = ebd_rule(row)
+    return None if result.kind == "unchanged" else f"breaks the rule: {result.reason or result.kind}"
+
+
+def _enrich_is_a_plot(row: Dict[str, Any], example: str, examples: Path) -> Dict[str, Any]:
+    """error-bars-defined gains is_a_plot, from individual-data-points' gold.
+
+    Decided 2026-10-02; the two checks' panel lists agree on every figure.
+    Placed right after panel_label. Left absent when no such gold row exists,
+    which makes the row a judgement.
+    """
+    if "is_a_plot" in row:
+        return row
+    path = examples / example / "checks" / "individual-data-points" / "expected_output.json"
+    if not path.is_file():
+        return row
+    plots = {r.get("panel_label"): r.get("plot") for r in json.loads(path.read_text())["outputs"]}
+    if row.get("panel_label") not in plots:
+        return row
+    out: Dict[str, Any] = {}
+    for key, value in row.items():
+        out[key] = value
+        if key == "panel_label":
+            out["is_a_plot"] = plots[row["panel_label"]]
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -305,14 +338,23 @@ def pgl_rule(row: Mapping[str, Any]) -> RowResult:
         if anomaly != "not_applicable" or marked != "not_applicable":
             return RowResult("judgement", dict(row), f"not a plot, but anomaly {anomaly!r}, marked {marked!r}")
         derived = "not_applicable"
-    elif plot == "yes" and anomaly == "no" and marked == "not_applicable":
+    elif plot == "yes" and anomaly == "no" and marked in ("not_applicable", "not_required"):
+        # No anomaly: there is no gap to mark -- not_required, a real answer
+        # (decided 2026-10-02), where the gold said not_applicable.
         derived = "PASS"
+        row = {**row, "gap_visually_marked": "not_required"}
     elif plot == "yes" and anomaly == "yes" and marked in ("yes", "no"):
         derived = "PASS" if marked == "yes" else "FAIL"
     else:
         return RowResult("judgement", dict(row), f"is_a_plot {plot!r}, anomaly {anomaly!r}, marked {marked!r}")
-    stop = _verdict(row, derived, f"anomaly {anomaly!r}, marked {marked!r}")
-    return stop or _settle(row, {**row, "decision": derived})
+    original = {k: (v if k != "gap_visually_marked" else marked) for k, v in row.items()}
+    stop = _verdict(original, derived, f"anomaly {anomaly!r}, marked {marked!r}")
+    if stop:
+        return stop
+    new = {**row, "decision": derived}
+    if original.get("decision") in (None, ""):
+        return RowResult("blank", new, f"blank decision; the rule gives {derived}")
+    return RowResult("unchanged" if new == original else "mechanical", new)
 
 
 def pgl_verify(row: Mapping[str, Any]) -> Optional[str]:
@@ -346,6 +388,9 @@ def ssl_verify(row: Mapping[str, Any]) -> Optional[str]:
     return None if ssl_rule(row).kind == "unchanged" else f"decision {row.get('decision')!r} breaks the rule"
 
 
+#: Per-check steps that add a field the rule needs before it runs.
+ENRICH: Dict[str, Callable] = {"error-bars-defined": _enrich_is_a_plot}
+
 RULES: Dict[str, Tuple[Callable, Callable]] = {
     "individual-data-points": (idp_rule, idp_verify),
     "error-bars-defined": (ebd_rule, ebd_verify),
@@ -373,7 +418,7 @@ def example_of(path: Path, examples: Optional[Path] = None) -> str:
 #: Fields a curation file may set, per check.
 CURATED_FIELDS = {
     "individual-data-points": ("plot", "individual_values", "decision"),
-    "error-bars-defined": ("error_bar_on_figure", "error_bar_defined_in_caption",
+    "error-bars-defined": ("is_a_plot", "error_bar_on_figure", "error_bar_defined_in_caption",
                            "from_the_caption", "decision", "explanation"),
     "plot-axis-units": ("is_a_plot", "decision"),
     "plot-gap-labeling": ("is_a_plot", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
@@ -416,13 +461,15 @@ def plan(check: str, examples: Optional[Path] = None,
             if not isinstance(row, dict):
                 continue
             key = (example, row.get("panel_label"))
-            curated = {**row, **overrides[key]} if key in overrides else row
+            enrich = ENRICH.get(check)
+            source = enrich(row, example, examples or EXAMPLES) if enrich else row
+            curated = {**source, **overrides[key]} if key in overrides else source
             if key in overrides:
                 if key in used:
                     raise ValueError(f"{key} matches more than one gold row")
                 used.add(key)
             result = rule(curated)
-            if curated is not row and result.kind in ("unchanged", "mechanical"):
+            if (curated is not row) and result.kind in ("unchanged", "mechanical"):
                 result = RowResult("unchanged" if result.new == row else "mechanical",
                                    result.new, "curated")
             results.append((path, index, result))

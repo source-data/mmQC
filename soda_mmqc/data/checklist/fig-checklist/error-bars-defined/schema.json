@@ -14,6 +14,11 @@
                                 "type": "string",
                                 "description": "Label of the panel (e.g., A, B, C)"
                             },
+                            "is_a_plot": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel is a plot"
+                            },
                             "error_bar_on_figure": {
                                 "type": "string",
                                 "enum": ["yes", "no"],
@@ -21,8 +26,8 @@
                             },
                             "error_bar_defined_in_caption": {
                                 "type": "string",
-                                "enum": ["yes", "no", "not_applicable"],
-                                "description": "Whether error bars are defined in caption; not_applicable when the panel has no error bars"
+                                "enum": ["yes", "no", "not_required", "not_applicable"],
+                                "description": "Whether error bars are defined in caption; not_required for a plot without error bars, not_applicable for a panel that is not a plot"
                             },
                             "from_the_caption": {
                                 "type": "string",
@@ -31,7 +36,7 @@
                             "decision": {
                                 "type": "string",
                                 "enum": ["PASS", "FAIL", "not_applicable"],
-                                "description": "Panel-level verdict on whether error bars or box-plot whiskers are adequately defined; not_applicable when error_bar_on_figure is 'no'"
+                                "description": "Panel-level verdict on whether error bars or box-plot whiskers are adequately defined; PASS for a plot without error bars, not_applicable for a panel that is not a plot"
                             },
                             "explanation": {
                                 "type": "string",
@@ -40,6 +45,7 @@
                         },
                         "required": [
                             "panel_label",
+                            "is_a_plot",
                             "error_bar_on_figure",
                             "error_bar_defined_in_caption",
                             "from_the_caption",

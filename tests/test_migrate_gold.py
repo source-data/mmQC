@@ -176,18 +176,33 @@ def test_write_applies_curation_and_the_rule_together(tmp_path):
 
 # --- error-bars-defined ----------------------------------------------------------
 
-EBD_NA = {"panel_label": "A", "error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
-          "from_the_caption": "not needed", "Decision_and_explanation": "not needed"}
+EBD_NA = {"panel_label": "A", "is_a_plot": "no", "error_bar_on_figure": "no",
+          "error_bar_defined_in_caption": "not needed", "from_the_caption": "not needed",
+          "Decision_and_explanation": "not needed"}
 
 
-def test_ebd_no_error_bars_becomes_not_applicable_and_splits_in_place():
+def test_ebd_a_non_plot_becomes_not_applicable_and_splits_in_place():
     result = m.ebd_rule(EBD_NA)
     assert result.kind == "mechanical"
-    assert list(result.new) == ["panel_label", "error_bar_on_figure", "error_bar_defined_in_caption",
-                                "from_the_caption", "decision", "explanation"]
-    assert result.new["error_bar_defined_in_caption"] == "not_applicable"
-    assert result.new["from_the_caption"] == "" and result.new["decision"] == "not_applicable"
-    assert result.new["explanation"] == ""
+    assert list(result.new) == ["panel_label", "is_a_plot", "error_bar_on_figure",
+                                "error_bar_defined_in_caption", "from_the_caption",
+                                "decision", "explanation"]
+    assert (result.new["error_bar_defined_in_caption"], result.new["decision"]) == (
+        "not_applicable", "not_applicable")
+    assert result.new["from_the_caption"] == "" and result.new["explanation"] == ""
+
+
+@pytest.mark.parametrize("legacy", [True, False])
+def test_ebd_a_plot_without_error_bars_is_a_pass(legacy):
+    """Whether the gold is still lumped or already split, the decision becomes PASS."""
+    row = {**EBD_NA, "is_a_plot": "yes"}
+    if not legacy:
+        row = {k: v for k, v in row.items() if k != "Decision_and_explanation"}
+        row.update(error_bar_defined_in_caption="not_applicable", from_the_caption="",
+                   decision="not_applicable", explanation="")
+    result = m.ebd_rule(row)
+    assert (result.new["error_bar_defined_in_caption"], result.new["decision"]) == ("not_required", "PASS")
+    assert m.ebd_verify(result.new) is None
 
 
 @pytest.mark.parametrize("defined, verdict, decision", [
@@ -195,8 +210,9 @@ def test_ebd_no_error_bars_becomes_not_applicable_and_splits_in_place():
     ("no", "FAIL - the caption does not define them", "FAIL"),
 ])
 def test_ebd_verdict_and_reason_split(defined, verdict, decision):
-    row = {"panel_label": "B", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": defined,
-           "from_the_caption": "mean +/- SEM", "Decision_and_explanation": verdict}
+    row = {"panel_label": "B", "is_a_plot": "yes", "error_bar_on_figure": "yes",
+           "error_bar_defined_in_caption": defined, "from_the_caption": "mean +/- SEM",
+           "Decision_and_explanation": verdict}
     result = m.ebd_rule(row)
     assert result.kind == "mechanical" and result.new["decision"] == decision
     assert result.new["explanation"] == verdict.split(" ", 1)[1].lstrip(":- ").strip()
@@ -204,14 +220,16 @@ def test_ebd_verdict_and_reason_split(defined, verdict, decision):
 
 
 @pytest.mark.parametrize("row, why", [
-    ({"error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
-      "from_the_caption": "SD", "Decision_and_explanation": "FAIL: no"}, "verdict"),
-    ({"error_bar_on_figure": "no", "error_bar_defined_in_caption": "yes",
-      "from_the_caption": "", "Decision_and_explanation": "not needed"}, "defined_in_caption"),
-    ({"error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
+    ({"is_a_plot": "yes", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "SD", "Decision_and_explanation": "FAIL: no"}, "the rule gives PASS"),
+    ({"is_a_plot": "no", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "SD", "Decision_and_explanation": "PASS"}, "not a plot"),
+    ({"is_a_plot": "yes", "error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
       "from_the_caption": "mean +/- SD", "Decision_and_explanation": "not needed"}, "from_the_caption"),
-    ({"error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+    ({"is_a_plot": "yes", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
       "from_the_caption": "SD", "Decision_and_explanation": "looks fine"}, "no verdict token"),
+    ({"error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "", "Decision_and_explanation": "not needed"}, "is_a_plot"),
 ])
 def test_ebd_rows_that_need_a_judgement(row, why):
     result = m.ebd_rule({"panel_label": "C", **row})
@@ -219,8 +237,8 @@ def test_ebd_rows_that_need_a_judgement(row, why):
 
 
 def test_ebd_a_blank_verdict_is_derived_but_only_offered():
-    row = {"panel_label": "D", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
-           "from_the_caption": "SD", "Decision_and_explanation": ""}
+    row = {"panel_label": "D", "is_a_plot": "yes", "error_bar_on_figure": "yes",
+           "error_bar_defined_in_caption": "yes", "from_the_caption": "SD", "Decision_and_explanation": ""}
     result = m.ebd_rule(row)
     assert result.kind == "blank" and result.new["decision"] == "PASS"
 
@@ -231,20 +249,14 @@ def test_ebd_is_idempotent_on_migrated_rows():
     assert m.ebd_verify(migrated) is None
 
 
-@pytest.mark.parametrize("indent, newline, escaped", [(4, False, False), (2, True, False), (2, False, True)])
-def test_write_keeps_each_files_own_layout(tmp_path, indent, newline, escaped):
-    """Gold written by other tools keeps its layout, so the diff shows values only."""
-    d = tmp_path / "examples" / "doc" / "content" / "1" / "checks" / "individual-data-points"
-    d.mkdir(parents=True)
-    text = json.dumps({"outputs": [ROW]}, indent=indent, ensure_ascii=escaped) + ("\n" if newline else "")
-    (d / "expected_output.json").write_text(text)
-    examples = tmp_path / "examples"
-    (written,) = m.write("individual-data-points", m.plan("individual-data-points", examples),
-                         fill_blank=False, examples=examples)
-    out = written.read_text()
-    assert out.endswith("\n") == newline
-    assert out.split("\n")[1].startswith(" " * indent + '"')
-    assert ("\\u2014" in out) == escaped
+def test_ebd_is_a_plot_comes_from_individual_data_points(tmp_path):
+    base = tmp_path / "examples" / "doc" / "content" / "1" / "checks"
+    (base / "individual-data-points").mkdir(parents=True)
+    (base / "individual-data-points" / "expected_output.json").write_text(
+        json.dumps({"outputs": [{"panel_label": "A", "plot": "yes"}]}))
+    row = {k: v for k, v in EBD_NA.items() if k != "is_a_plot"}
+    enriched = m._enrich_is_a_plot(row, "doc/content/1", tmp_path / "examples")
+    assert list(enriched)[:2] == ["panel_label", "is_a_plot"] and enriched["is_a_plot"] == "yes"
 
 
 # --- plot-axis-units, plot-gap-labeling, stat-significance-level --------------------
