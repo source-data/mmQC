@@ -187,8 +187,8 @@ def test_ebd_a_non_plot_becomes_not_applicable_and_splits_in_place():
     assert list(result.new) == ["panel_label", "is_a_plot", "error_bar_on_figure",
                                 "error_bar_defined_in_caption", "from_the_caption",
                                 "decision", "explanation"]
-    assert (result.new["error_bar_defined_in_caption"], result.new["decision"]) == (
-        "not_applicable", "not_applicable")
+    assert (result.new["error_bar_on_figure"], result.new["error_bar_defined_in_caption"],
+            result.new["decision"]) == ("not_applicable", "not_applicable", "not_applicable")
     assert result.new["from_the_caption"] == "" and result.new["explanation"] == ""
 
 

@@ -187,9 +187,12 @@ def ebd_rule(row: Mapping[str, Any]) -> RowResult:
     if plot not in ("yes", "no"):
         return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
     if plot == "no":
-        if on_figure != "no":
+        if on_figure not in ("no", "not_applicable"):
             return RowResult("judgement", dict(row), "not a plot, but error bars are marked present")
-        derived, fields = "not_applicable", {"error_bar_defined_in_caption": "not_applicable",
+        # A non-plot is not_applicable in every field the check asks about,
+        # error_bar_on_figure included (wording by the curator, 2026-10-02).
+        derived, fields = "not_applicable", {"error_bar_on_figure": "not_applicable",
+                                             "error_bar_defined_in_caption": "not_applicable",
                                              "from_the_caption": ""}
         accepted = ("", "not_applicable")
     elif on_figure == "no":
@@ -205,7 +208,7 @@ def ebd_rule(row: Mapping[str, Any]) -> RowResult:
     else:
         return RowResult("judgement", dict(row), f"error_bar_on_figure is {on_figure!r}")
 
-    if on_figure == "no":
+    if on_figure in ("no", "not_applicable"):
         if defined not in ("not needed", "not_applicable", "not_required"):
             return RowResult("judgement", dict(row),
                              f"no error bars, but defined_in_caption is {defined!r}")
