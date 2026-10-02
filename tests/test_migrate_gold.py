@@ -254,7 +254,7 @@ AX = lambda *answers: [{"axis": a, "answer": v} for a, v in zip("xyz", answers)]
 
 @pytest.mark.parametrize("row, decision, answers", [
     ({"is_a_plot": "no", "units_provided": [], "decision": "N/A"}, "not_applicable", []),
-    ({"is_a_plot": "yes", "units_provided": [], "decision": "N/A"}, "not_applicable", []),   # pie chart
+    ({"is_a_plot": "yes", "units_provided": [], "decision": "N/A"}, "PASS", []),   # pie chart: a plot, so checked
     ({"is_a_plot": "yes", "units_provided": AX("yes", "not needed"), "decision": "PASS"},
      "PASS", ["yes", "not_required"]),
     ({"is_a_plot": "yes", "units_provided": AX("no", "yes"), "decision": "FAIL"}, "FAIL", ["no", "yes"]),
@@ -288,13 +288,13 @@ def test_plot_gap_labeling_rule(plot, anomaly, marked, decision):
 
 @pytest.mark.parametrize("plot, symbols, defined, decision", [
     ("no", [], [], "not_applicable"),
-    ("yes", [], [], "not_applicable"),          # no symbols: nothing to check
+    ("yes", [], [], "PASS"),                    # a plot with no symbols: nothing to fail
     ("yes", ["*"], ["yes"], "PASS"),
     ("yes", ["*", "**"], ["yes", "no"], "FAIL"),
 ])
 def test_stat_significance_level_rule(plot, symbols, defined, decision):
     row = {"panel_label": "A", "is_a_plot": plot, "significance_level_symbols_on_image": symbols,
-           "symbols_defined": defined, "decision": "N/A" if decision == "not_applicable" else decision}
+           "symbols_defined": defined, "decision": "N/A" if (decision == "not_applicable" or not symbols) else decision}
     result = m.ssl_rule(row)
     assert result.new["decision"] == decision and m.ssl_verify(result.new) is None
 
@@ -303,3 +303,14 @@ def test_stat_significance_level_blank_is_a_plot_is_a_judgement():
     row = {"panel_label": "", "is_a_plot": "", "significance_level_symbols_on_image": [],
            "symbols_defined": [], "decision": "N/A"}
     assert m.ssl_rule(row).kind == "judgement"
+
+
+def test_na_on_a_plot_with_nothing_to_check_becomes_pass_but_other_na_does_not():
+    """N/A was the gold's word for a plot with nothing to check; that class
+    became PASS. N/A on a plot that does have something to check stays a
+    judgement."""
+    empty = {"panel_label": "A", "is_a_plot": "yes", "significance_level_symbols_on_image": [],
+             "symbols_defined": [], "decision": "N/A"}
+    assert m.ssl_rule(empty).new["decision"] == "PASS"
+    shown = {**empty, "significance_level_symbols_on_image": ["*"], "symbols_defined": ["yes"]}
+    assert m.ssl_rule(shown).kind == "judgement"

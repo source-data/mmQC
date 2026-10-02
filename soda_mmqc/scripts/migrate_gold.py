@@ -227,10 +227,16 @@ def ebd_verify(row: Mapping[str, Any]) -> Optional[str]:
 _NA = ("N/A", "not_applicable")
 
 
-def _verdict(row, derived: str, reason: str) -> Optional[RowResult]:
-    """A judgement if the gold's decision is neither blank nor the derived one."""
+def _verdict(row, derived: str, reason: str, *, na_means: Optional[str] = None) -> Optional[RowResult]:
+    """A judgement if the gold's decision is neither blank nor the derived one.
+
+    ``na_means`` names what the gold's N/A stands for in this case, when a
+    decision of 2026-10-02 settled the whole class at once -- a plot with
+    nothing to check was N/A and is now PASS -- so that it is a rename, not a
+    contradiction.
+    """
     current = row.get("decision")
-    current = "not_applicable" if current in _NA else current
+    current = (na_means or "not_applicable") if current in _NA else current
     if current not in (None, "", derived):
         return RowResult("judgement", dict(row), f"decision {row.get('decision')!r}, but {reason} gives {derived}")
     return None
@@ -243,16 +249,17 @@ def _settle(row, new) -> RowResult:
 
 
 def pau_rule(row: Mapping[str, Any]) -> RowResult:
-    """plot-axis-units: not a plot, or a plot with no axes, is not_applicable;
-    a plot fails if any axis lacks its unit.
+    """plot-axis-units: not a plot is not_applicable; a plot is checked, and
+    fails only if an axis lacks its unit.
 
-    units_provided[].answer "not needed" -- an axis that needs no unit -- is
-    not_required, a real answer; a plot with no axes, such as a pie chart, has
-    nothing to check (both decided 2026-10-02).
+    A plot means the check applies (decided 2026-10-02, the individual-data-
+    points model): a plot with no axes, such as a pie chart, has nothing to
+    fail and is a PASS; an axis that needs no unit answers not_required, a
+    real answer, where the gold said "not needed".
     """
     plot, units = row.get("is_a_plot"), row.get("units_provided") or []
     if plot == "yes" and not units and not row.get("unit_definition_as_provided"):
-        derived = "not_applicable"
+        derived = "PASS"
         new = {**row}
     elif plot == "no":
         if units or row.get("unit_definition_as_provided") or row.get("explanation"):
@@ -269,7 +276,9 @@ def pau_rule(row: Mapping[str, Any]) -> RowResult:
             for u in units]}
     else:
         return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
-    stop = _verdict(row, derived, f"is_a_plot {plot!r} and the axis answers")
+    nothing_to_check = plot == "yes" and not units
+    stop = _verdict(row, derived, f"is_a_plot {plot!r} and the axis answers",
+                    na_means="PASS" if nothing_to_check else None)
     if stop:
         return stop
     new["decision"] = derived
@@ -279,8 +288,10 @@ def pau_rule(row: Mapping[str, Any]) -> RowResult:
 def pau_verify(row: Mapping[str, Any]) -> Optional[str]:
     plot, units = row.get("is_a_plot"), row.get("units_provided") or []
     answers = [u.get("answer") for u in units]
-    if plot == "no" or (plot == "yes" and not units):
+    if plot == "no":
         ok = row.get("decision") == "not_applicable" and not units
+    elif plot == "yes" and not units:
+        ok = row.get("decision") == "PASS"
     else:
         ok = (plot == "yes" and units and all(a in ("yes", "no", "not_required") for a in answers)
               and row.get("decision") == ("FAIL" if "no" in answers else "PASS"))
@@ -309,7 +320,9 @@ def pgl_verify(row: Mapping[str, Any]) -> Optional[str]:
 
 
 def ssl_rule(row: Mapping[str, Any]) -> RowResult:
-    """stat-significance-level: not a plot, or no symbols, is not_applicable (decided 2026-10-02)."""
+    """stat-significance-level: not a plot is not_applicable; a plot with no
+    symbols has nothing to fail and is a PASS (decided 2026-10-02, the
+    individual-data-points model -- and what the skill always said)."""
     plot = row.get("is_a_plot")
     symbols, defined = row.get("significance_level_symbols_on_image") or [], row.get("symbols_defined") or []
     if plot == "no":
@@ -317,14 +330,15 @@ def ssl_rule(row: Mapping[str, Any]) -> RowResult:
             return RowResult("judgement", dict(row), "not a plot, but it lists symbols")
         derived = "not_applicable"
     elif plot == "yes" and not symbols:
-        derived = "not_applicable"
+        derived = "PASS"
     elif plot == "yes":
         if len(defined) != len(symbols) or any(d not in ("yes", "no") for d in defined):
             return RowResult("judgement", dict(row), f"{len(symbols)} symbols but symbols_defined {defined}")
         derived = "FAIL" if "no" in defined else "PASS"
     else:
         return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
-    stop = _verdict(row, derived, f"is_a_plot {plot!r} and {len(symbols)} symbol(s)")
+    stop = _verdict(row, derived, f"is_a_plot {plot!r} and {len(symbols)} symbol(s)",
+                    na_means="PASS" if plot == "yes" and not symbols else None)
     return stop or _settle(row, {**row, "decision": derived})
 
 
