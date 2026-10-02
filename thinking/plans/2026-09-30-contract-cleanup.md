@@ -361,3 +361,29 @@ G2, for review then.
 | new scorer feature | W2b, an unscored declaration |
 | skills to edit at G4 | 7 |
 | identifiers to declare | 11 fields |
+
+
+---
+
+## Progress
+
+| check | contract | prose (G4) | gold (G3) |
+|---|---|---|---|
+| `individual-data-points` | `f2a2c77ec` | `ea2c7b226` | `0a066b490`, with the curator's decisions (`d747da19b`) |
+| `error-bars-defined` | `0daf9c408` | `45dbc1d8f` | `ae9f00135` |
+
+Tooling added on the way: W2b, unscored fields (`68bc96bcd`); the migration
+keeps each gold file's layout (`7d943c662`).
+
+### Found while migrating, for curation
+
+- **NUL characters in gold** (2026-10-02): 32 strings in 14 files, across five
+  checks, held runs of NUL characters where a character had been lost. The NULs
+  were removed (`45f7a4e1d`). Damage they leave behind, which no rule detects:
+  a lost `±` or dash (`mean  + SEM`, `mean SD`, `Kaplananalysis`, `Average
+  Average SD`) in `error-bars-defined`, `replication-reporting` and `stat-test`,
+  and a repeated fragment (`scale bar=2bbbb…`) in `micrograph-symbols-defined`
+  on `s44318-024-00316-w/content/3`.
+- **Other control characters**: four `stat-test · from_the_caption` values in
+  the two `RATT…` folders still hold `\x04` or `\r`. The audit's
+  `gold-control` rule now reports them.

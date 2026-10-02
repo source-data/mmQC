@@ -185,3 +185,14 @@ def test_a_field_declared_unscored_is_outside_the_metric_rules(tmp_path):
     check_dir, gold = _contract(tmp_path, {"explanation": {"type": "string"}},
                                 {"outputs[].explanation": {"scored": False}})
     assert audit_check("toy", check_dir, gold) == []
+
+
+def test_control_characters_in_gold_are_flagged(tmp_path):
+    check_dir, gold = _contract(
+        tmp_path, {"quote": {"type": "string"}},
+        {"outputs[].quote": {"matching_metric": "graded_string", "string_compare": "semantic",
+                             "match_threshold": 0.8}},
+        gold_rows=[{"panel_label": "A", "quote": "mean \x04mean +/- SD"},
+                   {"panel_label": "B", "quote": "two\nlines\tare fine"}])
+    found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-control"]
+    assert len(found) == 1 and "1 gold value" in found[0].detail

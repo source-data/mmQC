@@ -33,6 +33,8 @@ Rules:
                   identifier in IDENTIFIERS (C4)
 ``gold-off-enum`` gold holding a value its own schema's enum does not allow --
                   an answer no strict session can give, so a forced mismatch
+``gold-control``  gold text holding control characters (NUL, \\x04, \\r ...):
+                  damaged text, usually where a character was lost
 
 The experiment checklists are frozen copies of the contracts their runs were
 scored against, so they keep their legacy findings by design; scope the audit
@@ -61,6 +63,10 @@ from soda_mmqc.core.schema_discovery import (  # noqa: E402
 CHECKLISTS = REPO / "soda_mmqc" / "data" / "checklist"
 EXAMPLES = REPO / "soda_mmqc" / "data" / "examples"
 RUNS = REPO / "experiments" / "runs"
+
+#: Control characters that do not belong in gold text: everything below 0x20
+#: except tab and newline, and DEL.
+_CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
 
 #: The one not-applicable token (C1).
 CANONICAL_NA = "not_applicable"
@@ -213,6 +219,12 @@ def audit_check(
                 missing = [t for t in polar + na if t not in values]
                 if missing:
                     add(pattern, "enum-gap", f"enum lacks {missing}", missing)
+
+        damaged = {v: n for v, n in seen_gold.items() if _CONTROL.search(v)}
+        if damaged:
+            sample = next(iter(damaged))
+            add(pattern, "gold-control",
+                f"{sum(damaged.values())} gold value(s) hold control characters, e.g. {sample[:50]!r}")
 
         if values:
             off = {v: n for v, n in seen_gold.items() if v not in values}
