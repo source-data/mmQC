@@ -29,8 +29,9 @@ The file is committed beside the gold change it made.
 
 A run is idempotent: rows already in the new vocabulary are left alone, so it
 can be re-run after any amount of curation. ``--write`` rewrites only files
-whose content changes, in the curation app's own format (4-space JSON, no
-trailing newline, and its ``expected_output.html`` where one exists), and
+whose content changes, keeping each file's own layout -- indentation, final
+newline, escaping -- so the diff shows only changed values (and refreshes its
+``expected_output.html`` where one exists), and
 verifies every rewritten row against the check's schema and rule.
 """
 
@@ -296,6 +297,24 @@ def plan(check: str, examples: Optional[Path] = None,
     return results
 
 
+def _file_format(text: str) -> Dict[str, Any]:
+    """How a gold file is laid out, so a rewrite changes only its values.
+
+    Most gold is the curation app's format -- 4-space indent, non-ASCII kept,
+    no trailing newline -- but some files were written by other tools, and a
+    migration that normalised them would bury its real changes in the diff.
+    """
+    second = text.split("\n", 2)[1] if text.count("\n") >= 1 else ""
+    indent = len(second) - len(second.lstrip(" ")) or 4
+    escaped = "\\u" in text and not any(ord(ch) > 127 for ch in text)
+    return {"indent": indent, "ensure_ascii": escaped, "newline": text.endswith("\n")}
+
+
+def _dump_like(record: Any, fmt: Mapping[str, Any]) -> str:
+    out = json.dumps(record, indent=fmt["indent"], ensure_ascii=fmt["ensure_ascii"])
+    return out + ("\n" if fmt["newline"] else "")
+
+
 def contracted(record: Mapping[str, Any], schema: Mapping[str, Any]) -> Dict[str, Any]:
     allowed = set(schema.get("properties") or {})
     return {k: v for k, v in record.items() if k in allowed}
@@ -316,7 +335,9 @@ def write(check: str, results, *, fill_blank: bool, examples: Optional[Path] = N
 
     written = []
     for path, rows in by_file.items():
-        gold = json.loads(path.read_text(encoding="utf-8"))
+        original = path.read_text(encoding="utf-8")
+        fmt = _file_format(original)
+        gold = json.loads(original)
         changed = False
         for index, result in rows.items():
             if result.kind == "mechanical" or (result.kind == "blank" and fill_blank):
@@ -335,7 +356,7 @@ def write(check: str, results, *, fill_blank: bool, examples: Optional[Path] = N
             if problem:
                 raise AssertionError(f"{path}: row {index} breaks the rule after migration: {problem}")
             row_validator.validate(row)
-        path.write_text(json.dumps(gold, indent=4, ensure_ascii=False), encoding="utf-8")
+        path.write_text(_dump_like(gold, fmt), encoding="utf-8")
         html = path.with_name("expected_output.html")
         if html.is_file():
             from soda_mmqc.lib.expected_output_html import output_to_html

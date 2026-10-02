@@ -229,3 +229,19 @@ def test_ebd_is_idempotent_on_migrated_rows():
     migrated = m.ebd_rule(EBD_NA).new
     assert m.ebd_rule(migrated).kind == "unchanged"
     assert m.ebd_verify(migrated) is None
+
+
+@pytest.mark.parametrize("indent, newline, escaped", [(4, False, False), (2, True, False), (2, False, True)])
+def test_write_keeps_each_files_own_layout(tmp_path, indent, newline, escaped):
+    """Gold written by other tools keeps its layout, so the diff shows values only."""
+    d = tmp_path / "examples" / "doc" / "content" / "1" / "checks" / "individual-data-points"
+    d.mkdir(parents=True)
+    text = json.dumps({"outputs": [ROW]}, indent=indent, ensure_ascii=escaped) + ("\n" if newline else "")
+    (d / "expected_output.json").write_text(text)
+    examples = tmp_path / "examples"
+    (written,) = m.write("individual-data-points", m.plan("individual-data-points", examples),
+                         fill_blank=False, examples=examples)
+    out = written.read_text()
+    assert out.endswith("\n") == newline
+    assert out.split("\n")[1].startswith(" " * indent + '"')
+    assert ("\\u2014" in out) == escaped
