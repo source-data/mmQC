@@ -31,7 +31,7 @@
                                         },
                                         "answer": {
                                             "type": "string",
-                                            "enum": ["yes", "no", "not needed"],
+                                            "enum": ["yes", "no", "not_required"],
                                             "description": "Whether the units are provided"
                                         }
                                     },
@@ -66,8 +66,8 @@
                             },
                             "decision": {
                                 "type": "string",
-                                "enum": ["PASS", "FAIL", "N/A"],
-                                "description": "Panel-level verdict: PASS if all required axes have adequate units, FAIL if any required axis lacks units, N/A if the panel is not a quantitative plot"
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict: PASS if all required axes have adequate units, FAIL if any required axis lacks units, not_applicable if the panel is not a quantitative plot"
                             },
                             "explanation": {
                                 "type": "array",

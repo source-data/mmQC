@@ -80,7 +80,10 @@ NA_LIKE = re.compile(
 #: Free-text fields scored exactly on purpose, because they are identifiers --
 #: a symbol, URL, accession or section name -- not prose (C4). Keyed by
 #: (check, field pattern), each with its reason. Filled at gate G2.
-IDENTIFIERS: Dict[Tuple[str, str], str] = {}
+IDENTIFIERS: Dict[Tuple[str, str], str] = {
+    ("stat-significance-level", "outputs[].significance_level_symbols_on_image"):
+        "significance symbols: *, ** and ns are different answers",
+}
 
 
 @dataclass(frozen=True)
@@ -140,13 +143,21 @@ def gold_values(gold_root: Path, check: str) -> Dict[str, Counter]:
         except (OSError, json.JSONDecodeError):
             continue
         for row in gold.get("outputs", []) if isinstance(gold, dict) else []:
-            if not isinstance(row, dict):
-                continue
-            for key, value in row.items():
-                for item in value if isinstance(value, list) else [value]:
-                    if isinstance(item, str):
-                        values[f"outputs[].{key}"][item] += 1
+            _collect(row, "outputs[]", values)
     return values
+
+
+def _collect(row: Any, prefix: str, values: Dict[str, Counter]) -> None:
+    """Strings of a row, by manifest pattern -- into lists of objects too."""
+    if not isinstance(row, dict):
+        return
+    for key, value in row.items():
+        pattern = f"{prefix}.{key}"
+        for item in value if isinstance(value, list) else [value]:
+            if isinstance(item, str):
+                values[pattern][item] += 1
+            elif isinstance(item, dict):
+                _collect(item, f"{pattern}[]", values)
 
 
 # ---------------------------------------------------------------------------
@@ -240,7 +251,10 @@ def audit_check(
                 if isinstance(token, str) and NA_LIKE.match(token) and token != CANONICAL_NA:
                     legacy.add(f"{token!r} in {source}")
         if legacy:
-            add(pattern, "legacy-token", f"use {CANONICAL_NA!r}: " + ", ".join(sorted(legacy)))
+            add(pattern, "legacy-token",
+                f"retire legacy spelling(s) -- {CANONICAL_NA!r} where the check does not "
+                f"apply, a real-answer token such as 'not_required' where it does: "
+                + ", ".join(sorted(legacy)))
 
         for token in sorted(scored_tokens):
             in_schema = token in (values or []) or token in node.get("description", "")

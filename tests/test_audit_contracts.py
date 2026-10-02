@@ -196,3 +196,16 @@ def test_control_characters_in_gold_are_flagged(tmp_path):
                    {"panel_label": "B", "quote": "two\nlines\tare fine"}])
     found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-control"]
     assert len(found) == 1 and "1 gold value" in found[0].detail
+
+
+def test_gold_in_lists_nested_inside_rows_is_read(tmp_path):
+    """plot-axis-units' units_provided[].answer: a list of objects in each row."""
+    field = {"units": {"type": "array", "items": {"type": "object", "properties": {
+        "axis": {"type": "string"}, "answer": {"type": "string", "enum": ["yes", "no", "not_required"]}}}}}
+    check_dir, gold = _contract(
+        tmp_path, field,
+        {"outputs[].units[].axis": {"matching_metric": "multiclass"},
+         "outputs[].units[].answer": {"matching_metric": "multiclass"}},
+        gold_rows=[{"panel_label": "A", "units": [{"axis": "x", "answer": "not needed"}]}])
+    found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-off-enum"]
+    assert found and found[0].field == "outputs[].units[].answer"
