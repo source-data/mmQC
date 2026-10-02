@@ -112,3 +112,63 @@ def test_main_writes_once_nothing_needs_a_judgement(tmp_path, monkeypatch):
     assert m.main(["individual-data-points", "--write"]) == 0
     gold = json.loads(next(examples.glob("**/expected_output.json")).read_text())
     assert gold["outputs"][0]["decision"] == "not_applicable"
+
+
+# --- curation files ------------------------------------------------------------
+
+def _curation(tmp_path: Path, lines: list) -> Path:
+    path = tmp_path / "curation.csv"
+    fields = ["example", "panel", "plot", "individual_values", "decision", "note", "curator", "date"]
+    import csv
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=fields)
+        w.writeheader()
+        for line in lines:
+            w.writerow({k: line.get(k, "") for k in fields})
+    return path
+
+
+ODD = {**ROW, "plot": "yes", "individual_values": "no", "decision": "PASS"}
+
+
+def test_a_curated_judgement_becomes_writable(tmp_path):
+    examples = _gold(tmp_path, [ODD])
+    overrides = m.read_curation("individual-data-points", [_curation(tmp_path, [
+        {"example": "doc/content/1", "panel": "A", "individual_values": "not_required"}])])
+    (result,) = [r for _, _, r in m.plan("individual-data-points", examples, overrides)]
+    assert result.kind == "mechanical"
+    assert (result.new["individual_values"], result.new["decision"]) == ("not_required", "PASS")
+
+
+def test_a_curated_value_that_breaks_the_rule_is_still_a_judgement(tmp_path):
+    examples = _gold(tmp_path, [ODD])
+    overrides = m.read_curation("individual-data-points", [_curation(tmp_path, [
+        {"example": "doc/content/1", "panel": "A", "individual_values": "not_required",
+         "decision": "not_applicable"}])])
+    (result,) = [r for _, _, r in m.plan("individual-data-points", examples, overrides)]
+    assert result.kind == "judgement"
+
+
+def test_a_curation_line_matching_no_gold_row_is_an_error(tmp_path):
+    examples = _gold(tmp_path, [ODD])
+    overrides = m.read_curation("individual-data-points", [_curation(tmp_path, [
+        {"example": "doc/content/1", "panel": "Z", "individual_values": "yes"}])])
+    with pytest.raises(ValueError, match="match no gold row"):
+        m.plan("individual-data-points", examples, overrides)
+
+
+def test_curating_the_same_row_twice_is_an_error(tmp_path):
+    line = {"example": "doc/content/1", "panel": "A", "individual_values": "yes"}
+    with pytest.raises(ValueError, match="curated twice"):
+        m.read_curation("individual-data-points", [_curation(tmp_path, [line, line])])
+
+
+def test_write_applies_curation_and_the_rule_together(tmp_path):
+    examples = _gold(tmp_path, [ROW, {**ODD, "panel_label": "B"}])
+    overrides = m.read_curation("individual-data-points", [_curation(tmp_path, [
+        {"example": "doc/content/1", "panel": "B", "individual_values": "not_required"}])])
+    m.write("individual-data-points", m.plan("individual-data-points", examples, overrides),
+            fill_blank=False, examples=examples)
+    rows = json.loads(next(examples.glob("**/expected_output.json")).read_text())["outputs"]
+    assert [(r["individual_values"], r["decision"]) for r in rows] == [
+        ("not_applicable", "not_applicable"), ("not_required", "PASS")]

@@ -19,6 +19,14 @@ Each check has a migration rule that sorts every gold row into one of:
                 only with ``--fill-blank``, after someone has confirmed the
                 example is real gold
 
+A curator's judgements can be applied from a file instead of the curation app:
+``--curation FILE`` names a CSV with ``example``, ``panel`` and the fields to
+set (here ``plot``, ``individual_values``, ``decision``), plus ``note``,
+``curator`` and ``date`` kept as the record. Each line must match exactly one
+gold row; its values are applied before the rule runs, so a judgement that
+contradicts the rule is still reported as one and still blocks ``--write``.
+The file is committed beside the gold change it made.
+
 A run is idempotent: rows already in the new vocabulary are left alone, so it
 can be re-run after any amount of curation. ``--write`` rewrites only files
 whose content changes, in the curation app's own format (4-space JSON, no
@@ -29,6 +37,7 @@ verifies every rewritten row against the check's schema and rule.
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
 from dataclasses import dataclass, field
@@ -129,14 +138,58 @@ def example_of(path: Path, examples: Optional[Path] = None) -> str:
     return str(path.relative_to(examples or EXAMPLES).parent.parent.parent)
 
 
-def plan(check: str, examples: Optional[Path] = None) -> List[Tuple[Path, int, RowResult]]:
+#: Fields a curation file may set, per check.
+CURATED_FIELDS = {"individual-data-points": ("plot", "individual_values", "decision")}
+
+Overrides = Dict[Tuple[str, str], Dict[str, str]]
+
+
+def read_curation(check: str, paths: List[Path]) -> Overrides:
+    """(example, panel) -> {field: value}, from one or more curation CSVs."""
+    overrides: Overrides = {}
+    for path in paths:
+        with open(path, newline="", encoding="utf-8") as handle:
+            for line in csv.DictReader(handle):
+                key = (line["example"], line["panel"])
+                if key in overrides:
+                    raise ValueError(f"{path}: {key} is curated twice")
+                overrides[key] = {f: line[f] for f in CURATED_FIELDS[check]
+                                  if line.get(f) not in (None, "")}
+    return overrides
+
+
+def plan(check: str, examples: Optional[Path] = None,
+         overrides: Optional[Overrides] = None) -> List[Tuple[Path, int, RowResult]]:
+    """Every gold row of a check, sorted by the rule -- after any curation.
+
+    A curated row's ``new`` holds the curator's values as well as the rule's;
+    its ``kind`` is whatever the rule makes of them, so a judgement that
+    contradicts the rule is reported as a judgement still.
+    """
     rule, _ = RULES[check]
+    overrides = dict(overrides or {})
+    used = set()
     results = []
     for path in gold_files(check, examples):
         gold = json.loads(path.read_text(encoding="utf-8"))
+        example = example_of(path, examples)
         for index, row in enumerate(gold.get("outputs", [])):
-            if isinstance(row, dict):
-                results.append((path, index, rule(row)))
+            if not isinstance(row, dict):
+                continue
+            key = (example, row.get("panel_label"))
+            curated = {**row, **overrides[key]} if key in overrides else row
+            if key in overrides:
+                if key in used:
+                    raise ValueError(f"{key} matches more than one gold row")
+                used.add(key)
+            result = rule(curated)
+            if curated is not row and result.kind in ("unchanged", "mechanical"):
+                result = RowResult("unchanged" if result.new == row else "mechanical",
+                                   result.new, "curated")
+            results.append((path, index, result))
+    unmatched = sorted(set(overrides) - used)
+    if unmatched:
+        raise ValueError(f"curation lines match no gold row: {unmatched}")
     return results
 
 
@@ -198,9 +251,11 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="Also fill blank values the rule can derive")
     parser.add_argument("--benchmark-only", action="store_true",
                         help="List only rows in the check's benchmark figures")
+    parser.add_argument("--curation", action="append", type=Path, default=[],
+                        help="A curator's decisions to apply first (CSV); repeatable")
     args = parser.parse_args(argv)
 
-    results = plan(args.check)
+    results = plan(args.check, overrides=read_curation(args.check, args.curation))
     bench = set(json.loads((CHECKLIST / args.check / "benchmark.json").read_text())["examples"])
     from collections import Counter
     counts = Counter(r.kind for _, _, r in results)
