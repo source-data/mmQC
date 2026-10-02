@@ -19,20 +19,21 @@
       "matching_metric": "binary_polarity"
     },
     "outputs[].error_bar_defined_in_caption": {
-      "na_values": ["not needed"],
+      "na_values": ["not_applicable"],
       "matching_metric": "binary_polarity"
     },
     "outputs[].from_the_caption": {
       "matching_metric": "graded_string",
-      "na_values": ["", "not needed"],
+      "na_values": [""],
       "string_compare": "semantic",
       "match_threshold": 0.8
     },
-    "outputs[].Decision_and_explanation": {
-      "matching_metric": "graded_string",
-      "na_values": ["", "not needed"],
-      "string_compare": "semantic",
-      "match_threshold": 0.8
+    "outputs[].decision": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].explanation": {
+      "scored": false
     }
   }
 }

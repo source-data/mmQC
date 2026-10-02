@@ -21,16 +21,21 @@
                             },
                             "error_bar_defined_in_caption": {
                                 "type": "string",
-                                "enum": ["yes", "no", "not needed"],
-                                "description": "Whether error bars are defined in caption"
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether error bars are defined in caption; not_applicable when the panel has no error bars"
                             },
                             "from_the_caption": {
                                 "type": "string",
-                                "description": "Text from caption describing error bars, when error bars are present, leave empty if no definition is found, or 'not needed' if error bars are not applicable"
+                                "description": "Text from caption describing error bars, when error bars are present; leave empty if no definition is found or the panel has no error bars"
                             },
-                            "Decision_and_explanation": {
+                            "decision": {
                                 "type": "string",
-                                "description": "Panel-level verdict and brief rationale (PASS or FAIL) on whether error bars or box-plot whiskers are adequately defined; use 'not needed' when error_bar_on_figure is 'no'"
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict on whether error bars or box-plot whiskers are adequately defined; not_applicable when error_bar_on_figure is 'no'"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Brief rationale for the decision"
                             }
                         },
                         "required": [
@@ -38,7 +43,8 @@
                             "error_bar_on_figure",
                             "error_bar_defined_in_caption",
                             "from_the_caption",
-                            "Decision_and_explanation"
+                            "decision",
+                            "explanation"
                         ],
                         "additionalProperties": false
                     }
