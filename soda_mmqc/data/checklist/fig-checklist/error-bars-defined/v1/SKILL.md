@@ -66,22 +66,31 @@ IQR, whisker definition.
 - If error bars are absent from the figure but mentioned in the caption, note
   that mismatch in the explanation.
 - If no error bars or box-plot elements apply to the panel, set
-  `error_bar_defined_in_caption`, `from_the_caption` and
-  `Decision_and_explanation` to `not needed`. **`error_bar_on_figure` is not
-  one of them** — it takes only `yes` or `no`, and for such a panel it is
-  `no`. `not needed` is not a permitted value there and will fail validation.
+  `error_bar_defined_in_caption` and `decision` to `not_applicable`, and leave
+  `from_the_caption` empty. **`error_bar_on_figure` is not one of them** — it
+  takes only `yes` or `no`, and for such a panel it is `no`. `not_applicable`
+  is not a permitted value there and will fail validation.
 
 ## 4. Your verdict
 
-Give a brief `PASS` or `FAIL` with a one-line explanation in
-`Decision_and_explanation`, in plain text. Use `not needed` when
-`error_bar_on_figure` is `no`.
+Put `PASS`, `FAIL` or `not_applicable` in `decision`, with a one-line reason in
+`explanation`, in plain text.
+
+- If error bars or box-plot elements are present and the caption defines them,
+  then `decision` is `PASS`.
+- If they are present and the caption does not define them, then `decision` is
+  `FAIL`.
+- If the panel image has no error bars or box-plot elements, then `decision` is
+  `not_applicable`: the check does not apply to it, so it neither passes nor
+  fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels with no error
-bars, which keep their label and take `not needed` in the three fields above.
+bars, which keep their label, take `not_applicable` in
+`error_bar_defined_in_caption` and `decision`, and leave `from_the_caption`
+empty.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The
