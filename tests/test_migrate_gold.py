@@ -172,3 +172,60 @@ def test_write_applies_curation_and_the_rule_together(tmp_path):
     rows = json.loads(next(examples.glob("**/expected_output.json")).read_text())["outputs"]
     assert [(r["individual_values"], r["decision"]) for r in rows] == [
         ("not_applicable", "not_applicable"), ("not_required", "PASS")]
+
+
+# --- error-bars-defined ----------------------------------------------------------
+
+EBD_NA = {"panel_label": "A", "error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
+          "from_the_caption": "not needed", "Decision_and_explanation": "not needed"}
+
+
+def test_ebd_no_error_bars_becomes_not_applicable_and_splits_in_place():
+    result = m.ebd_rule(EBD_NA)
+    assert result.kind == "mechanical"
+    assert list(result.new) == ["panel_label", "error_bar_on_figure", "error_bar_defined_in_caption",
+                                "from_the_caption", "decision", "explanation"]
+    assert result.new["error_bar_defined_in_caption"] == "not_applicable"
+    assert result.new["from_the_caption"] == "" and result.new["decision"] == "not_applicable"
+    assert result.new["explanation"] == ""
+
+
+@pytest.mark.parametrize("defined, verdict, decision", [
+    ("yes", "PASS: defined as mean +/- SEM", "PASS"),
+    ("no", "FAIL - the caption does not define them", "FAIL"),
+])
+def test_ebd_verdict_and_reason_split(defined, verdict, decision):
+    row = {"panel_label": "B", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": defined,
+           "from_the_caption": "mean +/- SEM", "Decision_and_explanation": verdict}
+    result = m.ebd_rule(row)
+    assert result.kind == "mechanical" and result.new["decision"] == decision
+    assert result.new["explanation"] == verdict.split(" ", 1)[1].lstrip(":- ").strip()
+    assert "Decision_and_explanation" not in result.new
+
+
+@pytest.mark.parametrize("row, why", [
+    ({"error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "SD", "Decision_and_explanation": "FAIL: no"}, "verdict"),
+    ({"error_bar_on_figure": "no", "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "", "Decision_and_explanation": "not needed"}, "defined_in_caption"),
+    ({"error_bar_on_figure": "no", "error_bar_defined_in_caption": "not needed",
+      "from_the_caption": "mean +/- SD", "Decision_and_explanation": "not needed"}, "from_the_caption"),
+    ({"error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "SD", "Decision_and_explanation": "looks fine"}, "no verdict token"),
+])
+def test_ebd_rows_that_need_a_judgement(row, why):
+    result = m.ebd_rule({"panel_label": "C", **row})
+    assert result.kind == "judgement" and why in result.reason
+
+
+def test_ebd_a_blank_verdict_is_derived_but_only_offered():
+    row = {"panel_label": "D", "error_bar_on_figure": "yes", "error_bar_defined_in_caption": "yes",
+           "from_the_caption": "SD", "Decision_and_explanation": ""}
+    result = m.ebd_rule(row)
+    assert result.kind == "blank" and result.new["decision"] == "PASS"
+
+
+def test_ebd_is_idempotent_on_migrated_rows():
+    migrated = m.ebd_rule(EBD_NA).new
+    assert m.ebd_rule(migrated).kind == "unchanged"
+    assert m.ebd_verify(migrated) is None

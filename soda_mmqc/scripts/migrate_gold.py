@@ -118,8 +118,107 @@ def idp_verify(row: Mapping[str, Any]) -> Optional[str]:
     return None if ok else f"plot {plot!r}, individual_values {values!r}, decision {decision!r}"
 
 
+# ---------------------------------------------------------------------------
+# error-bars-defined
+# ---------------------------------------------------------------------------
+#
+# The prose (v1/SKILL.md, 2026-10-02):
+#   error_bar_on_figure no               -> error_bar_defined_in_caption not_applicable,
+#                                           decision not_applicable, from_the_caption ""
+#   error_bar_on_figure yes, defined yes -> PASS
+#   error_bar_on_figure yes, defined no  -> FAIL
+# and Decision_and_explanation -- a verdict token and its reason in one
+# string -- splits into decision and explanation (C3).
+
+import re as _re
+
+_EBD_VERDICT = _re.compile(r"^\s*(PASS|FAIL|not needed|not_applicable)\b(.*)$", _re.S)
+_SEPARATORS = " \t\n:-–—.,;"
+
+
+def _split_verdict(text: str) -> Optional[Tuple[str, str]]:
+    """'PASS: defined as SEM' -> ('PASS', 'defined as SEM'); None if no token."""
+    match = _EBD_VERDICT.match(text or "")
+    if not match:
+        return None
+    token = "not_applicable" if match.group(1) in ("not needed", "not_applicable") else match.group(1)
+    return token, match.group(2).lstrip(_SEPARATORS).strip()
+
+
+def _ebd_row(row: Mapping[str, Any], decision: str, explanation: str, **fields) -> Dict[str, Any]:
+    """The row with Decision_and_explanation replaced, in place, by its two halves."""
+    out: Dict[str, Any] = {}
+    for key, value in row.items():
+        if key == "Decision_and_explanation":
+            out["decision"], out["explanation"] = decision, explanation
+        elif key not in ("decision", "explanation"):
+            out[key] = fields.get(key, value)
+        else:
+            out[key] = value
+    out.update({k: v for k, v in fields.items() if k in out})
+    if "decision" not in out:
+        out["decision"], out["explanation"] = decision, explanation
+    return out
+
+
+def ebd_rule(row: Mapping[str, Any]) -> RowResult:
+    on_figure = row.get("error_bar_on_figure")
+    defined = row.get("error_bar_defined_in_caption")
+    caption = row.get("from_the_caption")
+    if "Decision_and_explanation" in row:
+        combined = row.get("Decision_and_explanation") or ""
+        split = _split_verdict(combined) if combined.strip() else ("", "")
+        if split is None:
+            return RowResult("judgement", dict(row), f"no verdict token in {combined[:40]!r}")
+        verdict, explanation = split
+    else:
+        verdict, explanation = row.get("decision") or "", row.get("explanation") or ""
+
+    if on_figure == "no":
+        if defined not in ("not needed", "not_applicable"):
+            return RowResult("judgement", dict(row),
+                             f"no error bars, but defined_in_caption is {defined!r}")
+        if caption not in ("", "not needed", None):
+            return RowResult("judgement", dict(row),
+                             f"no error bars, but from_the_caption holds text")
+        if verdict not in ("", "not_applicable"):
+            return RowResult("judgement", dict(row), f"no error bars, but the verdict is {verdict!r}")
+        new = _ebd_row(row, "not_applicable", explanation,
+                       error_bar_defined_in_caption="not_applicable", from_the_caption="")
+        kind = "blank" if verdict == "" else None
+    elif on_figure == "yes":
+        if defined not in ("yes", "no"):
+            return RowResult("judgement", dict(row),
+                             f"error bars present, but defined_in_caption is {defined!r}")
+        derived = "PASS" if defined == "yes" else "FAIL"
+        if verdict not in ("", derived):
+            return RowResult("judgement", dict(row),
+                             f"verdict {verdict!r}, but defined_in_caption {defined!r} gives {derived}")
+        new = _ebd_row(row, derived, explanation)
+        kind = "blank" if verdict == "" else None
+    else:
+        return RowResult("judgement", dict(row), f"error_bar_on_figure is {on_figure!r}")
+
+    if kind == "blank":
+        return RowResult("blank", new, f"blank verdict; the rule gives {new['decision']}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
+def ebd_verify(row: Mapping[str, Any]) -> Optional[str]:
+    if "Decision_and_explanation" in row:
+        return "Decision_and_explanation is still present"
+    on_figure, defined, decision = (row.get("error_bar_on_figure"),
+                                    row.get("error_bar_defined_in_caption"), row.get("decision"))
+    ok = ((on_figure == "no" and defined == "not_applicable" and decision == "not_applicable"
+           and row.get("from_the_caption") == "")
+          or (on_figure == "yes" and defined == "yes" and decision == "PASS")
+          or (on_figure == "yes" and defined == "no" and decision == "FAIL"))
+    return None if ok else f"on_figure {on_figure!r}, defined {defined!r}, decision {decision!r}"
+
+
 RULES: Dict[str, Tuple[Callable, Callable]] = {
     "individual-data-points": (idp_rule, idp_verify),
+    "error-bars-defined": (ebd_rule, ebd_verify),
 }
 
 
@@ -139,7 +238,11 @@ def example_of(path: Path, examples: Optional[Path] = None) -> str:
 
 
 #: Fields a curation file may set, per check.
-CURATED_FIELDS = {"individual-data-points": ("plot", "individual_values", "decision")}
+CURATED_FIELDS = {
+    "individual-data-points": ("plot", "individual_values", "decision"),
+    "error-bars-defined": ("error_bar_on_figure", "error_bar_defined_in_caption",
+                           "from_the_caption", "decision", "explanation"),
+}
 
 Overrides = Dict[Tuple[str, str], Dict[str, str]]
 
