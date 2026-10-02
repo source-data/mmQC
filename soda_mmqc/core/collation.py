@@ -122,7 +122,7 @@ def validate_manifest_field_patterns(
     }
     forbidden = sorted(
         pattern
-        for pattern in manifest.field_patterns()
+        for pattern in (*manifest.field_patterns(), *manifest.unscored_leaf_properties())
         if pattern not in schema_eval_patterns
     )
     if forbidden:

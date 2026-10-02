@@ -61,6 +61,17 @@ class EvalManifest:
     list_alignment: dict[str, tuple[str, ...]]
     _fields: dict[str, FieldProfile]
     _field_keys: dict[str, frozenset[str]]
+    #: Fields declared ``"scored": false``: in the schema, deliberately not
+    #: scored -- e.g. a free-text explanation beside an enum decision (contract
+    #: cleanup, C3). Without the declaration, an unlisted field would inherit
+    #: the default metric.
+    _unscored: frozenset[str] = frozenset()
+
+    def is_scored(self, leaf_property: str) -> bool:
+        return leaf_property not in self._unscored
+
+    def unscored_leaf_properties(self) -> tuple[str, ...]:
+        return tuple(sorted(self._unscored))
 
     def profile_for(self, leaf_property: str) -> Optional[FieldProfile]:
         """Return merged defaults + field override, or None if unprofiled."""
@@ -114,9 +125,27 @@ def parse_eval_manifest(data: Mapping[str, Any]) -> EvalManifest:
 
     fields: dict[str, FieldProfile] = {}
     field_keys: dict[str, frozenset[str]] = {}
+    unscored: set[str] = set()
+    aligned = {f"{name}[].{key}" for name, keys in list_alignment.items() for key in keys}
     for path_key, field_raw in fields_raw.items():
         if not isinstance(field_raw, dict):
             raise ValueError(f"fields[{path_key!r}] must be an object")
+        if "scored" in field_raw:
+            if not isinstance(field_raw["scored"], bool):
+                raise ValueError(f"fields[{path_key!r}].scored must be true or false")
+            if field_raw["scored"] is False:
+                if set(field_raw) != {"scored"}:
+                    raise ValueError(
+                        f"fields[{path_key!r}] is declared unscored, so it takes no "
+                        f"other keys; found {sorted(set(field_raw) - {'scored'})}"
+                    )
+                if path_key in aligned:
+                    raise ValueError(
+                        f"fields[{path_key!r}] aligns rows, so it cannot be unscored"
+                    )
+                unscored.add(path_key)
+                continue
+            field_raw = {k: v for k, v in field_raw.items() if k != "scored"}
         profile = _profile_from_raw(field_raw, context=f"fields[{path_key!r}]")
         merged = _merge_profiles(
             defaults, profile, override_keys=frozenset(field_raw)
@@ -134,6 +163,7 @@ def parse_eval_manifest(data: Mapping[str, Any]) -> EvalManifest:
         list_alignment=list_alignment,
         _fields=fields,
         _field_keys=field_keys,
+        _unscored=frozenset(unscored),
     )
 
 

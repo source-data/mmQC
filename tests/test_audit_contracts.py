@@ -179,3 +179,9 @@ def test_gold_outside_the_schema_enum(tmp_path):
                    {"panel_label": "B", "decision": "PASS"}])
     found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-off-enum"]
     assert found and "''" in found[0].detail
+
+
+def test_a_field_declared_unscored_is_outside_the_metric_rules(tmp_path):
+    check_dir, gold = _contract(tmp_path, {"explanation": {"type": "string"}},
+                                {"outputs[].explanation": {"scored": False}})
+    assert audit_check("toy", check_dir, gold) == []

@@ -183,6 +183,9 @@ def audit_check(
             add(pattern, "untyped", f"not discovered by the scorer (keys {sorted(node)})")
             continue
         own = manifest.get("fields", {}).get(pattern)
+        if own == {"scored": False}:
+            # Declared unscored (C3, C5): outside every metric rule by design.
+            continue
         profile = {**defaults, **(own or {})}
         metric = profile.get("matching_metric")
         na = [v for v in profile.get("na_values", []) if v != ""]
