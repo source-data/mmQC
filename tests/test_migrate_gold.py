@@ -326,3 +326,42 @@ def test_na_on_a_plot_with_nothing_to_check_becomes_pass_but_other_na_does_not()
     assert m.ssl_rule(empty).new["decision"] == "PASS"
     shown = {**empty, "significance_level_symbols_on_image": ["*"], "symbols_defined": ["yes"]}
     assert m.ssl_rule(shown).kind == "judgement"
+
+
+# --- stat-test, replication-reporting ------------------------------------------------
+
+@pytest.mark.parametrize("plot, needed, mentioned, decision, out", [
+    ("no", "no", "not needed", "PASS", ("not_applicable", "not_applicable", "not_applicable")),
+    ("yes", "no", "not needed", "PASS", ("no", "not_required", "PASS")),
+    ("yes", "yes", "yes", "PASS", ("yes", "yes", "PASS")),
+    ("yes", "yes", "no", "FAIL", ("yes", "no", "FAIL")),
+])
+def test_stat_test_rule(plot, needed, mentioned, decision, out):
+    row = {"panel_label": "A", "is_a_plot": plot, "statistical_test_needed": needed,
+           "statistical_test_mentioned": mentioned, "from_the_caption": "t-test" if mentioned == "yes" else "",
+           "decision": decision, "explanation": ""}
+    new = m.st_rule(row).new
+    assert (new["statistical_test_needed"], new["statistical_test_mentioned"], new["decision"]) == out
+    assert m.st_rule(new).kind == "unchanged"
+
+
+@pytest.mark.parametrize("involves, n, t, n_min, rtype, decision, out", [
+    ("no", "not_applicable", "not_applicable", "not_applicable", "not_applicable", "PASS",
+     ("not_applicable", "not_applicable", "")),
+    ("yes", "yes", "yes", 2, "technical duplicates", "FAIL", ("PASS", 2, "technical duplicates")),  # n<3 is not this check's
+    ("yes", "no", "yes", "not_reported", "cells", "FAIL", ("FAIL", "not_reported", "cells")),
+    ("yes", "yes", "no", 3, "not_reported", "FAIL", ("FAIL", 3, "")),
+])
+def test_replication_reporting_rule(involves, n, t, n_min, rtype, decision, out):
+    row = {"panel_label": "A", "involves_replicates": involves, "replicate_statements": [],
+           "n_reported": n, "n_value_min": n_min, "replicate_type_reported": t,
+           "replicate_type": rtype, "decision": decision, "explanation": ""}
+    new = m.rr_rule(row).new
+    assert (new["decision"], new["n_value_min"], new["replicate_type"]) == out
+    assert m.rr_rule(new).kind == "unchanged"
+
+
+def test_replication_reporting_contradictions_need_a_judgement():
+    row = {"panel_label": "B", "involves_replicates": "no", "n_reported": "yes",
+           "replicate_type_reported": "yes", "decision": "PASS"}
+    assert m.rr_rule(row).kind == "judgement"

@@ -391,6 +391,92 @@ def ssl_verify(row: Mapping[str, Any]) -> Optional[str]:
     return None if ssl_rule(row).kind == "unchanged" else f"decision {row.get('decision')!r} breaks the rule"
 
 
+# ---------------------------------------------------------------------------
+# stat-test, replication-reporting  (decided 2026-10-03)
+# ---------------------------------------------------------------------------
+
+def st_rule(row: Mapping[str, Any]) -> RowResult:
+    """stat-test: a non-plot is not_applicable throughout; a plot that makes no
+    significance claim needs no test (statistical_test_mentioned not_required,
+    PASS); a claim fails only if the test is not named.
+
+    The gold's PASS on a non-plot is renamed to not_applicable as a class.
+    """
+    plot, needed = row.get("is_a_plot"), row.get("statistical_test_needed")
+    mentioned, caption = row.get("statistical_test_mentioned"), row.get("from_the_caption") or ""
+    decision = row.get("decision") or ""
+    if plot == "no":
+        if needed not in ("no", "not_applicable") or mentioned not in ("not needed", "not_applicable"):
+            return RowResult("judgement", dict(row), f"not a plot, but needed {needed!r}, mentioned {mentioned!r}")
+        if caption:
+            return RowResult("judgement", dict(row), "not a plot, but from_the_caption holds text")
+        derived, fields, accepted = "not_applicable", {
+            "statistical_test_needed": "not_applicable", "statistical_test_mentioned": "not_applicable",
+            "from_the_caption": ""}, ("", "PASS", "not_applicable")
+    elif plot == "yes" and needed == "no":
+        if mentioned not in ("not needed", "not_required"):
+            return RowResult("judgement", dict(row), f"no test needed, but mentioned {mentioned!r}")
+        derived, fields, accepted = "PASS", {"statistical_test_mentioned": "not_required"}, ("", "PASS")
+    elif plot == "yes" and needed == "yes":
+        if mentioned not in ("yes", "no"):
+            return RowResult("judgement", dict(row), f"a test is needed, but mentioned {mentioned!r}")
+        derived = "PASS" if mentioned == "yes" else "FAIL"
+        fields, accepted = {}, ("", derived)
+    else:
+        return RowResult("judgement", dict(row), f"is_a_plot {plot!r}, needed {needed!r}")
+    if decision not in accepted:
+        return RowResult("judgement", dict(row), f"decision {decision!r}, but the rule gives {derived}")
+    new = {**row, **fields, "decision": derived}
+    if decision == "":
+        return RowResult("blank", new, f"blank decision; the rule gives {derived}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
+def rr_rule(row: Mapping[str, Any]) -> RowResult:
+    """replication-reporting: applies to panels involving replicates. Not
+    involving them (or unclear) is not_applicable; involving them, PASS when
+    both n and replicate type are reported, else FAIL. Whether n is large
+    enough is n-larger-two's question, not this one's.
+
+    Renamed as classes: the gold's PASS on a panel without replicates becomes
+    not_applicable, and its FAIL for n below 3 with both reported becomes PASS.
+    """
+    involves = row.get("involves_replicates")
+    n_rep, t_rep = row.get("n_reported"), row.get("replicate_type_reported")
+    decision = row.get("decision") or ""
+    rtype = row.get("replicate_type") or ""
+    rtype = "" if rtype in ("not_applicable", "not_reported") else rtype
+    if involves in ("no", "unclear"):
+        if n_rep != "not_applicable" or t_rep != "not_applicable":
+            return RowResult("judgement", dict(row),
+                             f"involves_replicates {involves!r}, but n_reported {n_rep!r}, type {t_rep!r}")
+        derived, fields, accepted = "not_applicable", {
+            "n_value_min": "not_applicable", "replicate_type": ""}, ("", "PASS", "not_applicable")
+    elif involves == "yes":
+        if n_rep not in ("yes", "no") or t_rep not in ("yes", "no"):
+            return RowResult("judgement", dict(row), f"involves replicates, but n_reported {n_rep!r}, type {t_rep!r}")
+        derived = "PASS" if (n_rep, t_rep) == ("yes", "yes") else "FAIL"
+        accepted = ("", derived) + (("FAIL",) if derived == "PASS" else ())
+        n_min = row.get("n_value_min")
+        if n_rep == "no" and n_min not in ("not_reported", "not_applicable", None, ""):
+            return RowResult("judgement", dict(row), f"n not reported, but n_value_min is {n_min!r}")
+        fields = {"replicate_type": rtype if t_rep == "yes" else ""}
+        if n_rep == "no":
+            fields["n_value_min"] = "not_reported"
+    else:
+        return RowResult("judgement", dict(row), f"involves_replicates is {involves!r}")
+    if decision not in accepted:
+        return RowResult("judgement", dict(row), f"decision {decision!r}, but the rule gives {derived}")
+    new = {**row, **fields, "decision": derived}
+    if decision == "":
+        return RowResult("blank", new, f"blank decision; the rule gives {derived}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
+def _verify_by_rule(rule):
+    return lambda row: None if rule(row).kind == "unchanged" else f"breaks the rule: {rule(row).reason}"
+
+
 #: Per-check steps that add a field the rule needs before it runs.
 ENRICH: Dict[str, Callable] = {"error-bars-defined": _enrich_is_a_plot}
 
@@ -400,6 +486,8 @@ RULES: Dict[str, Tuple[Callable, Callable]] = {
     "plot-axis-units": (pau_rule, pau_verify),
     "plot-gap-labeling": (pgl_rule, pgl_verify),
     "stat-significance-level": (ssl_rule, ssl_verify),
+    "stat-test": (st_rule, _verify_by_rule(st_rule)),
+    "replication-reporting": (rr_rule, _verify_by_rule(rr_rule)),
 }
 
 
@@ -426,6 +514,10 @@ CURATED_FIELDS = {
     "plot-axis-units": ("is_a_plot", "decision"),
     "plot-gap-labeling": ("is_a_plot", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
     "stat-significance-level": ("is_a_plot", "decision"),
+    "stat-test": ("is_a_plot", "statistical_test_needed", "statistical_test_mentioned",
+                  "from_the_caption", "decision"),
+    "replication-reporting": ("involves_replicates", "n_reported", "n_value_min",
+                              "replicate_type_reported", "replicate_type", "decision"),
 }
 
 Overrides = Dict[Tuple[str, str], Dict[str, str]]
