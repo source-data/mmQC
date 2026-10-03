@@ -178,6 +178,18 @@ separate from exp-04 and comes first:
 [`plans/2026-09-30-contract-cleanup.md`](../plans/2026-09-30-contract-cleanup.md).
 **exp-04 does not start until it is done.**
 
+**Status, 2026-10-03:** the production `fig-checklist` is clean. What exp-04
+still needs from it is a **port**: exp-04 builds on exp-03's hierarchical skills
+(`fig-checklist-exp03`: the three checks at v1 and v3, `classify-panels`, D),
+which predate the cleanup and use its legacy vocabulary. Their wording,
+contracts and gold conventions have to be brought in line with the cleaned
+`fig-checklist` — `individual-data-points`' `not_required` / `not_applicable`,
+`error-bars-defined`'s `is_a_plot`, split `decision` and `explanation`, and the
+"a plot is checked" model — one skill at a time and reviewed, since the exp-03
+skills split the same instructions across blocks differently from the
+production skills. `micrograph-scale-bar` had no findings and needs no port.
+exp-04 is then also the first experiment scored against the cleaned gold.
+
 What exp-04 takes from it: one `not_applicable` token, always scored as NA;
 no fixed token inside free text, so each check's verdict is an enum and any
 explanation a separate field; free text scored semantically; and a clean audit

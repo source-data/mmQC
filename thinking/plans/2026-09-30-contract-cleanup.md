@@ -189,9 +189,9 @@ warning; a field deliberately left unscored is listed as such in the manifest.
 | W5 | Migrate gold to the new vocabulary with a script: token rewrites, and the `error-bars-defined` split — verified that every row parses, decisions agree with `error_bar_on_figure`, split fields rejoin to the original, nothing else changes, and every rewritten gold validates against its new schema | `soda_mmqc/scripts/` | **human gate G3** — the diff is reviewed before commit; **W5a first** |
 | W6 | Update schemas and manifests of the production checklist | `…/fig-checklist/`, `…/doc-checklist/` | audit clean |
 | W7 | Update skill prose to the new tokens and split fields — **one skill at a time, reviewed** | `…/SKILL.md` | **human gate G4**, per skill |
-| W8 | Manifests for `data-checklist`, or declare it out of scope | `…/data-checklist/` | G2 |
+| W8 | Manifests for `data-checklist`, or declare it out of scope | `…/data-checklist/` | **out of scope** (2026-10-03): `doc-checklist` and `data-checklist` are not active checklists |
 | W9 | Make the audit a test: every contract of the production checklist passes with no finding | `tests/` | CI |
-| W10 | Addenda to exp-01 and exp-02: the `error-bars-defined` artifact, `n_value_min` unscored, and — as **exploratory** re-scores, kept apart from the preregistered numbers — what their layer-1 numbers become under the prefix rule and under the new gold | `thinking/experiments/` | — |
+| W10 | Addenda to exp-01 and exp-02 documenting the known artifacts — the annotated `not needed` in `error-bars-defined`, `n_value_min` never scored, `N/A` scored at layer 2, the empty gold rows — **without re-scoring** (decided 2026-10-03, below) | `thinking/experiments/` | — |
 
 ### Where the rewritten gold lives, and how the frozen experiments stay reproducible
 
@@ -387,3 +387,35 @@ keeps each gold file's layout (`7d943c662`).
 - **Other control characters**: four `stat-test · from_the_caption` values in
   the two `RATT…` folders still hold `\x04` or `\r`. The audit's
   `gold-control` rule now reports them.
+
+
+### Decided 2026-10-03: no re-scoring of exp-01 to exp-03; the cleanup goes into exp-04
+
+- **`doc-checklist` and `data-checklist` are out of scope**: neither is an
+  active checklist. Their findings stay in the audit's output and are not
+  worked.
+- **exp-01 to exp-03 are not re-scored under the cleaned gold.** Their
+  predictions answered the prose and contracts of their time: a model told to
+  write `not needed`, or to PASS a non-plot, would be scored against
+  `not_required` and `not_applicable`, so a re-score would measure the change of
+  vocabulary, not the models. They stay pinned to `gold-v0` and `gold-v1`, and
+  their notes document the artifacts (W10) rather than revise numbers.
+- **The cleanup's effect is measured from exp-04 on.** That requires porting the
+  cleaned wording, contracts and gold conventions from `fig-checklist` to the
+  hierarchical skills of the exp-03 lineage — carefully, one skill at a time,
+  reviewed — before exp-04 runs.
+
+### Where the production checklist stands, 2026-10-03
+
+All seven figure checks with findings are through contract, prose and gold:
+`individual-data-points`, `error-bars-defined`, `plot-axis-units`,
+`plot-gap-labeling`, `stat-significance-level`, `stat-test`,
+`replication-reporting`. The model they share: **a panel that is not a plot (or,
+for `replication-reporting`, does not involve replicates) is `not_applicable`;
+a plot with nothing to check is a `PASS`, with `not_required` in the field that
+had nothing to report.** `audit_contracts --checklist fig-checklist` leaves one
+finding: the four `stat-test` captions with control characters in the `RATT…`
+folders, on the curation list above.
+
+Still open: W9 (the audit as a standing test, which needs those four captions
+repaired or the rule scoped first), W10, and the curation list.
