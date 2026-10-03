@@ -51,12 +51,12 @@
                             },
                             "replicate_type": {
                                 "type": "string",
-                                "description": "Verbatim replication type description from the figure caption, or not_reported / not_applicable"
+                                "description": "Verbatim replication type description from the figure caption; empty when none is reported or the check does not apply"
                             },
                             "decision": {
                                 "type": "string",
-                                "enum": ["PASS", "FAIL"],
-                                "description": "Panel-level pass/fail verdict for replication reporting completeness"
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict for replication reporting completeness; not_applicable for a panel that does not involve replicates"
                             },
                             "explanation": {
                                 "type": "string",

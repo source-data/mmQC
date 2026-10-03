@@ -31,19 +31,22 @@
       "na_values": ["not_applicable"],
       "matching_metric": "binary_polarity"
     },
-    "outputs[].replicate_type": {
+    "outputs[].n_value_min": {
       "na_values": ["not_applicable"],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].replicate_type": {
+      "na_values": [""],
       "matching_metric": "graded_string",
       "string_compare": "semantic",
       "match_threshold": 0.8
     },
     "outputs[].decision": {
+      "na_values": ["not_applicable"],
       "matching_metric": "multiclass"
     },
     "outputs[].explanation": {
-      "matching_metric": "graded_string",
-      "string_compare": "semantic",
-      "match_threshold": 0.8
+      "scored": false
     }
   }
 }

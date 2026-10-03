@@ -21,13 +21,13 @@
                             },
                             "statistical_test_needed": {
                                 "type": "string",
-                                "enum": ["yes", "no"],
-                                "description": "Whether a statistical test is needed"
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether a statistical test is needed; not_applicable for a panel that is not a plot"
                             },
                             "statistical_test_mentioned": {
                                 "type": "string",
-                                "enum": ["yes", "no", "not needed"],
-                                "description": "Whether the statistical test is mentioned"
+                                "enum": ["yes", "no", "not_required", "not_applicable"],
+                                "description": "Whether the statistical test is mentioned; not_required for a plot that needs no test, not_applicable for a panel that is not a plot"
                             },
                             "from_the_caption": {
                                 "type": "string",
@@ -35,8 +35,8 @@
                             },
                             "decision": {
                                 "type": "string",
-                                "enum": ["PASS", "FAIL"],
-                                "description": "Panel-level pass/fail verdict on whether the statistical test is adequately reported"
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict on whether the statistical test is adequately reported; not_applicable for a panel that is not a plot"
                             },
                             "explanation": {
                                 "type": "string",
