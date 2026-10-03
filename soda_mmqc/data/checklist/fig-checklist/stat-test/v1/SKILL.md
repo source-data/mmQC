@@ -45,9 +45,9 @@ check excludes it.
 not quantitative data** — it is an illustration. The plot description says when
 that is the case; take it into account before analysing the panel.
 
-If `is_a_plot` is `no`, set `statistical_test_needed` to `no`,
-`statistical_test_mentioned` to `not needed`, `from_the_caption` to an empty
-string, `decision` to `PASS` and `explanation` to an empty string.
+If `is_a_plot` is `no`, the check does not apply: set
+`statistical_test_needed`, `statistical_test_mentioned` and `decision` to
+`not_applicable`, and `from_the_caption` and `explanation` to an empty string.
 
 ## 3. Is a test mandatory for this panel?
 
@@ -57,27 +57,35 @@ difference. Set `statistical_test_needed` accordingly.
 
 **The mere presence of error bars does NOT imply statistical analysis and does
 NOT require a statistical test.** If the panel plots quantitative data but
-makes no significance claim, use the same values as for a non-plot panel.
+makes no significance claim, no test is needed: set `statistical_test_needed`
+to `no`, `statistical_test_mentioned` to `not_required`, and `from_the_caption`
+to an empty string.
 
 ## 4. Is the test named?
 
 Where a test is needed, check the caption for its name — t-test, ANOVA,
-Mann-Whitney, and so on. Put `yes`, `no` or `not needed` in
-`statistical_test_mentioned`, and the exact caption text naming it in
+Mann-Whitney, and so on. Put `yes` or `no` in `statistical_test_mentioned`, and the exact caption text naming it in
 `from_the_caption`. Use the caption text the panel inventory already mapped to
 this panel.
 
 ## 5. Your verdict
 
-Put `PASS` or `FAIL` in `decision` with a brief reason in `explanation`. A
-panel that claims significance without naming a test is a FAIL; everything else
-is a PASS.
+Put `PASS`, `FAIL` or `not_applicable` in `decision` with a brief reason in
+`explanation`.
+
+- If the panel claims significance and the caption names the test, then
+  `decision` is `PASS`.
+- If it claims significance without naming a test, then `decision` is `FAIL`.
+- If the panel is a plot that makes no significance claim, no test is needed,
+  so `decision` is `PASS`.
+- If the panel is not a plot, then `decision` is `not_applicable`: the check
+  does not apply to it, so it neither passes nor fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that plot no
-quantitative data.
+quantitative data, which take `not_applicable` as above.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The

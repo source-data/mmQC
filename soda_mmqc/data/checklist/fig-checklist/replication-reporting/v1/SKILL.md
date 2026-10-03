@@ -52,7 +52,7 @@ caption** for:
 
 - an n-number — `n = 3`, `five animals`, `n = 3-5`;
 - a replicate type — `biological replicates`, `independent experiments`,
-  `cells`.
+  `cells`, `animals`.
 
 **Extract verbatim and minimally. Do not paraphrase.** Put each statement you
 find into `replicate_statements`.
@@ -61,26 +61,33 @@ find into `replicate_statements`.
 - If several conditions report different n, list them all in
   `replicate_statements` and set `n_value_min` to the lowest.
 - Set `n_reported` and `replicate_type_reported` to `yes` or `no`, and put the
-  type itself in `replicate_type`.
+  type itself in `replicate_type`. If no n-number is reported, set
+  `n_value_min` to `not_reported`; if no type is reported, leave
+  `replicate_type` an empty string.
 
-When `involves_replicates` is `no` or `unclear`, set `n_reported` and
-`replicate_type_reported` to `not_applicable`, leave `replicate_statements`
-empty and `replicate_type` an empty string.
+When `involves_replicates` is `no` or `unclear`, the check does not apply: set
+`n_reported`, `replicate_type_reported`, `n_value_min` and `decision` to
+`not_applicable`, leave `replicate_statements` empty and `replicate_type` an
+empty string.
 
 ## 4. Your verdict
 
-Put `PASS` or `FAIL` in `decision` with a brief reason in `explanation`.
+Put `PASS`, `FAIL` or `not_applicable` in `decision` with a brief reason in
+`explanation`.
 
 - A panel involving replicates that reports **both** the n-number and the
-  replicate type is a PASS.
+  replicate type is a PASS. Whether n is large enough is not this check's
+  question.
 - A panel involving replicates that is missing either is a FAIL — say which.
-- A panel not involving replicates is a PASS.
+- A panel not involving replicates, or where you cannot tell, is
+  `not_applicable`: the check does not apply to it, so it neither passes nor
+  fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that involve no
-replicates, which keep their label.
+replicates, which keep their label and take `not_applicable` as above.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The
