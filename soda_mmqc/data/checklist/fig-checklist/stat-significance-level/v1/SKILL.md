@@ -62,19 +62,21 @@ empty string where a symbol is undefined.
 
 ## 5. Your verdict
 
-Put `PASS`, `FAIL` or `N/A` in `decision` with a brief reason in
+Put `PASS`, `FAIL` or `not_applicable` in `decision` with a brief reason in
 `explanation`:
 
-- `PASS` — every symbol shown is defined, or no symbols are shown.
+- `PASS` — every symbol shown is defined, or the plot shows no significance
+  symbols.
 - `FAIL` — a symbol appears on the image with no definition in the caption.
-- `N/A` — `is_a_plot` is `no`.
+- `not_applicable` — `is_a_plot` is `no`: the check does not apply to it, so it
+  neither passes nor fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that are not
 plots, which keep their label with `is_a_plot` set to `no`, the three lists
-empty and `decision` set to `N/A`.
+empty and `decision` set to `not_applicable`.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The

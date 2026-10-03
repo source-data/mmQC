@@ -39,7 +39,8 @@ visualizations qualify. Micrographs, schematics, western blots and
 representative images do not.
 
 For every `no` panel set `tick_sequence_anomaly` and `gap_visually_marked` to
-`not_applicable`, `decision` to `N/A`, and `explanation` to an empty string.
+`not_applicable`, `decision` to `not_applicable`, and `explanation` to an empty
+string.
 
 ## 3. Look for an anomalous jump in the tick labels
 
@@ -54,7 +55,8 @@ time points have no numerical sequence and must never be flagged. The plot
 description marks the scale, so use it rather than inferring from the labels.
 
 If every axis is consistent, or categorical, set `tick_sequence_anomaly` to
-`no`, `gap_visually_marked` to `not_applicable` and `decision` to `PASS`.
+`no`, `gap_visually_marked` to `not_required` — there is no gap to mark — and
+`decision` to `PASS`.
 
 ## 4. Is the gap marked?
 
@@ -65,12 +67,12 @@ Set `gap_visually_marked` to `yes` or `no` accordingly.
 
 ## 5. Your verdict
 
-Put `PASS`, `FAIL` or `N/A` in `decision` with a brief reason in
+Put `PASS`, `FAIL` or `not_applicable` in `decision` with a brief reason in
 `explanation`:
 
 - `PASS` — no anomaly, or an anomaly that is visually marked.
 - `FAIL` — an anomalous jump with no break indicator.
-- `N/A` — `is_a_plot` is `no`.
+- `not_applicable` — `is_a_plot` is `no`: the check does not apply to it, so it neither passes nor fails.
 
 ## Output
 

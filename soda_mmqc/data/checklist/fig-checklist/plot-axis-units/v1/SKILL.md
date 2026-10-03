@@ -59,7 +59,7 @@ a list of objects, one per axis** — not single values for the panel, and not
 lists of bare strings. Every entry names the axis it describes:
 
 - `units_provided` — `{"axis": "y", "answer": "yes"}`, where `answer` is
-  `yes`, `no`, or `not needed` for an axis that needs no unit (a categorical
+  `yes`, `no`, or `not_required` for an axis that needs no unit (a categorical
   axis, or a dimensionless quantity such as a ratio, percentage, count or fold
   change).
 - `unit_definition_as_provided` — `{"axis": "y", "definition": "%"}`, the unit
@@ -69,24 +69,26 @@ lists of bare strings. Every entry names the axis it describes:
   a brief per-axis reason.
 
 Use the same axis letters the plot description reports, and cover the same
-axes in all three lists. For a panel where `is_a_plot` is `no`, leave all three
-lists empty.
+axes in all three lists. For a panel where `is_a_plot` is `no`, or a plot with
+no axes, leave all three lists empty.
 
 ## 4. Your verdict
 
 `decision` is a single value for the panel, not a list. Put `PASS`, `FAIL` or
-`N/A` in it:
+`not_applicable` in it:
 
-- `PASS` — every axis that needs a unit has one.
+- `PASS` — every axis that needs a unit has one. A plot with no axes, such as a
+  pie chart, has nothing to label and is a `PASS`.
 - `FAIL` — any numeric axis measuring a dimensional quantity has no unit.
-- `N/A` — `is_a_plot` is `no`.
+- `not_applicable` — `is_a_plot` is `no`: the check does not apply to it, so it
+  neither passes nor fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that are not
 quantitative plots, which keep their label with `is_a_plot` set to `no` and
-`decision` set to `N/A`.
+`decision` set to `not_applicable`.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The
