@@ -1,0 +1,120 @@
+{
+  "checklist": "do-fig-checklist",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "micrograph-scale-bar": [
+      "panel_label"
+    ],
+    "individual-data-points": [
+      "panel_label"
+    ],
+    "error-bars-defined": [
+      "panel_label"
+    ]
+  },
+  "fields": {
+    "micrograph-scale-bar[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "micrograph-scale-bar[].micrograph": {
+      "matching_metric": "binary_polarity"
+    },
+    "micrograph-scale-bar[].scale_bar_on_image": {
+      "na_values": [
+        ""
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "micrograph-scale-bar[].scale_bar_defined_in_caption": {
+      "na_values": [
+        ""
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "micrograph-scale-bar[].from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "micrograph-scale-bar[].scale_bar_defined_in_image": {
+      "na_values": [
+        ""
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "micrograph-scale-bar[].from_the_image": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "individual-data-points[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "individual-data-points[].plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "individual-data-points[].individual_values": {
+      "na_values": [
+        "not needed"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "individual-data-points[].decision": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "individual-data-points[].explanation": {
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "error-bars-defined[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "error-bars-defined[].error_bar_on_figure": {
+      "matching_metric": "binary_polarity"
+    },
+    "error-bars-defined[].error_bar_defined_in_caption": {
+      "na_values": [
+        "not needed"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "error-bars-defined[].from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        "",
+        "not needed"
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "error-bars-defined[].Decision_and_explanation": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        "",
+        "not needed"
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}
