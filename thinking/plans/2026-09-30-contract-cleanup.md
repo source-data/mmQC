@@ -436,4 +436,7 @@ had nothing to report.**
   retired `micrograph-symbols-defined` gold on `s44318-024-00316-w/content/3`
   has `from_the_caption` lists that do not line up with `symbols`.
 
-Still open: the port of the cleanup to the exp-03 lineage skills, for exp-04.
+**The port to the exp-03 lineage skills moves to exp-04's plan** (decided
+2026-10-04). exp-04 becomes a baseline rather than a comparison with exp-03: it
+keeps exp-03's DAG of skills and carries this cleanup's wording into them, one
+skill at a time, as part of building it. The cleanup itself is closed.
