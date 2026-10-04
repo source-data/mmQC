@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Expected output — replication-reporting</title>
+<style>body { font-family: system-ui, sans-serif; max-width: 900px; margin: 1rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; color: #333; }
+    h3 { font-size: 1rem; margin: 1rem 0 0.5rem; color: #555; }
+    section { margin-bottom: 1.5rem; padding: 0.75rem; background: #f8f9fa; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #dee2e6; }
+    th { background: #e9ecef; font-weight: 600; }
+    .empty { color: #6c757d; font-style: italic; margin: 0.25rem 0; }
+    ul { margin: 0.25rem 0; padding-left: 1.25rem; }
+    .meta { font-size: 0.85rem; color: #6c757d; margin-bottom: 1rem; }</style></head><body>
+<h1>Expected output — replication-reporting</h1>
+<section><h3>Panel A</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Data are mean\u2009±\u2009SD from three biological replicates (A, B).']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 3</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> three biological replicates</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Caption explicitly states data are mean from three biological replicates, and n=3 (&gt;2).</p>
+</section>
+<section><h3>Panel B</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Data are mean\u2009±\u2009SD from three biological replicates (A, B).']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 3</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> three biological replicates</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Caption explicitly states data are mean from three biological replicates, and n=3 (&gt;2).</p>
+</section>
+<section><h3>Panel C</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['TCGA RNA-seq data of patients with COAD (C) and READ (D) were analyzed.', '(n=240)', '(n=187)']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 187</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> patients with COAD</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Panel C shows patient counts (n=240 and n=187) from TCGA-COAD; replicate type (patients) is indicated in the caption and n_min = 187 (&gt;2).</p>
+</section>
+<section><h3>Panel D</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['TCGA RNA-seq data of patients with COAD (C) and READ (D) were analyzed.', '(n=73)', '(n=65)']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 65</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> patients with READ</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Panel D shows patient counts (n=73 and n=65) from TCGA-READ; replicate type (patients) is indicated in the caption and n_min = 65 (&gt;2).</p>
+</section>
+<section><h3>Panel E</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Low PPA2 (n=93)', 'High PPA2 (n=94)', 'Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets.']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 93</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> TCGA-COAD dataset (patients)</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Kaplan-Meier analysis labels show n per group (n=93, n=94) and caption indicates TCGA-COAD patients; n_min = 93 (&gt;2).</p>
+</section>
+<section><h3>Panel F</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Low PPA2 (n=32)', 'High PPA2 (n=33)', 'Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets.']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 32</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> TCGA-READ dataset (patients)</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Kaplan-Meier plot labels show group sizes (n=32, n=33) and caption indicates TCGA dataset patients; n_min = 32 (&gt;2).</p>
+</section>
+<section><h3>Panel G</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Low PPA2 (n=120)', 'High PPA2 (n=120)', 'Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets.']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 120</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> TCGA-COAD dataset (patients)</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Kaplan-Meier legend shows n per group (n=120 each) and caption indicates TCGA-COAD patients; n_min = 120 (&gt;2).</p>
+</section>
+<section><h3>Panel H</h3>
+<p><strong>involves_replicates:</strong> yes</p>
+<p><strong>replicate_statements:</strong> ['Low PPA2 (n=36)', 'High PPA2 (n=37)', 'Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets.']</p>
+<p><strong>n_reported:</strong> yes</p>
+<p><strong>n_value_min:</strong> 36</p>
+<p><strong>replicate_type_reported:</strong> yes</p>
+<p><strong>replicate_type:</strong> TCGA-READ dataset (patients)</p>
+<p><strong>decision:</strong> PASS</p>
+<p><strong>explanation:</strong> Kaplan-Meier legend shows group sizes (n=36, n=37) and caption indicates TCGA-READ patients; n_min = 36 (&gt;2).</p>
+</section>
+</body></html>
