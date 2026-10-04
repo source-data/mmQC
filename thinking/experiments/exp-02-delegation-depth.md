@@ -658,6 +658,8 @@ monolith is a quarter of that cost and the three split arrangements the rest.
 
 **`gold-v0`** — the gold as of `c96c8f8de`, 2026-09-18. The 2026-09-28 fix of one `error-bars-defined` label (`B ` → `B`) came after its runs. Its notebook pins the scorer to this tag (`soda_mmqc/gold.py`), so re-running it reproduces these numbers; re-scoring under the current gold is exploratory and recorded separately. Verified 2026-10-02: re-scoring a committed leaf against `gold-v0` reproduces its original analysis instance for instance.
 
+**Changed since, 2026-10-04: gold, prose and contracts.** After exp-03, the contract cleanup (`thinking/plans/2026-09-30-contract-cleanup.md`) changed the `schema.json`, `eval-manifest.json`, `SKILL.md` prose and gold of seven `fig-checklist` checks: `individual-data-points`, `error-bars-defined`, `plot-axis-units`, `plot-gap-labeling`, `stat-significance-level`, `stat-test` and `replication-reporting`. A panel that is not a plot is now `not_applicable`, a plot with nothing to check is `PASS` with `not_required`, explanations are unscored and free text is scored semantically; damaged gold text was repaired. The result is tagged `gold-v2`. The numbers here are not re-scored under it (decided 2026-10-03): the sessions answered the prose and contracts of their time, so a re-score would measure the change of vocabulary rather than the models. The cleanup's effect is measured from exp-04 on.
+
 ## Status and next
 
 Planned, not yet preregistered, not yet run. The preparation is done: the

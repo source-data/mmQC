@@ -190,8 +190,8 @@ warning; a field deliberately left unscored is listed as such in the manifest.
 | W6 | Update schemas and manifests of the production checklist | `…/fig-checklist/`, `…/doc-checklist/` | audit clean |
 | W7 | Update skill prose to the new tokens and split fields — **one skill at a time, reviewed** | `…/SKILL.md` | **human gate G4**, per skill |
 | W8 | Manifests for `data-checklist`, or declare it out of scope | `…/data-checklist/` | **out of scope** (2026-10-03): `doc-checklist` and `data-checklist` are not active checklists |
-| W9 | Make the audit a test: every contract of the production checklist passes with no finding | `tests/` | CI |
-| W10 | Addenda to exp-01 and exp-02 documenting the known artifacts — the annotated `not needed` in `error-bars-defined`, `n_value_min` never scored, `N/A` scored at layer 2, the empty gold rows — **without re-scoring** (decided 2026-10-03, below) | `thinking/experiments/` | — |
+| W9 | Make the audit a test: every contract of the production checklist passes with no finding *(done 2026-10-04)* | `tests/` | CI |
+| W10 | Addenda to exp-01 and exp-02 documenting the known artifacts — the annotated `not needed` in `error-bars-defined`, `n_value_min` never scored, `N/A` scored at layer 2, the empty gold rows — **without re-scoring** (decided 2026-10-03, below). *Done 2026-10-04 as a note, not addenda.* | `thinking/experiments/` | — |
 
 ### Where the rewritten gold lives, and how the frozen experiments stay reproducible
 
@@ -413,9 +413,27 @@ All seven figure checks with findings are through contract, prose and gold:
 `replication-reporting`. The model they share: **a panel that is not a plot (or,
 for `replication-reporting`, does not involve replicates) is `not_applicable`;
 a plot with nothing to check is a `PASS`, with `not_required` in the field that
-had nothing to report.** `audit_contracts --checklist fig-checklist` leaves one
-finding: the four `stat-test` captions with control characters in the `RATT…`
-folders, on the curation list above.
+had nothing to report.**
 
-Still open: W9 (the audit as a standing test, which needs those four captions
-repaired or the rule scoped first), W10, and the curation list.
+### Closed 2026-10-04: text repair, W9, W10, `gold-v2`
+
+- **Control characters and damaged text.** The `RATT…` folders' figure-level
+  gold, which held the four `stat-test` captions, was removed (`61fd8dbb8`). The
+  text lost with the NULs was restored from the captions: `mean +/- SEM` in
+  `error-bars-defined` (`s44318-026-00715-1/content/2`, panels L, M, O),
+  `Kaplan-Meier` in `replication-reporting` (`s44318-025-00416-1/content/8`,
+  curated by hand), and `(scale bar=2µm)` in `micrograph-symbols-defined`
+  (`s44318-024-00316-w/content/3`). That last file also held 212 vertical tabs
+  where `± SD` had been, which the audit never reported: the check is retired,
+  and the `gold-control` rule sees only the checklists audited.
+- **W9.** `tests/test_production_contracts.py`: `fig-checklist` audits with no
+  finding, and no gold anywhere -- whatever checklist its check belongs to --
+  holds a control character.
+- **W10.** No addenda. The exp-01, exp-02 and exp-03 notes each say, under
+  "Gold this was scored against", that gold, prose and contracts changed after
+  exp-03 and that their numbers are not re-scored.
+- **`gold-v2`** tags the gold at the close of the cleanup. Left as it was: the
+  retired `micrograph-symbols-defined` gold on `s44318-024-00316-w/content/3`
+  has `from_the_caption` lists that do not line up with `symbols`.
+
+Still open: the port of the cleanup to the exp-03 lineage skills, for exp-04.
