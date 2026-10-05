@@ -244,6 +244,15 @@ check-major contract is kept, being simpler.
 
 ## Status and next
 
+**P4 done, 2026-10-05.** `fig-checklist-exp04` carries the cleanup's wording
+in all three checks at v1 and v3 (`1199f44d1`, `6ac3db034`, `33abc0a2e`), each
+v3 identical to its v1 after its call to `classify-panels`. The shared skills
+are aligned with the checks (`8b1350ee8`, `d276f5374`): panel identification
+and classification are worded the same wherever they are written out, apart
+from what depends on having a caller, so the arms differ in arrangement
+only. `do-fig-checklist` is unchanged, pending P5.
+
+
 Draft. The contract cleanup it depended on is closed (`gold-v3`, 2026-10-05).
 Next: settle the decisions, run P1–P3, port the skills one check at a time for
 review (P4–P5), derive and audit the contracts (P6–P7), size margins (P8),
