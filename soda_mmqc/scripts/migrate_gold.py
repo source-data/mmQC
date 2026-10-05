@@ -473,6 +473,36 @@ def rr_rule(row: Mapping[str, Any]) -> RowResult:
     return RowResult("unchanged" if new == dict(row) else "mechanical", new)
 
 
+# ---------------------------------------------------------------------------
+# micrograph-scale-bar  (decided 2026-10-05)
+# ---------------------------------------------------------------------------
+
+MSB_ENUMS = ("scale_bar_on_image", "scale_bar_defined_in_caption", "scale_bar_defined_in_image")
+
+
+def msb_rule(row: Mapping[str, Any]) -> RowResult:
+    """micrograph-scale-bar: a panel that is not a micrograph is not_applicable
+    in the three yes/no fields, where the gold had an empty string; its two
+    extracted texts stay empty. A micrograph keeps yes or no throughout: one
+    without a scale bar fails the check, so its "defined" fields are "no",
+    not not_required.
+    """
+    values = {f: row.get(f) for f in MSB_ENUMS}
+    texts = [row.get("from_the_caption") or "", row.get("from_the_image") or ""]
+    micrograph = row.get("micrograph")
+    if micrograph == "no":
+        if any(v not in ("", "not_applicable") for v in values.values()) or any(texts):
+            return RowResult("judgement", dict(row), f"not a micrograph, but {values}, texts {texts}")
+        new = {**row, **{f: "not_applicable" for f in MSB_ENUMS}}
+    elif micrograph == "yes":
+        if any(v not in ("yes", "no") for v in values.values()):
+            return RowResult("judgement", dict(row), f"a micrograph, but {values}")
+        new = dict(row)
+    else:
+        return RowResult("judgement", dict(row), f"micrograph is {micrograph!r}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
 def _verify_by_rule(rule):
     return lambda row: None if rule(row).kind == "unchanged" else f"breaks the rule: {rule(row).reason}"
 
@@ -488,6 +518,7 @@ RULES: Dict[str, Tuple[Callable, Callable]] = {
     "stat-significance-level": (ssl_rule, ssl_verify),
     "stat-test": (st_rule, _verify_by_rule(st_rule)),
     "replication-reporting": (rr_rule, _verify_by_rule(rr_rule)),
+    "micrograph-scale-bar": (msb_rule, _verify_by_rule(msb_rule)),
 }
 
 

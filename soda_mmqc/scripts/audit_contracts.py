@@ -27,7 +27,8 @@ Rules:
                   scores as an ordinary class, at layer 2 (C1)
 ``enum-gap``      an enum missing a token the manifest scores against
 ``legacy-token``  a not-applicable spelling other than ``not_applicable``, in
-                  the schema, the manifest or the gold (C1)
+                  the schema, the manifest or the gold, or an empty string as
+                  an enum value (C1)
 ``orphan-token``  a manifest token that neither the schema nor the gold uses
 ``text-metric``   free text not scored semantically, unless declared an
                   identifier in IDENTIFIERS (C4)
@@ -250,6 +251,11 @@ def audit_check(
             for token in tokens:
                 if isinstance(token, str) and NA_LIKE.match(token) and token != CANONICAL_NA:
                     legacy.add(f"{token!r} in {source}")
+        if values and "" in values:
+            # An empty string as an enum value is a not-applicable token that
+            # no spelling rule sees: micrograph-scale-bar used it until
+            # 2026-10-05, after the audit had reported the check clean.
+            legacy.add("'' in schema enum")
         if legacy:
             add(pattern, "legacy-token",
                 f"retire legacy spelling(s) -- {CANONICAL_NA!r} where the check does not "

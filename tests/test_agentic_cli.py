@@ -2160,23 +2160,27 @@ class TestLeafProseAgainstPilotGold:
         ]
         assert offenders == []
 
-    def test_non_micrograph_rows_leave_the_answer_fields_empty(self, gold_rows):
-        """Backs the leaf's output rule -- and bounds the known gold outlier.
+    def test_non_micrograph_rows_are_not_applicable(self, gold_rows):
+        """Backs the leaf's output rule for a panel that is not a micrograph.
 
-        `eval-manifest.json` marks "" as the NA value for these fields, so a
-        non-micrograph panel is expected to carry empty strings. One gold row
-        uses "no" instead. The rule holds for the rest.
+        Since the contract cleanup (2026-10-05) its three yes/no fields are
+        `not_applicable` -- before, an empty string, which no spelling rule
+        recognised -- and its two extracted texts stay empty. The one gold row
+        that once carried "no" instead is gone.
         """
         non_micrograph = [r for r in gold_rows if r.get("micrograph") == "no"]
         offenders = [
             r
             for r in non_micrograph
-            if any(r.get(f, "") != "" for f in SCALE_BAR_ANSWER_FIELDS)
+            if any(r.get(f) != "not_applicable" for f in SCALE_BAR_ANSWER_FIELDS
+                   if not f.startswith("from_"))
+            or any(r.get(f, "") != "" for f in SCALE_BAR_ANSWER_FIELDS
+                   if f.startswith("from_"))
         ]
         assert len(non_micrograph) > 100
-        assert len(offenders) <= 1, (
-            "more gold rows now disagree with the leaf's rule that a "
-            f"non-micrograph panel empties the answer fields: {offenders}"
+        assert offenders == [], (
+            "gold rows disagree with the leaf's rule for a non-micrograph "
+            f"panel: {offenders}"
         )
 
     def test_every_non_micrograph_row_still_carries_its_label(self, gold_rows):

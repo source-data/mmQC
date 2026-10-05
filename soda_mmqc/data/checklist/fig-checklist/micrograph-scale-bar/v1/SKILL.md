@@ -47,6 +47,8 @@ considered microscopy images.
 Set `micrograph` accordingly. A panel that holds several images counts as a
 micrograph panel if any of its images is one.
 
+For a panel that is not a micrograph, the check does not apply: set the three scale-bar fields to `not_applicable`, leave the two extracted texts empty, and skip steps 3 to 5.
+
 ## 3. Check for a scale bar on the image
 
 If and only if the panel is a micrograph or microscopic image, check whether
@@ -58,6 +60,8 @@ defined length.
 Record the answer in `scale_bar_on_image`.
 
 ## 4. Decide where the scale bar length is defined
+
+A micrograph without a scale bar fails the check: set `scale_bar_defined_in_image` and `scale_bar_defined_in_caption` to `no`.
 
 In some cases the defined length of the scale bar is written in the image itself
 and displayed as a label such as "10 μm" or "500 nm"; in other cases it is
@@ -90,8 +94,7 @@ descriptions of the figure or panel content.
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports. Panels that are not micrographs are
-still reported, keeping their label, with `micrograph` set to `no` and the
-remaining scale-bar fields left as empty strings.
+still reported, keeping their label, with `micrograph` set to `no`: the check does not apply to them, so `scale_bar_on_image`, `scale_bar_defined_in_caption` and `scale_bar_defined_in_image` are `not_applicable`, and `from_the_caption` and `from_the_image` are left as empty strings.
 
 Return the result as JSON conforming to the `schema.json` file of this check:
 a single object whose **`outputs`** key holds the list of panel entries. The

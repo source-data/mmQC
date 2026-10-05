@@ -209,3 +209,12 @@ def test_gold_in_lists_nested_inside_rows_is_read(tmp_path):
         gold_rows=[{"panel_label": "A", "units": [{"axis": "x", "answer": "not needed"}]}])
     found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "gold-off-enum"]
     assert found and found[0].field == "outputs[].units[].answer"
+
+
+def test_an_empty_string_in_an_enum_is_a_legacy_token(tmp_path):
+    """micrograph-scale-bar's "" for a non-micrograph, which the spellings missed."""
+    check_dir, gold = _contract(
+        tmp_path, {"on_image": {"type": "string", "enum": ["yes", "no", ""]}},
+        {"outputs[].on_image": {"matching_metric": "binary_polarity", "na_values": [""]}})
+    found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "legacy-token"]
+    assert found and "'' in schema enum" in found[0].detail

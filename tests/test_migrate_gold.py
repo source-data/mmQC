@@ -365,3 +365,33 @@ def test_replication_reporting_contradictions_need_a_judgement():
     row = {"panel_label": "B", "involves_replicates": "no", "n_reported": "yes",
            "replicate_type_reported": "yes", "decision": "PASS"}
     assert m.rr_rule(row).kind == "judgement"
+
+
+def _msb(micrograph, on, caption, image, from_caption="", from_image=""):
+    return {"panel_label": "A", "micrograph": micrograph, "scale_bar_on_image": on,
+            "scale_bar_defined_in_caption": caption, "from_the_caption": from_caption,
+            "scale_bar_defined_in_image": image, "from_the_image": from_image}
+
+
+def test_micrograph_scale_bar_non_micrograph_becomes_not_applicable():
+    result = m.msb_rule(_msb("no", "", "", ""))
+    assert result.kind == "mechanical"
+    assert [result.new[f] for f in m.MSB_ENUMS] == ["not_applicable"] * 3
+    assert (result.new["from_the_caption"], result.new["from_the_image"]) == ("", "")
+    assert m.msb_rule(result.new).kind == "unchanged"
+
+
+def test_micrograph_without_a_scale_bar_keeps_no():
+    """A missing scale bar fails the check: nothing is 'not required'."""
+    assert m.msb_rule(_msb("yes", "no", "no", "no")).kind == "unchanged"
+    assert m.msb_rule(_msb("yes", "yes", "yes", "no", "Scale bar, 10 µm.")).kind == "unchanged"
+
+
+@pytest.mark.parametrize("row", [
+    _msb("no", "yes", "", ""),
+    _msb("no", "", "", "", from_caption="Scale bar, 10 µm."),
+    _msb("yes", "", "no", "no"),
+    _msb("", "", "", ""),
+])
+def test_micrograph_scale_bar_contradictions_need_a_judgement(row):
+    assert m.msb_rule(row).kind == "judgement"
