@@ -15,7 +15,7 @@ the prep steps have passed.*
 
 *Reframed 2026-10-04. The first draft compared a new panel-major contract with
 exp-03's runs. exp-04 now runs **all its conditions itself**, on exp-03's DAG of
-skills carrying the cleaned wording and contracts, scored against `gold-v2`. It
+skills carrying the cleaned wording and contracts, scored against `gold-v3`. It
 is not compared with exp-01 to exp-03, which answered other prose and other
 contracts (see their notes, "Gold this was scored against"). Its conditions
 become the baseline for what follows.*
@@ -23,7 +23,7 @@ become the baseline for what follows.*
 ## Where this sits in the series
 
 1. **exp-04 — the baseline, and the schema question.** Three DAG
-   arrangements × two contract shapes, cleaned prose and contracts, `gold-v2`,
+   arrangements × two contract shapes, cleaned prose and contracts, `gold-v3`,
    one model, three checks.
 2. **Orchestration experiments.** Each varies one thing against exp-04's best
    condition — subagents for the checks, parallel dispatch, other arrangements
@@ -174,7 +174,7 @@ is placed by hand:
 
 Both are derived, not authored, from the three cleaned `fig-checklist`
 contracts, with the same refuse-unless-identical verification exp-03 used.
-`gold-v2` is shared by check name, so the cleaned gold applies as it is: as
+`gold-v3` is shared by check name, so the cleaned gold applies as it is: as
 exp-03 merged it per check for CM, merged per panel for PM.
 
 ### Endpoints (draft)
@@ -219,11 +219,11 @@ check-major contract is kept, being simpler.
 |---|---|---|
 | P1 | Show the scorer handles a check's object nested in a list row (`outputs[].<check>.x`) exactly as the flat field | nesting objects in rows is untested |
 | P2 | Read a PM answer as per-check lists, and count spurious panels per figure for both shapes | the endpoints compare the shapes on the same footing |
-| P3 | Merge `gold-v2` per check (CM) and per panel (PM), refusing on any label disagreement | mechanical, verified |
+| P3 | Merge `gold-v3` per check (CM) and per panel (PM), refusing on any label disagreement | mechanical, verified |
 | P4 | Copy exp-03's skills, and exp-02's `classify-panels` v2 and `identify-panels` v1, into `fig-checklist-exp04`; then port the cleanup **one skill at a time** — proposed, edited by the author, checked | the wording encodes domain judgement |
 | P5 | D: one version per contract shape if its prose must differ — reviewed | the one deliberate difference along the schema factor |
 | P6 | Derive both contracts; both pass `audit_contracts` with no finding | the cleanup's conventions |
-| P7 | Pin the scorer to `gold-v2` | as exp-01 to exp-03 are pinned to theirs |
+| P7 | Pin the scorer to `gold-v3` | as exp-01 to exp-03 are pinned to theirs |
 | P8 | Size the margins from exp-03's observed variance | if decision 1 is non-inferiority on layers 1 and 2 |
 | P9 | Smoke test on all six conditions | as for exp-03 |
 
@@ -244,7 +244,7 @@ check-major contract is kept, being simpler.
 
 ## Status and next
 
-Draft. The contract cleanup it depended on is closed (`gold-v2`, 2026-10-04).
+Draft. The contract cleanup it depended on is closed (`gold-v3`, 2026-10-05).
 Next: settle the decisions, run P1–P3, port the skills one check at a time for
 review (P4–P5), derive and audit the contracts (P6–P7), size margins (P8),
 smoke-test (P9), then preregister in exp-03's format — on the `exp-04` branch

@@ -440,3 +440,19 @@ had nothing to report.**
 2026-10-04). exp-04 becomes a baseline rather than a comparison with exp-03: it
 keeps exp-03's DAG of skills and carries this cleanup's wording into them, one
 skill at a time, as part of building it. The cleanup itself is closed.
+
+### Reopened and closed 2026-10-05: `micrograph-scale-bar`, `gold-v3`
+
+Porting the checks into exp-04 showed that `micrograph-scale-bar`, reported
+clean, marked a non-micrograph with an empty string in its three yes/no
+fields: a not-applicable token the audit's spelling rule did not recognise.
+It now follows C1 like the other checks (`5a5542b1f`): `not_applicable` in
+the schema, the manifest, the prose and 372 gold rows; the extracted texts
+stay empty (C3). A micrograph without a scale bar fails the check, so its
+"defined" fields are `no`, not `not_required` -- unlike a plot without error
+bars, which passes. The audit now reports an empty string as an enum value.
+Curated on the way: panel D of `s44318-025-00409-0` Fig. 1 does carry scale
+bars (`17cc6d44a`).
+
+**`gold-v3`** tags the gold after this; exp-04 is scored against it.
+
