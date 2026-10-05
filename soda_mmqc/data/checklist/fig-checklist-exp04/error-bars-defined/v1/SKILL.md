@@ -18,7 +18,7 @@ Proceed step-by-step and establish a systematical structured strategy to be very
 
 To decide when the check is applicable or not, classify panels based on content type before you do anything else. Proceed step-by-step and be accurate.
 
-### 1. Get the panels
+### 1. Get all the panels
 
 Understand the figure image and see where there are figure sub-parts or
 "panels". Each panel depicts an experiment either with a plot, a micrograph,
@@ -77,6 +77,7 @@ whose content looks irrelevant to whatever the calling skill is checking. The
 calling skill decides what is relevant; dropping a panel here silently removes
 it from that decision. A panel you cannot classify at all gets `other`, never an empty list.
 
+
 ### 5. How to report it
 
 State the classification in your own reply, as a comma-separated list with one
@@ -85,14 +86,14 @@ entry per panel, in label order. Each entry carries two things:
 - the panel's label, exactly as the inventory gave it;
 - every content type you found, from the vocabulary above, as a list.
 
-## Is the panel a plot?
+## Applicability of the check to plots only
 
-Set `is_a_plot` to "yes" for a panel whose classification includes `plot`, alone or beside other content types, and to "no" otherwise.
+Set `is_a_plot` to "yes" for panels whose classification includes `plot`, alone or beside other content types, and to "no" otherwise.
 
 For a panel that is not a plot, this check does not apply: set
 `error_bar_on_figure`, `error_bar_defined_in_caption` and `decision` to "not_applicable", and leave `from_the_caption` empty. You can skip the next two sections and jump to "Decision and explanation".
 
-## Determine if the panel contains error bars or box-plot elements to define
+## Determine if panels contain error bars or box-plot elements to define
 Your job is to pay attention to any plots that have error bars (typically bar charts, line plots). This is easy when the plot is itself an individual panel image. Pay attention also to more difficult cases when a plot is only part of a composite panel image.
 
 Cross-check with the panel classification to avoid common mistakes.
