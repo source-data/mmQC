@@ -280,7 +280,28 @@ only. `do-fig-checklist` is unchanged, pending P5.
   28 spurious panels in 190 sessions (`A|B|C_i <- D`) and 21 (`A|B <- C_i <-
   D`), from only 4 and 5 of the 38 figures.
 
-Left: P8 (margins, proposed below, to settle), P9 (smoke test), the notebook.
+- *P9, smoke test, 2026-10-05*: six conditions x 3 figures (`s44318-026-00715-1`
+  content/1-3), one replicate, 18 sessions, none failed, $1.84.
+  - **Dispatch**: all three checks in 18/18, always in D's listed order. No
+    skill outside a condition's closure.
+  - **Reach**: `A|B <- C_i <- D` reached `classify-panels` in 2/3 sessions (CM)
+    and 3/3 (PM), once each; `A <- B <- C_i <- D` reached both shared skills
+    in 6/6, `classify-panels` twice in one CM session.
+  - **Shape**: every answer validates against its contract. PM rows all carry
+    `panel_classes`, none empty, composite panels with several classes
+    (`micrograph, plot`). **D needs no sentence on assembling rows**: the
+    schema is enough (P5 closed).
+  - **Panels**: the one figure with spurious panels (content/3: 2 spurious, 1
+    missing, as if one panel were split) shows them in both shapes.
+  - **Cost** per condition, CM against PM: $0.32 / $0.35, $0.24 / $0.31,
+    $0.25 / $0.37 -- PM dearer in all three, on three figures.
+  - **For the notebook**: a CM check's `panel_label` instances sit under its
+    name, a PM row's once under `outputs[]`; per-check rates must count PM's
+    shared label towards every check, as `build_contract.py`'s verification
+    does, or the shapes are compared on different instance sets.
+
+Left: P8 (margins, proposed below, to settle), the preregistration, the
+notebook.
 
 #### P8, proposed 2026-10-05: margins
 
