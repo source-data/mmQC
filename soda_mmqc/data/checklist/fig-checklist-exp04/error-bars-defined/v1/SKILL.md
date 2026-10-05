@@ -67,15 +67,13 @@ the densitometry of its own bands is "blot, plot". A structure shown next
 to the binding curve that supports it is
 "molecular_or_protein_structure, plot".
 
-Dropping the second type silently removes that panel from whichever check cares
-about it.
+Dropping the second type can silently remove that panel from this check.
 
 ### 4. Report every panel
 
-Report **every** panel from the inventory, in label order, including panels
-whose content looks irrelevant to whatever the calling skill is checking. The
-calling skill decides what is relevant; dropping a panel here silently removes
-it from that decision. A panel you cannot classify at all gets `other`, never an empty list.
+Report **every** panel from step 1, in label order, including panels
+whose content looks irrelevant to this check. The steps below decide what is
+relevant; dropping a panel here silently removes it from that decision. A panel you cannot classify at all gets `other`, never an empty list.
 
 
 ### 5. How to report it
@@ -83,7 +81,7 @@ it from that decision. A panel you cannot classify at all gets `other`, never an
 State the classification in your own reply, as a comma-separated list with one
 entry per panel, in label order. Each entry carries two things:
 
-- the panel's label, exactly as the inventory gave it;
+- the panel's label, exactly as you recorded it in step 1;
 - every content type you found, from the vocabulary above, as a list.
 
 ## Applicability of the check to plots only

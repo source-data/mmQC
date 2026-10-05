@@ -18,7 +18,7 @@ Proceed step-by-step and establish a systematical strategy to be very accurate a
 
 To decide when the check is applicable or not, classify panels based on content type before you do anything else. Proceed step-by-step and be accurate.
 
-### 1. Get the panels
+### 1. Get all the panels
 
 Understand the figure image and see where there are figure sub-parts or
 "panels". Each panel depicts an experiment either with a plot, a micrograph,
@@ -52,13 +52,12 @@ violin, histogram, pie, donut charts, heatmaps |
 | `schematic` | a drawing that explains rather than presents measured data — experimental design, model, pathway, cartoon, timeline |
 | `photograph` | a macroscopic photograph — whole organism, culture plate, tissue specimen, apparatus |
 | `table` | values laid out in labelled rows and columns rather than drawn |
-| `other` | anything the list above does not cover. Say what it is in `evidence` |
+| `other` | anything the list above does not cover.|
 
 
 Note of caution: **A plot drawn inside a schematic, for illustration rather than to
   present data, is not a plot.** An idealised curve in a model diagram, a sketched bar
-  chart in an experimental-design cartoon: report `schematic` alone and say so
-  in `evidence`.
+  chart in an experimental-design cartoon: report `schematic` alone.
 
 ### 3. A panel can hold several things
 
@@ -68,24 +67,22 @@ the densitometry of its own bands is "blot, plot". A structure shown next
 to the binding curve that supports it is
 "molecular_or_protein_structure, plot".
 
-Dropping the second type silently removes that panel from whichever check cares
-about it.
+Dropping the second type can silently remove that panel from this check.
 
 ### 4. Report every panel
 
-Report **every** panel from the inventory, in label order, including panels
-whose content looks irrelevant to whatever the calling skill is checking. The
-calling skill decides what is relevant; dropping a panel here silently removes
-it from that decision. A panel you cannot classify at all gets `other` and an
-`evidence` note, never an empty list.
+Report **every** panel from step 1, in label order, including panels
+whose content looks irrelevant to this check. The steps below decide what is
+relevant; dropping a panel here silently removes it from that decision. A panel you cannot classify at all gets `other`, never an empty list.
+
 
 ### 5. How to report it
 
 State the classification in your own reply, as a comma-separated list with one
-entry per panel, in label order. Each entry carries three things:
+entry per panel, in label order. Each entry carries two things:
 
-- the panel's label, exactly as the inventory gave it;
-- every content type you found, from the vocabulary above, as a list
+- the panel's label, exactly as you recorded it in step 1;
+- every content type you found, from the vocabulary above, as a list.
 
 ## Check for scale bars on microscopy images
 For each panel in the figure:
