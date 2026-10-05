@@ -15,6 +15,10 @@ Tags:
              before the 2026-09-28 label fix)
 ``gold-v1``  the gold exp-03 was scored against, and the last state before the
              contract cleanup's migration
+``gold-v2``  the gold at the close of the contract cleanup (2026-10-04)
+``gold-v3``  ``gold-v2`` with micrograph-scale-bar's not_applicable (2026-10-05)
+``gold-v4``  ``gold-v3`` with exp-04's merged gold for do-fig-checklist-cm and
+             -pm added; the gold exp-04 is scored against
 
 A snapshot holds only gold files -- ``<example>/checks/<check>/expected_output.*``
 -- extracted with ``git archive`` into ``.gold-snapshots/<tag>/`` (gitignored),

@@ -15,7 +15,7 @@ the prep steps have passed.*
 
 *Reframed 2026-10-04. The first draft compared a new panel-major contract with
 exp-03's runs. exp-04 now runs **all its conditions itself**, on exp-03's DAG of
-skills carrying the cleaned wording and contracts, scored against `gold-v3`. It
+skills carrying the cleaned wording and contracts, scored against `gold-v4`. It
 is not compared with exp-01 to exp-03, which answered other prose and other
 contracts (see their notes, "Gold this was scored against"). Its conditions
 become the baseline for what follows.*
@@ -23,7 +23,7 @@ become the baseline for what follows.*
 ## Where this sits in the series
 
 1. **exp-04 — the baseline, and the schema question.** Three DAG
-   arrangements × two contract shapes, cleaned prose and contracts, `gold-v3`,
+   arrangements × two contract shapes, cleaned prose and contracts, `gold-v4`,
    one model, three checks.
 2. **Orchestration experiments.** Each varies one thing against exp-04's best
    condition — subagents for the checks, parallel dispatch, other arrangements
@@ -88,11 +88,13 @@ in this arm: closure assembly leaves it out of the other two.
 
 **The contract is the only difference along the schema factor.** The checks'
 prose says nothing about the shape of the answer, and D's says only which checks
-to run; the contract reaches the session as the leaf's `schema.json`. So within
-an arm, CM and PM run **the same skills, byte for byte**, and differ in the
-contract alone. If D needs a sentence on how rows are assembled, it goes into
-both versions of D, worded for each, and is reviewed as the one deliberate
-difference.
+to run; the contract reaches the session as the leaf's `schema.json`. D is two
+leaves in one checklist, `do-fig-checklist-cm` and `do-fig-checklist-pm`, each
+owning one contract, with prose identical but for the name (decided 2026-10-05);
+closure assembly gives a session the one it starts from and never the other. So
+within an arm, CM and PM run the same checks and shared skills byte for byte,
+and an entry skill differing in its name alone. D's prose says nothing on how
+rows are assembled; the smoke test (P9) shows whether it needs to.
 
 ### The skills: exp-03's DAG, with the cleanup's wording
 
@@ -175,7 +177,10 @@ is placed by hand:
 Both are derived, not authored, from the three cleaned `fig-checklist`
 contracts, with the same refuse-unless-identical verification exp-03 used.
 `gold-v3` is shared by check name, so the cleaned gold applies as it is: as
-exp-03 merged it per check for CM, merged per panel for PM.
+exp-03 merged it per check for CM, merged per panel for PM, into
+`checks/do-fig-checklist-cm/` and `checks/do-fig-checklist-pm/`. `gold-v4`
+tags `gold-v3` with those two merged golds added, and is what exp-04 is scored
+against.
 
 ### Endpoints (draft)
 
@@ -223,7 +228,7 @@ check-major contract is kept, being simpler.
 | P4 | Copy exp-03's skills, and exp-02's `classify-panels` v2 and `identify-panels` v1, into `fig-checklist-exp04`; then port the cleanup **one skill at a time** — proposed, edited by the author, checked | the wording encodes domain judgement |
 | P5 | D: one version per contract shape if its prose must differ — reviewed | the one deliberate difference along the schema factor |
 | P6 | Derive both contracts; both pass `audit_contracts` with no finding | the cleanup's conventions |
-| P7 | Pin the scorer to `gold-v3` | as exp-01 to exp-03 are pinned to theirs |
+| P7 | Pin the scorer to `gold-v4` | as exp-01 to exp-03 are pinned to theirs |
 | P8 | Size the margins from exp-03's observed variance | if decision 1 is non-inferiority on layers 1 and 2 |
 | P9 | Smoke test on all six conditions | as for exp-03 |
 
@@ -252,8 +257,25 @@ and classification are worded the same wherever they are written out, apart
 from what depends on having a caller, so the arms differ in arrangement
 only. `do-fig-checklist` is unchanged, pending P5.
 
+**P1, P3, P5, P6 done; P7 ready, 2026-10-05.**
 
-Draft. The contract cleanup it depended on is closed (`gold-v3`, 2026-10-05).
+- *P1*: the scorer read a field in an object nested in a row as absent on
+  both sides; fixed (`892393a14`), with a test that the nested and flat shapes
+  score identically. No earlier contract has such a field.
+- *P5*: two entry points, `do-fig-checklist-cm` and `-pm`, identical but for
+  the name (`0d2feb23e`).
+- *P6*: both contracts derived by `experiments/exp-04-panel-major/
+  build_contract.py`, which refuses unless each scores every check exactly as
+  its own contract does, on answers made from the gold (1,137 comparisons under
+  CM, 795 under PM); both audit with no finding.
+- *P3*: the merged gold, 38 files per shape (`27b8c4208`), reviewed.
+- *P7*: `gold-v4` tagged; the runner and notebook pin to it when written.
+
+Left: P2 (spurious panels per figure), P8 (margins), P9 (smoke test), the
+runner and the notebook.
+
+
+Draft. The contract cleanup it depended on is closed (`gold-v3`, 2026-10-05); exp-04 is scored against `gold-v4`.
 Next: settle the decisions, run P1–P3, port the skills one check at a time for
 review (P4–P5), derive and audit the contracts (P6–P7), size margins (P8),
 smoke-test (P9), then preregister in exp-03's format — on the `exp-04` branch
