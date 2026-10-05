@@ -1,6 +1,6 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp04 --write` instead. `graph fig-checklist-exp04` fails when it and the skills disagree.
 checklist: fig-checklist-exp04
-skill_set: b40c87e57ce649133d3593d38e69a84b947e3f516c00b234448f63420417986d
+skill_set: d527afdb25ee5d2d1d8bd077980a58fdd5f08f8a64684868dad8cc4b481426da
 skills:
 - name: classify-panels
   version: v1
@@ -12,9 +12,9 @@ skills:
   calls: []
   produces:
   - panel_classes
-- name: do-fig-checklist
+- name: do-fig-checklist-cm
   version: v1
-  content_hash: 88e720e26a1725ac8aa1020be3a9c79e5ccceeed702526e6d3201ee606392cb1
+  content_hash: 0792d3b788b2ac1ca19bef75225c7fdfef40d4d0e2b56603f8bf2ae090329925
   kind: check
   description: Run the whole figure checklist on a figure.
   calls:
@@ -22,7 +22,18 @@ skills:
   - individual-data-points
   - micrograph-scale-bar
   produces:
-  - do-fig-checklist
+  - do-fig-checklist-cm
+- name: do-fig-checklist-pm
+  version: v1
+  content_hash: 86e8001d93e5bf40b6a831903fe182a31d3afe28b0317a61e800e9ac50667f1f
+  kind: check
+  description: Run the whole figure checklist on a figure.
+  calls:
+  - error-bars-defined
+  - individual-data-points
+  - micrograph-scale-bar
+  produces:
+  - do-fig-checklist-pm
 - name: error-bars-defined
   version: v1
   content_hash: b7be10c4fe643d28d98c13e4214e48bb0039657b3bd850bf260fc3ca8531b649

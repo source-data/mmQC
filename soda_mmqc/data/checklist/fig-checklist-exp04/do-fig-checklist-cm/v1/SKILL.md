@@ -1,12 +1,12 @@
 ---
-name: do-fig-checklist
+name: do-fig-checklist-cm
 description: Run the whole figure checklist on a figure.
 requires:
 - micrograph-scale-bar
 - individual-data-points
 - error-bars-defined
 produces:
-  - do-fig-checklist
+  - do-fig-checklist-cm
 needs: []
 ---
 

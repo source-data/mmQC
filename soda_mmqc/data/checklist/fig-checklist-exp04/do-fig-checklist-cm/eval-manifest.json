@@ -1,5 +1,5 @@
 {
-  "checklist": "do-fig-checklist",
+  "checklist": "do-fig-checklist-cm",
   "defaults": {
     "matching_metric": "binary_polarity",
     "positive_value": "yes",
@@ -28,13 +28,13 @@
     },
     "micrograph-scale-bar[].scale_bar_on_image": {
       "na_values": [
-        ""
+        "not_applicable"
       ],
       "matching_metric": "binary_polarity"
     },
     "micrograph-scale-bar[].scale_bar_defined_in_caption": {
       "na_values": [
-        ""
+        "not_applicable"
       ],
       "matching_metric": "binary_polarity"
     },
@@ -48,7 +48,7 @@
     },
     "micrograph-scale-bar[].scale_bar_defined_in_image": {
       "na_values": [
-        ""
+        "not_applicable"
       ],
       "matching_metric": "binary_polarity"
     },
@@ -70,14 +70,15 @@
     },
     "individual-data-points[].individual_values": {
       "na_values": [
-        "not needed"
+        "not_applicable"
       ],
-      "matching_metric": "binary_polarity"
+      "matching_metric": "multiclass"
     },
     "individual-data-points[].decision": {
-      "matching_metric": "graded_string",
-      "string_compare": "exact",
-      "match_threshold": 1.0
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
     },
     "individual-data-points[].explanation": {
       "matching_metric": "graded_string",
@@ -89,32 +90,37 @@
       "string_compare": "exact",
       "match_threshold": 1.0
     },
+    "error-bars-defined[].is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
     "error-bars-defined[].error_bar_on_figure": {
+      "na_values": [
+        "not_applicable"
+      ],
       "matching_metric": "binary_polarity"
     },
     "error-bars-defined[].error_bar_defined_in_caption": {
       "na_values": [
-        "not needed"
+        "not_applicable"
       ],
-      "matching_metric": "binary_polarity"
+      "matching_metric": "multiclass"
     },
     "error-bars-defined[].from_the_caption": {
       "matching_metric": "graded_string",
       "na_values": [
-        "",
-        "not needed"
+        ""
       ],
       "string_compare": "semantic",
       "match_threshold": 0.8
     },
-    "error-bars-defined[].Decision_and_explanation": {
-      "matching_metric": "graded_string",
+    "error-bars-defined[].decision": {
       "na_values": [
-        "",
-        "not needed"
+        "not_applicable"
       ],
-      "string_compare": "semantic",
-      "match_threshold": 0.8
+      "matching_metric": "multiclass"
+    },
+    "error-bars-defined[].explanation": {
+      "scored": false
     }
   }
 }

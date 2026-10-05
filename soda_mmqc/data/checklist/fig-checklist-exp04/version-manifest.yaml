@@ -9,10 +9,14 @@
 # time (thinking/experiments/exp-04-panel-major.md, "How the skills are
 # written"); these pins move to those versions as they land.
 #
-# `do-fig-checklist` is the entry point and the only leaf: it owns the one
-# contract. Its schema.json and eval-manifest.json are exp-03's check-major
-# contract, not yet cleaned; both contracts, check-major and panel-major, are
-# derived from the cleaned fig-checklist contracts before the run (P6).
+# Two entry points, the only leaves, one per contract shape:
+# `do-fig-checklist-cm` (check-major: one list per check) and
+# `do-fig-checklist-pm` (panel-major: one row per panel, each check's fields in
+# an object inside it). Their prose is identical but for the name; each owns
+# its schema.json, eval-manifest.json and benchmark.json, derived from the
+# cleaned fig-checklist contracts by experiments/exp-04-panel-major/
+# build_contract.py. Closure assembly gives a session the leaf it starts from
+# and never the other.
 #
 # The three arms, and how each is reached:
 #
@@ -21,21 +25,23 @@
 #   A <- B <- C_i <- D    as above, and classify-panels -> v2          (calls identify-panels)
 #
 # where A is panel identification, B panel classification, C_i a check and D
-# the entry skill. Each runs under both contract shapes.
+# the entry skill, -cm or -pm. Each runs under both contract shapes.
 #
 # `identify-panels` is reached only in the third arm. exp-02 showed that its
 # description alone drew calls in 5-12% of A|B <- C sessions; closure assembly
 # keeps it out of the sessions of the other two arms.
 skills:
-  # Entry point. Owns schema.json, benchmark.json and eval-manifest.json.
-  do-fig-checklist: v1
+  # Entry points, one per contract shape. Each owns schema.json,
+  # benchmark.json and eval-manifest.json.
+  do-fig-checklist-cm: v1
+  do-fig-checklist-pm: v1
 
   # Shared skills. classify-panels is called by the checks at v3; at v2 it
   # calls identify-panels. Both idle when the checks are at v1.
   classify-panels: v1
   identify-panels: v1
 
-  # Checks, called by do-fig-checklist through prose.
+  # Checks, called by the entry point through prose.
   error-bars-defined: v1
   individual-data-points: v1
   micrograph-scale-bar: v1

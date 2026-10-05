@@ -2,9 +2,9 @@
 
 # `fig-checklist-exp04`
 
-1 check(s) and 5 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
+2 check(s) and 5 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
 
-- **SkillSet digest:** `b40c87e57ce649133d3593d38e69a84b947e3f516c00b234448f63420417986d`
+- **SkillSet digest:** `d527afdb25ee5d2d1d8bd077980a58fdd5f08f8a64684868dad8cc4b481426da`
 
 A check is a skill that owns the evaluation contracts (schema.json, benchmark.json). Nothing else distinguishes a check from a shared skill: the hierarchy below is carried entirely by what each skill's own prose asks for, never by where its directory sits.
 
@@ -13,7 +13,8 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 | skill | version | kind | description |
 | --- | --- | --- | --- |
 | `classify-panels` | v1 | shared | Classify panels by labelling them with the kind of content it shows (micrograph, plot, blot, molecular or protein structure, sequence, schematic, photograph, table). Use when a check applies to only some kinds of panel. |
-| `do-fig-checklist` | v1 | check | Run the whole figure checklist on a figure. |
+| `do-fig-checklist-cm` | v1 | check | Run the whole figure checklist on a figure. |
+| `do-fig-checklist-pm` | v1 | check | Run the whole figure checklist on a figure. |
 | `error-bars-defined` | v1 | shared | Check that error bars, and box or violin plot elements, are explained in the caption. |
 | `identify-panels` | v1 | shared | Find every labelled panel in a figure. Use before any per-panel check. |
 | `individual-data-points` | v1 | shared | Check that a plot showing averages also shows the individual data points behind them. |
@@ -23,7 +24,11 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 
 Each entry is one check and the skills its prose asks for, transitively.
 
-- `do-fig-checklist`
+- `do-fig-checklist-cm`
+  - `error-bars-defined`
+  - `individual-data-points`
+  - `micrograph-scale-bar`
+- `do-fig-checklist-pm`
   - `error-bars-defined`
   - `individual-data-points`
   - `micrograph-scale-bar`
