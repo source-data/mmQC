@@ -54,7 +54,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from soda_mmqc import logger                                  # noqa: E402
-from soda_mmqc.agentic.runner import run_check_live           # noqa: E402
+from soda_mmqc.agentic.runner import RunAborted, run_check_live  # noqa: E402
 from soda_mmqc.agentic.runtime import ASSEMBLY_CLOSURE        # noqa: E402
 from soda_mmqc.agentic.skills import resolve_check_dir        # noqa: E402
 
@@ -246,8 +246,12 @@ def main(argv: List[str] | None = None) -> int:
         logger.info("exp-04 smoke test: %d example(s), 1 replicate -- %s", limit,
                     ", ".join(f"{k} {v}" for k, v in planned.items()))
         failures: List[str] = []
-        for shape in shapes:
-            failures += run_shape(shape, root, replicates=1, limit=limit, force=True)
+        try:
+            for shape in shapes:
+                failures += run_shape(shape, root, replicates=1, limit=limit, force=True)
+        except RunAborted as stopped:
+            logger.error("smoke test stopped on an account error: %s", stopped)
+            return 2
         for line in failures:
             logger.error("  %s", line)
         return report_smoke(root) or (1 if failures else 0)
@@ -264,10 +268,18 @@ def main(argv: List[str] | None = None) -> int:
         return 0
 
     failures = []
-    for shape in shapes:
-        logger.info("[%s]", shape)
-        failures += run_shape(shape, RUNS, replicates=args.replicates,
-                              limit=args.limit, force=args.force)
+    try:
+        for shape in shapes:
+            logger.info("[%s]", shape)
+            failures += run_shape(shape, RUNS, replicates=args.replicates,
+                                  limit=args.limit, force=args.force)
+    except RunAborted as stopped:
+        # An invalid key or an empty account fails every session alike: the
+        # harness stops at the first, and so does the run.
+        logger.error("exp-04 stopped on an account error: %s", stopped)
+        logger.error("Fix the API key or the account, then rerun the same command: "
+                     "predictions already written are skipped.")
+        return 2
     if failures:
         # Reported, never swallowed: a condition that fails more often than
         # another is a result about that condition.

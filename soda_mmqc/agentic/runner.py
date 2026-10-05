@@ -11,6 +11,7 @@ import dataclasses
 
 import asyncio
 import json
+import re
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -68,12 +69,46 @@ DEFAULT_RUN_LABEL = "agentic"
 __all__ = [
     "run_check_mock",
     "run_check_live",
+    "RunAborted",
     "default_predictions_dir",
     "resolve_model",
     "PREDICTION_FILENAME",
     "DEFAULT_RUN_LABEL",
     "INTERMEDIATES_DIRNAME",
 ]
+
+
+class RunAborted(RuntimeError):
+    """A session failed for a reason every later session would share.
+
+    An invalid or revoked API key, or an account out of credit, fails each
+    session the same way, minutes apiece after the SDK's retries. Recording
+    those as per-example failures and carrying on turned an unattended run
+    into hours of nothing: exp-04's first full run, 2026-10-05, spent over an
+    hour failing 25 sessions on a revoked key before it was noticed.
+
+    ``report`` holds the entries up to and including the failure that ended
+    the run; every prediction written before it stays, so rerunning resumes.
+    """
+
+    def __init__(self, message: str, report: List[Dict[str, Any]]):
+        super().__init__(message)
+        self.report = report
+
+
+#: Errors about the account rather than the example: authentication,
+#: permission, credit. A rate limit or an overloaded API is not here -- it
+#: passes, and a later session may succeed.
+_ACCOUNT_ERROR = re.compile(
+    r"\b40[13]\b|failed to authenticate|invalid x-api-key|api key is invalid"
+    r"|authentication_error|permission_error|credit balance|billing",
+    re.IGNORECASE,
+)
+
+
+def is_account_error(exc: BaseException) -> bool:
+    """Whether a session's failure would recur in every later session."""
+    return bool(_ACCOUNT_ERROR.search(str(exc)))
 
 
 def default_predictions_dir(checklist: str, check: str, model: str) -> Path:
@@ -453,6 +488,17 @@ def run_check_live(
                     logger.error("%s failed: %s", relative_source_path, exc)
                     entry["status"] = "failed"
                     entry["error"] = str(exc)
+                    if is_account_error(exc):
+                        # ...but an account that cannot run this session cannot
+                        # run the next one either.
+                        report.append(entry)
+                        logger.error(
+                            "Stopping the run: %s is an account error, and every "
+                            "later session would fail the same way. Predictions "
+                            "written so far are kept; rerun to resume.",
+                            relative_source_path,
+                        )
+                        raise RunAborted(str(exc), report) from exc
                 report.append(entry)
 
     ok = sum(1 for e in report if e["status"] == "ok")
