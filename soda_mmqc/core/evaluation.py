@@ -313,7 +313,11 @@ class FlatEvaluator:
         pairings: dict[str, dict[tuple[Any, ...], RowPairing]],
     ) -> list[LeafInstanceResult]:
         assert leaf_spec.eval_list is not None
-        field_name = leaf_spec.eval_pattern.rsplit(".", maxsplit=1)[-1]
+        # The leaf's path inside its own row: what follows the last `[].`.
+        # Usually one field name, but an object nested in a row gives a dotted
+        # path (`outputs[].<check>.decision`), which reading the last segment
+        # alone silently scored as absent on both sides.
+        field_name = leaf_spec.eval_pattern.rsplit("[].", maxsplit=1)[-1]
         profile = self.manifest.profile_for(leaf_spec.eval_pattern)
         results: list[LeafInstanceResult] = []
 
@@ -324,9 +328,9 @@ class FlatEvaluator:
             prefix = _instance_prefix_for_context(leaf_spec.eval_list, context_key)
             for gold_index, gold_row in enumerate(gold_rows):
                 pred_index = pairing.pred_index_for_gold(gold_index)
-                exp_value = gold_row.get(field_name)
+                exp_value = _get_value_at_eval_pattern(gold_row, field_name)
                 pred_value = (
-                    pred_rows[pred_index].get(field_name)
+                    _get_value_at_eval_pattern(pred_rows[pred_index], field_name)
                     if pred_index is not None
                     else None
                 )
