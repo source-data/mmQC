@@ -190,10 +190,21 @@ shapes are compared on the same footing:
 
 - **Dispatch**: every check invoked; whether the shared step was done, and how
   often (trace and answer).
-- **Layer S, per check**: correct, missing and spurious rows.
-- **Spurious panels per figure**: a panel no check's gold has, counted once
-  however many check lists carry it — the measure of an inventory restated and
-  drifting.
+- **Layer S, per check**: correct, missing and spurious rows (the evaluator's
+  three outcomes). Two statistics, decided 2026-10-05:
+  - **for the comparison**, the gate statistic of exp-02 and exp-03,
+    `correct / (correct + missing)` -- the share of gold rows found, tested for
+    non-inferiority. It leaves spurious rows out, so it measures missing panels
+    alone;
+  - **for reporting**, `correct / (correct + missing + spurious)`, per check
+    and condition, beside the gate: the one number that charges both errors.
+    exp-02 and exp-03 reported the gate statistic only, with spurious rows
+    visible in the stacked layer-S plots but in no rate.
+- **Spurious panels per figure** (directional): a panel no check's gold has,
+  counted once however many check lists carry it — the measure of an inventory
+  restated and drifting. Missing panels per figure are reported beside it,
+  without a direction: layer S's gate already tests them per check, and exp-03
+  gives no mechanism by which PM would lose fewer.
 - **Layers 1 and 2**, per check and per field.
 - **Cost, turns, tokens and wall-clock time per figure**, from `tool_audit.json`.
 - **Replicate variance** per check and layer, for sizing later margins.
@@ -300,10 +311,9 @@ only. `do-fig-checklist` is unchanged, pending P5.
     shared label towards every check, as `build_contract.py`'s verification
     does, or the shapes are compared on different instance sets.
 
-Left: P8 (margins, proposed below, to settle), the preregistration, the
-notebook.
+Left: the preregistration, the notebook.
 
-#### P8, proposed 2026-10-05: margins
+#### P8, margins (settled 2026-10-05)
 
 exp-04's comparisons -- PM against CM within an arrangement -- pair two fan-out
 conditions of five replicates each, the structure of exp-03's fan-out against
@@ -319,7 +329,7 @@ prior data and is assumed as noisy as the second.
 | layer 1 | 0.02 | 0.0036-0.0066; `error-bars-defined` 0.015-0.016 | all |
 | layer 2 | 0.02 | <= 0.014, but `micrograph-scale-bar · from_the_image` 0.039 (10 examples) | all but `from_the_image` |
 
-Proposed: **keep δ_S = 0.0125, δ₁ = 0.02, δ₂ = 0.02**, and pre-declare as
+**Settled 2026-10-05**: **keep δ_S = 0.0125, δ₁ = 0.02, δ₂ = 0.02**, and pre-declare as
 expected to be uninformative `micrograph-scale-bar` at layer S in the two
 delegating arrangements, and `micrograph-scale-bar · from_the_image` at layer
 2 -- reported, not counted, if their intervals are wider than δ, as exp-03 did.
