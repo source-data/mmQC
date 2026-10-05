@@ -1,7 +1,7 @@
 ---
 name: identify-panels
 description: >-
-  Find every labelled panel in a figure and the caption text that describes it.
+  Find every labelled panel in a figure.
   Use before any per-panel check.
 requires: []
 produces:
@@ -28,6 +28,14 @@ some other kinds of images, a scheme.
   renumber them.
 - Sometimes one panel can include several images. For example, a panel can include both a microscopy image and a plot that typically displays a
 quantification of some features shown on the image.
+- When the image alone leaves the panel structure or sequence unclear, use the
+  caption: it usually names the panels in order and says which images belong
+  to which panel.
 
 You must analyze each labeled panel independently, even if panels are related.
+
+## How to report it
+
+State the panels in your own reply, as a comma-separated list of their labels,
+in label order.
 

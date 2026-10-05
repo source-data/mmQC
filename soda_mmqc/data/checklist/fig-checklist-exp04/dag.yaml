@@ -1,10 +1,10 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp04 --write` instead. `graph fig-checklist-exp04` fails when it and the skills disagree.
 checklist: fig-checklist-exp04
-skill_set: 5511be65ad8a0d1d786b156368571fa3e2120ea5fe6987129cb5fbd1922181c2
+skill_set: b40c87e57ce649133d3593d38e69a84b947e3f516c00b234448f63420417986d
 skills:
 - name: classify-panels
   version: v1
-  content_hash: 134518abca41fba9c7a89c2e76ffd38da890fc15404af88dd3468cc4f501873b
+  content_hash: 7463d21a2a5dcefab0db7603f243ec8a2fc69772da84d493298758cc8b54d17b
   kind: shared
   description: Classify panels by labelling them with the kind of content it shows
     (micrograph, plot, blot, molecular or protein structure, sequence, schematic,
@@ -25,7 +25,7 @@ skills:
   - do-fig-checklist
 - name: error-bars-defined
   version: v1
-  content_hash: 66945f2366f72552edcc7e6bc000e5bc5d14ee9841930200bbd2a2c82911cbaa
+  content_hash: b7be10c4fe643d28d98c13e4214e48bb0039657b3bd850bf260fc3ca8531b649
   kind: shared
   description: Check that error bars, and box or violin plot elements, are explained
     in the caption.
@@ -34,16 +34,15 @@ skills:
   - error-bars-defined
 - name: identify-panels
   version: v1
-  content_hash: 6d0c8b5303880bdcb9843823397fedf624839d7b94ac69d93252ccd3f3b7ead0
+  content_hash: e160683ccb461857d589c708c8f6506f8cd4e79a5e1e3b41f5a8e0ea0be72177
   kind: shared
-  description: Find every labelled panel in a figure and the caption text that describes
-    it. Use before any per-panel check.
+  description: Find every labelled panel in a figure. Use before any per-panel check.
   calls: []
   produces:
   - panels
 - name: individual-data-points
   version: v1
-  content_hash: ed0ef37c590fb1ce3104b03f0731e95964adffe37c43e378309add1e3673dc33
+  content_hash: 9f3a64e625347f095149fae98dadee57f5beb2c34d723aed0eff1f55ad1bcbc2
   kind: shared
   description: Check that a plot showing averages also shows the individual data points
     behind them.
@@ -52,7 +51,7 @@ skills:
   - individual-data-points
 - name: micrograph-scale-bar
   version: v1
-  content_hash: e456b31c0ab5dac5cd1e88b933e270aa4daba86552b13d7d95c117563e037cf2
+  content_hash: e3c04a4b1c4f25b660c035cde8a02c79259028383670722e49c5547dfaa09c21
   kind: shared
   description: Check that every micrograph panel carries a scale bar, and that its
     length is stated on the image or in the caption.

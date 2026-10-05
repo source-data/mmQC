@@ -4,7 +4,7 @@
 
 1 check(s) and 5 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
 
-- **SkillSet digest:** `5511be65ad8a0d1d786b156368571fa3e2120ea5fe6987129cb5fbd1922181c2`
+- **SkillSet digest:** `b40c87e57ce649133d3593d38e69a84b947e3f516c00b234448f63420417986d`
 
 A check is a skill that owns the evaluation contracts (schema.json, benchmark.json). Nothing else distinguishes a check from a shared skill: the hierarchy below is carried entirely by what each skill's own prose asks for, never by where its directory sits.
 
@@ -15,7 +15,7 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 | `classify-panels` | v1 | shared | Classify panels by labelling them with the kind of content it shows (micrograph, plot, blot, molecular or protein structure, sequence, schematic, photograph, table). Use when a check applies to only some kinds of panel. |
 | `do-fig-checklist` | v1 | check | Run the whole figure checklist on a figure. |
 | `error-bars-defined` | v1 | shared | Check that error bars, and box or violin plot elements, are explained in the caption. |
-| `identify-panels` | v1 | shared | Find every labelled panel in a figure and the caption text that describes it. Use before any per-panel check. |
+| `identify-panels` | v1 | shared | Find every labelled panel in a figure. Use before any per-panel check. |
 | `individual-data-points` | v1 | shared | Check that a plot showing averages also shows the individual data points behind them. |
 | `micrograph-scale-bar` | v1 | shared | Check that every micrograph panel carries a scale bar, and that its length is stated on the image or in the caption. |
 
