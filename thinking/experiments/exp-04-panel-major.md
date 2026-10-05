@@ -271,8 +271,45 @@ only. `do-fig-checklist` is unchanged, pending P5.
 - *P3*: the merged gold, 38 files per shape (`27b8c4208`), reviewed.
 - *P7*: `gold-v4` tagged; the runner and notebook pin to it when written.
 
-Left: P2 (spurious panels per figure), P8 (margins), P9 (smoke test), the
-runner and the notebook.
+- *Runner* (`10e30f9a6`): six conditions, closures checked -- neither entry
+  point reaches the other; `identify-panels` only in the third arrangement.
+- *P2*: `experiments/exp-04-panel-major/panels.py`, tested. A spurious panel is
+  a label the answer states -- in any check's list, for CM -- that the gold
+  does not have, counted once per figure; also missing and (CM only) partly
+  missing panels. **Reference, exp-03's CM fan-out** against `gold-v4`'s labels:
+  28 spurious panels in 190 sessions (`A|B|C_i <- D`) and 21 (`A|B <- C_i <-
+  D`), from only 4 and 5 of the 38 figures.
+
+Left: P8 (margins, proposed below, to settle), P9 (smoke test), the notebook.
+
+#### P8, proposed 2026-10-05: margins
+
+exp-04's comparisons -- PM against CM within an arrangement -- pair two fan-out
+conditions of five replicates each, the structure of exp-03's fan-out against
+per-check comparisons. exp-03's **observed** half-widths are therefore the
+closest estimate of exp-04's, with one caveat each way: both exp-04 sides are
+fan-outs, a little noisier than exp-03's per-check controls; and the cleaned
+vocabulary changes what layers 1 and 2 count. The third arrangement has no
+prior data and is assumed as noisy as the second.
+
+| gate | δ (exp-03's) | exp-03 observed half-width | expected to clear |
+|---|---|---|---|
+| layer S | 0.0125 | 0.0056-0.0073; `micrograph-scale-bar` delegating 0.0133 | all but `micrograph-scale-bar` in the two delegating arrangements |
+| layer 1 | 0.02 | 0.0036-0.0066; `error-bars-defined` 0.015-0.016 | all |
+| layer 2 | 0.02 | <= 0.014, but `micrograph-scale-bar · from_the_image` 0.039 (10 examples) | all but `from_the_image` |
+
+Proposed: **keep δ_S = 0.0125, δ₁ = 0.02, δ₂ = 0.02**, and pre-declare as
+expected to be uninformative `micrograph-scale-bar` at layer S in the two
+delegating arrangements, and `micrograph-scale-bar · from_the_image` at layer
+2 -- reported, not counted, if their intervals are wider than δ, as exp-03 did.
+
+**Spurious panels** need no margin: the hypothesis is directional. Statistic:
+per figure, spurious panels averaged over replicates; PM minus CM, paired by
+figure; percentile bootstrap over the 38 figures, 10,000 resamples; **fewer**
+if the 95% interval lies below 0. Power is limited and stated in advance: in
+exp-03 the spurious panels came from 4-5 figures, so the interval excludes 0
+only if PM removes most of them; a reduction confined to one or two figures
+will read as inconclusive, and the counts are reported either way.
 
 
 Draft. The contract cleanup it depended on is closed (`gold-v3`, 2026-10-05); exp-04 is scored against `gold-v4`.
