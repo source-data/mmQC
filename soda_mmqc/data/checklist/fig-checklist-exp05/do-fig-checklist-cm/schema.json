@@ -1,0 +1,200 @@
+{
+  "format": {
+    "type": "json_schema",
+    "name": "do-fig-checklist-cm",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "micrograph-scale-bar": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "panel_label": {
+                "type": "string",
+                "description": "Label of the panel (e.g., A, B, C)"
+              },
+              "micrograph": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no"
+                ],
+                "description": "Whether the panel contains a micrograph or microscopic image"
+              },
+              "scale_bar_on_image": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_applicable"
+                ],
+                "description": "Whether there is a scale bar present on the micrograph; not_applicable for a panel that is not a micrograph"
+              },
+              "scale_bar_defined_in_caption": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_applicable"
+                ],
+                "description": "Whether the scale bar is defined in the caption; not_applicable for a panel that is not a micrograph"
+              },
+              "from_the_caption": {
+                "type": "string",
+                "description": "The exact text from the caption that defines the scale bar; leave empty if none is found or the panel is not a micrograph"
+              },
+              "scale_bar_defined_in_image": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_applicable"
+                ],
+                "description": "Whether the scale bar is defined in the image; not_applicable for a panel that is not a micrograph"
+              },
+              "from_the_image": {
+                "type": "string",
+                "description": "The exact text from the image that defines the scale bar; leave empty if none is found or the panel is not a micrograph"
+              }
+            },
+            "required": [
+              "panel_label",
+              "micrograph",
+              "scale_bar_on_image",
+              "scale_bar_defined_in_caption",
+              "from_the_caption",
+              "scale_bar_defined_in_image",
+              "from_the_image"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "individual-data-points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "panel_label": {
+                "type": "string",
+                "description": "Label of the panel (e.g., A, B, C)"
+              },
+              "plot": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no"
+                ],
+                "description": "Whether the panel is a plot"
+              },
+              "individual_values": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_required",
+                  "not_applicable"
+                ],
+                "description": "Whether the panel displays individual data points: not_required for a plot type that does not require them, not_applicable for a panel that is not a plot"
+              },
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "not_applicable"
+                ],
+                "description": "Panel-level verdict on whether individual data points are shown where average values are displayed; not_applicable for a panel that is not a plot"
+              },
+              "explanation": {
+                "type": "string",
+                "description": "Short explanation of the decision"
+              }
+            },
+            "required": [
+              "panel_label",
+              "plot",
+              "individual_values",
+              "decision",
+              "explanation"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "error-bars-defined": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "panel_label": {
+                "type": "string",
+                "description": "Label of the panel (e.g., A, B, C)"
+              },
+              "is_a_plot": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no"
+                ],
+                "description": "Whether the panel is a plot"
+              },
+              "error_bar_on_figure": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_applicable"
+                ],
+                "description": "Whether error bars are present; not_applicable for a panel that is not a plot"
+              },
+              "error_bar_defined_in_caption": {
+                "type": "string",
+                "enum": [
+                  "yes",
+                  "no",
+                  "not_required",
+                  "not_applicable"
+                ],
+                "description": "Whether error bars are defined in caption; not_required for a plot without error bars, not_applicable for a panel that is not a plot"
+              },
+              "from_the_caption": {
+                "type": "string",
+                "description": "Text from caption describing error bars, when error bars are present; leave empty if no definition is found or the panel has no error bars"
+              },
+              "decision": {
+                "type": "string",
+                "enum": [
+                  "PASS",
+                  "FAIL",
+                  "not_applicable"
+                ],
+                "description": "Panel-level verdict on whether error bars or box-plot whiskers are adequately defined; PASS for a plot without error bars, not_applicable for a panel that is not a plot"
+              },
+              "explanation": {
+                "type": "string",
+                "description": "Brief rationale for the decision"
+              }
+            },
+            "required": [
+              "panel_label",
+              "is_a_plot",
+              "error_bar_on_figure",
+              "error_bar_defined_in_caption",
+              "from_the_caption",
+              "decision",
+              "explanation"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "micrograph-scale-bar",
+        "individual-data-points",
+        "error-bars-defined"
+      ],
+      "additionalProperties": false
+    },
+    "strict": true
+  }
+}
