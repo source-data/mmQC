@@ -97,9 +97,10 @@ A new checklist, `fig-checklist-exp05`, starts as a copy of
 
 - **`do-fig-checklist-cm` and `-pm` v2**: invoke `classify-panels` first, then
   each check. Identical but for the name, as at v1.
-- **the three checks at v4**: v3 without the call to `classify-panels`; they
-  take the panel list and classes established earlier in the session. Their
-  `requires` is empty.
+- **the three checks at v4**: v3 with its "Classify figure panels" section
+  removed, and `requires` empty. Nothing replaces it: the classification is in
+  the session's context from D's call, and the checks' remaining references to
+  "the panel classification" read it (decided 2026-10-06, reversing decision 2).
 - **`classify-panels` v1** as A|B: it identifies and classifies, and calls
   nothing. `identify-panels` is reached by no arrangement, and closure assembly
   leaves it out.
@@ -127,7 +128,7 @@ replicate variance — with two changes:
 | # | decision | recommendation |
 |---|---|---|
 | 1 | reuse exp-04's CM-2 and PM-2 as references | **settled 2026-10-06**: yes, with one sanity rerun of PM-2, reported, not gated |
-| 2 | does a check at v4 say where its panel list comes from | **settled**: yes — "established earlier in this session, by the skill that invoked you" |
+| 2 | does a check at v4 say where its panel list comes from | **settled, then reversed 2026-10-06**: no — the section is removed, and the classification already in context is what the checks' remaining references point to |
 | 3 | the order in D v2 | **settled**: `classify-panels`, then exp-04's check order |
 
 ## Prep work (draft)
@@ -155,4 +156,8 @@ replicate variance — with two changes:
 
 ## Status and next
 
-Draft, decisions settled. Next: P1–P2.
+Draft, decisions settled. **P1–P4 done, 2026-10-06**: `fig-checklist-exp05`
+copied from exp-04 (`44f7d5875`); D at v2 (`5b51b0812`) and the checks at v4,
+pinned; closures checked — D, `classify-panels` and the three checks, nothing
+else; contracts byte-identical to exp-04's. Next: P5 (runner), P6 (smoke test),
+P7 (notebook), then preregister.

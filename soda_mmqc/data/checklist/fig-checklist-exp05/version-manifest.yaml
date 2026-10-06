@@ -7,8 +7,9 @@
 # exp-05 adds the entry points at v2 (invoke classify-panels, then each check)
 # and the checks at v4 (no classification step; they take the panel list as
 # given), for the arrangement [A|B, {C_i}] <- D
-# (thinking/experiments/exp-05-shared-step-first.md). These pins move to those
-# versions as they land; until then they are exp-04's.
+# (thinking/experiments/exp-05-shared-step-first.md). The pins below are that
+# arrangement; exp-04's versions stay in the checklist, unpinned, so exp-04's
+# arrangements remain reachable by unpinning.
 #
 # Two entry points, the only leaves, one per contract shape:
 # `do-fig-checklist-cm` (check-major: one list per check) and
@@ -19,30 +20,28 @@
 # build_contract.py. Closure assembly gives a session the leaf it starts from
 # and never the other.
 #
-# The three arms, and how each is reached:
+# exp-05's arrangement, these pins:
 #
-#   A|B|C_i <- D          these pins                                   (checks at v1)
-#   A|B <- C_i <- D       --unpin the three checks -> v3               (classify-panels at v1)
-#   A <- B <- C_i <- D    as above, and classify-panels -> v2          (calls identify-panels)
+#   [A|B, {C_i}] <- D     D at v2 invokes classify-panels v1 (A|B) once, then
+#                         each check at v4, which classifies nothing itself
 #
 # where A is panel identification, B panel classification, C_i a check and D
-# the entry skill, -cm or -pm. Each runs under both contract shapes.
+# the entry skill, -cm or -pm. It runs under both contract shapes.
 #
-# `identify-panels` is reached only in the third arm. exp-02 showed that its
-# description alone drew calls in 5-12% of A|B <- C sessions; closure assembly
-# keeps it out of the sessions of the other two arms.
+# `identify-panels` is reached by no exp-05 arrangement; closure assembly
+# keeps it out of every session.
 skills:
   # Entry points, one per contract shape. Each owns schema.json,
-  # benchmark.json and eval-manifest.json.
-  do-fig-checklist-cm: v1
-  do-fig-checklist-pm: v1
+  # benchmark.json and eval-manifest.json. v2 invokes classify-panels first.
+  do-fig-checklist-cm: v2
+  do-fig-checklist-pm: v2
 
-  # Shared skills. classify-panels is called by the checks at v3; at v2 it
-  # calls identify-panels. Both idle when the checks are at v1.
+  # Shared skills. classify-panels v1 is A|B, invoked by D.
   classify-panels: v1
   identify-panels: v1
 
-  # Checks, called by the entry point through prose.
-  error-bars-defined: v1
-  individual-data-points: v1
-  micrograph-scale-bar: v1
+  # Checks, invoked by the entry point after classify-panels. v4 takes the
+  # panel classification as given.
+  error-bars-defined: v4
+  individual-data-points: v4
+  micrograph-scale-bar: v4

@@ -1,6 +1,6 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp05 --write` instead. `graph fig-checklist-exp05` fails when it and the skills disagree.
 checklist: fig-checklist-exp05
-skill_set: d527afdb25ee5d2d1d8bd077980a58fdd5f08f8a64684868dad8cc4b481426da
+skill_set: ae77558f9933341fd72e83de5a1a606950a96b79f7259cab7f7b9dab99b7f5a0
 skills:
 - name: classify-panels
   version: v1
@@ -13,30 +13,32 @@ skills:
   produces:
   - panel_classes
 - name: do-fig-checklist-cm
-  version: v1
-  content_hash: 0792d3b788b2ac1ca19bef75225c7fdfef40d4d0e2b56603f8bf2ae090329925
+  version: v2
+  content_hash: 1fd3e561ee4d78723c209e532e19cf1f849c24695060fae44cbb99db28a69ec3
   kind: check
   description: Run the whole figure checklist on a figure.
   calls:
+  - classify-panels
   - error-bars-defined
   - individual-data-points
   - micrograph-scale-bar
   produces:
   - do-fig-checklist-cm
 - name: do-fig-checklist-pm
-  version: v1
-  content_hash: 86e8001d93e5bf40b6a831903fe182a31d3afe28b0317a61e800e9ac50667f1f
+  version: v2
+  content_hash: fe132ecd231ec7c3266dfce74d26638b073ee3e13778ec2387f2fd78de02cf43
   kind: check
   description: Run the whole figure checklist on a figure.
   calls:
+  - classify-panels
   - error-bars-defined
   - individual-data-points
   - micrograph-scale-bar
   produces:
   - do-fig-checklist-pm
 - name: error-bars-defined
-  version: v1
-  content_hash: b7be10c4fe643d28d98c13e4214e48bb0039657b3bd850bf260fc3ca8531b649
+  version: v4
+  content_hash: 6e7d9111b20c5c710c03d4fa8eb0d026490aeed023805d644b7e2911eee7202a
   kind: shared
   description: Check that error bars, and box or violin plot elements, are explained
     in the caption.
@@ -52,8 +54,8 @@ skills:
   produces:
   - panels
 - name: individual-data-points
-  version: v1
-  content_hash: 9f3a64e625347f095149fae98dadee57f5beb2c34d723aed0eff1f55ad1bcbc2
+  version: v4
+  content_hash: 4b4708364cca3f56fad3754400f5410e0bdbd6ee5abd6217ef10ad2604c99789
   kind: shared
   description: Check that a plot showing averages also shows the individual data points
     behind them.
@@ -61,8 +63,8 @@ skills:
   produces:
   - individual-data-points
 - name: micrograph-scale-bar
-  version: v1
-  content_hash: e3c04a4b1c4f25b660c035cde8a02c79259028383670722e49c5547dfaa09c21
+  version: v4
+  content_hash: 5758c47db04baf29ed167895ff2867647709c448822b894448f517a0e48cf48b
   kind: shared
   description: Check that every micrograph panel carries a scale bar, and that its
     length is stated on the image or in the caption.
