@@ -78,19 +78,17 @@ failure mode, which this arrangement could make easier rather than harder.
 | **PM-5** | `do-fig-checklist-pm` v2 | `[A\|B, {C_i}] ← D` | new, 190 sessions |
 | CM-2 | `do-fig-checklist-cm` v1 | `A\|B ← C_i ← D` | **exp-04's run, reused** |
 | PM-2 | `do-fig-checklist-pm` v1 | `A\|B ← C_i ← D` | **exp-04's run, reused** |
-| PM-2, drift check | `do-fig-checklist-pm` v1 | `A\|B ← C_i ← D` | rerun, 38 figures × 1 replicate |
+| PM-2, sanity rerun | `do-fig-checklist-pm` v1 | `A\|B ← C_i ← D` | rerun, 38 figures × 1 replicate |
 
 Model, provider, closure assembly, the 38 figures, 5 replicates, the contracts
 and `gold-v4` are exp-04's. **About 418 sessions, ≈ $40.**
 
-**Reusing exp-04's references** puts the two sides of each comparison days
-apart. The drift check reruns the reference most exposed to it — PM-2, whose
-output tokens hypothesis 2 reads — on every figure once, and its output tokens
-and layer-S and layer-1 rates are compared with exp-04's PM-2 before either
-hypothesis is read. *Open: what counts as drift* — recommended, a per-figure
-output-token ratio, rerun ÷ exp-04, whose interval excludes 1, or a layer-S or
-layer-1 difference beyond exp-04's margin; if so, hypothesis 2 is reported as
-confounded and the references are rerun in full (380 sessions) before any claim.
+**exp-04's references are reused** (decided 2026-10-06): exp-04 ran on
+2026-10-05/06, with the same model pinned by name, and nothing on this side has
+changed. As a **sanity check**, not a gate, exp-04's PM-2 — the reference
+hypothesis 2 reads — is rerun once on every figure, and its output tokens and
+layer-S and layer-1 rates are reported beside exp-04's. No decision rule rests
+on it: one replicate against five is a look, not a test.
 
 ### The skills
 
@@ -128,10 +126,9 @@ replicate variance — with two changes:
 
 | # | decision | recommendation |
 |---|---|---|
-| 1 | reuse exp-04's CM-2 and PM-2 as references, with a drift check | yes, as above |
-| 2 | what counts as drift | as above |
-| 3 | does a check at v4 say where its panel list comes from | yes: "established earlier in this session, by the skill that invoked you" — without it, a check invoked without the list has nothing to fall back on |
-| 4 | the order in D v2 | `classify-panels`, then exp-04's check order |
+| 1 | reuse exp-04's CM-2 and PM-2 as references | **settled 2026-10-06**: yes, with one sanity rerun of PM-2, reported, not gated |
+| 2 | does a check at v4 say where its panel list comes from | **settled**: yes — "established earlier in this session, by the skill that invoked you" |
+| 3 | the order in D v2 | **settled**: `classify-panels`, then exp-04's check order |
 
 ## Prep work (draft)
 
@@ -147,8 +144,8 @@ replicate variance — with two changes:
 
 ## Threats (draft)
 
-- **References from another run**, days earlier; the drift check covers one of
-  them on one replicate.
+- **References from another run**, a day earlier; the sanity rerun looks at
+  one of them on one replicate.
 - **Wording moves with the arrangement.** D v2 says more than D v1, and the
   checks at v4 say less than at v3; the comparison is of arrangements as
   written, not of call order alone.
@@ -158,4 +155,4 @@ replicate variance — with two changes:
 
 ## Status and next
 
-Draft. Next: settle the decisions, then P1–P2.
+Draft, decisions settled. Next: P1–P2.
