@@ -1,0 +1,108 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 50 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "The spatial expression panels are heatmap-type overlays on tissue spots; heatmaps are exempt from the requirement to show individual data points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Panel contains only micrographs (H&E and RNAscope images), no plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each tumor sample (LUAD and LUSC) is plotted as an individual dot; individual data points are shown."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Bar chart overlays individual replicate dots (n=3 per group) on top of the mean +/- SD bars."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "The spatial expression heatmaps do not include error bars; none are required for this plot type."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel B consists of micrographs only, not a plot."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "Plot represents median with 95% CI.",
+      "decision": "PASS",
+      "explanation": "The dot plot shows a median line with 95% CI whiskers, which is explicitly defined in the caption."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "Plot represents mean +/- SD",
+      "decision": "PASS",
+      "explanation": "The bar chart error bars are defined in the caption as mean +/- SD."
+    }
+  ]
+}

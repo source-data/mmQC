@@ -1,0 +1,147 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "no",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel A shows only fluorescence micrographs (GFP, DsRed, MitoTracker, Merge); there is no plot of averaged data."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel A is a micrograph panel, not a plot, so this check does not apply."
+      }
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "yes",
+        "from_the_image": "10 μm"
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "no",
+        "decision": "FAIL",
+        "explanation": "The JC-1 ratio and anti-HMGB1 intensity bar graphs (n=20) show group means with error bars but no individual data points are overlaid."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "yes",
+        "error_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "Error bars are visible on both bar graphs but the caption does not state whether they represent SD, SEM, or another measure of variability."
+      }
+    },
+    {
+      "panel_label": "C",
+      "panel_classes": [
+        "blot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel C is a Western blot image with no accompanying quantification plot."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel C is a blot, not a plot, so this check does not apply."
+      }
+    },
+    {
+      "panel_label": "D",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "yes",
+        "from_the_image": "20 μm"
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "no",
+        "decision": "FAIL",
+        "explanation": "The SDH and COX signal intensity bar graphs show group means with error bars and sample sizes (N) printed on the bars, but no individual data points are plotted."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "yes",
+        "error_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "Error bars are present on the SDH and COX quantification graphs, but the caption text provided does not define what they represent (only significance notation is given)."
+      }
+    },
+    {
+      "panel_label": "E",
+      "panel_classes": [
+        "schematic",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "The FACS histograms display the full TMRM intensity distribution of all measured cells rather than a summary average, so overlaying individual points is not required (analogous to a histogram/distribution plot)."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The FACS histograms show raw count distributions without error bars, so no definition is required."
+      }
+    }
+  ]
+}

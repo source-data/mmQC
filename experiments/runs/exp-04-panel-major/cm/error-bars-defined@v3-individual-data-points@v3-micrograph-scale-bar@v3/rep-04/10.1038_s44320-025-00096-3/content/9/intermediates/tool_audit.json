@@ -1,0 +1,131 @@
+{
+  "session": {
+    "tools": [
+      "Skill",
+      "StructuredOutput"
+    ],
+    "skills": [
+      "classify-panels",
+      "do-fig-checklist-cm",
+      "error-bars-defined",
+      "individual-data-points",
+      "micrograph-scale-bar",
+      "deep-research",
+      "design-sync",
+      "dataviz",
+      "update-config",
+      "verify",
+      "debug",
+      "code-review",
+      "simplify",
+      "batch",
+      "fewer-permission-prompts",
+      "doctor",
+      "loop",
+      "claude-api",
+      "workflow-authoring",
+      "run",
+      "run-skill-generator"
+    ],
+    "model": "claude-sonnet-5",
+    "permissionMode": "dontAsk",
+    "cwd": "/private/var/folders/96/p4_g4fsx0fdd80t9ly5mhdrc0000gq/T/soda-mmqc-agentic-si0lla8n"
+  },
+  "usage": {
+    "total_cost_usd": 0.0938109,
+    "num_turns": 10,
+    "duration_ms": 54680,
+    "usage": {
+      "input_tokens": 6,
+      "cache_creation_input_tokens": 10611,
+      "cache_read_input_tokens": 20767,
+      "output_tokens": 6123,
+      "output_tokens_details": {
+        "thinking_tokens": 3202
+      },
+      "server_tool_use": {
+        "web_search_requests": 0,
+        "web_fetch_requests": 0
+      },
+      "service_tier": "standard",
+      "cache_creation": {
+        "ephemeral_1h_input_tokens": 0,
+        "ephemeral_5m_input_tokens": 10611
+      },
+      "inference_geo": "global",
+      "iterations": [
+        {
+          "input_tokens": 2,
+          "output_tokens": 5860,
+          "cache_read_input_tokens": 9287,
+          "cache_creation_input_tokens": 3849,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 3849,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "type": "message"
+        }
+      ],
+      "speed": "standard"
+    }
+  },
+  "calls": [
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "do-fig-checklist-cm"
+      },
+      "tool_use_id": "toolu_01TYs27ZbkCxFbfp7RqbFnEu",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-10-06T00:18:42.402497+00:00"
+    },
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "micrograph-scale-bar"
+      },
+      "tool_use_id": "toolu_01U29p5PV6tUUK6pZ1TBm1dZ",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-10-06T00:18:44.055437+00:00"
+    },
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "individual-data-points"
+      },
+      "tool_use_id": "toolu_01EcrJqRdaE8zZLuCMR3M2Pi",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-10-06T00:18:44.409509+00:00"
+    },
+    {
+      "tool": "Skill",
+      "input": {
+        "skill": "error-bars-defined"
+      },
+      "tool_use_id": "toolu_01DLmm1ZG6pBeWYFiCR24xxG",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-10-06T00:18:44.612029+00:00"
+    },
+    {
+      "tool": "StructuredOutput",
+      "input": {
+        "elided": {
+          "bytes": 6705,
+          "keys": [
+            "error-bars-defined",
+            "individual-data-points",
+            "micrograph-scale-bar"
+          ]
+        }
+      },
+      "tool_use_id": "toolu_011AqnkAJjnUg4mv3ax6pbj9",
+      "decision": "allow",
+      "reason": "",
+      "timestamp": "2026-10-06T00:19:34.973175+00:00"
+    }
+  ]
+}

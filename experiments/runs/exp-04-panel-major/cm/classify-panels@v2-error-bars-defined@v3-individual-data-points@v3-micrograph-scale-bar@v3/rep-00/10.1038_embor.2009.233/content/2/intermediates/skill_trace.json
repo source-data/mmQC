@@ -1,0 +1,68 @@
+[
+  {
+    "skill": "do-fig-checklist-cm",
+    "version": "v1",
+    "tool_input": {
+      "skill": "do-fig-checklist-cm",
+      "args": "Figure 2 caption and image provided. Run the full figure checklist (identify panels, classify panels, then apply micrograph-scale-bar, individual-data-points, and error-bars-defined checks) on this figure.\n\nFigure caption:\nFigure 2. Absence of Asef and/or Asef2 impairs intestinal adenoma formation in ApcMin/+ mice. (A) Macroscopic comparison of the small intestine of ApcMin/+ (left) and Asef−/−Asef2−/−ApcMin/+ (right) mice at 4 months of age. Arrowheads and arrows indicate large and small adenomatous polyps, respectively. (B) Haematoxylin and eosin staining of intestinal 'Swiss roll' sections from ApcMin/+ and Asef−/−Asef2−/−ApcMin/+ mice at 4 months of age. The regions in boxes are magnified and shown in the lower panels. The dashed lines depict the boundary between normal and adenoma tissues. (C) The mean numbers and sizes of intestinal polyps in ApcMin/+ mice with different Asef and Asef2 genotypes at 4 months of age (n=8–18 per genotype). *P<0.05; ***P<0.001. (D) Kaplan–Meier survival curves of Asef2+/+ApcMin/+, Asef2+/−ApcMin/+ and Asef2−/−ApcMin/+ mice (n=24–27 per genotype). (E) The amounts of GTP‐bound Rac1 and Cdc42 in polyps of ApcMin/+ and Asef−/−Asef2−/−ApcMin/+ mice. GTP‐bound GTPases were precipitated using GST–PAK CRIB coupled to glutathione–Sepharose beads and detected by immunoblotting with the indicated antibodies (for Rac1 and Cdc42). The total amount of GTPases in the lysates before pulldown assays were also analysed. (F) Immunohistochemical analysis of pJNK, MMP9 and Asef/Asef2 in intestinal sections from ApcMin/+ and Asef−/−Asef2−/−ApcMin/+ mice. Arrowheads indicate pJNK staining in intestinal crypts (also see supplementary Fig S12 online). Scale bar, 100 μm. (G) Immunoblotting analysis and zymography of the normal intestinal mucosa (N) and polyps (P) of ApcMin/+ and Asef−/−ApcMin/+ mice. Tissue lysates were subjected to immunoblotting with antibodies specific for the indicated proteins. Polyps of similar sizes of ApcMin/+ and Asef−/−ApcMin/+ mice were used for experiments. As pJNK2 showed no change in abundance, only the bands of pJNK1 and JNK1 are shown in this figure. Actin and c‐Myc were used as a loading control and a marker of β‐catenin–TCF‐mediated activation, respectively. MMP9 gelatinolytic activities were examined by gelatin zymography. CRIB, Cdc42/Rac interactive binding; GST, glutathione S‐transferase; GTP, guanosine triphosphate; MMP9, matrix metalloproteinase 9; PAK, p21‐activated kinase; pJNK, phosphorylated c‐Jun N‐terminal kinase; TCF, T‐cell factor; zymo, gelatin zymography.\n\nPanels present: A (macroscopic photo of intestine), B (H&E micrograph sections), C (box plot of total polyp number per mouse across genotypes, plus a 3D bar chart of polyp number per mouse by diameter across genotypes), D (Kaplan-Meier survival curve), E (western blot panels plus a bar graph of GTP-bound form quantification with error bars), F (immunohistochemistry micrographs with scale bar), G (western blot/zymography panels plus a bar graph \"Relative expression\" with error bars and significance asterisks).\n"
+    },
+    "tool_use_id": "toolu_01UYEEo532V2F2CDDoFpToQY",
+    "timestamp": "2026-10-06T00:43:03.350363+00:00",
+    "source": "hook"
+  },
+  {
+    "skill": "micrograph-scale-bar",
+    "version": "v3",
+    "tool_input": {
+      "skill": "micrograph-scale-bar",
+      "args": "Figure 2. Panels: A (macroscopic photo, not micrograph), B (H&E micrograph sections of intestine, no scale bar mentioned in caption, no scale bar visible on image), C (box plot and 3D bar chart, not micrographs), D (Kaplan-Meier curve, not micrograph), E (western blot images + bar graph, not micrographs), F (immunohistochemistry micrographs, caption states \"Scale bar, 100 μm\" - check if scale bar is visible on image), G (western blot/zymography images + bar graph, not micrographs).\n\nCaption text: \"(F) Immunohistochemical analysis of pJNK, MMP9 and Asef/Asef2 in intestinal sections from ApcMin/+ and Asef−/−Asef2−/−ApcMin/+ mice. Arrowheads indicate pJNK staining in intestinal crypts (also see supplementary Fig S12 online). Scale bar, 100 μm.\"\n\nImage description for panel F: six IHC micrograph images (pJNK, MMP9, Asef/Asef2 rows x ApcMin/+, Asef-/-Asef2-/-ApcMin/+ columns). A scale bar appears to be present in the bottom right of the panel F image grid (near the bottom right micrograph), but need to confirm from the image which panels actually carry the scale bar mark itself.\n\nPanel B image description: top row shows low-magnification Swiss-roll H&E sections with boxed regions; bottom row shows magnified insets. No scale bar is visible in the image and none is mentioned in caption for panel B specifically."
+    },
+    "tool_use_id": "toolu_01GdXcNxJHzwhaUVVfs3q6wc",
+    "timestamp": "2026-10-06T00:43:09.775401+00:00",
+    "source": "hook"
+  },
+  {
+    "skill": "individual-data-points",
+    "version": "v3",
+    "tool_input": {
+      "skill": "individual-data-points",
+      "args": "Figure 2. Panels needing evaluation for averages/individual data points:\n- A: macroscopic photo, not a plot.\n- B: micrograph, not a plot.\n- C: Two plots - (1) box plot of \"Total polyp number per mouse\" across 6 genotypes (Asef+/+, Asef+/-, Asef-/-, Asef2+/-, Asef2-/-, Asef-/-Asef2-/-), shown as box-and-whisker plots (median line, box, whiskers) - no individual points overlaid. (2) 3D bar chart of \"Polyp number per mouse\" by polyp diameter category across genotypes - bar heights represent mean values, no individual data points or error bars shown.\n- D: Kaplan-Meier survival curve - not an average/bar plot, not required to show individual points.\n- E: bar graph \"GTP-bound form\" (relative amount, normalized to 1) for Rac1 and Cdc42, two bars, with error bar shown on Cdc42 bar; no individual data points overlaid; appears to be representative of n=1 blot normalized, or quantification across replicates - caption doesn't specify n.\n- F: micrograph, not a plot.\n- G: bar graph \"Relative expression\" of Asef, pJNK1, MMP9 across conditions (N, P for ApcMin/+ and Asef-/-ApcMin/+), with error bars and asterisks for significance; no individual data points overlaid.\n\nPlease determine, for each plot panel, whether individual data points are required and whether they are shown."
+    },
+    "tool_use_id": "toolu_01WyJGrXLYGZQFx4J51sBBfa",
+    "timestamp": "2026-10-06T00:43:14.923389+00:00",
+    "source": "hook"
+  },
+  {
+    "skill": "error-bars-defined",
+    "version": "v3",
+    "tool_input": {
+      "skill": "error-bars-defined",
+      "args": "Figure 2. Panels with error bars or box plot whiskers:\n- C: Box plot (box-and-whisker) of \"Total polyp number per mouse\" per genotype - box plots have whiskers. Caption text for panel C: \"The mean numbers and sizes of intestinal polyps in ApcMin/+ mice with different Asef and Asef2 genotypes at 4 months of age (n=8–18 per genotype). *P<0.05; ***P<0.001.\" No explicit definition of what the box/whiskers represent (e.g., median, quartiles, min/max, SD, SEM) is given in the caption.\n- C (3D bar chart): bars show polyp number per mouse by diameter category; no visible error bars.\n- D: Kaplan-Meier curve - no error bars typically, step function lines only; caption: \"Kaplan–Meier survival curves of Asef2+/+ApcMin/+, Asef2+/−ApcMin/+ and Asef2−/−ApcMin/+ mice (n=24–27 per genotype).\" No error bar definition needed if none shown.\n- E: Bar graph of GTP-bound form (Rac1, Cdc42) with an error bar visible on at least one bar (Cdc42). Caption for E: \"The amounts of GTP‐bound Rac1 and Cdc42 in polyps of ApcMin/+ and Asef−/−Asef2−/−ApcMin/+ mice. GTP‐bound GTPases were precipitated using GST–PAK CRIB coupled to glutathione–Sepharose beads and detected by immunoblotting with the indicated antibodies (for Rac1 and Cdc42). The total amount of GTPases in the lysates before pulldown assays were also analysed.\" No mention of error bar type (SD/SEM) or n.\n- G: Bar graph \"Relative expression\" (Asef, pJNK1, MMP9) with error bars and asterisks. Caption for G: \"Immunoblotting analysis and zymography of the normal intestinal mucosa (N) and polyps (P) of ApcMin/+ and Asef−/−ApcMin/+ mice. Tissue lysates were subjected to immunoblotting with antibodies specific for the indicated proteins. Polyps of similar sizes of ApcMin/+ and Asef−/−ApcMin/+ mice were used for experiments. As pJNK2 showed no change in abundance, only the bands of pJNK1 and JNK1 are shown in this figure. Actin and c‐Myc were used as a loading control and a marker of β‐catenin–TCF‐mediated activation, respectively. MMP9 gelatinolytic activities were examined by gelatin zymography.\" No mention of error bar type or n for the quantification graph.\n\nDetermine for each panel whether error bars/whiskers are adequately defined in the caption."
+    },
+    "tool_use_id": "toolu_01R8Q4iQAu24aQ4Wd4LFyPCX",
+    "timestamp": "2026-10-06T00:43:22.824590+00:00",
+    "source": "hook"
+  },
+  {
+    "skill": "classify-panels",
+    "version": "v2",
+    "tool_input": {
+      "skill": "classify-panels",
+      "args": "Figure 2 (7 labeled panels A-G, panel C and G contain two sub-plots each as composite images). Classify each panel:\n- A: Macroscopic photograph of small intestine (gross photo) - classification: photograph\n- B: Haematoxylin and eosin (H&E) stained histology sections of intestine (low mag + magnified insets) - classification: micrograph\n- C: Composite of two plots - (1) box-and-whisker plot of \"Total polyp number per mouse\" across 6 genotypes - classification: plot (box plot); (2) 3D bar chart of \"Polyp number per mouse\" by polyp diameter - classification: plot (bar chart)\n- D: Kaplan-Meier survival curves - classification: plot (line/survival curve)\n- E: Composite of western blot images (GTP-Rac1, Total Rac1, GTP-Cdc42, Total Cdc42) - classification: blot; plus a bar graph \"GTP-bound form\" quantification - classification: plot (bar chart)\n- F: Immunohistochemistry images (pJNK, MMP9, Asef/Asef2 staining) in grid - classification: micrograph\n- G: Composite of western blot images and gelatin zymography images - classification: blot; plus a bar graph \"Relative expression\" quantification - classification: plot (bar chart)\n\nPlease confirm classification for each panel, noting composite panels contain multiple classifications."
+    },
+    "tool_use_id": "toolu_011bt1nXt7rW78JH7wAf6E2r",
+    "timestamp": "2026-10-06T00:43:28.834951+00:00",
+    "source": "hook"
+  },
+  {
+    "skill": "identify-panels",
+    "version": "v1",
+    "tool_input": {
+      "skill": "identify-panels",
+      "args": "Figure 2 contains labeled panels A, B, C, D, E, F, G as described in the caption and image layout provided earlier."
+    },
+    "tool_use_id": "toolu_017cwtANrpiT6bPYSt8MSuvu",
+    "timestamp": "2026-10-06T00:43:30.996687+00:00",
+    "source": "hook"
+  }
+]

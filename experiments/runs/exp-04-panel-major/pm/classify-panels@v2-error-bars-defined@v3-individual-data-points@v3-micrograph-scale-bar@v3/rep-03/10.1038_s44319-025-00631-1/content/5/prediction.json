@@ -1,0 +1,145 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "no",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "Panel shows spatial heatmap-style scatter of deconvolution scores per spot; heatmap/spatial-map type plots are exempt from requiring overlaid individual points."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "Spatial scatter/heatmap plot has no error bars or box-whisker elements to define."
+      }
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "yes",
+        "decision": "PASS",
+        "explanation": "Box plots in this panel have individual data points (dots) overlaid for each biological replicate."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "yes",
+        "error_bar_defined_in_caption": "yes",
+        "from_the_caption": "The box plots represent the distribution of values for each group, extending from the 25th percentile to the 75th percentile; T11b-high LUSC: Classical monocyte (minima=0.00035, median=0.32265, maxima=1, Q1 = 0.16193, Q3 = 0.52806)... [full Q1/Q3/median/minima/maxima values given for each population and group]",
+        "decision": "PASS",
+        "explanation": "Box-whisker elements (quartiles, median, min, max) are explicitly defined with numeric values in the caption."
+      }
+    },
+    {
+      "panel_label": "C",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "GSEA enrichment score plots are line plots, which are exempt from the individual-data-points requirement."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "Enrichment score line plots do not display error bars."
+      }
+    },
+    {
+      "panel_label": "D",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "no",
+        "decision": "FAIL",
+        "explanation": "Bar chart of log2 fold-change per gene (with associated p-values implying an underlying statistical comparison) shows only summary bars without any overlaid individual data points."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "Bars show single log2 fold-change values per gene with no error bars present."
+      }
+    },
+    {
+      "panel_label": "E",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 100 μm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel contains H&E and IHC micrographs, not a plot."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel is a set of micrographs, not a plot, so this check does not apply."
+      }
+    }
+  ]
+}

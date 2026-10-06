@@ -1,0 +1,58 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar 10 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Panel A is a set of micrographs (pseudocoloured confocal images), not a plot."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Each line plot (and its inset) displays the individual intensity measurements as scatter points over time (red for euchromatin, green for heterochromatin), overlaid with the model fit lines, rather than only showing averaged/fitted curves."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel A is composed of micrographs, not a plot, so error bars are not applicable."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "no",
+      "from_the_caption": "",
+      "decision": "FAIL",
+      "explanation": "The plots (and their insets) show visible error bars on the data points at each time point, but the caption never states what the error bars represent (e.g., SD, SEM, number of replicates/cells)."
+    }
+  ]
+}

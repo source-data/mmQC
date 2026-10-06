@@ -1,0 +1,133 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Spatial cluster map overlaid on tissue image, not a quantitative plot of averages."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "H&E histology images with manual region annotation; not a data plot."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Spatial gene-expression overlays are heatmap-type visualizations, which are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots showing a running enrichment score, exempt from the individual-points requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar chart of log2 fold-change per gene with no individual data points overlaid."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Not a plot; this is a spatial cluster image."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Not a plot; this is a histology image with annotations."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial expression heatmaps show per-spot log2 expression with a color scale, no error bars present."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots display a running enrichment score curve with no error bars."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Bar chart of log2 fold change values with p-values annotated; no error bars are shown."
+    }
+  ]
+}

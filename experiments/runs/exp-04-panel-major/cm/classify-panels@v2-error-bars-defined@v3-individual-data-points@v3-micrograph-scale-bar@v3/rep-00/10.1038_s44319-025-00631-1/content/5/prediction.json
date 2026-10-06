@@ -1,0 +1,133 @@
+{
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution plots show per-spot scores on a color scale, no error bars or distribution elements to define."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "yes",
+      "error_bar_defined_in_caption": "yes",
+      "from_the_caption": "The box plots represent the distribution of values for each group, extending from the 25th percentile to the 75th percentile",
+      "decision": "PASS",
+      "explanation": "Box plot whiskers/box are defined in the caption with percentiles, median, minima and maxima values given."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment score line plots show no error bars."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Bar graph of log2 fold change shows single bars per gene with p-values annotated but no error bars."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel is a set of micrographs (H&E and IHC images), not a plot."
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Spatial deconvolution heatmap plots show per-spot values directly, not aggregated averages, so this check does not apply as a summary-vs-points issue; treated as not requiring additional points."
+    },
+    {
+      "panel_label": "B",
+      "plot": "yes",
+      "individual_values": "yes",
+      "decision": "PASS",
+      "explanation": "Box plots show individual data points overlaid as dots in addition to the box summary statistics."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment line plots do not represent averaged replicate data requiring individual points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar graph shows single fold-change values per gene from DEG analysis without displaying underlying individual data points."
+    },
+    {
+      "panel_label": "E",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Panel is composed of micrographs, not a plot."
+    }
+  ],
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 100 μm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    }
+  ]
+}

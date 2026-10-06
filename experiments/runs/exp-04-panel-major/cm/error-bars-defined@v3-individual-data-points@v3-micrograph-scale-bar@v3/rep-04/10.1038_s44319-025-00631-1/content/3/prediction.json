@@ -1,0 +1,133 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Spatial cluster map overlaid on tissue image, not a quantitative summary plot."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "H&E micrograph with manual region annotation, not a plot of averaged data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Spatial gene-expression maps are heatmap-style overlays on tissue, which are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment score curves are line plots, which are exempt from requiring individual data points."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "no",
+      "decision": "FAIL",
+      "explanation": "Bar chart shows single log2 fold-change values per gene with no individual data points or replicate measurements overlaid."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel is a spatial cluster image, not a plot."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel is an H&E micrograph with annotations, not a plot."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial expression heatmaps show a continuous color scale, not error bars, so nothing needs to be defined."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots show a single running-score line per gene set with no error bars."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Bar chart shows single fold-change values per gene with no error bars present."
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "micrograph-scale-bar": [
+    {
+      "panel_label": "A",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "B",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 2 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "C",
+      "micrograph": "yes",
+      "scale_bar_on_image": "yes",
+      "scale_bar_defined_in_caption": "yes",
+      "from_the_caption": "Scale bar, 1 mm.",
+      "scale_bar_defined_in_image": "no",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "D",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    },
+    {
+      "panel_label": "E",
+      "micrograph": "no",
+      "scale_bar_on_image": "not_applicable",
+      "scale_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "scale_bar_defined_in_image": "not_applicable",
+      "from_the_image": ""
+    }
+  ],
+  "individual-data-points": [
+    {
+      "panel_label": "A",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Spatial cluster map plots each individual spatial spot, not an aggregated average, so it is inherently at single-measurement resolution."
+    },
+    {
+      "panel_label": "B",
+      "plot": "no",
+      "individual_values": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": "Panel contains only annotated histology micrographs, no plotted data."
+    },
+    {
+      "panel_label": "C",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Spatial expression maps display per-spot expression values across the tissue rather than an averaged summary statistic."
+    },
+    {
+      "panel_label": "D",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment plots are line plots, which are exempt from the individual-data-point requirement."
+    },
+    {
+      "panel_label": "E",
+      "plot": "yes",
+      "individual_values": "not_required",
+      "decision": "PASS",
+      "explanation": "Bars show a single computed log2 fold-change value per gene from the differential expression analysis rather than an average of replicate measurements, so there are no underlying individual data points to overlay."
+    }
+  ],
+  "error-bars-defined": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial cluster map shows no error bars or box-plot elements."
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "no",
+      "error_bar_on_figure": "not_applicable",
+      "error_bar_defined_in_caption": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": "Panel contains only annotated histology micrographs, not a plot."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Spatial expression heatmap-style plots show no error bars."
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "GSEA enrichment score curves do not display error bars."
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "error_bar_on_figure": "no",
+      "error_bar_defined_in_caption": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": "Bar graph of log2 fold-change values shows no error bars, only p-values labeled above each bar."
+    }
+  ]
+}

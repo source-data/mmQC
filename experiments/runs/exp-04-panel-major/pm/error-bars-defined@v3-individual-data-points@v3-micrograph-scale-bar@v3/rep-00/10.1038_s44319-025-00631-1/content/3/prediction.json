@@ -1,0 +1,145 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 2 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel A is a spatial cluster map on a tissue image, not a plot of averaged/aggregated quantitative data."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel A is a micrograph with cluster overlay, not a plot."
+      }
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 2 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel B shows H&E and annotated histology images, not a quantitative plot."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel B is a micrograph (H&E and annotation), not a plot."
+      }
+    },
+    {
+      "panel_label": "C",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 1 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "The spatial mRNA distribution images are heatmap-style overlays on tissue, which are exempt from the individual-data-points requirement."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The spatial expression heatmaps do not use error bars, so none need to be defined."
+      }
+    },
+    {
+      "panel_label": "D",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "GSEA enrichment score line plots are exempt from the requirement to show individual data points."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The enrichment plots show a single running-score curve with no error bars."
+      }
+    },
+    {
+      "panel_label": "E",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "no",
+        "decision": "FAIL",
+        "explanation": "The bar chart displays log2 fold-change values per gene from differential expression analysis without showing the underlying individual data points."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "No error bars are shown on the bars, so none require a caption definition."
+      }
+    }
+  ]
+}

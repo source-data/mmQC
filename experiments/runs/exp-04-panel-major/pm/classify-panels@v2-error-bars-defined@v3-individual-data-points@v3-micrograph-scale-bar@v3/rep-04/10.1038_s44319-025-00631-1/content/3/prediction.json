@@ -1,0 +1,146 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 2 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "Panel A is a spatial cluster map (spot-level spatial transcriptomic clustering), analogous to a heatmap/spatial scatter display, not a bar chart of means, so individual data points are not required."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The spatial cluster map does not include error bars or box-plot elements, so there is nothing to define."
+      }
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 2 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Panel B consists of H&E micrographs with manual region annotation; it is not a plot."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Panel B is a micrograph image, not a plot, so error bars are not applicable."
+      }
+    },
+    {
+      "panel_label": "C",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "yes",
+        "from_the_caption": "Scale bar, 1 mm.",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "The spatial mRNA expression maps are heatmap-like color-coded displays of expression level per spot, a plot type for which overlaying individual points is not meaningful."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The spatial expression heatmaps do not contain error bars or box-plot elements."
+      }
+    },
+    {
+      "panel_label": "D",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "not_required",
+        "decision": "PASS",
+        "explanation": "GSEA enrichment plots are line plots of running enrichment score, a plot type exempt from requiring individual data points."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The GSEA enrichment curves do not display error bars; NES, FDR and P values are reported instead."
+      }
+    },
+    {
+      "panel_label": "E",
+      "panel_classes": [
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "individual-data-points": {
+        "plot": "yes",
+        "individual_values": "no",
+        "decision": "FAIL",
+        "explanation": "The bar graph shows a single log2 fold-change value per gene with no error bars and no individual data points overlaid."
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "The bar graph shows single fold-change values with p-values annotated above each bar, with no error bars present to define."
+      }
+    }
+  ]
+}

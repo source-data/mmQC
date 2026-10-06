@@ -1,7 +1,7 @@
 ---
 title: exp-04 — panel-major or check-major, on the cleaned contracts
 date: 2026-10-05
-status: planned        # planned | running | done | abandoned
+status: done           # planned | running | done | abandoned
 kind: experiment
 extends: exp-03
 tags: [experiment, skills, dag, schema, panel-major, baseline]
@@ -359,14 +359,155 @@ content/1–3), one replicate, 18 sessions, none failed, $1.84.
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-05 | smoke, six conditions | `run.py --smoke` | $1.84 | `experiments/runs/exp-04-panel-major/smoke/` (not committed) |
-| | all six | `python experiments/exp-04-panel-major/run.py` | est. $110–120 | `experiments/runs/exp-04-panel-major/` |
+| 2026-10-05 | all six, revoked API key | `run.py` | $0 | stopped: 25 sessions failed authentication, none wrote a prediction; deleted, not experiment data |
+| 2026-10-05/06 | all six | `python experiments/exp-04-panel-major/run.py` | $105.84 | `experiments/runs/exp-04-panel-major/` |
 
 The estimate is the smoke test's cost per session — about $0.09 CM and $0.11 PM
 — over 570 sessions each.
 
 ## Findings
 
-*To be written after the run.*
+Run 2026-10-05 21:44 to 2026-10-06 ~15:00 under closure assembly: 1,140
+sessions, **none failed, no empty answer**, all 38 figures × 5 replicates in
+every condition, $105.84. Analysis in
+`notebooks/experiments/exp-04-panel-major.ipynb`, against `gold-v4`.
+
+### Numbers
+
+**Endpoint 0 — dispatch.**
+
+| | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` | `A ← B ← C_i ← D` |
+|---|---|---|---|
+| all three checks invoked, CM | 189/190 | 190/190 | 188/190 |
+| all three checks invoked, PM | **182/190** | **181/190** | **170/190** |
+| in D's listed order, CM | 189/189 | 190/190 | 188/188 |
+| in D's listed order, PM | 182/182 | 178/181 | 166/170 |
+| `classify-panels` calls per session, CM (0 / 1 / 2) | — | 61 / 128 / 1 | 46 / 135 / 9 |
+| `classify-panels` calls per session, PM (0 / 1 / 2) | — | 9 / 181 / 0 | 5 / 184 / 1 |
+| `identify-panels` reached, CM / PM | — | — | 146 / 182 |
+
+No skill was invoked outside a condition's closure, and no PM row left
+`panel_classes` empty. Of the 37 PM sessions that did not invoke all three
+checks, 13 invoked nothing beneath D and **20 had D invoke the shared skills
+itself** (`identify-panels` and `classify-panels`, or `classify-panels` alone)
+and then answer with no check invoked. Under CM, 3 sessions in 570 fell short,
+2 of them invoking nothing beneath D. Every one of these sessions still
+answered all three checks: **33 PM sessions answered without invoking a single
+check skill, against 2 under CM**.
+
+**Hypothesis 1 — spurious panels per figure**, PM − CM:
+
+| arrangement | spurious panels CM → PM (190 sessions each) | per figure, PM − CM [95% CI] | figures with any | verdict |
+|---|---|---|---|---|
+| `A\|B\|C_i ← D` | 26 → 13 | −0.068 [−0.174, 0.000] | 3, 2 | inconclusive |
+| `A\|B ← C_i ← D` | 3 → 5 | +0.011 [0.000, 0.032] | 2, 2 | inconclusive |
+| `A ← B ← C_i ← D` | 10 → 8 | −0.011 [−0.084, 0.074] | 2, 2 | inconclusive |
+
+Missing panels per figure, reported without a direction: 8 → 2, 1 → 1, 5 → 1.
+**Partly missing panels: 0 in every CM condition** — a check-major answer's
+three lists always named the same panels.
+
+**Gate 1 — layer S**, δ_S = 0.0125: **non-inferior** for every check in every
+arrangement; largest difference +0.004, every lower bound at 0.000. Including
+`micrograph-scale-bar` in the two delegating arrangements, pre-declared as
+likely uninformative: their intervals came out at 0.000–0.007. Reported with
+spurious rows, `correct / (correct + missing + spurious)`, identical across
+checks within a condition:
+
+| | `A\|B\|C_i ← D` | `A\|B ← C_i ← D` | `A ← B ← C_i ← D` |
+|---|---|---|---|
+| CM | 0.979 | **0.997** | 0.991 |
+| PM | 0.990 | 0.996 | 0.994 |
+
+**Gate 2 — layer 1**, δ₁ = 0.02: **non-inferior** for every check in every
+arrangement; differences between −0.005 and +0.004, the widest interval
+`error-bars-defined` in `A ← B ← C_i ← D`, −0.0054 [−0.0125, 0.0003].
+
+**Gate 3 — layer 2**, δ₂ = 0.02. **No property degraded.** Thirteen of 54
+property cells are inconclusive, most because their interval is wider than
+±0.02 on properties applicable to 28–34 figures. With an interval wholly
+below 0:
+
+| arrangement | property | PM − CM [95% CI] |
+|---|---|---|
+| `A\|B ← C_i ← D` | `error-bars-defined · from_the_caption` | −0.013 [−0.022, −0.003] |
+
+and with negative point estimates near it: `error-bars-defined ·
+from_the_caption` (−0.009) and `· is_a_plot` (−0.009) in `A ← B ← C_i ← D`;
+`micrograph-scale-bar · from_the_image` (−0.019, 10 examples) and
+`· scale_bar_defined_in_caption` (−0.013) in `A|B|C_i ← D`.
+`micrograph-scale-bar · from_the_image` was uninformative where pre-declared.
+
+**Through the fixed sequence**: every comparison is non-inferior at layers S and
+1; two reach non-inferiority at all three gates (`error-bars-defined` in
+`A|B|C_i ← D`, `individual-data-points` in `A ← B ← C_i ← D`); the other seven
+stop at layer 2, inconclusive.
+
+**The choice rule.** PM states fewer spurious panels in **none** of the three
+arrangements (all inconclusive), so the rule's condition — fewer in at least
+two, with no degradation — is not met. **The check-major contract is kept.** No
+check degraded under PM anywhere.
+
+**Secondary — cost and time** per figure, PM ÷ CM, mean of 38 per-figure ratios:
+
+| | cost | input tokens | output tokens | turns | time |
+|---|---|---|---|---|---|
+| `A\|B\|C_i ← D` | 1.20 [1.15, 1.26] | 1.09 | **1.34** | 0.99 | 1.34 |
+| `A\|B ← C_i ← D` | 1.19 [1.15, 1.23] | 1.01 | **1.31** | 1.02 | 1.30 |
+| `A ← B ← C_i ← D` | 1.25 [1.20, 1.30] | 0.96 | **1.44** | 1.02 | 1.37 |
+
+About $0.08–0.09 per figure under CM, $0.10–0.11 under PM.
+
+**Secondary — the arrangements**, within each shape, against `A|B|C_i ← D`:
+every interval at layers S and 1 includes 0 or lies above it; the largest,
+CM layer S `A|B ← C_i ← D`, +0.005 [0.000, 0.013].
+
+**Replicate variance**, for later margins: planned 5-against-5 half-widths at
+layer S 0.002–0.005, at layer 1 up to 0.006 — well inside exp-04's margins.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**Panel-major is safe and not better.** It held every check at layers S and 1
+and degraded none at layer 2, so the dependency on the DAG cost no accuracy —
+but it did not buy the reduction in spurious panels it was predicted to. Those
+were rare: 26 at most in 190 sessions, from two or three figures per condition.
+
+**The drift exp-03 suggested is not what makes spurious panels.** A check-major
+answer's three lists never disagreed — zero partly missing panels in 570
+sessions — so the copies did not drift. The spurious and missing panels come
+from the inventory itself, made once and copied faithfully, and a contract that
+states it once has nothing to remove. exp-03's identical counts across checks
+said the same, and were read as copies drifting; they were copies not drifting.
+
+**The contract's shape changes how the DAG is executed** — the finding the
+hypotheses did not anticipate. Under PM, D is asked for `panel_classes`
+directly, and D took on the shared step: `classify-panels` was reached in 95–97%
+of PM sessions against 68–76% under CM, and in 20 sessions D classified the
+panels itself and then answered all three checks **without invoking any check
+skill** — the failure mode exp-03 named; with the 13 that invoked nothing, 33
+PM sessions answered from the schema alone, against 2 under CM.
+Dispatch fell to 89% in the deepest arrangement. The schema, in other words,
+reaches past the leaf it belongs to and reshapes the calls above it: a contract
+that mirrors the DAG pulls the shared step up to the level where the contract
+states it.
+
+**PM writes more.** About 1,670 more output tokens per session, of which the
+longer answer accounts for some 170 tokens and resubmissions (1.09 structured
+answers per PM session, 1.01 per CM) for at most another 140; turns and input
+tokens are unchanged. The remainder is text between tool calls, which the runs
+do not record. One explanation, untested: the checks run one after another and
+report panel by panel within each, so a check-major answer is their output in
+the order it was produced, while a panel-major one has to be transposed — and
+with D doing more of the work itself, more of it is written at D's level.
+
+**What it settles**: the check-major contract, which is independent of the DAG,
+stays; panel-major is not worse but costs 20–25% more and dispatches less
+reliably. `A|B ← C_i ← D` under CM is the most accurate condition at layer S
+counting both errors (0.997), and the baseline for what follows. **What it does
+not**: whether the shared step belongs at D's level by design rather than by
+the model's own initiative — which is exp-05's question.
 
 ## Threats to validity
 
@@ -396,5 +537,8 @@ merged gold of `do-fig-checklist-cm` and `do-fig-checklist-pm` added.
 
 ## Status and next
 
-Planned. Next: the full run; the notebook, written while it runs, pinned to
-`gold-v4`.
+Done. **Next: exp-05**, `[A|B, {C_i}] ← D` — D invokes `classify-panels` (A|B)
+once, then each check, which takes the panel list as given — in both shapes,
+against exp-04's `A|B ← C_i ← D` of the same shape: non-inferior at every gate,
+and, for PM, fewer output tokens. Planned in
+`thinking/experiments/exp-05-shared-step-first.md`.
