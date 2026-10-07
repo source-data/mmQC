@@ -1,0 +1,28 @@
+# Pinned skill versions for fig-checklist-exp06.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# exp-06 extends exp-04's winning configuration, check-major
+# A|B <- C_i <- D, to all eleven checks of the figure checklist
+# (thinking/experiments/exp-06-full-checklist.md). Copied 2026-10-07 from
+# fig-checklist-exp04, which stays frozen: identify-panels v1 (A),
+# classify-panels v1 (A|B) and v2 (A <- B), the three checks at v3, and
+# do-fig-checklist-cm v1. The eight other checks are ported from the
+# production fig-checklist, one at a time and reviewed, into the same form:
+# each calls classify-panels, and does its own sub-classification from there.
+#
+# The entry point owns the one contract; it is derived before the run.
+skills:
+  # Entry point.
+  do-fig-checklist-cm: v1
+
+  # Shared skills: A|B, invoked by every check; A <- B kept for later
+  # arrangements.
+  classify-panels: v1
+  identify-panels: v1
+
+  # Checks, invoked by the entry point; each calls classify-panels.
+  error-bars-defined: v3
+  individual-data-points: v3
+  micrograph-scale-bar: v3
