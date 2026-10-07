@@ -164,7 +164,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=1,
         metavar="N",
         help=(
-            "Run N sessions at once (default: %(default)s, one after another). "
+            "Run N sessions at once (default: %(default)s, one after another; "
+            "38 recommended for experiment runs). "
             "Sessions are independent, so this changes how long a run takes, "
             "not what it measures -- except wall time and prompt-cache hits, "
             "which each session records with the concurrency it ran at"

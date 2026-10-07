@@ -71,6 +71,7 @@ __all__ = [
     "run_check_mock",
     "run_check_live",
     "RunAborted",
+    "RECOMMENDED_CONCURRENCY",
     "default_predictions_dir",
     "resolve_model",
     "PREDICTION_FILENAME",
@@ -95,6 +96,15 @@ class RunAborted(RuntimeError):
     def __init__(self, message: str, report: List[Dict[str, Any]]):
         super().__init__(message)
         self.report = report
+
+
+#: The concurrency experiment runs should pass to ``run_check_live``. The
+#: default stays 1, so a plain call behaves as it always has; 38 -- one
+#: condition's benchmark figures per wave -- was measured on 2026-10-07 at
+#: an eighth of the output-token rate limit and ~10 GB of memory, with
+#: per-session durations and cost indistinguishable from sequential runs
+#: (thinking/plans/2026-10-07-concurrent-harness.md).
+RECOMMENDED_CONCURRENCY = 38
 
 
 #: Errors about the account rather than the example: authentication,
