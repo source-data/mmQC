@@ -12,6 +12,7 @@ import dataclasses
 import asyncio
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
@@ -339,6 +340,7 @@ def run_check_live(
     replicates: int = 1,
     force: bool = False,
     assembly: str = ASSEMBLY_CLOSURE,
+    concurrency: int = 1,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -361,12 +363,24 @@ def run_check_live(
     a single arm or a single replicate: one shape means one reader, and a run
     that later wants replicates never has to relocate the one it has.
 
+    ``concurrency`` is how many sessions run at once. 1 -- the default -- runs
+    them one after another, as every run before 2026-10-07 did. Above 1,
+    sessions run in a pool of that many workers; the report keeps the
+    sequential order. Each session records the concurrency it ran at in its
+    ``tool_audit.json``, because wall time and prompt-cache hits depend on it.
+
     Returns:
         ``(run root, per-example report)``. The root holds one directory per
         arm, each holding one per replicate; scoring is pointed at a leaf.
     """
     if replicates < 1:
         raise ValueError(f"replicates must be at least one, got {replicates}")
+    if concurrency < 1:
+        raise ValueError(f"concurrency must be at least one, got {concurrency}")
+    if approve_tools and concurrency > 1:
+        # The approver asks at the terminal, one call at a time; concurrent
+        # sessions would interleave their questions.
+        raise ValueError("approve_tools needs concurrency 1")
 
     check_dir = resolve_check_dir(checklist, check)
     checklist_dir = check_dir.parent
@@ -392,114 +406,152 @@ def run_check_live(
     root_dir = Path(output or default_predictions_dir(checklist, check, model))
     approver = interactive_approver() if approve_tools else None
 
-    report: List[Dict[str, Any]] = []
-    for skill_set in skill_sets:
-        label = skill_set.label(pins)
-        versions = skill_set.pins
-        for replicate in range(replicates):
-            # Every axis is a directory, with no exception for the degenerate
-            # case. The baseline arm used to write flat, which gave one run
-            # two shapes and made `score --predictions <root>` score that arm
-            # alone; and a run that later wants replicates must not have to
-            # relocate the one it already has.
-            predictions_dir = root_dir / label / f"rep-{replicate:02d}"
-            for relative_source_path in wanted:
-                entry: Dict[str, Any] = {
-                    "example": relative_source_path,
-                    "skill_set": skill_set.digest,
-                    "label": label,
-                    "replicate": replicate,
-                }
-                done = (
-                    predictions_dir / relative_source_path / PREDICTION_FILENAME
+    # One unit per session, in the order a sequential run takes them. Every
+    # axis is a directory, with no exception for the degenerate case: a run
+    # that later wants replicates must not have to relocate the one it has.
+    units = [
+        (skill_set, skill_set.label(pins), skill_set.pins, replicate,
+         root_dir / skill_set.label(pins) / f"rep-{replicate:02d}", example)
+        for skill_set in skill_sets
+        for replicate in range(replicates)
+        for example in wanted
+    ]
+
+    def run_one(unit) -> Dict[str, Any]:
+        """One session: skipped if done, else run, recorded, never raised."""
+        skill_set, label, versions, replicate, predictions_dir, relative_source_path = unit
+        entry: Dict[str, Any] = {
+            "example": relative_source_path,
+            "skill_set": skill_set.digest,
+            "label": label,
+            "replicate": replicate,
+        }
+        done = (
+            predictions_dir / relative_source_path / PREDICTION_FILENAME
+        )
+        if done.is_file() and not force:
+            # Resumability is not a convenience at this size: a full
+            # experiment is thousands of sessions and hours long, so an
+            # interruption must cost what it interrupted and not the
+            # whole run. `force` is how a deliberate rerun says so.
+            logger.info(
+                "Skipping %s on %s [%s rep-%02d]: already has a "
+                "prediction",
+                check_name, relative_source_path, label, replicate,
+            )
+            entry["status"] = "skipped"
+            return entry
+        logger.info(
+            "Running %s on %s [%s]", check_name, relative_source_path, label
+        )
+        try:
+            with runtime_session(
+                checklist, check, relative_source_path,
+                keep=keep_runtime, pins=versions, assembly=assembly,
+            ) as layout:
+                options = effective_session_options(
+                    layout, skills, defaults=defaults
                 )
-                if done.is_file() and not force:
-                    # Resumability is not a convenience at this size: a full
-                    # experiment is thousands of sessions and hours long, so an
-                    # interruption must cost what it interrupted and not the
-                    # whole run. `force` is how a deliberate rerun says so.
-                    logger.info(
-                        "Skipping %s on %s [%s rep-%02d]: already has a "
-                        "prediction",
-                        check_name, relative_source_path, label, replicate,
+                options["model"] = model
+                client = (
+                    _openai_session_client(layout, model)
+                    if provider == "openai"
+                    else None
+                )
+                prediction, recorder, audit = asyncio.run(
+                    _run_agent_session(
+                        layout,
+                        versions=versions,
+                        approver=approver,
+                        options=options,
+                        client=client,
                     )
-                    entry["status"] = "skipped"
-                    report.append(entry)
-                    continue
-                logger.info(
-                    "Running %s on %s [%s]", check_name, relative_source_path, label
                 )
-                try:
-                    with runtime_session(
-                        checklist, check, relative_source_path,
-                        keep=keep_runtime, pins=versions, assembly=assembly,
-                    ) as layout:
-                        options = effective_session_options(
-                            layout, skills, defaults=defaults
-                        )
-                        options["model"] = model
-                        client = (
-                            _openai_session_client(layout, model)
-                            if provider == "openai"
-                            else None
-                        )
-                        prediction, recorder, audit = asyncio.run(
-                            _run_agent_session(
-                                layout,
-                                versions=versions,
-                                approver=approver,
-                                options=options,
-                                client=client,
-                            )
-                        )
-                        # The file-production contract is gone with the write
-                        # tool: nothing the session does touches the filesystem.
-                        # What that check protected -- a shared skill that was
-                        # declared but never fired -- is answered by the hop
-                        # trace below, which reads the session's own tool calls
-                        # and needs no artifact to exist.
-                        entry["hops"] = compare_declared_and_observed(
-                            checklist_dir, check, recorder.invoked, pins=versions
-                        )
-                        entry["tools"] = audit.summary()
-                        entry["reported_tools"] = audit.session_info.get("tools")
-                        # What this session spent, so a caller can total a run
-                        # without reopening every sidecar.
-                        if audit.usage:
-                            entry["usage"] = dict(audit.usage)
-                        _write_prediction(
-                            predictions_dir,
-                            relative_source_path,
-                            prediction,
-                            recorder.entries,
-                            skill_set,
-                            arm=label,
-                            replicate=replicate,
-                            assembled=runtime_skill_set(layout, versions),
-                            assembly=assembly,
-                        )
-                        _copy_sidecar(
-                            audit.path,
-                            predictions_dir / relative_source_path
-                            / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
-                        )
-                        entry["status"] = "ok"
-                except Exception as exc:  # noqa: BLE001 - one example must not end the run
-                    logger.error("%s failed: %s", relative_source_path, exc)
-                    entry["status"] = "failed"
-                    entry["error"] = str(exc)
-                    if is_account_error(exc):
-                        # ...but an account that cannot run this session cannot
-                        # run the next one either.
-                        report.append(entry)
-                        logger.error(
-                            "Stopping the run: %s is an account error, and every "
-                            "later session would fail the same way. Predictions "
-                            "written so far are kept; rerun to resume.",
-                            relative_source_path,
-                        )
-                        raise RunAborted(str(exc), report) from exc
-                report.append(entry)
+                # The file-production contract is gone with the write
+                # tool: nothing the session does touches the filesystem.
+                # What that check protected -- a shared skill that was
+                # declared but never fired -- is answered by the hop
+                # trace below, which reads the session's own tool calls
+                # and needs no artifact to exist.
+                entry["hops"] = compare_declared_and_observed(
+                    checklist_dir, check, recorder.invoked, pins=versions
+                )
+                entry["tools"] = audit.summary()
+                entry["reported_tools"] = audit.session_info.get("tools")
+                # What this session spent, so a caller can total a run
+                # without reopening every sidecar.
+                if audit.usage:
+                    entry["usage"] = dict(audit.usage)
+                _write_prediction(
+                    predictions_dir,
+                    relative_source_path,
+                    prediction,
+                    recorder.entries,
+                    skill_set,
+                    arm=label,
+                    replicate=replicate,
+                    assembled=runtime_skill_set(layout, versions),
+                    assembly=assembly,
+                )
+                # How many sessions ran at once: wall time and prompt-cache
+                # hits depend on it, so time and cost are comparable only
+                # between runs that share it.
+                audit.note_session({**audit.session_info, "concurrency": concurrency})
+                _copy_sidecar(
+                    audit.path,
+                    predictions_dir / relative_source_path
+                    / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
+                )
+                entry["status"] = "ok"
+        except Exception as exc:  # noqa: BLE001 - one example must not end the run
+            logger.error("%s failed: %s", relative_source_path, exc)
+            entry["status"] = "failed"
+            entry["error"] = str(exc)
+            # ...but an account that cannot run this session cannot run the
+            # next one either; the caller stops the run on this flag.
+            entry["account_error"] = is_account_error(exc)
+        return entry
+
+    def stop(entry: Dict[str, Any], done: List[Dict[str, Any]]) -> None:
+        logger.error(
+            "Stopping the run: %s is an account error, and every later session "
+            "would fail the same way. Predictions written so far are kept; "
+            "rerun to resume.",
+            entry["example"],
+        )
+        raise RunAborted(entry.get("error", ""), done)
+
+    report: List[Dict[str, Any]] = []
+    if concurrency == 1:
+        for unit in units:
+            entry = run_one(unit)
+            report.append(entry)
+            if entry.pop("account_error", False):
+                stop(entry, report)
+    else:
+        # Sessions are independent -- each assembles its own runtime in its own
+        # temporary directory and writes its own prediction -- so several can
+        # run at once. Each worker thread runs its session's event loop with
+        # asyncio.run, exactly as the sequential path does.
+        results: Dict[int, Dict[str, Any]] = {}
+        aborted: Optional[Dict[str, Any]] = None
+        with ThreadPoolExecutor(max_workers=concurrency) as pool:
+            futures = {pool.submit(run_one, unit): i for i, unit in enumerate(units)}
+            for future in as_completed(futures):
+                if future.cancelled():
+                    # Dropped after an account error: it never ran.
+                    continue
+                entry = future.result()
+                results[futures[future]] = entry
+                if entry.pop("account_error", False) and aborted is None:
+                    aborted = entry
+                    # Sessions not yet started are dropped; those running
+                    # finish and keep what they write.
+                    for pending in futures:
+                        pending.cancel()
+        report = [results[i] for i in sorted(results)]
+        if aborted is not None:
+            stop(aborted, report)
 
     ok = sum(1 for e in report if e["status"] == "ok")
     logger.info(

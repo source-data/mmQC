@@ -4346,6 +4346,9 @@ class TestASessionNeedsNoFilesystem:
             def summary(self):
                 return "Skill (allow) x1"
 
+            def note_session(self, info):
+                self.session_info = dict(info)
+
         async def fake_run_agent_session(
             layout, *, versions, approver, options, client
         ):

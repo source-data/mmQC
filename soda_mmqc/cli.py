@@ -159,6 +159,18 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     run.add_argument(
+        "--concurrency",
+        type=int,
+        default=1,
+        metavar="N",
+        help=(
+            "Run N sessions at once (default: %(default)s, one after another). "
+            "Sessions are independent, so this changes how long a run takes, "
+            "not what it measures -- except wall time and prompt-cache hits, "
+            "which each session records with the concurrency it ran at"
+        ),
+    )
+    run.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -366,6 +378,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     unpin={name: versions for name in (args.unpin or [])},
                     replicates=args.replicates,
                     force=args.force,
+                    concurrency=args.concurrency,
                 )
         except (FileNotFoundError, ValueError, KeyError) as exc:
             logger.error("%s", exc)
