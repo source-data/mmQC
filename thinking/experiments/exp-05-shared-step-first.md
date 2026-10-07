@@ -310,7 +310,7 @@ appears only under the new arrangement.
 model drifted towards in exp-04 is worse when imposed. Across exp-04 and
 exp-05, **CM `A|B ← C_i ← D` is the configuration to keep**: the most accurate
 at layer S counting both errors (0.997), all three checks dispatched in 190/190,
-no empty answer — at some 8% more output tokens than exp-05's CM. **What it
+no empty answer — at about 9% more output tokens than exp-05's CM. **What it
 does not**: why the imposed order breaks dispatch, and whether an explicit
 instruction in D to invoke every check would recover it.
 
