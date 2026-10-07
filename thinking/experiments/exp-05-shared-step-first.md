@@ -1,7 +1,7 @@
 ---
 title: exp-05 — the shared step first, by design
 date: 2026-10-07
-status: planned        # planned | running | done | abandoned
+status: done           # planned | running | done | abandoned
 kind: experiment
 extends: exp-04
 tags: [experiment, skills, dag, entry-point, shared-step, tokens]
@@ -212,11 +212,107 @@ narrows what PM's comparison can show.
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-07 | smoke, both shapes | `run.py --smoke` | $0.56 | `experiments/runs/exp-05-shared-step-first/smoke/` (not committed) |
-| | CM, PM, sanity | `python experiments/exp-05-shared-step-first/run.py` | est. $40 | `experiments/runs/exp-05-shared-step-first/` |
+| 2026-10-07 | CM, PM, sanity | `python experiments/exp-05-shared-step-first/run.py` | $35.48 | `experiments/runs/exp-05-shared-step-first/` |
 
 ## Findings
 
-*To be written after the run.*
+Run 2026-10-07 00:19–05:30 under closure assembly: 418 sessions, **none
+failed**, $35.48. Analysis in `notebooks/experiments/exp-05-shared-step-first.ipynb`,
+against `gold-v4`, beside exp-04's CM and PM `A|B ← C_i ← D`.
+
+### Numbers
+
+**Endpoint 0 — dispatch.**
+
+| | all three checks | only `micrograph-scale-bar` (+ one after two) | no check | `classify-panels` first |
+|---|---|---|---|---|
+| CM exp-05 | **166/190** | 19 (+1) | 4 | 190/190 |
+| PM exp-05 | **180/190** | 4 | 6 | 190/190 |
+| CM exp-04 | 190/190 | 0 | 0 | 0/190 |
+| PM exp-04 | 181/190 | 1 (+1) | 7 | 148/190 |
+
+D did the shared step first in every exp-05 session, once, as designed; no
+skill outside the closure. But it stopped before the last check more often than
+either reference — **CM in 24 sessions against none in exp-04** — most often
+after the first check.
+
+**Non-response.** **CM exp-05: 10 sessions** invoked `classify-panels` and
+`micrograph-scale-bar` only, answered that check, and returned **empty lists**
+for `individual-data-points` and `error-bars-defined`; 9 more stopped at the
+same point and filled the other two checks without invoking them. **PM exp-05:
+2 sessions** answered `outputs: []`, short answers of 391 and 480 output tokens.
+exp-04's references had no empty answer in 380 sessions.
+
+**Hypothesis 1 — non-inferiority**, exp-05 − exp-04 of the same shape:
+
+| | layer S (δ 0.0125) | layer 1 (δ 0.02) | layer 2 (δ 0.02) | stops at |
+|---|---|---|---|---|
+| CM `micrograph-scale-bar` | non-inferior, +0.000 [0.000, 0.000] | non-inferior | inconclusive | layer 2 |
+| CM `individual-data-points` | **degraded**, −0.053 [−0.089, −0.021] | inconclusive, −0.043 | inconclusive | **layer S** |
+| CM `error-bars-defined` | **degraded**, −0.053 [−0.089, −0.021] | inconclusive, −0.036 | inconclusive | **layer S** |
+| PM, each check | inconclusive, −0.010 [−0.026, 0.001] | non-inferior (`micrograph-scale-bar`) / inconclusive | non-inferior / inconclusive | layer S |
+
+The CM degradation is the 10 empty lists: an empty list scores as every row
+missing, and `micrograph-scale-bar`, invoked in every session, is untouched.
+PM's layer S is inconclusive by its 2 empty answers. **At layer 2 no property
+degraded in either shape**; the largest negative point estimate is CM
+`error-bars-defined · from_the_caption`, −0.011 [−0.022, 0.001].
+
+Layer S counting both errors, `correct / (correct + missing + spurious)`:
+
+| | `micrograph-scale-bar` | `individual-data-points` | `error-bars-defined` |
+|---|---|---|---|
+| CM exp-05 | 0.994 | 0.941 | 0.941 |
+| PM exp-05 | 0.984 | 0.984 | 0.984 |
+| CM exp-04 | 0.997 | 0.997 | 0.997 |
+| PM exp-04 | 0.996 | 0.996 | 0.996 |
+
+Spurious panels per figure, reported: CM 8 (exp-04: 3), PM 7 (exp-04: 5).
+
+**Hypothesis 2 — PM output tokens: fewer.** Per figure, exp-05 ÷ exp-04,
+**0.874 [0.837, 0.910]**. Reported beside it, per figure, exp-05 ÷ exp-04:
+
+| | output tokens | cost | input tokens | turns | time |
+|---|---|---|---|---|---|
+| PM | **0.87** [0.84, 0.91] | 0.95 [0.92, 0.98] | 1.25 [1.20, 1.31] | 1.01 | 0.87 |
+| CM | 0.92 [0.86, 0.98] | 0.97 [0.93, 1.01] | 1.16 [1.10, 1.21] | 1.00 | 0.92 |
+
+**The sanity rerun** of exp-04's PM `A|B ← C_i ← D`, one replicate: output
+tokens 0.99 [0.90, 1.07] of exp-04's; costs and time within 3%. But **one empty
+answer in 38** (589 output tokens), where exp-04's 190 sessions of the same
+condition had none, and so layer S 0.974 against 0.999.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**The shared step first works as designed and saves output, and it costs
+dispatch.** D classified once, first, in every session; PM wrote 13% fewer
+output tokens and CM 8% fewer. But D stopped before the last check far more
+often than in the arrangement where the checks reach the shared step
+themselves, and under CM it left two checks' lists empty in 10 sessions. The
+checks that ran judged as well as before — nothing degraded at layer 2 — so the
+loss is in **dispatch, not in the checks**.
+
+**Why CM stopped after the first check, and PM much less, is not explained.**
+The arrangements are identical but for the contract, and nothing obvious in the
+check-major schema invites stopping. The observation stands without a
+mechanism.
+
+**Empty answers may be partly model-side.** The sanity rerun of a condition
+that answered every time in exp-04 gave one short empty answer in 38, like
+exp-05's two PM ones. One session is no proof, and it is not investigated
+further; but the PM empties should not be read as caused by the arrangement
+alone. The CM pattern — stop after the first check, empty lists for the rest —
+appears only under the new arrangement.
+
+**What it settles**: `[A|B, {C_i}] ← D` is not used further; the topology the
+model drifted towards in exp-04 is worse when imposed. Across exp-04 and
+exp-05, **CM `A|B ← C_i ← D` is the configuration to keep**: the most accurate
+at layer S counting both errors (0.997), all three checks dispatched in 190/190,
+no empty answer — at some 8% more output tokens than exp-05's CM. **What it
+does not**: why the imposed order breaks dispatch, and whether an explicit
+instruction in D to invoke every check would recover it.
 
 ## Threats to validity
 
@@ -239,4 +335,5 @@ narrows what PM's comparison can show.
 
 ## Status and next
 
-Planned. Next: the full run.
+Done. CM `A|B ← C_i ← D` (exp-04, `fig-checklist-exp04`, the checks at v3) is
+the series' configuration going forward.
