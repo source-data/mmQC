@@ -11,7 +11,7 @@ Understand the figure image and see where there are figure sub-part or "panels".
 ## 2. Determine if the panel is a quantitative plot
 For each panel in the figure:
 - Determine whether the panel is a plot of quantitative data with axes (XY or XYZ axes).
-- If, and only if, it is a quantitative plot with axes, proceed to check for units. Otherwise, set "is_a_plot" to "no" and skip unit checking. Skip this check for schematics, pie charts, heat maps and sequence alignment plots.
+- If, and only if, it is a quantitative plot with axes, proceed to check for units. Otherwise, set "is_a_plot_with_axes" to "no" and skip unit checking. Skip this check for schematics, pie charts, heat maps and sequence alignment plots.
 
 ## 3. Understand when units are needed
 A unit is a standardized quantity used to express a measurement. Units should be clearly defined for any continuous variable that represents a physical or biological measurement.
@@ -56,9 +56,9 @@ If units are missing (answer is "no"):
 
 ## 7. Panel decision
 Set `decision` for each panel:
-- `"N/A"` when `is_a_plot` is `"no"` (unit checking does not apply).
-- `"PASS"` when `is_a_plot` is `"yes"` and every axis answer for 'units_provided' is `"yes"` or `"not needed"` (no axis with `"no"`).
-- `"FAIL"` when `is_a_plot` is `"yes"` and any axis has answer to  'units_provided' `"no"`.
+- `"N/A"` when `is_a_plot_with_axes` is `"no"` (unit checking does not apply).
+- `"PASS"` when `is_a_plot_with_axes` is `"yes"` and every axis answer for 'units_provided' is `"yes"` or `"not needed"` (no axis with `"no"`).
+- `"FAIL"` when `is_a_plot_with_axes` is `"yes"` and any axis has answer to  'units_provided' `"no"`.
 
 ## 8. Provide your analysis in the following JSON format for EACH and EVERY panel:
 
@@ -66,7 +66,7 @@ Set `decision` for each panel:
     "outputs": [
         {
             "panel_label": "A",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "units_provided": [
                 {
                     "axis": "x",
@@ -88,7 +88,7 @@ Set `decision` for each panel:
         },
         {
             "panel_label": "B",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "units_provided": [
                 {
                     "axis": "x",
@@ -114,7 +114,7 @@ Set `decision` for each panel:
         },
         {
             "panel_label": "C",
-            "is_a_plot": "no",
+            "is_a_plot_with_axes": "no",
             "units_provided": [],
             "unit_definition_as_provided": [],
             "decision": "N/A",
@@ -129,6 +129,6 @@ Set `decision` for each panel:
 - Only provide explanation when units are missing but are needed. If units are "not needed", no explanation is required.
 - Only include entries in `unit_definition_as_provided` when units are present (answer is "yes").
 - Only include entries in `explanation` when units are missing but needed (answer is "no").
-- Set `decision` to `"N/A"` for non-plot panels; use `"PASS"` or `"FAIL"` only when `is_a_plot` is `"yes"`.
-- For FACS data scatterplot, please put "is_a_plot": "no", as these are by defintion arbitrary units and do not require axis units
-- For pie charts please put "is_a_plot": "no" as these are not plots requiring units. 
+- Set `decision` to `"N/A"` for non-plot panels; use `"PASS"` or `"FAIL"` only when `is_a_plot_with_axes` is `"yes"`.
+- For FACS data scatterplot, please put "is_a_plot_with_axes": "no", as these are by defintion arbitrary units and do not require axis units
+- For pie charts please put "is_a_plot_with_axes": "no" as these are not plots requiring units. 

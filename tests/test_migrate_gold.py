@@ -265,11 +265,11 @@ AX = lambda *answers: [{"axis": a, "answer": v} for a, v in zip("xyz", answers)]
 
 
 @pytest.mark.parametrize("row, decision, answers", [
-    ({"is_a_plot": "no", "units_provided": [], "decision": "N/A"}, "not_applicable", []),
-    ({"is_a_plot": "yes", "units_provided": [], "decision": "N/A"}, "PASS", []),   # pie chart: a plot, so checked
-    ({"is_a_plot": "yes", "units_provided": AX("yes", "not needed"), "decision": "PASS"},
+    ({"is_a_plot_with_axes": "no", "units_provided": [], "decision": "N/A"}, "not_applicable", []),
+    ({"is_a_plot_with_axes": "yes", "units_provided": [], "decision": "N/A"}, "PASS", []),   # pie chart: a plot, so checked
+    ({"is_a_plot_with_axes": "yes", "units_provided": AX("yes", "not needed"), "decision": "PASS"},
      "PASS", ["yes", "not_required"]),
-    ({"is_a_plot": "yes", "units_provided": AX("no", "yes"), "decision": "FAIL"}, "FAIL", ["no", "yes"]),
+    ({"is_a_plot_with_axes": "yes", "units_provided": AX("no", "yes"), "decision": "FAIL"}, "FAIL", ["no", "yes"]),
 ])
 def test_plot_axis_units_rule(row, decision, answers):
     result = m.pau_rule({"panel_label": "A", "unit_definition_as_provided": [], "explanation": [], **row})
@@ -280,7 +280,7 @@ def test_plot_axis_units_rule(row, decision, answers):
 
 
 def test_plot_axis_units_a_verdict_against_the_rule_is_a_judgement():
-    row = {"panel_label": "A", "is_a_plot": "yes", "units_provided": AX("no"), "decision": "PASS",
+    row = {"panel_label": "A", "is_a_plot_with_axes": "yes", "units_provided": AX("no"), "decision": "PASS",
            "unit_definition_as_provided": [], "explanation": []}
     assert m.pau_rule(row).kind == "judgement"
 

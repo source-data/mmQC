@@ -31,7 +31,7 @@ title, which is the raw material for this check.
 
 ## 2. Does this check apply to the panel?
 
-Set `is_a_plot` to `yes` only when the panel is a plot of quantitative data
+Set `is_a_plot_with_axes` to `yes` only when the panel is a plot of quantitative data
 with axes — XY or XYZ.
 
 Set it to `no`, and skip unit checking, for schematics, **pie charts, heat maps
@@ -69,7 +69,7 @@ lists of bare strings. Every entry names the axis it describes:
   a brief per-axis reason.
 
 Use the same axis letters the plot description reports, and cover the same
-axes in all three lists. For a panel where `is_a_plot` is `no`, or a plot with
+axes in all three lists. For a panel where `is_a_plot_with_axes` is `no`, or a plot with
 no axes, leave all three lists empty.
 
 ## 4. Your verdict
@@ -80,14 +80,14 @@ no axes, leave all three lists empty.
 - `PASS` — every axis that needs a unit has one. A plot with no axes, such as a
   pie chart, has nothing to label and is a `PASS`.
 - `FAIL` — any numeric axis measuring a dimensional quantity has no unit.
-- `not_applicable` — `is_a_plot` is `no`: the check does not apply to it, so it
+- `not_applicable` — `is_a_plot_with_axes` is `no`: the check does not apply to it, so it
   neither passes nor fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that are not
-quantitative plots, which keep their label with `is_a_plot` set to `no` and
+quantitative plots, which keep their label with `is_a_plot_with_axes` set to `no` and
 `decision` set to `not_applicable`.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a

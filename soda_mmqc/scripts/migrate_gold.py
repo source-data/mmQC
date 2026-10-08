@@ -293,7 +293,7 @@ def pau_rule(row: Mapping[str, Any]) -> RowResult:
     fail and is a PASS; an axis that needs no unit answers not_required, a
     real answer, where the gold said "not needed".
     """
-    plot, units = row.get("is_a_plot"), row.get("units_provided") or []
+    plot, units = row.get("is_a_plot_with_axes"), row.get("units_provided") or []
     if plot == "yes" and not units and not row.get("unit_definition_as_provided"):
         derived = "PASS"
         new = {**row}
@@ -311,9 +311,9 @@ def pau_rule(row: Mapping[str, Any]) -> RowResult:
             {**u, "answer": "not_required" if u.get("answer") == "not needed" else u.get("answer")}
             for u in units]}
     else:
-        return RowResult("judgement", dict(row), f"is_a_plot is {plot!r}")
+        return RowResult("judgement", dict(row), f"is_a_plot_with_axes is {plot!r}")
     nothing_to_check = plot == "yes" and not units
-    stop = _verdict(row, derived, f"is_a_plot {plot!r} and the axis answers",
+    stop = _verdict(row, derived, f"is_a_plot_with_axes {plot!r} and the axis answers",
                     na_means="PASS" if nothing_to_check else None)
     if stop:
         return stop
@@ -322,7 +322,7 @@ def pau_rule(row: Mapping[str, Any]) -> RowResult:
 
 
 def pau_verify(row: Mapping[str, Any]) -> Optional[str]:
-    plot, units = row.get("is_a_plot"), row.get("units_provided") or []
+    plot, units = row.get("is_a_plot_with_axes"), row.get("units_provided") or []
     answers = [u.get("answer") for u in units]
     if plot == "no":
         ok = row.get("decision") == "not_applicable" and not units
@@ -331,7 +331,7 @@ def pau_verify(row: Mapping[str, Any]) -> Optional[str]:
     else:
         ok = (plot == "yes" and units and all(a in ("yes", "no", "not_required") for a in answers)
               and row.get("decision") == ("FAIL" if "no" in answers else "PASS"))
-    return None if ok else f"is_a_plot {plot!r}, answers {answers}, decision {row.get('decision')!r}"
+    return None if ok else f"is_a_plot_with_axes {plot!r}, answers {answers}, decision {row.get('decision')!r}"
 
 
 def pgl_rule(row: Mapping[str, Any]) -> RowResult:
@@ -542,7 +542,7 @@ CURATED_FIELDS = {
     "individual-data-points": ("plot", "individual_values", "decision"),
     "error-bars-defined": ("is_a_plot", "error_bar_on_figure", "error_bar_defined_in_caption",
                            "from_the_caption", "decision", "explanation"),
-    "plot-axis-units": ("is_a_plot", "decision"),
+    "plot-axis-units": ("is_a_plot_with_axes", "decision"),
     "plot-gap-labeling": ("is_a_plot", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
     "stat-significance-level": ("is_a_plot", "decision"),
     "stat-test": ("is_a_plot", "statistical_test_needed", "statistical_test_mentioned",
