@@ -2,17 +2,20 @@
 
 Why this exists
 ---------------
-The repository runs on OpenAI: ``API_PROVIDER=openai``, a working
-``OPENAI_API_KEY``, and a default model of ``gpt-5-mini``. The Claude Agent
-SDK adopted at human gate 4A cannot use that key -- it drives Claude Code,
-which authenticates against Anthropic, Bedrock, Vertex or Foundry. Adopting it
-therefore means a second model provider and a second billing relationship,
-which gate 4A did not surface and which left the project unable to run at all.
+When the agentic runner was written, the repository ran only on OpenAI. The
+Claude Agent SDK adopted at human gate 4A cannot use an ``OPENAI_API_KEY`` --
+it drives Claude Code, which authenticates against Anthropic, Bedrock, Vertex
+or Foundry -- so adopting it meant a second provider and a second billing
+relationship, which gate 4A did not surface.
 
-This module is the alternative: the same experiment, driven through the
-provider the project already has. It is deliberately an *additional* client
-rather than a replacement, so gate 4A's decision stands and either path can be
-taken once credentials exist for both.
+This module was the stopgap: the same experiment, driven through the provider
+the project already had. The SDK path (``--provider claude-sdk``) is now the
+default and the one every experiment runs on; this client remains an
+alternative, selected only with ``--provider openai``.
+
+It is not an exact twin of the SDK path. It still offers a ``Read`` tool
+confined to the runtime, which the SDK session no longer has, so results from
+the two providers are not directly comparable.
 
 What it must preserve
 ---------------------

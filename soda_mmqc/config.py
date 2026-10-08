@@ -371,8 +371,10 @@ AGENTIC_SETTING_SOURCES = ("project",)
 # Agentic permission profile
 # ---------------------------------------------------------------------------
 #
-# Deny by default. The session may do exactly three things: read inside the
-# runtime, write inside the runtime's artifacts directory, and invoke a skill.
+# Deny by default. The session may do exactly one thing: invoke a skill. It has
+# no file tools -- the example's content travels with the request, and the
+# runner serialises the structured result -- so nothing it does touches the
+# filesystem.
 #
 # Three facts from the Agent SDK's permission documentation shape this, and
 # each one invalidates an obvious-looking construction:
@@ -380,7 +382,7 @@ AGENTIC_SETTING_SOURCES = ("project",)
 # 1. `allowed_tools` is NOT an allowlist. It is a list of *auto-approvals*.
 #    "Any other tool not listed in allowed_tools is still available to Claude,
 #    and a call to it that needs approval falls through to the permission mode
-#    and canUseTool." So listing three tools does not remove the rest.
+#    and canUseTool." So listing one tool does not remove the rest.
 #
 # 2. `permission_mode="dontAsk"` is what turns it into one: "Any call that
 #    would otherwise prompt is denied [...] canUseTool is never called." The
@@ -396,14 +398,14 @@ AGENTIC_SETTING_SOURCES = ("project",)
 #    redundant with the allowlist -- for `Agent` in particular they are the
 #    only thing that works.
 
-#: Tool names the session may use. The rules actually passed to the SDK are
-#: built per-runtime by cli.session_options(), because two of the three are
-#: scoped to paths that only exist once a runtime is assembled.
+#: Tool names the session may use. The options actually passed to the SDK are
+#: built per-runtime by agentic.runtime.session_options().
 #:
-#: `Edit` rather than `Write` is deliberate and is a documented trap:
-#: "Edit(path) rules govern all built-in tools that write files, including
-#: Write and NotebookEdit; a Write(path) rule is never matched by the file
-#: permission checks." A scoped `Write(...)` rule would silently match nothing.
+#: If a file tool ever comes back, scope writes with `Edit(...)`, never
+#: `Write(...)`: "Edit(path) rules govern all built-in tools that write files,
+#: including Write and NotebookEdit; a Write(path) rule is never matched by the
+#: file permission checks." A scoped `Write(...)` rule would silently match
+#: nothing.
 AGENTIC_ALLOWED_TOOL_NAMES = ("Skill",)
 
 #: Tools removed from the model's context entirely, each for a specific
