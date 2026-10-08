@@ -9,7 +9,7 @@ For each and every panel in the figure, return your analysis in the following JS
     "outputs": [
         {
             "panel_label": "A",
-            "is_a_plot": "yes/no",
+            "is_a_plot_with_axes": "yes/no",
             "tick_sequence_anomaly": "yes/no/not_applicable",
             "gap_visually_marked": "yes/no/not_applicable",
             "decision": "PASS/FAIL/N/A",
@@ -21,14 +21,14 @@ For each and every panel in the figure, return your analysis in the following JS
 
 ## Logic
 IF panel is not a quantitative plot:
-    SET is_a_plot = "no"
+    SET is_a_plot_with_axes = "no"
     SET tick_sequence_anomaly = "not_applicable"
     SET gap_visually_marked = "not_applicable"
     SET decision = "N/A"
     SET explanation = ""
     CONTINUE to next panel
 
-SET is_a_plot = "yes"
+SET is_a_plot_with_axes = "yes"
 
 # Step 1: Check tick label sequence on each axis
 IF tick labels on all axes form a consistent numerical sequence
@@ -64,7 +64,7 @@ IF any axis shows anomalous tick label jump or skip
     "outputs": [
         {
             "panel_label": "A",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "yes",
             "gap_visually_marked": "no",
             "decision": "FAIL",
@@ -80,7 +80,7 @@ IF any axis shows anomalous tick label jump or skip
     "outputs": [
         {
             "panel_label": "B",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "yes",
             "gap_visually_marked": "yes",
             "decision": "PASS",
@@ -96,7 +96,7 @@ IF any axis shows anomalous tick label jump or skip
     "outputs": [
         {
             "panel_label": "C",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "no",
             "gap_visually_marked": "not_applicable",
             "decision": "PASS",
@@ -112,7 +112,7 @@ IF any axis shows anomalous tick label jump or skip
     "outputs": [
         {
             "panel_label": "D",
-            "is_a_plot": "no",
+            "is_a_plot_with_axes": "no",
             "tick_sequence_anomaly": "not_applicable",
             "gap_visually_marked": "not_applicable",
             "decision": "N/A",

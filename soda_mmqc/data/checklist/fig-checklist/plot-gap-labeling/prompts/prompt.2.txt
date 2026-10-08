@@ -10,7 +10,7 @@ For each and every panel in the figure, return your analysis in the following JS
     "outputs": [
         {
             "panel_label": "A",
-            "is_a_plot": "yes/no",
+            "is_a_plot_with_axes": "yes/no",
             "tick_sequence_anomaly": "yes/no/not_applicable",
             "gap_visually_marked": "yes/no/not_applicable",
             "decision": "PASS/FAIL/N/A",
@@ -23,7 +23,7 @@ For each and every panel in the figure, return your analysis in the following JS
 ## Guidelines
 
 **Step 1 — Is this a numerical plot?**
-Determine whether the panel contains a quantitative plot with labeled axes. Bar charts, line plots, scatter plots, box plots, and similar visualizations qualify. Micrographs, schematics, western blots, and representative images do not. Set `is_a_plot` to `"yes"` or `"no"` accordingly. For all `"no"` panels, set `tick_sequence_anomaly` and `gap_visually_marked` to `"not_applicable"`, `decision` to `"N/A"`, and `explanation` to an empty string.
+Determine whether the panel contains a quantitative plot with labeled axes. Bar charts, line plots, scatter plots, box plots, and similar visualizations qualify. Micrographs, schematics, western blots, and representative images do not. Set `is_a_plot_with_axes` to `"yes"` or `"no"` accordingly. For all `"no"` panels, set `tick_sequence_anomaly` and `gap_visually_marked` to `"not_applicable"`, `decision` to `"N/A"`, and `explanation` to an empty string.
 
 **Step 2 — Do the axis tick labels form a consistent sequence?**
 For each axis of a quantitative plot, examine the tick labels carefully. A consistent sequence is one that is evenly spaced, follows a logarithmic scale, or is otherwise numerically regular. Look specifically for anomalous jumps or skips in the tick label values — for example, labels reading 0, 10, 20, 30, 500 where the final value is disproportionately large relative to the preceding intervals. Categorical axes (e.g. treatment groups, sample names, time points as discrete categories) do not have a numerical sequence and should never be flagged as anomalies — this check applies to continuous numerical axes only. If all axes appear consistent and/or are of categorical nature, set `tick_sequence_anomaly` to `"no"`, `gap_visually_marked` to `"not_applicable"`, and `decision` to `"PASS"`.
@@ -46,7 +46,7 @@ If any axis shows an anomalous tick label jump or skip, set `tick_sequence_anoma
     "outputs": [
         {
             "panel_label": "A",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "yes",
             "gap_visually_marked": "no",
             "decision": "FAIL",
@@ -62,7 +62,7 @@ If any axis shows an anomalous tick label jump or skip, set `tick_sequence_anoma
     "outputs": [
         {
             "panel_label": "B",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "yes",
             "gap_visually_marked": "yes",
             "decision": "PASS",
@@ -78,7 +78,7 @@ If any axis shows an anomalous tick label jump or skip, set `tick_sequence_anoma
     "outputs": [
         {
             "panel_label": "C",
-            "is_a_plot": "yes",
+            "is_a_plot_with_axes": "yes",
             "tick_sequence_anomaly": "no",
             "gap_visually_marked": "not_applicable",
             "decision": "PASS",
@@ -94,7 +94,7 @@ If any axis shows an anomalous tick label jump or skip, set `tick_sequence_anoma
     "outputs": [
         {
             "panel_label": "D",
-            "is_a_plot": "no",
+            "is_a_plot_with_axes": "no",
             "tick_sequence_anomaly": "not_applicable",
             "gap_visually_marked": "not_applicable",
             "decision": "N/A",

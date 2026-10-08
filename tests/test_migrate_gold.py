@@ -292,7 +292,7 @@ def test_plot_axis_units_a_verdict_against_the_rule_is_a_judgement():
     ("yes", "yes", "no", "FAIL"),
 ])
 def test_plot_gap_labeling_rule(plot, anomaly, marked, decision):
-    row = {"panel_label": "A", "is_a_plot": plot, "tick_sequence_anomaly": anomaly,
+    row = {"panel_label": "A", "is_a_plot_with_axes": plot, "tick_sequence_anomaly": anomaly,
            "gap_visually_marked": marked, "decision": "N/A" if decision == "not_applicable" else decision}
     result = m.pgl_rule(row)
     assert result.new["decision"] == decision and m.pgl_verify(result.new) is None

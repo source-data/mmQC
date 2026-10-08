@@ -336,7 +336,7 @@ def pau_verify(row: Mapping[str, Any]) -> Optional[str]:
 
 def pgl_rule(row: Mapping[str, Any]) -> RowResult:
     """plot-gap-labeling: not a plot is not_applicable; FAIL only for an unmarked jump."""
-    plot, anomaly, marked = row.get("is_a_plot"), row.get("tick_sequence_anomaly"), row.get("gap_visually_marked")
+    plot, anomaly, marked = row.get("is_a_plot_with_axes"), row.get("tick_sequence_anomaly"), row.get("gap_visually_marked")
     if plot == "no":
         if anomaly != "not_applicable" or marked != "not_applicable":
             return RowResult("judgement", dict(row), f"not a plot, but anomaly {anomaly!r}, marked {marked!r}")
@@ -349,7 +349,7 @@ def pgl_rule(row: Mapping[str, Any]) -> RowResult:
     elif plot == "yes" and anomaly == "yes" and marked in ("yes", "no"):
         derived = "PASS" if marked == "yes" else "FAIL"
     else:
-        return RowResult("judgement", dict(row), f"is_a_plot {plot!r}, anomaly {anomaly!r}, marked {marked!r}")
+        return RowResult("judgement", dict(row), f"is_a_plot_with_axes {plot!r}, anomaly {anomaly!r}, marked {marked!r}")
     original = {k: (v if k != "gap_visually_marked" else marked) for k, v in row.items()}
     stop = _verdict(original, derived, f"anomaly {anomaly!r}, marked {marked!r}")
     if stop:
@@ -543,7 +543,7 @@ CURATED_FIELDS = {
     "error-bars-defined": ("is_a_plot", "error_bar_on_figure", "error_bar_defined_in_caption",
                            "from_the_caption", "decision", "explanation"),
     "plot-axis-units": ("is_a_plot_with_axes", "decision"),
-    "plot-gap-labeling": ("is_a_plot", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
+    "plot-gap-labeling": ("is_a_plot_with_axes", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
     "stat-significance-level": ("is_a_plot", "decision"),
     "stat-test": ("is_a_plot", "statistical_test_needed", "statistical_test_mentioned",
                   "from_the_caption", "decision"),

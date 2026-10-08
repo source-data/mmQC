@@ -33,7 +33,7 @@ turns on.
 
 ## 2. Does this check apply to the panel?
 
-Set `is_a_plot` to `yes` when the panel contains a quantitative plot with
+Set `is_a_plot_with_axes` to `yes` when the panel contains a quantitative plot with
 labeled axes. Bar charts, line plots, scatter plots, box plots and similar
 visualizations qualify. Micrographs, schematics, western blots and
 representative images do not.
@@ -72,7 +72,7 @@ Put `PASS`, `FAIL` or `not_applicable` in `decision` with a brief reason in
 
 - `PASS` — no anomaly, or an anomaly that is visually marked.
 - `FAIL` — an anomalous jump with no break indicator.
-- `not_applicable` — `is_a_plot` is `no`: the check does not apply to it, so it neither passes nor fails.
+- `not_applicable` — `is_a_plot_with_axes` is `no`: the check does not apply to it, so it neither passes nor fails.
 
 ## Output
 
