@@ -102,7 +102,7 @@ def init_expected_outputs(
     *,
     from_run: Optional[Path] = None,
     model: Optional[str] = None,
-    provider: str = "openai",
+    provider: str = "claude-sdk",
     overwrite: bool = True,
     examples: Optional[Sequence[str]] = None,
     limit: Optional[int] = None,

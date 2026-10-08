@@ -132,10 +132,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--provider",
         choices=("openai", "claude-sdk"),
-        default="openai",
+        default="claude-sdk",
         help=(
             "Which agent runtime to drive (default: %(default)s). "
-            "claude-sdk needs ANTHROPIC_API_KEY"
+            "claude-sdk needs ANTHROPIC_API_KEY, openai needs "
+            "OPENAI_API_KEY. API_PROVIDER in .env does not affect this"
         ),
     )
     run.add_argument(
@@ -254,7 +255,7 @@ def _build_parser() -> argparse.ArgumentParser:
     init.add_argument(
         "--provider",
         choices=("openai", "claude-sdk"),
-        default="openai",
+        default="claude-sdk",
         help="Agent runtime for a live run (default: %(default)s)",
     )
     init.add_argument(

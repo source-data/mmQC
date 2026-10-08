@@ -345,7 +345,7 @@ def run_check_live(
     limit: Optional[int] = None,
     keep_runtime: bool = False,
     approve_tools: bool = False,
-    provider: str = "openai",
+    provider: str = "claude-sdk",
     unpin: Optional[Mapping[str, Optional[Sequence[str]]]] = None,
     replicates: int = 1,
     force: bool = False,
