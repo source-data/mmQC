@@ -2,7 +2,7 @@
 
 # `fig-checklist-exp06`
 
-0 check(s) and 14 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
+1 check(s) and 13 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
 
 - **SkillSet digest:** `355fae4c42f94c1bca5697a3b1936f0c0606d98c4456701a75a81c2b1d59eac6`
 
@@ -13,7 +13,7 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 | skill | version | kind | description |
 | --- | --- | --- | --- |
 | `classify-panels` | v1 | shared | Classify panels by labelling them with the kind of content it shows (micrograph, plot, blot, molecular or protein structure, sequence, schematic, photograph, table). Use when a check applies to only some kinds of panel. |
-| `do-fig-checklist-cm` | v1 | shared | Run the whole figure checklist on a figure. |
+| `do-fig-checklist-cm` | v1 | check | Run the whole figure checklist on a figure. |
 | `error-bars-defined` | v3 | shared | Check that error bars, and box or violin plot elements, are explained in the caption. |
 | `identify-panels` | v1 | shared | Find every labelled panel in a figure. Use before any per-panel check. |
 | `image-annotation-defined` | v1 | shared | Check that graphical annotations drawn on imaging panels — arrows, arrowheads, circles, boxes, dashed lines — are explained in the caption. |
@@ -31,22 +31,32 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 
 Each entry is one check and the skills its prose asks for, transitively.
 
+- `do-fig-checklist-cm`
+  - `error-bars-defined`
+    - `classify-panels`
+  - `image-annotation-defined`
+    - `classify-panels`
+  - `individual-data-points`
+    - `classify-panels`
+  - `micrograph-scale-bar`
+    - `classify-panels`
+  - `panel-image-matches-caption`
+    - `classify-panels`
+  - `plot-axis-units`
+    - `classify-panels`
+  - `plot-gap-labeling`
+    - `classify-panels`
+  - `replication-reporting`
+    - `classify-panels`
+  - `single-channel-for-overlay`
+    - `classify-panels`
+  - `stat-significance-level`
+    - `classify-panels`
+  - `stat-test`
+    - `classify-panels`
 
 ### Called by no check
 
 These are pinned, but no check's prose reaches them today. Under closure assembly -- the default since exp-03 -- a session holds its entry point and what that prose reaches, so none holds these. Runs made with `assembly="all"`, as exp-01 and exp-02 were, had them in every session.
 
-- `classify-panels`
-- `do-fig-checklist-cm`
-- `error-bars-defined`
 - `identify-panels`
-- `image-annotation-defined`
-- `individual-data-points`
-- `micrograph-scale-bar`
-- `panel-image-matches-caption`
-- `plot-axis-units`
-- `plot-gap-labeling`
-- `replication-reporting`
-- `single-channel-for-overlay`
-- `stat-significance-level`
-- `stat-test`

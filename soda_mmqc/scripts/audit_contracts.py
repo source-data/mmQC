@@ -87,6 +87,19 @@ IDENTIFIERS: Dict[Tuple[str, str], str] = {
 }
 
 
+def _combined_identifier(pattern: str, identifiers) -> Optional[str]:
+    """An identifier declared for a check, found in a contract that combines checks.
+
+    A check-major contract carries each check's fields under its name:
+    ``<check>[].x`` is that check's ``outputs[].x``, scored by the same profile
+    (exp-03 and exp-06 verify it), so its declaration still holds.
+    """
+    head, sep, rest = pattern.partition("[].")
+    if not sep:
+        return None
+    return identifiers.get((head, f"outputs[].{rest}"))
+
+
 @dataclass(frozen=True)
 class Finding:
     checklist: str
@@ -270,7 +283,7 @@ def audit_check(
                     [token])
 
         if free and not (metric == "graded_string" and profile.get("string_compare") == "semantic"):
-            reason = identifiers.get((check, pattern))
+            reason = identifiers.get((check, pattern)) or _combined_identifier(pattern, identifiers)
             if reason is None:
                 add(pattern, "text-metric",
                     f"free text scored {metric}/{profile.get('string_compare')}: "

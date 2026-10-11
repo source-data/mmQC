@@ -218,3 +218,17 @@ def test_an_empty_string_in_an_enum_is_a_legacy_token(tmp_path):
         {"outputs[].on_image": {"matching_metric": "binary_polarity", "na_values": [""]}})
     found = [f for f in audit_check("toy", check_dir, gold) if f.rule == "legacy-token"]
     assert found and "'' in schema enum" in found[0].detail
+
+
+def test_an_identifier_holds_in_a_contract_that_combines_checks(tmp_path):
+    """exp-06's check-major contract names it stat-significance-level[].x."""
+    profile = {"matching_metric": "graded_string", "string_compare": "exact", "match_threshold": 1.0}
+    fields = {"significance_level_symbols_on_image": {"type": "array", "items": {"type": "string"}}}
+    check_dir, gold = _contract(tmp_path, fields,
+                                {"outputs[].significance_level_symbols_on_image": profile},
+                                check="stat-significance-level")
+    assert [f for f in audit_check("toy", check_dir, gold) if f.rule == "text-metric"] == []
+    from soda_mmqc.scripts.audit_contracts import _combined_identifier, IDENTIFIERS
+    assert _combined_identifier("stat-significance-level[].significance_level_symbols_on_image",
+                                IDENTIFIERS)
+    assert _combined_identifier("stat-test[].from_the_caption", IDENTIFIERS) is None
