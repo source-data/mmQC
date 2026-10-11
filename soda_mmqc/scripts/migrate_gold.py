@@ -402,7 +402,7 @@ def st_rule(row: Mapping[str, Any]) -> RowResult:
 
     The gold's PASS on a non-plot is renamed to not_applicable as a class.
     """
-    plot, needed = row.get("is_a_plot"), row.get("statistical_test_needed")
+    plot, needed = row.get("is_a_plot"), row.get("statistical_significance_claim")
     mentioned, caption = row.get("statistical_test_mentioned"), row.get("from_the_caption") or ""
     decision = row.get("decision") or ""
     if plot == "no":
@@ -411,7 +411,7 @@ def st_rule(row: Mapping[str, Any]) -> RowResult:
         if caption:
             return RowResult("judgement", dict(row), "not a plot, but from_the_caption holds text")
         derived, fields, accepted = "not_applicable", {
-            "statistical_test_needed": "not_applicable", "statistical_test_mentioned": "not_applicable",
+            "statistical_significance_claim": "not_applicable", "statistical_test_mentioned": "not_applicable",
             "from_the_caption": ""}, ("", "PASS", "not_applicable")
     elif plot == "yes" and needed == "no":
         if mentioned not in ("not needed", "not_required"):
@@ -592,7 +592,7 @@ CURATED_FIELDS = {
     "plot-axis-units": ("is_a_plot_with_axes", "decision"),
     "plot-gap-labeling": ("is_a_plot_with_axes", "tick_sequence_anomaly", "gap_visually_marked", "decision"),
     "stat-significance-level": ("is_a_plot", "decision"),
-    "stat-test": ("is_a_plot", "statistical_test_needed", "statistical_test_mentioned",
+    "stat-test": ("is_a_plot", "statistical_significance_claim", "statistical_test_mentioned",
                   "from_the_caption", "decision"),
     "replication-reporting": ("involves_replicates", "n_reported", "n_value_min",
                               "replicate_type_reported", "replicate_type", "decision"),

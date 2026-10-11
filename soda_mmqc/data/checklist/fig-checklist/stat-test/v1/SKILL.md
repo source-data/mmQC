@@ -46,24 +46,25 @@ not quantitative data** — it is an illustration. The plot description says whe
 that is the case; take it into account before analysing the panel.
 
 If `is_a_plot` is `no`, the check does not apply: set
-`statistical_test_needed`, `statistical_test_mentioned` and `decision` to
+`statistical_significance_claim`, `statistical_test_mentioned` and `decision` to
 `not_applicable`, and `from_the_caption` and `explanation` to an empty string.
 
-## 3. Is a test mandatory for this panel?
+## 3. Does the panel claim statistical significance?
 
-A test must be named **only** where there is a statement of statistical
-significance — p-values, significance stars, a claim of a significant
-difference. Set `statistical_test_needed` accordingly.
+Set `statistical_significance_claim` to `yes` if the panel, or the caption text
+about it, marks or states statistical significance — p-values, significance
+stars or other significance symbols, `ns`, a claim of a significant difference
+— and to `no` otherwise. This asks only what the figure shows, not whether its
+data would call for a statistical analysis. **Error bars alone are not a
+significance claim.**
 
-**The mere presence of error bars does NOT imply statistical analysis and does
-NOT require a statistical test.** If the panel plots quantitative data but
-makes no significance claim, no test is needed: set `statistical_test_needed`
-to `no`, `statistical_test_mentioned` to `not_required`, and `from_the_caption`
-to an empty string.
+If the panel makes no claim, no test needs to be named: set
+`statistical_test_mentioned` to `not_required` and `from_the_caption` to an
+empty string.
 
 ## 4. Is the test named?
 
-Where a test is needed, check the caption for its name — t-test, ANOVA,
+Where the panel claims significance, check the caption for the name of the test — t-test, ANOVA,
 Mann-Whitney, and so on. Put `yes` or `no` in `statistical_test_mentioned`, and the exact caption text naming it in
 `from_the_caption`. Use the caption text the panel inventory already mapped to
 this panel.

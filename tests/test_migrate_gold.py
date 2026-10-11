@@ -337,11 +337,11 @@ def test_na_on_a_plot_with_nothing_to_check_becomes_pass_but_other_na_does_not()
     ("yes", "yes", "no", "FAIL", ("yes", "no", "FAIL")),
 ])
 def test_stat_test_rule(plot, needed, mentioned, decision, out):
-    row = {"panel_label": "A", "is_a_plot": plot, "statistical_test_needed": needed,
+    row = {"panel_label": "A", "is_a_plot": plot, "statistical_significance_claim": needed,
            "statistical_test_mentioned": mentioned, "from_the_caption": "t-test" if mentioned == "yes" else "",
            "decision": decision, "explanation": ""}
     new = m.st_rule(row).new
-    assert (new["statistical_test_needed"], new["statistical_test_mentioned"], new["decision"]) == out
+    assert (new["statistical_significance_claim"], new["statistical_test_mentioned"], new["decision"]) == out
     assert m.st_rule(new).kind == "unchanged"
 
 
