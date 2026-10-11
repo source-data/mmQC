@@ -3,7 +3,7 @@ name: individual-data-points
 description: >-
   Check that plots which should show individual data points actually do. Use
   this for the individual-data-points quality-control check. Decides, for each
-  panel, whether it is a plot, whether individual values are displayed or are
+  panel, whether it is a plot with axes, whether individual values are displayed or are
   not required for that plot type, and gives a PASS or FAIL verdict with an
   explanation.
 requires:
@@ -34,12 +34,12 @@ the `Skill` tool. Work from what they return rather than deriving your own
 list, so that this check and every other check of this figure agree on what the
 panels are and what they show.
 
-## 2. Is the panel a plot?
+## 2. Is the panel a plot with axes?
 
-Set `plot` to `yes` when the plot description reports any plot type for the
-panel, and `no` otherwise. Pay attention to plots that show error bars —
-typically bar charts — or that show mean values, since those are the ones this
-check is about.
+Set `is_a_plot_with_axes` to `yes` when the panel is a plot of quantitative
+data with drawn axes, and `no` otherwise, including for heat maps and for a
+plot with no drawn axes. Pay attention to plots that show error bars — typically bar charts — or
+that show mean values, since those are the ones this check is about.
 
 ## 3. Are individual values shown, or not required?
 
@@ -50,11 +50,12 @@ For a plot panel, decide if `individual_values` are shown:
 - `no` — the panel summarises data, for instance a bar chart of means with
   error bars, and the individual measurements are not shown.
 - `not_required` — the plot type does not require them. **Box plots, violin
-  plots, line graphs, scatter plots, Venn diagrams, heatmaps, Kaplan-Meier curves and pie
+  plots, line graphs, scatter plots, Venn diagrams, Kaplan-Meier curves and pie
   charts are automatic PASS**; put `not_required` for these. The plot description
   names the type, so use it rather than re-deciding from the image.
 
-For a panel that is not a plot, set `individual_values` to `not_applicable`.
+For a panel that is not a plot with axes, set `individual_values` to
+`not_applicable`.
 
 ## 4. Your verdict
 
@@ -64,14 +65,14 @@ Put `PASS`, `FAIL` or `not_applicable` in `decision`, with a brief reason in
 - if `individual_values` is `yes` or `not_required` then `decision` is PASS.
 - if `individual_values` is `no` then `decision` is a FAIL: the panel should show its individual
   data points and does not.
-- If a panel is not a plot then the `decision` is `not_applicable`: the check does not apply
-  to it, so it neither passes nor fails.
+- If a panel is not a plot with axes then the `decision` is `not_applicable`: the check
+  does not apply to it, so it neither passes nor fails.
 
 ## Output
 
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports — including panels that are not
-plots, which keep their label with `plot` set to `no`.
+plots with axes, which keep their label with `is_a_plot_with_axes` set to `no`.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The

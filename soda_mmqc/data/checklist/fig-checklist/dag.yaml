@@ -1,6 +1,6 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist --write` instead. `graph fig-checklist` fails when it and the skills disagree.
 checklist: fig-checklist
-skill_set: 34e3b8b8fce1c035fbaaeccb9cf3ad7ffa6a7c85b5a28fae77ffb160f35a41ac
+skill_set: 06f1bd24e21502c21f480fdbc7045c32ce6d79254a18570d9d0a743300887c47
 skills:
 - name: classify-plot-panels
   version: v1
@@ -60,12 +60,13 @@ skills:
   - image-annotation-defined
 - name: individual-data-points
   version: v1
-  content_hash: 021e9e5af12f889cd20e889b737e8d7f6a45d27ac616806fc33baef7d0199771
+  content_hash: 5bd843649041a100c2a23fe340ab410698dec1bf36951354513187a8012a8481
   kind: check
   description: Check that plots which should show individual data points actually
     do. Use this for the individual-data-points quality-control check. Decides, for
-    each panel, whether it is a plot, whether individual values are displayed or are
-    not required for that plot type, and gives a PASS or FAIL verdict with an explanation.
+    each panel, whether it is a plot with axes, whether individual values are displayed
+    or are not required for that plot type, and gives a PASS or FAIL verdict with
+    an explanation.
   calls:
   - classify-plot-panels
   - identify-panels

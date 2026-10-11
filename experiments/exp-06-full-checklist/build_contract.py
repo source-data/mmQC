@@ -17,7 +17,8 @@ after the contract cleanup and the renames and changes of 2026-10-08 to
 2026-10-11 (`plot-axis-units` and `plot-gap-labeling`'s `is_a_plot_with_axes`,
 `stat-test`'s `statistical_significance_claim`, `single-channel-for-overlay`'s
 counts and `overlay_channels`). The merged gold is tagged with them as
-`gold-v5`.
+`gold-v5`, which the exp-06 run is scored against. Rebuilt 2026-10-11 with
+`individual-data-points`' `is_a_plot_with_axes` for `gold-v6`.
 
 **Verification is the point of this script.** It scores answers made from the
 gold -- rows dropped, added and reordered, every field perturbed by type

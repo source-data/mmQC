@@ -21,7 +21,7 @@ Each check has a migration rule that sorts every gold row into one of:
 
 A curator's judgements can be applied from a file instead of the curation app:
 ``--curation FILE`` names a CSV with ``example``, ``panel`` and the fields to
-set (here ``plot``, ``individual_values``, ``decision``), plus ``note``,
+set (here ``is_a_plot_with_axes``, ``individual_values``, ``decision``), plus ``note``,
 ``curator`` and ``date`` kept as the record. Each line must match exactly one
 gold row; its values are applied before the rule runs, so a judgement that
 contradicts the rule is still reported as one and still blocks ``--write``.
@@ -69,6 +69,12 @@ class RowResult:
 #   plot yes, individual_values no   -> FAIL
 # and "not needed" is retired: it meant not_applicable on a non-plot and
 # not_required on an exempt plot type.
+#
+# Renamed 2026-10-11: plot -> is_a_plot_with_axes, the field plot-axis-units
+# and plot-gap-labeling already use, with its value taken from plot-axis-units'
+# gold (ENRICH below) so that the checks agree on which panels are plots. A
+# plot without axes -- a pie chart, a Venn diagram -- no longer counts; the
+# list of exempt plot types stays.
 
 IDP_VALUES = {"yes": "yes", "no": "no", "not needed": "not_required",
               "not_required": "not_required", "not_applicable": "not_applicable"}
@@ -76,7 +82,7 @@ IDP_VALUES = {"yes": "yes", "no": "no", "not needed": "not_required",
 
 def idp_rule(row: Mapping[str, Any]) -> RowResult:
     new = dict(row)
-    plot = row.get("plot")
+    plot = row.get("is_a_plot_with_axes")
     values = row.get("individual_values")
     decision = row.get("decision")
 
@@ -101,14 +107,17 @@ def idp_rule(row: Mapping[str, Any]) -> RowResult:
                              f"decision {decision!r}, but individual_values "
                              f"{values!r} gives {derived}")
     else:
-        return RowResult("judgement", dict(row), f"plot is {plot!r}")
+        return RowResult("judgement", dict(row), f"is_a_plot_with_axes is {plot!r}")
 
     return RowResult("unchanged" if new == dict(row) else "mechanical", new)
 
 
 def idp_verify(row: Mapping[str, Any]) -> Optional[str]:
     """None if a migrated row satisfies the rule, else what is wrong."""
-    plot, values, decision = row.get("plot"), row.get("individual_values"), row.get("decision")
+    if "plot" in row:
+        return "plot is still present"
+    plot, values, decision = (row.get("is_a_plot_with_axes"), row.get("individual_values"),
+                              row.get("decision"))
     if plot == "no":
         ok = values == "not_applicable" and decision == "not_applicable"
     elif plot == "yes":
@@ -116,7 +125,26 @@ def idp_verify(row: Mapping[str, Any]) -> Optional[str]:
             values == "no" and decision == "FAIL")
     else:
         ok = False
-    return None if ok else f"plot {plot!r}, individual_values {values!r}, decision {decision!r}"
+    return None if ok else (f"is_a_plot_with_axes {plot!r}, individual_values {values!r}, "
+                            f"decision {decision!r}")
+
+
+def _enrich_plot_with_axes(row: Dict[str, Any], example: str, examples: Path) -> Dict[str, Any]:
+    """individual-data-points' plot becomes is_a_plot_with_axes, in place.
+
+    Its value is plot-axis-units' gold for the same panel (decided
+    2026-10-11). Left unset -- a judgement -- when that gold has no row with
+    the label; where it disagrees with the old plot, individual_values and
+    decision no longer fit and the row is a judgement too.
+    """
+    if "plot" not in row:
+        return row
+    path = examples / example / "checks" / "plot-axis-units" / "expected_output.json"
+    axes = ({r.get("panel_label"): r.get("is_a_plot_with_axes")
+             for r in json.loads(path.read_text())["outputs"]} if path.is_file() else {})
+    return {("is_a_plot_with_axes" if key == "plot" else key):
+            (axes.get(row.get("panel_label")) if key == "plot" else value)
+            for key, value in row.items()}
 
 
 # ---------------------------------------------------------------------------
@@ -235,7 +263,8 @@ def _enrich_is_a_plot(row: Dict[str, Any], example: str, examples: Path) -> Dict
 
     Decided 2026-10-02; the two checks' panel lists agree on every figure.
     Placed right after panel_label. Left absent when no such gold row exists,
-    which makes the row a judgement.
+    which makes the row a judgement. It has run: every row has is_a_plot, and
+    individual-data-points' plot has since become is_a_plot_with_axes.
     """
     if "is_a_plot" in row:
         return row
@@ -554,7 +583,8 @@ def _verify_by_rule(rule):
 
 
 #: Per-check steps that add a field the rule needs before it runs.
-ENRICH: Dict[str, Callable] = {"error-bars-defined": _enrich_is_a_plot}
+ENRICH: Dict[str, Callable] = {"error-bars-defined": _enrich_is_a_plot,
+                               "individual-data-points": _enrich_plot_with_axes}
 
 RULES: Dict[str, Tuple[Callable, Callable]] = {
     "individual-data-points": (idp_rule, idp_verify),
@@ -586,7 +616,8 @@ def example_of(path: Path, examples: Optional[Path] = None) -> str:
 
 #: Fields a curation file may set, per check.
 CURATED_FIELDS = {
-    "individual-data-points": ("plot", "individual_values", "decision"),
+    "individual-data-points": ("is_a_plot_with_axes", "individual_values", "decision",
+                               "explanation"),
     "error-bars-defined": ("is_a_plot", "error_bar_on_figure", "error_bar_defined_in_caption",
                            "from_the_caption", "decision", "explanation"),
     "plot-axis-units": ("is_a_plot_with_axes", "decision"),
@@ -598,7 +629,20 @@ CURATED_FIELDS = {
                               "replicate_type_reported", "replicate_type", "decision"),
 }
 
-Overrides = Dict[Tuple[str, str], Dict[str, str]]
+Overrides = Dict[Tuple[str, str], Dict[str, Any]]
+
+#: What a curated "not a plot with axes" implies for the fields that depend
+#: on it, so that a curation line need only say "no" (decided 2026-10-11,
+#: heat maps). A field the line sets itself is kept.
+NOT_A_PLOT: Dict[str, Dict[str, Any]] = {
+    "individual-data-points": {"individual_values": "not_applicable",
+                               "decision": "not_applicable"},
+    "plot-axis-units": {"units_provided": [], "unit_definition_as_provided": [],
+                        "explanation": [], "decision": "not_applicable"},
+    "plot-gap-labeling": {"tick_sequence_anomaly": "not_applicable",
+                          "gap_visually_marked": "not_applicable",
+                          "decision": "not_applicable"},
+}
 
 
 def read_curation(check: str, paths: List[Path]) -> Overrides:
@@ -610,8 +654,11 @@ def read_curation(check: str, paths: List[Path]) -> Overrides:
                 key = (line["example"], line["panel"])
                 if key in overrides:
                     raise ValueError(f"{path}: {key} is curated twice")
-                overrides[key] = {f: line[f] for f in CURATED_FIELDS[check]
-                                  if line.get(f) not in (None, "")}
+                values = {f: line[f] for f in CURATED_FIELDS[check]
+                          if line.get(f) not in (None, "")}
+                if values.get("is_a_plot_with_axes") == "no":
+                    values = {**NOT_A_PLOT.get(check, {}), **values}
+                overrides[key] = values
     return overrides
 
 

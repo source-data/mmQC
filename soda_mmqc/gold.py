@@ -25,6 +25,11 @@ Tags:
              counts (``not_applicable`` without an overlay) and
              ``overlay_channels``, and exp-06's eleven-check merged gold in
              do-fig-checklist-cm
+``gold-v6``  ``gold-v5`` with individual-data-points' ``plot`` renamed
+             ``is_a_plot_with_axes``, its values those of plot-axis-units'
+             gold (2026-10-11); heat maps not plots with axes in it,
+             plot-axis-units and plot-gap-labeling; and exp-06's merged gold
+             rebuilt with both
 
 A snapshot holds only gold files -- ``<example>/checks/<check>/expected_output.*``
 -- extracted with ``git archive`` into ``.gold-snapshots/<tag>/`` (gitignored),

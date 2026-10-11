@@ -12,19 +12,19 @@ from soda_mmqc.scripts import migrate_gold as m
 
 
 @pytest.mark.parametrize("row, kind, values, decision", [
-    ({"plot": "no", "individual_values": "not needed", "decision": "PASS"},
+    ({"is_a_plot_with_axes": "no", "individual_values": "not needed", "decision": "PASS"},
      "mechanical", "not_applicable", "not_applicable"),
-    ({"plot": "no", "individual_values": "not needed", "decision": ""},
+    ({"is_a_plot_with_axes": "no", "individual_values": "not needed", "decision": ""},
      "mechanical", "not_applicable", "not_applicable"),
-    ({"plot": "yes", "individual_values": "not needed", "decision": "PASS"},
+    ({"is_a_plot_with_axes": "yes", "individual_values": "not needed", "decision": "PASS"},
      "mechanical", "not_required", "PASS"),
-    ({"plot": "yes", "individual_values": "yes", "decision": "PASS"},
+    ({"is_a_plot_with_axes": "yes", "individual_values": "yes", "decision": "PASS"},
      "unchanged", "yes", "PASS"),
-    ({"plot": "yes", "individual_values": "no", "decision": "FAIL"},
+    ({"is_a_plot_with_axes": "yes", "individual_values": "no", "decision": "FAIL"},
      "unchanged", "no", "FAIL"),
-    ({"plot": "yes", "individual_values": "not_required", "decision": "PASS"},
+    ({"is_a_plot_with_axes": "yes", "individual_values": "not_required", "decision": "PASS"},
      "unchanged", "not_required", "PASS"),
-    ({"plot": "no", "individual_values": "not_applicable", "decision": "not_applicable"},
+    ({"is_a_plot_with_axes": "no", "individual_values": "not_applicable", "decision": "not_applicable"},
      "unchanged", "not_applicable", "not_applicable"),
 ])
 def test_rows_the_rule_settles(row, kind, values, decision):
@@ -34,10 +34,10 @@ def test_rows_the_rule_settles(row, kind, values, decision):
 
 
 @pytest.mark.parametrize("row", [
-    {"plot": "yes", "individual_values": "no", "decision": "PASS"},   # the 30
-    {"plot": "no", "individual_values": "no", "decision": "PASS"},    # the 1
-    {"plot": "yes", "individual_values": "not_applicable", "decision": "PASS"},
-    {"plot": "", "individual_values": "yes", "decision": "PASS"},
+    {"is_a_plot_with_axes": "yes", "individual_values": "no", "decision": "PASS"},   # the 30
+    {"is_a_plot_with_axes": "no", "individual_values": "no", "decision": "PASS"},    # the 1
+    {"is_a_plot_with_axes": "yes", "individual_values": "not_applicable", "decision": "PASS"},
+    {"is_a_plot_with_axes": "", "individual_values": "yes", "decision": "PASS"},
 ])
 def test_rows_that_need_a_judgement_are_left_alone(row):
     result = m.idp_rule({"panel_label": "A", **row})
@@ -46,7 +46,7 @@ def test_rows_that_need_a_judgement_are_left_alone(row):
 
 
 def test_a_blank_decision_on_a_plot_is_derived_but_only_offered():
-    result = m.idp_rule({"panel_label": "A", "plot": "yes",
+    result = m.idp_rule({"panel_label": "A", "is_a_plot_with_axes": "yes",
                          "individual_values": "no", "decision": ""})
     assert result.kind == "blank" and result.new["decision"] == "FAIL"
 
@@ -61,7 +61,7 @@ def _gold(tmp_path: Path, rows: list, *, html: bool = True) -> Path:
     return tmp_path / "examples"
 
 
-ROW = {"panel_label": "A", "plot": "no", "individual_values": "not needed",
+ROW = {"panel_label": "A", "is_a_plot_with_axes": "no", "individual_values": "not needed",
        "decision": "PASS", "explanation": "Micrograph — check does not apply."}
 
 
@@ -88,7 +88,7 @@ def test_write_is_idempotent(tmp_path):
 
 
 def test_write_leaves_judgement_rows_untouched(tmp_path):
-    odd = {**ROW, "panel_label": "B", "plot": "yes", "individual_values": "no", "decision": "PASS"}
+    odd = {**ROW, "panel_label": "B", "is_a_plot_with_axes": "yes", "individual_values": "no", "decision": "PASS"}
     examples = _gold(tmp_path, [ROW, odd])
     m.write("individual-data-points", m.plan("individual-data-points", examples),
             fill_blank=False, examples=examples)
@@ -97,7 +97,7 @@ def test_write_leaves_judgement_rows_untouched(tmp_path):
 
 
 def test_main_refuses_to_write_while_judgements_remain(tmp_path, monkeypatch, capsys):
-    odd = {**ROW, "plot": "yes", "individual_values": "no", "decision": "PASS"}
+    odd = {**ROW, "is_a_plot_with_axes": "yes", "individual_values": "no", "decision": "PASS"}
     examples = _gold(tmp_path, [odd])
     before = next(examples.glob("**/expected_output.json")).read_text()
     monkeypatch.setattr(m, "EXAMPLES", examples)
@@ -114,11 +114,40 @@ def test_main_writes_once_nothing_needs_a_judgement(tmp_path, monkeypatch):
     assert gold["outputs"][0]["decision"] == "not_applicable"
 
 
+def test_plot_becomes_is_a_plot_with_axes_from_plot_axis_units(tmp_path):
+    """Renamed in place 2026-10-11, the value taken from plot-axis-units' gold."""
+    base = tmp_path / "examples" / "doc" / "content" / "1" / "checks"
+    (base / "plot-axis-units").mkdir(parents=True)
+    (base / "plot-axis-units" / "expected_output.json").write_text(
+        json.dumps({"outputs": [{"panel_label": "A", "is_a_plot_with_axes": "no"}]}))
+    row = {"panel_label": "A", "plot": "yes", "individual_values": "not_required",
+           "decision": "PASS", "explanation": "Pie chart."}
+    enriched = m._enrich_plot_with_axes(row, "doc/content/1", tmp_path / "examples")
+    assert list(enriched) == ["panel_label", "is_a_plot_with_axes", "individual_values",
+                              "decision", "explanation"]
+    assert enriched["is_a_plot_with_axes"] == "no"
+    assert m.idp_rule(enriched).kind == "judgement"     # a pie chart: no longer a plot
+
+
+def test_a_panel_plot_axis_units_does_not_label_is_a_judgement(tmp_path):
+    row = {"panel_label": "C", "plot": "yes", "individual_values": "not_required",
+           "decision": "PASS", "explanation": ""}
+    enriched = m._enrich_plot_with_axes(row, "doc/content/1", tmp_path / "examples")
+    assert "plot" not in enriched and enriched["is_a_plot_with_axes"] is None
+    assert m.idp_rule(enriched).kind == "judgement"
+
+
+def test_a_row_still_carrying_plot_fails_verification():
+    row = {"panel_label": "A", "plot": "yes", "is_a_plot_with_axes": "yes",
+           "individual_values": "yes", "decision": "PASS"}
+    assert m.idp_verify(row) == "plot is still present"
+
+
 # --- curation files ------------------------------------------------------------
 
 def _curation(tmp_path: Path, lines: list) -> Path:
     path = tmp_path / "curation.csv"
-    fields = ["example", "panel", "plot", "individual_values", "decision", "note", "curator", "date"]
+    fields = ["example", "panel", "is_a_plot_with_axes", "individual_values", "decision", "note", "curator", "date"]
     import csv
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
@@ -128,7 +157,7 @@ def _curation(tmp_path: Path, lines: list) -> Path:
     return path
 
 
-ODD = {**ROW, "plot": "yes", "individual_values": "no", "decision": "PASS"}
+ODD = {**ROW, "is_a_plot_with_axes": "yes", "individual_values": "no", "decision": "PASS"}
 
 
 def test_a_curated_judgement_becomes_writable(tmp_path):
@@ -433,3 +462,15 @@ def test_an_overlay_keeps_its_counts_including_a_real_zero():
 ])
 def test_single_channel_contradictions_need_a_judgement(row):
     assert m.scfo_rule(row).kind == "judgement"
+
+
+def test_a_curated_non_plot_implies_its_dependent_fields(tmp_path):
+    """Heat maps, 2026-10-11: a curation line need only say "no"."""
+    path = tmp_path / "pau.csv"
+    path.write_text("example,panel,is_a_plot_with_axes,decision\ndoc/content/1,A,no,\n")
+    (values,) = m.read_curation("plot-axis-units", [path]).values()
+    assert values == {"units_provided": [], "unit_definition_as_provided": [], "explanation": [],
+                      "decision": "not_applicable", "is_a_plot_with_axes": "no"}
+    row = {"panel_label": "A", "is_a_plot_with_axes": "yes", "units_provided": AX("no"),
+           "unit_definition_as_provided": [], "decision": "FAIL", "explanation": []}
+    assert m.pau_verify({**row, **values}) is None

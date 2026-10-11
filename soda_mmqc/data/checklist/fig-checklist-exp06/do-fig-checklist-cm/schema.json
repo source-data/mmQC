@@ -216,13 +216,13 @@
                 "type": "string",
                 "description": "Label of the panel (e.g., A, B, C)"
               },
-              "plot": {
+              "is_a_plot_with_axes": {
                 "type": "string",
                 "enum": [
                   "yes",
                   "no"
                 ],
-                "description": "Whether the panel is a plot"
+                "description": "Whether the panel is a plot of quantitative data with drawn axes; heat maps are not"
               },
               "individual_values": {
                 "type": "string",
@@ -232,7 +232,7 @@
                   "not_required",
                   "not_applicable"
                 ],
-                "description": "Whether the panel displays individual data points: not_required for a plot type that does not require them, not_applicable for a panel that is not a plot"
+                "description": "Whether the panel displays individual data points: not_required for a plot type that does not require them, not_applicable for a panel that is not a plot with axes"
               },
               "decision": {
                 "type": "string",
@@ -241,7 +241,7 @@
                   "FAIL",
                   "not_applicable"
                 ],
-                "description": "Panel-level verdict on whether individual data points are shown where average values are displayed; not_applicable for a panel that is not a plot"
+                "description": "Panel-level verdict on whether individual data points are shown where average values are displayed; not_applicable for a panel that is not a plot with axes"
               },
               "explanation": {
                 "type": "string",
@@ -250,7 +250,7 @@
             },
             "required": [
               "panel_label",
-              "plot",
+              "is_a_plot_with_axes",
               "individual_values",
               "decision",
               "explanation"
