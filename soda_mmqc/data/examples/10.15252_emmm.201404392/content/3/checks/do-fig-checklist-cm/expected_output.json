@@ -46,6 +46,90 @@
       "from_the_image": ""
     }
   ],
+  "image-annotation-defined": [
+    {
+      "panel_label": "A",
+      "image_data": "yes",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    },
+    {
+      "panel_label": "B",
+      "image_data": "yes",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    },
+    {
+      "panel_label": "C",
+      "image_data": "no",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    },
+    {
+      "panel_label": "D",
+      "image_data": "yes",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    },
+    {
+      "panel_label": "E",
+      "image_data": "no",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    }
+  ],
+  "single-channel-for-overlay": [
+    {
+      "panel_label": "A",
+      "multicolored_overlay_micrograph": "yes",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": 3,
+      "number_of_single_channel_images_shown": 3,
+      "all_channels_shown_separately": "yes"
+    },
+    {
+      "panel_label": "B",
+      "multicolored_overlay_micrograph": "yes",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": 2,
+      "number_of_single_channel_images_shown": 1,
+      "all_channels_shown_separately": "no"
+    },
+    {
+      "panel_label": "C",
+      "multicolored_overlay_micrograph": "no",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
+      "all_channels_shown_separately": "not_applicable"
+    },
+    {
+      "panel_label": "D",
+      "multicolored_overlay_micrograph": "no",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
+      "all_channels_shown_separately": "not_applicable"
+    },
+    {
+      "panel_label": "E",
+      "multicolored_overlay_micrograph": "no",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
+      "all_channels_shown_separately": "not_applicable"
+    }
+  ],
   "individual-data-points": [
     {
       "panel_label": "A",
@@ -128,6 +212,349 @@
       "from_the_caption": "",
       "decision": "PASS",
       "explanation": ""
+    }
+  ],
+  "plot-axis-units": [
+    {
+      "panel_label": "A",
+      "is_a_plot_with_axes": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "not_applicable",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot_with_axes": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not_required"
+        },
+        {
+          "axis": "y",
+          "answer": "not_required"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Intensity (AU)"
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot_with_axes": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "not_applicable",
+      "explanation": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot_with_axes": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "not_required"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "no"
+        }
+      ],
+      "unit_definition_as_provided": [],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "y",
+          "explanation": "SDH signal intensity (continuous measurement) is plotted but no units are specified; intensity should indicate units (e.g., arbitrary units [AU] or optical density)."
+        },
+        {
+          "axis": "y",
+          "explanation": "COX signal intensity (continuous measurement) is plotted but no units are specified; intensity should indicate units (e.g., arbitrary units [AU] or optical density)."
+        }
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot_with_axes": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "no"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "y",
+          "definition": "Counts"
+        }
+      ],
+      "decision": "FAIL",
+      "explanation": [
+        {
+          "axis": "x",
+          "explanation": "TMRM fluorescence intensity is displayed as channel 'FL2-H' with tick values (10^1–10^4) but no defined unit is given; fluorescence intensity should be labeled (e.g., arbitrary units [AU] or clarified as instrument channel units)."
+        }
+      ]
+    }
+  ],
+  "plot-gap-labeling": [
+    {
+      "panel_label": "A",
+      "is_a_plot_with_axes": "no",
+      "tick_sequence_anomaly": "not_applicable",
+      "gap_visually_marked": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot_with_axes": "yes",
+      "tick_sequence_anomaly": "no",
+      "gap_visually_marked": "not_required",
+      "decision": "PASS",
+      "explanation": ""
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot_with_axes": "no",
+      "tick_sequence_anomaly": "not_applicable",
+      "gap_visually_marked": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot_with_axes": "yes",
+      "tick_sequence_anomaly": "no",
+      "gap_visually_marked": "not_required",
+      "decision": "PASS",
+      "explanation": ""
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot_with_axes": "yes",
+      "tick_sequence_anomaly": "no",
+      "gap_visually_marked": "not_required",
+      "decision": "PASS",
+      "explanation": ""
+    }
+  ],
+  "stat-significance-level": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "decision": "not_applicable",
+      "explanation": "",
+      "symbols_defined": [],
+      "symbol_definition": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "*",
+        "**"
+      ],
+      "decision": "PASS",
+      "explanation": "All significance level symbols are defined.",
+      "symbols_defined": [
+        "yes",
+        "yes"
+      ],
+      "symbol_definition": [
+        "*p<0.05",
+        "**p<0.01"
+      ]
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "decision": "not_applicable",
+      "explanation": "",
+      "symbols_defined": [],
+      "symbol_definition": []
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [
+        "##"
+      ],
+      "decision": "PASS",
+      "explanation": "All significance level symbols are defined.",
+      "symbols_defined": [
+        "yes"
+      ],
+      "symbol_definition": [
+        "##"
+      ]
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [],
+      "decision": "PASS",
+      "explanation": "",
+      "symbols_defined": [],
+      "symbol_definition": []
+    }
+  ],
+  "stat-test": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "statistical_significance_claim": "not_applicable",
+      "statistical_test_mentioned": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "statistical_significance_claim": "yes",
+      "statistical_test_mentioned": "no",
+      "from_the_caption": "",
+      "decision": "FAIL",
+      "explanation": "The panel includes bar graphs with significance markers (*, **) indicating statistical comparisons, but the caption/figure legend does not specify which statistical test was used."
+    },
+    {
+      "panel_label": "C",
+      "is_a_plot": "no",
+      "statistical_significance_claim": "not_applicable",
+      "statistical_test_mentioned": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "D",
+      "is_a_plot": "yes",
+      "statistical_significance_claim": "yes",
+      "statistical_test_mentioned": "yes",
+      "from_the_caption": "##: p<0.01, Tukey's test follows One-way ANOVA",
+      "decision": "PASS",
+      "explanation": ""
+    },
+    {
+      "panel_label": "E",
+      "is_a_plot": "yes",
+      "statistical_significance_claim": "no",
+      "statistical_test_mentioned": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": ""
+    }
+  ],
+  "replication-reporting": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "",
+      "decision": "not_applicable",
+      "explanation": "Panel A shows representative microscopy images (no quantified summary or error bars); no replicate information is provided or required for this representative image."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "n=20"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 20,
+      "replicate_type_reported": "no",
+      "replicate_type": "",
+      "decision": "FAIL",
+      "explanation": "The panel reports n=20 (shown on the graph) but does not state what the replicates represent (biological/technical/cells/independent experiments), so replicate type is missing."
+    },
+    {
+      "panel_label": "C",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "",
+      "decision": "not_applicable",
+      "explanation": "Panel C is a Western blot presented as a representative confirmation of expression with no quantification or reported replicate number in the figure legend."
+    },
+    {
+      "panel_label": "D",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "15",
+        "23, 26, 23"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 15,
+      "replicate_type_reported": "no",
+      "replicate_type": "",
+      "decision": "FAIL",
+      "explanation": "Bar graphs include sample counts (numbers shown on bars: 15 for SDH; 23, 26, 23 for COX) so n is reported, but the figure/legend does not specify what those numbers represent (e.g. animals, sections, cells), so replicate type is missing."
+    },
+    {
+      "panel_label": "E",
+      "involves_replicates": "yes",
+      "replicate_statements": [
+        "three sets of independent transfection experiments"
+      ],
+      "n_reported": "yes",
+      "n_value_min": 3,
+      "replicate_type_reported": "yes",
+      "replicate_type": "independent transfection experiments",
+      "decision": "PASS",
+      "explanation": "The legend explicitly states that results are from three sets of independent transfection experiments (n = 3 independent experiments), providing both number and type of replicates and n > 2."
+    }
+  ],
+  "panel-image-matches-caption": [
+    {
+      "panel_label": "A",
+      "image_matches_caption": "no",
+      "discrepancies": "Caption states that co‑expression of HMGB1‑GFP reduces MitoTracker Deep Red accumulation in Atxn1(86Q)‑transfected cells, but the images show the opposite: the Atxn1(86Q) column has reduced MitoTracker signal while the Atxn1(86Q)+HMGB1‑GFP column shows stronger/ restored MitoTracker staining. The visual data therefore contradict the caption wording."
+    },
+    {
+      "panel_label": "B",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
+    },
+    {
+      "panel_label": "C",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
+    },
+    {
+      "panel_label": "D",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
+    },
+    {
+      "panel_label": "E",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
     }
   ]
 }

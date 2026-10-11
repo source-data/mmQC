@@ -19,6 +19,57 @@
       "from_the_image": ""
     }
   ],
+  "image-annotation-defined": [
+    {
+      "panel_label": "A",
+      "image_data": "yes",
+      "any_annotation_present_on_image": "yes",
+      "annotation_description_on_image": [
+        "red circle",
+        "green circle",
+        "red box",
+        "green box"
+      ],
+      "annotation_defined_in_caption": [
+        "yes",
+        "yes",
+        "yes",
+        "yes"
+      ],
+      "from_the_caption": [
+        "Images are selected frames of PA time lapse with the photoactivated region represented by circles in euchromatin (red) or in heterochromatin (green) on the pre‐activation  image.",
+        "Images are selected frames of PA time lapse with the photoactivated region represented by circles in euchromatin (red) or in heterochromatin (green) on the pre‐activation image.",
+        "The inserts outlined in red and green correspond to two higher magnifications of photoactivated areas in euchromatin and heterochromatin, respectively.",
+        "The inserts outlined in red and green correspond to two higher magnifications of photoactivated areas in euchromatin and heterochromatin, respectively."
+      ]
+    },
+    {
+      "panel_label": "B",
+      "image_data": "no",
+      "any_annotation_present_on_image": "no",
+      "annotation_description_on_image": [],
+      "annotation_defined_in_caption": [],
+      "from_the_caption": []
+    }
+  ],
+  "single-channel-for-overlay": [
+    {
+      "panel_label": "A",
+      "multicolored_overlay_micrograph": "no",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
+      "all_channels_shown_separately": "not_applicable"
+    },
+    {
+      "panel_label": "B",
+      "multicolored_overlay_micrograph": "no",
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
+      "all_channels_shown_separately": "not_applicable"
+    }
+  ],
   "individual-data-points": [
     {
       "panel_label": "A",
@@ -53,6 +104,136 @@
       "from_the_caption": "",
       "decision": "FAIL",
       "explanation": "Plots show vertical error bars around data points, but the figure caption does not define what the error bars represent (e.g., SD, SEM, or CI) nor provide sample size."
+    }
+  ],
+  "plot-axis-units": [
+    {
+      "panel_label": "A",
+      "is_a_plot_with_axes": "no",
+      "units_provided": [],
+      "unit_definition_as_provided": [],
+      "decision": "not_applicable",
+      "explanation": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot_with_axes": "yes",
+      "units_provided": [
+        {
+          "axis": "x",
+          "answer": "yes"
+        },
+        {
+          "axis": "y",
+          "answer": "yes"
+        }
+      ],
+      "unit_definition_as_provided": [
+        {
+          "axis": "x",
+          "definition": "Time is indicated on the x-axis in seconds [s]."
+        },
+        {
+          "axis": "y",
+          "definition": "Intensity is reported in arbitrary units [a.u.]."
+        }
+      ],
+      "decision": "PASS",
+      "explanation": []
+    }
+  ],
+  "plot-gap-labeling": [
+    {
+      "panel_label": "A",
+      "is_a_plot_with_axes": "no",
+      "tick_sequence_anomaly": "not_applicable",
+      "gap_visually_marked": "not_applicable",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot_with_axes": "yes",
+      "tick_sequence_anomaly": "no",
+      "gap_visually_marked": "not_required",
+      "decision": "PASS",
+      "explanation": ""
+    }
+  ],
+  "stat-significance-level": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "significance_level_symbols_on_image": [],
+      "decision": "not_applicable",
+      "explanation": "",
+      "symbols_defined": [],
+      "symbol_definition": []
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "significance_level_symbols_on_image": [],
+      "decision": "PASS",
+      "explanation": "",
+      "symbols_defined": [],
+      "symbol_definition": []
+    }
+  ],
+  "stat-test": [
+    {
+      "panel_label": "A",
+      "is_a_plot": "no",
+      "statistical_significance_claim": "not_applicable",
+      "statistical_test_mentioned": "not_applicable",
+      "from_the_caption": "",
+      "decision": "not_applicable",
+      "explanation": ""
+    },
+    {
+      "panel_label": "B",
+      "is_a_plot": "yes",
+      "statistical_significance_claim": "no",
+      "statistical_test_mentioned": "not_required",
+      "from_the_caption": "",
+      "decision": "PASS",
+      "explanation": ""
+    }
+  ],
+  "replication-reporting": [
+    {
+      "panel_label": "A",
+      "involves_replicates": "no",
+      "replicate_statements": [],
+      "n_reported": "not_applicable",
+      "n_value_min": "not_applicable",
+      "replicate_type_reported": "not_applicable",
+      "replicate_type": "",
+      "decision": "not_applicable",
+      "explanation": "Panel A shows representative pseudocoloured microscopy frames (selected images) rather than quantified, replicated summary data."
+    },
+    {
+      "panel_label": "B",
+      "involves_replicates": "yes",
+      "replicate_statements": [],
+      "n_reported": "no",
+      "n_value_min": "not_reported",
+      "replicate_type_reported": "no",
+      "replicate_type": "",
+      "decision": "FAIL",
+      "explanation": "Panel B presents quantified intensity traces and averaged inset responses but the figure caption does not report an n-number or specify the type of replicates."
+    }
+  ],
+  "panel-image-matches-caption": [
+    {
+      "panel_label": "A",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
+    },
+    {
+      "panel_label": "B",
+      "image_matches_caption": "yes",
+      "discrepancies": ""
     }
   ]
 }
