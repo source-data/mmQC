@@ -15,9 +15,9 @@ Check that the axes of quantitative plots state the units of what they measure, 
 
 Proceed step-by-step and establish a systematical strategy to be very accurate and avoid mistakes.
 
-## Classify figure panels
+## List and classify all figure panels
 
-To decide when the check is applicable or not, invoke the `classify-panels` skill to classify panels based on content type before you do anything else.
+To be systematic, start from a complete and accurate list of all the figure's panels. Before you do anything else, invoke the `classify-panels` skill to list every panel and classify it by content type.
 
 ## Applicability of the check to plots with axes only
 

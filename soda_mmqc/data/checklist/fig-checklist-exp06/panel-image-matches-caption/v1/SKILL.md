@@ -15,9 +15,9 @@ Check whether each panel image matches its caption description — that is, whet
 
 Proceed step-by-step and establish a systematical strategy to be very accurate and avoid mistakes.
 
-## Classify figure panels
+## List and classify all figure panels
 
-To get the panels and what each shows, invoke the `classify-panels` skill before you do anything else.
+To be systematic, start from a complete and accurate list of all the figure's panels. Before you do anything else, invoke the `classify-panels` skill to list every panel and classify it by content type.
 
 ## Applicability of the check to panels the caption describes
 

@@ -16,9 +16,9 @@ Check whether plots showing averaged or aggregated data also display the underly
 
 Showing individual data points alongside summary statistics is important because it allows the reader to assess the spread and variability of the raw measurements, and to judge how robust a result truly is. Plotting only averages can obscure low replication numbers, outliers, or large variability — details that are critical for interpreting the reliability of a finding.
 
-## Classify figure panels
+## List and classify all figure panels
 
-To decide when the check is applicable or not, invoke the `classify-panels` skill to classify panels based on content type before you do anything else.
+To be systematic, start from a complete and accurate list of all the figure's panels. Before you do anything else, invoke the `classify-panels` skill to list every panel and classify it by content type.
 
 ## Applicability of the check to plots only
 
