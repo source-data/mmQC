@@ -1,7 +1,7 @@
 ---
 title: exp-06 — the full figure checklist, fanned in from one entry point
 date: 2026-10-11
-status: planned        # draft | planned | running | done | abandoned
+status: done           # draft | planned | running | done | abandoned
 kind: experiment
 extends: exp-04
 tags: [experiment, skills, dag, entry-point, baseline, full-checklist]
@@ -191,7 +191,7 @@ contract is changed:
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-11 | smoke, both arrangements | `run.py --smoke` | $1.59 | `experiments/runs/exp-06-full-checklist/smoke/` (not committed) |
-| | both arrangements | `python experiments/exp-06-full-checklist/run.py` | est. ~$100 | `experiments/runs/exp-06-full-checklist/` |
+| 2026-10-11 | both arrangements | `python experiments/exp-06-full-checklist/run.py` | $87.66 | `experiments/runs/exp-06-full-checklist/` |
 
 The estimate is the smoke test's mean, $0.27 per session, over 370 sessions.
 
@@ -213,7 +213,98 @@ content/1–3), one replicate, 6 sessions, none failed, $1.59.
 
 ## Findings
 
-*To be written after the run.*
+Run 2026-10-11 at concurrency 50: 370 sessions, **none failed**, $87.66.
+Analysis in `notebooks/experiments/exp-06-full-checklist.ipynb`, against
+`gold-v5`. `individual-data-points · explanation` is unscored (convention C3;
+fixed in the contract before scoring, `e8901a1a8`).
+
+### Numbers
+
+**Dispatch — all or nothing, almost always all.**
+
+| | all eleven checks | no check | partial | `classify-panels` reached | `identify-panels` reached | in D's order |
+|---|---|---|---|---|---|---|
+| `A\|B ← C_i ← D` | **184/185** | 1 | 0 | 64/185, never twice | — | 185/185 |
+| `A ← B ← C_i ← D` | **182/185** | 3 | 0 | 109/185 (twice in 3) | 130/185 | 185/185 |
+
+No session stopped partway, so no check was dropped for its position in D's
+list. A session that invoked no check still answered all eleven from the
+schema. No skill outside the closure. **One empty answer**, in
+`A ← B ← C_i ← D`: all eleven checks empty.
+
+**Layer S**, per check (`found` = correct ÷ (correct + missing); `both` also
+counts spurious rows):
+
+| | `A\|B ← C_i ← D` found / both | `A ← B ← C_i ← D` found / both |
+|---|---|---|
+| most checks | 0.997 / 0.992 | 0.992 / 0.987 |
+| `individual-data-points` | 0.996 / 0.990 | 0.992 / 0.987 |
+| `stat-significance-level`, `stat-test` | 0.996 / 0.991 | 0.992 / 0.987 |
+| `plot-axis-units` | 0.991 / 0.983 | 0.985 / 0.977 |
+
+**Panels across the eleven lists**: 6 spurious panels in each arrangement;
+missing 2 (`A|B ← C_i ← D`) against 10 (`A ← B ← C_i ← D`); **partly missing
+2 in 185 sessions** — one panel inventory holds across eleven check lists, as
+it held across three in exp-04.
+
+**Layer 1**, `A|B ← C_i ← D`: `image-annotation-defined` 0.997,
+`single-channel-for-overlay` 0.996, `micrograph-scale-bar` 0.989,
+`panel-image-matches-caption` 0.985, `stat-significance-level` 0.983,
+`individual-data-points` 0.983, `error-bars-defined` 0.982,
+`plot-gap-labeling` 0.982, `stat-test` 0.979, `replication-reporting` 0.971,
+`plot-axis-units` 0.963.
+
+**Layer 2**, `A|B ← C_i ← D`: most properties at 0.93 or above, most
+decisions 0.95–1.00. The weakest:
+
+| check · property | mean_score | figures |
+|---|---|---|
+| `plot-axis-units · unit_definition_as_provided[].definition` | 0.77 | 28 |
+| `replication-reporting · replicate_statements` | 0.79 | 37 |
+| `plot-axis-units · units_provided[].answer` | 0.83 | 34 |
+| `stat-significance-level · symbol_definition` / `symbols_defined` / `significance_level_symbols_on_image` | 0.84 / 0.86 / 0.87 | 37 |
+| `error-bars-defined · from_the_caption` | 0.87 | 28 |
+| `panel-image-matches-caption · discrepancies` | 0.90 | 5 |
+| `single-channel-for-overlay · all_channels_shown_separately`, `number_of_single_channel_images_shown` | 0.92 | 13 |
+| `individual-data-points · individual_values` | 0.93 | 34 |
+| `plot-axis-units · decision` | 0.94 | 34 |
+| `replication-reporting · decision` | 0.96 | 33 |
+| `stat-significance-level · decision` | 0.95 | 33 |
+
+**The arrangements side by side**, `A ← B ← C_i ← D` minus `A|B ← C_i ← D`:
+lower at layer S for every check (about −0.005, intervals [−0.016, 0.000]) and
+at layer 1 for every check (−0.001 to −0.008; `micrograph-scale-bar`'s interval
+wholly below 0); at layer 2 mostly small negative differences, intervals
+including 0. Reported, not tested.
+
+**Cost and time per figure** (concurrency 50): `A|B ← C_i ← D` $0.235
+[0.216, 0.253], `A ← B ← C_i ← D` $0.239; about 17,600 output tokens, 27
+turns and 169 s per session. The 370 sessions took under an hour.
+
+**Replicate variance**: planned five-against-five half-widths at layer S
+0.0075 (`A|B ← C_i ← D`) and 0.017 (`A ← B ← C_i ← D`) — the deeper arrangement
+is the noisier.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**One session can run the whole checklist.** Eleven checks did not break
+dispatch: when D dispatched it dispatched all eleven, in order, and position in
+the list cost nothing. The inventory held across eleven lists. The failure mode
+that remains is the one exp-03 named — a session answering every check without
+invoking any — at 1–3 sessions in 185.
+
+**`A|B ← C_i ← D` is the baseline.** It is ahead of `A ← B ← C_i ← D` on
+dispatch, layer S, layer 1 and panel completeness, at the same cost, and its
+replicate variance is lower — as in exp-04 with three checks.
+
+**Where to improve is concentrated.** The checks judge applicability well
+(layer 1 ≥ 0.96 everywhere) and most verdicts are right; what is weakest is
+text taken from the figure or caption — unit definitions, replicate
+statements, significance definitions, error-bar definitions — and the per-axis
+and per-symbol lists. The error analysis starts from the verdicts, which are
+what a reader acts on, and leaves the text extractions for later.
 
 ## Gold this was scored against
 
@@ -221,4 +312,7 @@ content/1–3), one replicate, 6 sessions, none failed, $1.59.
 
 ## Status and next
 
-Planned. Next: the full run; the notebook, written during it.
+Run and analysed. **Next: the error analysis**, starting — as decided with the
+author, 2026-10-11 — from each check's verdict (`decision`, or its equivalent
+where a check has none), and putting aside the text extractions scored by
+semantic comparison.
