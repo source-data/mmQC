@@ -503,6 +503,52 @@ def msb_rule(row: Mapping[str, Any]) -> RowResult:
     return RowResult("unchanged" if new == dict(row) else "mechanical", new)
 
 
+# ---------------------------------------------------------------------------
+# single-channel-for-overlay  (decided 2026-10-11)
+# ---------------------------------------------------------------------------
+
+SCFO_COUNTS = ("number_of_channels_in_overlay", "number_of_single_channel_images_shown")
+
+
+def _with_channels(row: Mapping[str, Any]) -> Dict[str, Any]:
+    """The row with `overlay_channels` -- new, unscored, no gold -- before the counts."""
+    if "overlay_channels" in row:
+        return dict(row)
+    out: Dict[str, Any] = {}
+    for key, value in row.items():
+        if key == SCFO_COUNTS[0]:
+            out["overlay_channels"] = []
+        out[key] = value
+    out.setdefault("overlay_channels", [])
+    return out
+
+
+def scfo_rule(row: Mapping[str, Any]) -> RowResult:
+    """single-channel-for-overlay: a panel with no overlay is not_applicable in
+    both counts, where the gold had 0 -- a 0 that scored as a free correct
+    answer. In an overlay panel a 0 is a real count (no single-channel image
+    shown) and stays. Every row gains overlay_channels, empty: the field is
+    unscored and has no gold.
+    """
+    overlay = row.get("multicolored_overlay_micrograph")
+    counts = [row.get(f) for f in SCFO_COUNTS]
+    complete = row.get("all_channels_shown_separately")
+    if overlay == "no":
+        if any(c not in (0, "not_applicable") for c in counts) or complete != "not_applicable":
+            return RowResult("judgement", dict(row), f"no overlay, but counts {counts}, complete {complete!r}")
+        new = {**_with_channels(row), **{f: "not_applicable" for f in SCFO_COUNTS}}
+    elif overlay == "yes":
+        if any(not isinstance(c, int) or isinstance(c, bool) or c < 0 for c in counts) or counts[0] < 2:
+            return RowResult("judgement", dict(row), f"an overlay, but counts {counts}")
+        derived = "yes" if counts[1] >= counts[0] else "no"
+        if complete != derived:
+            return RowResult("judgement", dict(row), f"counts {counts} give {derived!r}, the gold says {complete!r}")
+        new = _with_channels(row)
+    else:
+        return RowResult("judgement", dict(row), f"multicolored_overlay_micrograph is {overlay!r}")
+    return RowResult("unchanged" if new == dict(row) else "mechanical", new)
+
+
 def _verify_by_rule(rule):
     return lambda row: None if rule(row).kind == "unchanged" else f"breaks the rule: {rule(row).reason}"
 
@@ -519,6 +565,7 @@ RULES: Dict[str, Tuple[Callable, Callable]] = {
     "stat-test": (st_rule, _verify_by_rule(st_rule)),
     "replication-reporting": (rr_rule, _verify_by_rule(rr_rule)),
     "micrograph-scale-bar": (msb_rule, _verify_by_rule(msb_rule)),
+    "single-channel-for-overlay": (scfo_rule, _verify_by_rule(scfo_rule)),
 }
 
 

@@ -31,11 +31,11 @@ Answer yes only if the panel contains a microscopy image with two or more distin
 If the panel does not contain a merged microscopy image (e.g., plots, schematics, brightfield images), answer no. Schematics, Crystal structures, Cryo-EM maps or three dimensional rendering of molecular structures and kymographs are not considered multi-channel microscopy images and the answer is therefore, no. 
 
 ### 2. Count the number of channels in the overlay
-If multicolored_overlay_micrograph = yes, count the number of distinct channels merged. Count only channels that are visually distinguishable and relevant.
-If uncertain, choose the most conservative lower number. If no overlay is present, set this value to 0.
+If multicolored_overlay_micrograph = yes, describe each channel merged into it in overlay_channels, by colour and what it shows, then report the number of distinct channels. Count only channels that are visually distinguishable and relevant.
+If uncertain, choose the most conservative lower number. If no overlay is present, leave overlay_channels empty and set this value to not_applicable.
 
 ### 3. Count the number of single-channel images shown
-Count how many separate single-channel images corresponding to the overlay are provided in the same panel. Do not count quantification plots or unrelated images. If no overlay is present, set this value to 0.
+Count how many separate single-channel images corresponding to the overlay are provided in the same panel. Do not count quantification plots or unrelated images. If no overlay is present, set this value to not_applicable.
 
 ### 4. Determine completeness
 If a multicolored overlay is present:Set all_channels_shown_separately = yes only if the number of single-channel images is equal to or greater than the number of overlay channels. Otherwise set it to no. If no multicolored overlay is present, set this field to not_applicable.
@@ -43,7 +43,7 @@ If a multicolored overlay is present:Set all_channels_shown_separately = yes onl
 ### Important rules (do not violate)
 
 - Do not guess channels or infer missing images. If you are unsure whether an image corresponds to the overlay, do not count it.
-- Do not describe colors or channel identities. Be conservative: when in doubt, under-count rather than over-count.
+- Be conservative: when in doubt, under-count rather than over-count.
 
 ### Output format (must be followed exactly)
 
@@ -54,6 +54,7 @@ Provide your final answer only as valid JSON that *strictly* follows this schema
     {
       "panel_label": "A",
       "multicolored_overlay_micrograph": "yes",
+      "overlay_channels": ["blue: DAPI (nuclei)", "green: phalloidin (actin)", "red: anti-tubulin"],
       "number_of_channels_in_overlay": 3,
       "number_of_single_channel_images_shown": 3,
       "all_channels_shown_separately": "yes"
@@ -61,6 +62,7 @@ Provide your final answer only as valid JSON that *strictly* follows this schema
     {
       "panel_label": "B",
       "multicolored_overlay_micrograph": "yes",
+      "overlay_channels": ["green: GFP-tagged protein", "magenta: membrane marker"],
       "number_of_channels_in_overlay": 2,
       "number_of_single_channel_images_shown": 1,
       "all_channels_shown_separately": "no"
@@ -68,8 +70,9 @@ Provide your final answer only as valid JSON that *strictly* follows this schema
     {
       "panel_label": "C",
       "multicolored_overlay_micrograph": "no",
-      "number_of_channels_in_overlay": 0,
-      "number_of_single_channel_images_shown": 0,
+      "overlay_channels": [],
+      "number_of_channels_in_overlay": "not_applicable",
+      "number_of_single_channel_images_shown": "not_applicable",
       "all_channels_shown_separately": "not_applicable"
     }
   ]

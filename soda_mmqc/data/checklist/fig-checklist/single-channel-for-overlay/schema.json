@@ -19,14 +19,25 @@
                                 "enum": ["yes", "no"],
                                 "description": "Whether the panel shows a multicolored overlay microscopy image"
                             },
+                            "overlay_channels": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Each channel merged in the overlay, briefly, by colour and what it shows (e.g. 'green: phalloidin (actin)'); empty when there is no overlay"
+                            },
                             "number_of_channels_in_overlay": {
-                                "type": "integer",
-                                "description": "Number of distinct channels merged in the overlay image"
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 0},
+                                    {"type": "string", "enum": ["not_applicable"]}
+                                ],
+                                "description": "Number of distinct channels merged in the overlay image; not_applicable for a panel with no overlay"
                             },
                             "number_of_single_channel_images_shown": {
-                                "type": "integer",
-                                "description": "Number of single-channel images shown for this panel"
-                             },
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 0},
+                                    {"type": "string", "enum": ["not_applicable"]}
+                                ],
+                                "description": "Number of single-channel images shown for the overlay in this panel; not_applicable for a panel with no overlay"
+                            },
                            "all_channels_shown_separately": {
                                 "type": "string",
                                 "enum": ["yes", "no", "not_applicable"],
@@ -36,6 +47,7 @@
                         "required": [
                             "panel_label",
                             "multicolored_overlay_micrograph",
+                            "overlay_channels",
                             "number_of_channels_in_overlay",
                             "number_of_single_channel_images_shown",
                             "all_channels_shown_separately"

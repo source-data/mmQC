@@ -48,19 +48,25 @@ images. Schematics, crystal structures, cryo-EM maps, three-dimensional
 renderings of molecular structures and **kymographs** are not multi-channel
 microscopy images, so the answer for them is `no`.
 
-## 3. Count the channels in the overlay
+## 3. Describe and count the channels in the overlay
 
-If `multicolored_overlay_micrograph` is `yes`, count the distinct channels
-merged into it in `number_of_channels_in_overlay`. Count only channels that are
-visually distinguishable and relevant. **If uncertain, choose the most
-conservative lower number.** If no overlay is present, set this to `0`.
+If `multicolored_overlay_micrograph` is `yes`, describe each channel merged into
+it in `overlay_channels`, one short entry per channel, by colour and what it
+shows — for example `green: phalloidin (actin)`; the caption usually names
+them. Then report the number of distinct channels in
+`number_of_channels_in_overlay`. Count only channels that are visually
+distinguishable and relevant. **If uncertain, choose the most conservative
+lower number.**
+
+If no overlay is present, leave `overlay_channels` empty and set both counts to
+`not_applicable`.
 
 ## 4. Count the single-channel images
 
 Count how many separate single-channel images corresponding to that overlay are
 provided **in the same panel**, in `number_of_single_channel_images_shown`. Do
-not count quantification plots or unrelated images. If no overlay is present,
-set this to `0`.
+not count quantification plots or unrelated images. An overlay shown with no
+single-channel image at all is `0`.
 
 ## 5. Decide completeness
 
@@ -74,7 +80,6 @@ If no multicoloured overlay is present, set it to `not_applicable`.
 
 - **Do not guess channels or infer missing images.** If you are unsure whether
   an image corresponds to the overlay, do not count it.
-- **Do not describe colours or channel identities.**
 - Be conservative: when in doubt, under-count rather than over-count.
 
 ## Output
@@ -82,11 +87,12 @@ If no multicoloured overlay is present, set it to `not_applicable`.
 Produce one entry for each and every panel of the figure, labelled with the
 `panel_label` the panel inventory reports. Panels with no overlay are still
 reported, keeping their label, with `multicolored_overlay_micrograph` set to
-`no`, both counts `0`, and `all_channels_shown_separately` set to
-`not_applicable`.
+`no`, `overlay_channels` empty, and both counts and
+`all_channels_shown_separately` set to `not_applicable`.
 
 Return the result as JSON conforming to the `schema.json` file of this check: a
 single object whose **`outputs`** key holds the list of panel entries. The
 top-level key is `outputs`, not `panels` — `panels` belongs to the intermediate
-inventory, and reusing it here produces an answer that fails validation. Both
-counts must be integers. Add no extra fields and no text outside the JSON.
+inventory, and reusing it here produces an answer that fails validation. Each
+count is an integer, or `not_applicable` when there is no overlay. Add no extra
+fields and no text outside the JSON.

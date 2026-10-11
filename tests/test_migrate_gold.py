@@ -395,3 +395,41 @@ def test_micrograph_without_a_scale_bar_keeps_no():
 ])
 def test_micrograph_scale_bar_contradictions_need_a_judgement(row):
     assert m.msb_rule(row).kind == "judgement"
+
+
+def _scfo(overlay, channels, singles, complete, **extra):
+    return {"panel_label": "A", "multicolored_overlay_micrograph": overlay,
+            "number_of_channels_in_overlay": channels,
+            "number_of_single_channel_images_shown": singles,
+            "all_channels_shown_separately": complete, **extra}
+
+
+def test_single_channel_no_overlay_becomes_not_applicable_with_channels_added():
+    result = m.scfo_rule(_scfo("no", 0, 0, "not_applicable"))
+    assert result.kind == "mechanical"
+    assert list(result.new) == ["panel_label", "multicolored_overlay_micrograph", "overlay_channels",
+                                "number_of_channels_in_overlay",
+                                "number_of_single_channel_images_shown",
+                                "all_channels_shown_separately"]
+    assert (result.new["overlay_channels"], result.new["number_of_channels_in_overlay"],
+            result.new["number_of_single_channel_images_shown"]) == ([], "not_applicable", "not_applicable")
+    assert m.scfo_rule(result.new).kind == "unchanged"
+
+
+def test_an_overlay_keeps_its_counts_including_a_real_zero():
+    """An overlay shown with no single-channel image: the 0 is the answer that fails."""
+    result = m.scfo_rule(_scfo("yes", 2, 0, "no"))
+    assert result.kind == "mechanical"
+    assert (result.new["number_of_single_channel_images_shown"], result.new["overlay_channels"]) == (0, [])
+    assert m.scfo_rule(result.new).kind == "unchanged"
+
+
+@pytest.mark.parametrize("row", [
+    _scfo("no", 2, 0, "not_applicable"),
+    _scfo("no", 0, 0, "no"),
+    _scfo("yes", 2, 2, "no"),
+    _scfo("yes", 1, 1, "yes"),
+    _scfo("yes", "not_applicable", 0, "no"),
+])
+def test_single_channel_contradictions_need_a_judgement(row):
+    assert m.scfo_rule(row).kind == "judgement"
