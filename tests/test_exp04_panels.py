@@ -63,3 +63,12 @@ def test_labels_are_compared_exactly_as_layer_s_aligns_them():
 def test_an_unknown_shape_is_refused():
     with pytest.raises(ValueError):
         panels.labels_per_check(_pm(GOLD), "row-major")
+
+
+def test_any_number_of_checks_can_be_counted():
+    """exp-06 counts across eleven check lists."""
+    checks = [f"check-{i}" for i in range(11)]
+    answer = {c: [{"panel_label": label} for label in GOLD] for c in checks}
+    answer["check-10"] = [{"panel_label": "A"}, {"panel_label": "Z"}]
+    assert panels.panel_counts(GOLD, answer, "cm", checks) == {
+        "gold_panels": 3, "spurious_panels": 1, "missing_panels": 0, "partly_missing_panels": 2}

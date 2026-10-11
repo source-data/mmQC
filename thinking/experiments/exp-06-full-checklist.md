@@ -1,7 +1,7 @@
 ---
 title: exp-06 — the full figure checklist, fanned in from one entry point
 date: 2026-10-11
-status: draft          # draft | planned | running | done | abandoned
+status: planned        # draft | planned | running | done | abandoned
 kind: experiment
 extends: exp-04
 tags: [experiment, skills, dag, entry-point, baseline, full-checklist]
@@ -182,14 +182,34 @@ contract is changed:
 | P1 | The eight checks ported, the three re-opened, D listing eleven | `afb1df70a`, `e05b44e75` |
 | P2 | Contract derived and verified: 6,919 comparisons on 37 figures, identical | `fe710a20c` |
 | P3 | Merged gold; `gold-v5` | `3aaa24734`, `45d664092` |
-| P4 | Runner: both arrangements, concurrency 50 | |
-| P5 | Smoke test: both arrangements on 3 figures | |
-| P6 | `panels.py` generalised to eleven checks; the notebook | |
+| P4 | Runner: both arrangements, concurrency 50; closures 13 and 14 skills | `4ad9b9691` |
+| P5 | Smoke test: both arrangements on 3 figures | below |
+| P6 | `panels.py` generalised to any list of checks (exp-04's three by default); the notebook during the run | this commit |
 
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
+| 2026-10-11 | smoke, both arrangements | `run.py --smoke` | $1.59 | `experiments/runs/exp-06-full-checklist/smoke/` (not committed) |
+| | both arrangements | `python experiments/exp-06-full-checklist/run.py` | est. ~$100 | `experiments/runs/exp-06-full-checklist/` |
+
+The estimate is the smoke test's mean, $0.27 per session, over 370 sessions.
+
+**Smoke test, 2026-10-11.** Both arrangements × 3 figures (`s44318-026-00715-1`
+content/1–3), one replicate, 6 sessions, none failed, $1.59.
+
+- **Dispatch**: all eleven checks in 6/6 sessions, always in D's order; no
+  skill outside the closure.
+- **The shared step**: `A|B ← C_i ← D` invoked `classify-panels` once in one
+  session and not at all in two — classified inline, as exp-04 saw; `A ← B ←
+  C_i ← D` invoked `classify-panels` once or twice and `identify-panels` once
+  in every session. Never once per check.
+- **Answers**: every one valid against the contract; within a session the
+  eleven check lists name the same panels (no partly-missing panel). The deep
+  arrangement split one panel on content/3 — the figure exp-04's smoke test
+  split too.
+- **Size**: 26–32 turns, 9,800–28,700 output tokens, 75–236 s and $0.17–0.36
+  per session. Within no turn limit, so none is needed.
 
 ## Findings
 
@@ -201,4 +221,4 @@ contract is changed:
 
 ## Status and next
 
-Draft. Next: P4–P6, then the run.
+Planned. Next: the full run; the notebook, written during it.

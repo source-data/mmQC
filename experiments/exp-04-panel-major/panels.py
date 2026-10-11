@@ -27,26 +27,31 @@ CHECKS = ("micrograph-scale-bar", "individual-data-points", "error-bars-defined"
 LIST, LABEL = "outputs", "panel_label"
 
 
-def labels_per_check(answer: Optional[Mapping[str, Any]], shape: str) -> Dict[str, List[str]]:
-    """The panel labels each check's part of an answer states, in order."""
+def labels_per_check(answer: Optional[Mapping[str, Any]], shape: str,
+                     checks: Sequence[str] = CHECKS) -> Dict[str, List[str]]:
+    """The panel labels each check's part of an answer states, in order.
+
+    ``checks`` defaults to exp-04's three; exp-06 passes its eleven.
+    """
     if shape not in ("cm", "pm"):
         raise ValueError(f"shape is 'cm' or 'pm', not {shape!r}")
     if not answer:
-        return {check: [] for check in CHECKS}
+        return {check: [] for check in checks}
     if shape == "pm":
         rows = answer.get(LIST) or []
         labels = [row.get(LABEL) for row in rows if isinstance(row, Mapping)]
-        return {check: list(labels) for check in CHECKS}
+        return {check: list(labels) for check in checks}
     return {check: [row.get(LABEL) for row in (answer.get(check) or [])
                     if isinstance(row, Mapping)]
-            for check in CHECKS}
+            for check in checks}
 
 
 def panel_counts(gold_labels: Sequence[str], answer: Optional[Mapping[str, Any]],
-                 shape: str) -> Dict[str, int]:
+                 shape: str, checks: Sequence[str] = CHECKS) -> Dict[str, int]:
     """Spurious, missing and partly missing panels in one answer for one figure."""
     gold = set(gold_labels)
-    per_check = {check: set(labels) for check, labels in labels_per_check(answer, shape).items()}
+    per_check = {check: set(labels)
+                 for check, labels in labels_per_check(answer, shape, checks).items()}
     stated = set().union(*per_check.values())
     in_all = set.intersection(*per_check.values())
     return {
