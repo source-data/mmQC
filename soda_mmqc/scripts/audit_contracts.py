@@ -36,6 +36,8 @@ Rules:
                   an answer no strict session can give, so a forced mismatch
 ``gold-control``  gold text holding control characters (NUL, \\x04, \\r ...):
                   damaged text, usually where a character was lost
+``scored-explanation``  an ``explanation`` scored while the same row holds a
+                  ``decision``: the explanation of an enum verdict is unscored (C3)
 
 The experiment checklists are frozen copies of the contracts their runs were
 scored against, so they keep their legacy findings by design; scope the audit
@@ -206,6 +208,15 @@ def audit_check(
     except SchemaTypingError as exc:
         add("", "untyped", str(exc))
         visible = None
+
+    patterns = {pattern for pattern, _ in leaves(schema)}
+    for pattern in sorted(patterns):
+        row, _, leaf = pattern.rpartition(".")
+        if leaf == "explanation" and f"{row}.decision" in patterns:
+            profile = manifest.get("fields", {}).get(pattern, {})
+            if profile.get("scored", True) is not False:
+                add(pattern, "scored-explanation",
+                    "explanation scored beside an enum decision: mark it \"scored\": false (C3)")
 
     for pattern, node in leaves(schema):
         if pattern.endswith("panel_label"):

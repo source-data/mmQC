@@ -55,8 +55,7 @@ def test_a_contract_following_the_conventions_is_clean(tmp_path):
          "explanation": {"type": "string"},
          "on_figure": {"type": "string", "enum": ["yes", "no", "not_applicable"]}},
         {"outputs[].decision": {"matching_metric": "multiclass", "na_values": ["not_applicable"]},
-         "outputs[].explanation": {"matching_metric": "graded_string",
-                                   "string_compare": "semantic", "match_threshold": 0.8},
+         "outputs[].explanation": {"scored": False},
          "outputs[].on_figure": {"matching_metric": "binary_polarity",
                                  "na_values": ["not_applicable"]}},
         gold_rows=[{"panel_label": "A", "decision": "not_applicable", "explanation": "",
@@ -232,3 +231,17 @@ def test_an_identifier_holds_in_a_contract_that_combines_checks(tmp_path):
     assert _combined_identifier("stat-significance-level[].significance_level_symbols_on_image",
                                 IDENTIFIERS)
     assert _combined_identifier("stat-test[].from_the_caption", IDENTIFIERS) is None
+
+
+def test_an_explanation_beside_a_decision_must_be_unscored(tmp_path):
+    """individual-data-points scored its explanation semantically until 2026-10-11."""
+    fields = {"decision": {"type": "string", "enum": ["PASS", "FAIL", "not_applicable"]},
+              "explanation": {"type": "string"}}
+    decision = {"matching_metric": "multiclass", "na_values": ["not_applicable"]}
+    scored = {"matching_metric": "graded_string", "string_compare": "semantic", "match_threshold": 0.8}
+    check_dir, gold = _contract(tmp_path, fields, {"outputs[].decision": decision,
+                                                   "outputs[].explanation": scored})
+    assert "scored-explanation" in _rules(audit_check("toy", check_dir, gold))
+    unscored_dir, gold2 = _contract(tmp_path / "b", fields, {"outputs[].decision": decision,
+                                                             "outputs[].explanation": {"scored": False}})
+    assert "scored-explanation" not in _rules(audit_check("toy", unscored_dir, gold2))
