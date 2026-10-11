@@ -19,6 +19,12 @@ Tags:
 ``gold-v3``  ``gold-v2`` with micrograph-scale-bar's not_applicable (2026-10-05)
 ``gold-v4``  ``gold-v3`` with exp-04's merged gold for do-fig-checklist-cm and
              -pm added; the gold exp-04 is scored against
+``gold-v5``  the gold exp-06 is scored against: ``gold-v4`` with plot-axis-units'
+             and plot-gap-labeling's ``is_a_plot_with_axes``, stat-test's
+             ``statistical_significance_claim``, single-channel-for-overlay's
+             counts (``not_applicable`` without an overlay) and
+             ``overlay_channels``, and exp-06's eleven-check merged gold in
+             do-fig-checklist-cm
 
 A snapshot holds only gold files -- ``<example>/checks/<check>/expected_output.*``
 -- extracted with ``git archive`` into ``.gold-snapshots/<tag>/`` (gitignored),
