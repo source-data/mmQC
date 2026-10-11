@@ -1,0 +1,151 @@
+# This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist-exp06 --write` instead. `graph fig-checklist-exp06` fails when it and the skills disagree.
+checklist: fig-checklist-exp06
+skill_set: 355fae4c42f94c1bca5697a3b1936f0c0606d98c4456701a75a81c2b1d59eac6
+skills:
+- name: classify-panels
+  version: v1
+  content_hash: 7463d21a2a5dcefab0db7603f243ec8a2fc69772da84d493298758cc8b54d17b
+  kind: shared
+  description: Classify panels by labelling them with the kind of content it shows
+    (micrograph, plot, blot, molecular or protein structure, sequence, schematic,
+    photograph, table). Use when a check applies to only some kinds of panel.
+  calls: []
+  produces:
+  - panel_classes
+- name: do-fig-checklist-cm
+  version: v1
+  content_hash: 67ec8621fdac080ed94bf52bd7129ee371afcf279ff09d91ea0fb42bb7c7f3c9
+  kind: shared
+  description: Run the whole figure checklist on a figure.
+  calls:
+  - error-bars-defined
+  - image-annotation-defined
+  - individual-data-points
+  - micrograph-scale-bar
+  - panel-image-matches-caption
+  - plot-axis-units
+  - plot-gap-labeling
+  - replication-reporting
+  - single-channel-for-overlay
+  - stat-significance-level
+  - stat-test
+  produces:
+  - do-fig-checklist-cm
+- name: error-bars-defined
+  version: v3
+  content_hash: 87ed140bf2cc3bde4b3f287523c789252f278153a489071c09306a6967feb689
+  kind: shared
+  description: Check that error bars, and box or violin plot elements, are explained
+    in the caption.
+  calls:
+  - classify-panels
+  produces:
+  - error-bars-defined
+- name: identify-panels
+  version: v1
+  content_hash: e160683ccb461857d589c708c8f6506f8cd4e79a5e1e3b41f5a8e0ea0be72177
+  kind: shared
+  description: Find every labelled panel in a figure. Use before any per-panel check.
+  calls: []
+  produces:
+  - panels
+- name: image-annotation-defined
+  version: v1
+  content_hash: 71feeb01417d38281bf0ba8d96d6b6a940f81ebf4deb3585a68a6057d989f979
+  kind: shared
+  description: Check that graphical annotations drawn on imaging panels — arrows,
+    arrowheads, circles, boxes, dashed lines — are explained in the caption.
+  calls:
+  - classify-panels
+  produces:
+  - image-annotation-defined
+- name: individual-data-points
+  version: v3
+  content_hash: 61f0cf08f6ea5dd394295076ea1864aa5eab96a3ed865da858708eb6d4313d4f
+  kind: shared
+  description: Check that a plot showing averages also shows the individual data points
+    behind them.
+  calls:
+  - classify-panels
+  produces:
+  - individual-data-points
+- name: micrograph-scale-bar
+  version: v3
+  content_hash: 6a03881c85182f17e5280131420ade4f1ed9775c8667dd293cdde5aae07cbdd3
+  kind: shared
+  description: Check that every micrograph panel carries a scale bar, and that its
+    length is stated on the image or in the caption.
+  calls:
+  - classify-panels
+  produces:
+  - micrograph-scale-bar
+- name: panel-image-matches-caption
+  version: v1
+  content_hash: 165e99b1a786122864878832445d94a42051738e0c9e52b54fdf3bf8b9aecff6
+  kind: shared
+  description: Judge whether what a panel's image shows contradicts what its caption
+    says is shown.
+  calls:
+  - classify-panels
+  produces:
+  - panel-image-matches-caption
+- name: plot-axis-units
+  version: v1
+  content_hash: 156a19fa3ce89afd725e5a53dd4423000f3120d4fb0a4ae9e12915b97e269add
+  kind: shared
+  description: Check that the axes of quantitative plots state the units of what they
+    measure.
+  calls:
+  - classify-panels
+  produces:
+  - plot-axis-units
+- name: plot-gap-labeling
+  version: v1
+  content_hash: c130f63c6f6892fca62c3ec34b8c86b6b35c60306b3a2b5e24379fd1af568617
+  kind: shared
+  description: Check that any discontinuity in a quantitative plot's axis is marked
+    with a visual break indicator.
+  calls:
+  - classify-panels
+  produces:
+  - plot-gap-labeling
+- name: replication-reporting
+  version: v1
+  content_hash: 20da0a449f44a18d5b8bfb84483b97b830183c17e185d49d71de8d5c3a77a36d
+  kind: shared
+  description: Check that panels showing replicated data report the number of replicates
+    and what they represent.
+  calls:
+  - classify-panels
+  produces:
+  - replication-reporting
+- name: single-channel-for-overlay
+  version: v1
+  content_hash: 5472c401e09dbdfed9768a465cc12ffd85c34d5b16e03a7ecd388d4825cf60ee
+  kind: shared
+  description: Check that each channel of a multicoloured overlay micrograph is also
+    shown as a single-channel image.
+  calls:
+  - classify-panels
+  produces:
+  - single-channel-for-overlay
+- name: stat-significance-level
+  version: v1
+  content_hash: d6b395db0c9da03ad0d0e7445e1a325da8ec78055f155d460ec2c5b9fa0da404
+  kind: shared
+  description: Check that significance symbols shown on plots, such as asterisks,
+    are defined in the caption.
+  calls:
+  - classify-panels
+  produces:
+  - stat-significance-level
+- name: stat-test
+  version: v1
+  content_hash: ea0e8561da6cd06e99700c132c3fcad7955513441695a7f993feb1743b256d92
+  kind: shared
+  description: Check that a panel claiming statistical significance names the statistical
+    test behind the claim.
+  calls:
+  - classify-panels
+  produces:
+  - stat-test
