@@ -1,7 +1,7 @@
 ---
 title: exp-07 — three models on the full checklist
 date: 2026-10-12
-status: planned        # draft | planned | running | done | abandoned
+status: done           # draft | planned | running | done | abandoned
 kind: experiment
 extends: exp-06
 tags: [experiment, models, full-checklist, baseline]
@@ -192,7 +192,7 @@ round.
 | 2026-10-12 | smoke 6, three models, runtime `CLAUDE.md` naming the `Skill` tool | `run.py --smoke` | $1.94 | below |
 | 2026-10-12 | the run, 3 replicates | `caffeinate -i python experiments/exp-07-models/run.py` | $56.75 | `experiments/runs/exp-07-models/`; 332 of 333 sessions answered |
 | 2026-10-12 | the extension, replicates 4 and 5 | `caffeinate -i python experiments/exp-07-models/run.py --extend` | | Opus 5.5 complete; then the network dropped: 25 Sonnet and all 74 Haiku sessions failed in seconds (`ENOTFOUND`) |
-| 2026-10-12 | the extension, resumed | same command | | `experiments/runs/exp-07-models/` |
+| 2026-10-12 | the extension, resumed | same command | $37.66 (with the first attempt) | `experiments/runs/exp-07-models/`; one more Haiku failure, kept |
 
 **The network outage.** The 99 failures were the connection's, not the
 models', and are not kept: their records were deleted and the sessions rerun.
@@ -254,10 +254,109 @@ three figures, default thinking display, the runtime `CLAUDE.md` naming the
 The `CLAUDE.md` wording did not remove either pattern. Both are measured by
 the run's dispatch reading, per model.
 
+## Findings
+
+Run 2026-10-12, five replicates after the rule fired at three: 555 sessions
+planned, 553 answered, $94.41 (the CLI's estimates). Analysis in
+`notebooks/experiments/exp-07-models.ipynb`, against `gold-v6`. The rule fires
+again at five, for all three pairs; the plan allows no third round, so this
+is the result.
+
+### Numbers
+
+**Dispatch.** No session invoked no check; every incomplete one was partial.
+
+| | all eleven checks | partial | of which only the first check | failed (no answer) |
+|---|---|---|---|---|
+| Opus 5.5 | 174/185 | 11 | 8 | 0 |
+| Sonnet 5.5 | 168/185 | 17 | 14 | 0 |
+| Haiku 5.5 | 156/184 | 28 | 15 (and 9 skipping one check, mostly `single-channel-for-overlay`) | 2 |
+
+"Only the first check": the session invoked `micrograph-scale-bar` (and
+`classify-panels`), then answered all eleven itself in about 8 turns. Haiku's
+two failures ended the turn in prose, after 2 and 3 checks; the second, on
+`jcs.242834` content/4 rep-04, is recorded whole (the harness keeps failures
+since the first). Panels missing from some check lists but not others:
+Opus 7, Sonnet 0, Haiku 69 — Haiku's partial sessions leave lists empty.
+
+**Fallback.** Opus 5.5 switched to Opus 5 in 2 of 5 replicates of one
+figure, `s44318-026-00715-1` content/1 — mycobacteria, *M. tuberculosis* and
+*M. smegmatis*; 17,884 output tokens on Opus 5. No other figure or model
+switched; no refusal.
+
+**Primary endpoints**, per model (mean over figures):
+
+| | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 |
+|---|---|---|---|
+| E1 layer S, both errors | 0.987 | **0.997** | 0.966 |
+| E2 layer 1 | 0.982 | 0.981 | 0.958 |
+| E1, complete sessions only | 0.988 | 0.997 | 0.993 |
+| E2, complete sessions only | 0.983 | 0.984 | 0.978 |
+
+| E3 decision | Opus 5.5 | Sonnet 5.5 | Haiku 5.5 |
+|---|---|---|---|
+| `micrograph-scale-bar · scale_bar_defined_in_caption` | 0.975 | 0.990 | 0.979 |
+| `image-annotation-defined · annotation_defined_in_caption` | 0.963 | 0.971 | 0.960 |
+| `single-channel-for-overlay · all_channels_shown_separately` | 0.929 | 0.923 | 0.943 |
+| `individual-data-points · decision` | 0.955 | 0.957 | 0.934 |
+| `error-bars-defined · decision` | 0.992 | 0.998 | 0.990 |
+| `plot-axis-units · decision` | 0.964 | 0.974 | 0.932 |
+| `plot-gap-labeling · decision` | 1.000 | 1.000 | 1.000 |
+| `stat-significance-level · decision` | 0.971 | 0.956 | 0.949 |
+| `stat-test · decision` | 0.998 | 0.996 | 0.994 |
+| `replication-reporting · decision` | **0.986** | 0.976 | **0.912** |
+| `panel-image-matches-caption · image_matches_caption` | **0.937** | **0.968** | 0.953 |
+
+**The pairs**, paired differences with 95% intervals:
+
+| | Opus − Sonnet | Sonnet − Haiku | Opus − Haiku |
+|---|---|---|---|
+| E1 layer S | −0.010 [−0.024, −0.000] **Sonnet better** | +0.031 [+0.009, +0.056] **Sonnet better** | +0.021 [−0.006, +0.050] undecided |
+| E2 layer 1 | +0.000 [−0.005, +0.005] **equivalent** | +0.024 [+0.007, +0.043] **Sonnet better** | +0.024 [+0.007, +0.043] **Opus better** |
+| E3 better | Sonnet: `panel-image-matches-caption` (−0.031) | Sonnet: `plot-axis-units` (+0.042), `replication-reporting` (+0.064), `image-annotation-defined` (+0.011) | Opus: `plot-axis-units` (+0.032), `replication-reporting` (+0.074), `stat-significance-level` (+0.021) |
+| E3 equivalent | 4: `single-channel-for-overlay`, `error-bars-defined`, `plot-gap-labeling`, `stat-test` | 2: `plot-gap-labeling`, `stat-test` | 5 |
+| E3 undecided | 6 | 6 | 3 |
+
+**Cost and time per figure** (concurrency 50, the CLI's estimates): Opus
+$0.337, Sonnet $0.157, Haiku $0.016; 9,400, 9,600 and 18,400 output tokens;
+27, 25 and 26 turns; 94, 60 and 90 s. The CLI's background model is included
+and negligible (about $0.0003 per session).
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**Opus 5.5 and Sonnet 5.5 are close; Sonnet is ahead where they differ, at
+less than half the cost.** They are equivalent on applicability (E2), and on
+the panels Sonnet is better by a hundredth (E1), which is within what matters
+but excludes zero. On the decisions, each is ahead on one check —
+`panel-image-matches-caption` for Sonnet clearly, `stat-significance-level`
+and `replication-reporting` for Opus within intervals that include zero —
+and six are undecided at five replicates, several of them bounded by the
+figures rather than the replicates. Opus also spends part of its runs on Opus
+5 when a figure is flagged as biology; that will recur on pathogen biology.
+
+**Haiku 5.5's deficit is mostly dispatch, not judgement.** On the sessions
+that invoked all eleven checks, its layer S (0.993) and layer 1 (0.978) are
+close to the other two; overall they are 0.966 and 0.958, because it stops
+early or skips a check in about one session in seven, and twice did not
+answer at all. Where it does judge, it is behind on `replication-reporting`
+and `plot-axis-units` — reading counts and units — and at a tenth of Sonnet's
+cost.
+
+**Dispatch is now the first thing to fix, for every model.** With the
+`Skill` tool named, no session invoked no check — exp-06's failure mode is
+gone — but a new one appeared in all three models: invoking the first check
+and then answering the rest without the others. It is most frequent in Haiku
+and least in Opus, and concentrated on some figures.
+
 ## Gold this is scored against
 
 **`gold-v6`**.
 
 ## Status and next
 
-Planned, reviewed with the author 2026-10-12. Next: P2 to P4, then the run.
+Run and analysed, 2026-10-12. Next, for the author to choose: whether the
+baseline moves to Sonnet 5.5; the partial dispatch, which every model shows;
+and the error analysis on the decisions, starting from
+`experiments/exp-07-models/error_analysis_candidates.csv`.
