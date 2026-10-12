@@ -188,6 +188,8 @@ round.
 | 2026-10-12 | smoke 1, three models, exp-06 wording, SDK 0.2.152 | `run.py --smoke` | $3.88 | Opus 5.5 refused by CLI 2.1.259; Sonnet 5.5 no check in 2/3 |
 | 2026-10-12 | smoke 2, SDK 0.2.165, exp-06 wording | `run.py --smoke` | $1.37 | no check: Sonnet 5.5 3/3, Opus 5.5 1/3, Haiku 5.5 0/3 |
 | 2026-10-12 | smoke 3, `fig-checklist-exp07` | `run.py --smoke` | $2.08 | below |
+| 2026-10-12 | smoke 4 and 5, Opus 5.5 only, runtimes kept | `run.py --smoke --model claude-opus-5-5 --keep-runtime` | $1.26, $1.30 | below |
+| 2026-10-12 | smoke 6, three models, runtime `CLAUDE.md` naming the `Skill` tool | `run.py --smoke` | $1.94 | below |
 
 **Smoke 3, 2026-10-12.** Each model on `s44318-026-00715-1` content/1–3, one
 replicate, 9 sessions, none failed.
@@ -211,6 +213,21 @@ throughout (no fallback; content/1, which fell back in smoke 3, did not), $1.26
 and $1.30. With the default display the transcripts' thinking blocks were
 empty; with `display: summarized` each session had 5–8 thinking summaries of
 80–780 characters, at the same cost and turns.
+
+**Smoke 6, 2026-10-12: the configuration of the run.** Three models × the
+three figures, default thinking display, the runtime `CLAUDE.md` naming the
+`Skill` tool. 9 sessions, none failed, no fallback, no refusal.
+
+- Opus 5.5: all eleven checks in 3/3, 28 turns, $0.39–0.53.
+- Sonnet 5.5: all eleven in 2/3; on content/1 it invoked
+  `micrograph-scale-bar` (and `classify-panels`) and answered the rest itself
+  in 8 turns — as on content/2 in smoke 3. $0.14–0.25.
+- Haiku 5.5: all eleven in 2/3; on content/2 it skipped
+  `single-channel-for-overlay` alone — the check it skipped in smoke 3 too.
+  $0.015–0.021, 15,000–28,000 output tokens.
+
+The `CLAUDE.md` wording did not remove either pattern. Both are measured by
+the run's dispatch reading, per model.
 
 ## Gold this is scored against
 
