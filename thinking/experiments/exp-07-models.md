@@ -327,13 +327,13 @@ and negligible (about $0.0003 per session).
 *Interpretation, separable from the numbers above.*
 
 **Opus 5.5 and Sonnet 5.5 are close; Sonnet is ahead where they differ, at
-less than half the cost.** They are equivalent on applicability (E2), and on
-the panels Sonnet is better by a hundredth (E1), which is within what matters
-but excludes zero. On the decisions, each is ahead on one check —
-`panel-image-matches-caption` for Sonnet clearly, `stat-significance-level`
-and `replication-reporting` for Opus within intervals that include zero —
-and six are undecided at five replicates, several of them bounded by the
-figures rather than the replicates. Opus also spends part of its runs on Opus
+less than half the cost.** They are equivalent on applicability (E2). On the
+panels Sonnet is better by 0.010 (E1), an interval that excludes zero and
+reaches just past the margin. On the decisions, Sonnet is better on one,
+`panel-image-matches-caption` (0.968 against 0.937); Opus's leads on
+`stat-significance-level` and `replication-reporting` have intervals that
+include zero; six are undecided at five replicates, several of them bounded
+by the figures rather than the replicates. Opus also spends part of its runs on Opus
 5 when a figure is flagged as biology; that will recur on pathogen biology.
 
 **Haiku 5.5's deficit is mostly dispatch, not judgement.** On the sessions
