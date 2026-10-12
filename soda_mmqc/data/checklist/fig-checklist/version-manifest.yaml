@@ -1,32 +1,50 @@
-# Which version of each skill a run of `fig-checklist` uses.
+# Pinned skill versions for fig-checklist, the production checklist.
 #
-# Hand-maintained, and complete by rule: every skill in the checklist is
-# pinned here, including ones no check calls today. `graph fig-checklist`
-# fails if a skill is missing, if a pin names a skill that is gone, or if a
-# pinned version does not exist.
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
 #
-# This file is the identity a result is attributed to. Adding a version of a
-# skill does not change any run until its pin moves here, and moving a pin is
-# a reviewed edit, not a consequence of committing a directory.
-
+# 2026-10-12: the configuration the experiments settled on (exp-04 to exp-08,
+# thinking/experiments/) is production -- check-major A|B <- C_i <- D: one
+# entry skill, do-fig-checklist-cm, invokes the eleven checks with the `Skill`
+# tool in one session per figure; each check invokes classify-panels, which
+# lists and classifies the panels. The versions are fig-checklist-exp07's,
+# copied as each skill's next version here:
+#
+#   do-fig-checklist-cm v1 <- exp07 v2      classify-panels v1 <- exp07 v1
+#   identify-panels v2     <- exp07 v1      error-bars-defined v2 <- exp07 v4
+#   individual-data-points v2 <- exp07 v5   micrograph-scale-bar v2 <- exp07 v4
+#   the other eight checks v2 <- exp07 v2
+#
+# The v1 checks, identify-panels v1 and classify-plot-panels -- the skills of
+# per-check runs before the experiments -- stay, unpinned or unreached.
+# A single check still runs on its own: it invokes classify-panels itself.
+#
+# The entry point owns one contract, derived from the checks' own
+# (experiments/exp-06-full-checklist/build_contract.py, the derivation exp-07
+# used), and the merged gold of gold-v6.
 checklist: fig-checklist
 
 skills:
-  # Shared skills. Called by leaves through prose, never by the runner.
+  # Entry point: the whole checklist in one session.
+  do-fig-checklist-cm: v1
+
+  # Shared skills. classify-panels is invoked by every check;
+  # identify-panels and classify-plot-panels are reached by no pinned skill.
+  classify-panels: v1
   classify-plot-panels: v1
-  identify-panels: v1
+  identify-panels: v2
 
   # Checks. Each owns schema.json, eval-manifest.json and benchmark.json,
   # which stay above the version directories so two versions of one skill
   # score against the same contract and stay comparable.
-  error-bars-defined: v1
-  image-annotation-defined: v1
-  individual-data-points: v1
-  micrograph-scale-bar: v1
-  panel-image-matches-caption: v1
-  plot-axis-units: v1
-  plot-gap-labeling: v1
-  replication-reporting: v1
-  single-channel-for-overlay: v1
-  stat-significance-level: v1
-  stat-test: v1
+  error-bars-defined: v2
+  image-annotation-defined: v2
+  individual-data-points: v2
+  micrograph-scale-bar: v2
+  panel-image-matches-caption: v2
+  plot-axis-units: v2
+  plot-gap-labeling: v2
+  replication-reporting: v2
+  single-channel-for-overlay: v2
+  stat-significance-level: v2
+  stat-test: v2

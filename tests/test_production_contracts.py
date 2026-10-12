@@ -44,3 +44,42 @@ def test_no_gold_holds_control_characters():
         if _CONTROL.search(text)
     ]
     assert damaged == [], "\n".join(damaged)
+
+
+# ---------------------------------------------------------------------------
+# The entry skill's contract is derived from the checks' own
+# (experiments/exp-06-full-checklist/build_contract.py) and copied into
+# production on 2026-10-12. A change to one check's contract that is not
+# rederived into the entry's would score that check differently in a
+# whole-checklist run than on its own.
+# ---------------------------------------------------------------------------
+
+from pathlib import Path  # noqa: E402
+
+_FIG = Path(__file__).resolve().parents[1] / "soda_mmqc" / "data" / "checklist" / "fig-checklist"
+_ENTRY = "do-fig-checklist-cm"
+
+
+def _read(*parts):
+    return json.loads((_FIG.joinpath(*parts)).read_text(encoding="utf-8"))
+
+
+def _checks():
+    return list(_read(_ENTRY, "schema.json")["format"]["schema"]["properties"])
+
+
+def test_the_entry_contract_holds_each_checks_row_schema_verbatim():
+    entry = _read(_ENTRY, "schema.json")["format"]["schema"]["properties"]
+    assert len(entry) == 11
+    for check in entry:
+        own = _read(check, "schema.json")["format"]["schema"]["properties"]["outputs"]
+        assert entry[check] == own, f"{check}: rederive the entry contract"
+
+
+def test_the_entry_manifest_holds_each_checks_fields_under_its_key():
+    entry = _read(_ENTRY, "eval-manifest.json")
+    for check in _checks():
+        own = _read(check, "eval-manifest.json")
+        for field, profile in own.get("fields", {}).items():
+            key = check + field[len("outputs"):] if field.startswith("outputs") else field
+            assert entry["fields"].get(key) == profile, f"{check} · {field}: rederive"

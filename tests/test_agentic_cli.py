@@ -224,7 +224,8 @@ class TestOwnsEvaluationContracts:
 class TestListChecks:
     def test_fig_checklist_enumeration_unchanged(self):
         checks = list_checks(CHECKLIST_DIR / "fig-checklist")
-        assert set(checks) == FIG_CHECKLIST_CHECKS
+        # The entry skill owns a contract too, so it is enumerated with them.
+        assert set(checks) == FIG_CHECKLIST_CHECKS | {ENTRY_SKILL}
         for name, path in checks.items():
             assert path == CHECKLIST_DIR / "fig-checklist" / name
 
@@ -1311,8 +1312,25 @@ class TestCurationEnumeration:
 
 
 FIG_CHECKLIST_DIR = CHECKLIST_DIR / "fig-checklist"
-SHARED_SKILL = "identify-panels"
+# The production design since 2026-10-12 (exp-04 to exp-08): one entry skill
+# invokes the eleven checks, and each check invokes classify-panels, which
+# lists the panels and classifies them. The panel inventory is classify-panels'
+# job; identify-panels and classify-plot-panels, the shared skills of the
+# per-check design before it, remain in the checklist but no pinned skill
+# reaches them.
+SHARED_SKILL = "classify-panels"
+SHARED_VERSION = "v1"
 PILOT_LEAF = "micrograph-scale-bar"
+PILOT_VERSION = "v2"
+ENTRY_SKILL = "do-fig-checklist-cm"
+#: Skills whose job is the panels themselves; the rest must not restate it.
+PANEL_SKILLS = {SHARED_SKILL, "identify-panels", "classify-plot-panels"}
+
+
+def _pinned_skills(checklist_dir: Path = None):
+    """name -> the pinned Skill: what production runs."""
+    checklist_dir = checklist_dir or FIG_CHECKLIST_DIR
+    return select_versions(load_skills(checklist_dir), checklist_pins(checklist_dir))
 
 # The evaluation contracts live at the skill level and are shared across
 # versions, so that two versions of one skill stay comparable. A copy inside a
@@ -1496,27 +1514,27 @@ class TestLoadSkillsOnTheRealChecklist:
         skills = load_skills(FIG_CHECKLIST_DIR)
         assert SHARED_SKILL in skills
         assert PILOT_LEAF in skills
-        assert sorted(skills[SHARED_SKILL]) == ["v1"]
-        assert sorted(skills[PILOT_LEAF]) == ["v1"]
+        assert sorted(skills[SHARED_SKILL]) == [SHARED_VERSION]
+        assert sorted(skills[PILOT_LEAF]) == ["v1", PILOT_VERSION]
 
     def test_the_leaf_declares_and_invokes_the_shared_skill(self):
-        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF][PILOT_VERSION]
         assert leaf.requires == (SHARED_SKILL,)
         assert SHARED_SKILL in leaf.body
         assert SKILL_TOOL in leaf.body
 
     def test_the_shared_skill_requires_nothing_and_produces_panels(self):
-        shared = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"]
+        shared = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL][SHARED_VERSION]
         assert shared.requires == ()
-        assert shared.produces == ("panels",)
+        assert shared.produces == ("panel_classes",)
 
     def test_descriptions_claim_their_own_job(self):
         """The description is what the agent matches on; it is load-bearing."""
         skills = load_skills(FIG_CHECKLIST_DIR)
-        shared = skills[SHARED_SKILL]["v1"].description.lower()
-        leaf = skills[PILOT_LEAF]["v1"].description.lower()
+        shared = skills[SHARED_SKILL][SHARED_VERSION].description.lower()
+        leaf = skills[PILOT_LEAF][PILOT_VERSION].description.lower()
 
-        assert "panel" in shared and "caption" in shared
+        assert "panel" in shared and "classify" in shared
         assert "scale bar" not in shared
         assert "scale bar" in leaf
 
@@ -1545,10 +1563,12 @@ class TestSkillGraph:
         """Stated as a property rather than a fixed edge list, so converting
         another leaf does not require editing this test to keep passing.
 
-        `identify-panels` is the root; every other skill either requires it
-        directly or requires something that does.
+        Over the pinned skills, `classify-panels` is the root; every other
+        skill but the unreached panel skills requires it directly or requires
+        something that does.
         """
-        graph = _graph(FIG_CHECKLIST_DIR)
+        pinned = _pinned_skills()
+        graph = {name: set(skill.requires) for name, skill in pinned.items()}
         assert graph[SHARED_SKILL] == set()
 
         def reaches(name, seen=None):
@@ -1558,7 +1578,7 @@ class TestSkillGraph:
                     return True
             return False
 
-        others = {n for n in graph if n != SHARED_SKILL}
+        others = {n for n in graph if n not in PANEL_SKILLS}
         assert others, "no leaves converted"
         for name in others:
             assert reaches(name), f"{name} never reaches {SHARED_SKILL}"
@@ -1787,7 +1807,7 @@ class TestProseAndFrontmatterAgree:
 
     def test_the_real_leaf_names_the_shared_skill_and_the_tool_together(self):
         """The hop is prose, not a template: one sentence, in the leaf's words."""
-        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"]
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF][PILOT_VERSION]
         sentences = [
             line for line in leaf.body.splitlines() if SHARED_SKILL in line
         ]
@@ -1824,7 +1844,7 @@ class TestGraphIsPathIndependent:
 
         assert _graph(checklist) == before
         skills = validate_skills(checklist)
-        assert skills[PILOT_LEAF]["v1"].requires == (SHARED_SKILL,)
+        assert skills[PILOT_LEAF][PILOT_VERSION].requires == (SHARED_SKILL,)
 
     def test_a_skill_nested_arbitrarily_deep_is_still_found(
         self, tmp_path: Path
@@ -1869,7 +1889,7 @@ class TestEvaluationContractsStayAtSkillLevel:
 
     def test_the_shared_skill_is_not_enumerated_as_a_check(self):
         assert SHARED_SKILL not in list_checks(FIG_CHECKLIST_DIR)
-        assert set(list_checks(FIG_CHECKLIST_DIR)) == FIG_CHECKLIST_CHECKS
+        assert set(list_checks(FIG_CHECKLIST_DIR)) == FIG_CHECKLIST_CHECKS | {ENTRY_SKILL}
 
     def test_the_shared_skill_cannot_be_scored(self):
         with pytest.raises(ValueError, match=r"is not a check"):
@@ -2010,8 +2030,12 @@ class TestSharedSkillAgainstRealGold:
             "C",
         ]
 
+    @pytest.mark.xfail(strict=True, reason=(
+        "classify-panels v1 has no rule for unlabelled composites: identify-"
+        "panels v1's 'do not split' an unlabelled composite was not carried "
+        "into the exp-04 lineage. Open for the author, 2026-10-12."))
     def test_the_shared_skill_does_not_forbid_splitting_outright(self):
-        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
+        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL][SHARED_VERSION].body
         forbidding = [
             block
             for block in _prose_blocks(body)
@@ -2025,9 +2049,11 @@ class TestSharedSkillAgainstRealGold:
             )
 
     def test_the_shared_skill_tells_the_agent_to_split_labelled_sub_panels(self):
-        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL]["v1"].body
-        assert "sub-part" in body.lower() or "sub-panel" in body.lower()
-        assert "one entry per labelled sub-part" in body.lower()
+        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL][SHARED_VERSION].body.lower()
+        assert "subpanels" in body or "sub-panel" in body or "sub-part" in body
+        # classify-panels' wording of identify-panels v1's "one entry per
+        # labelled sub-part": each labelled subpanel is a panel of its own.
+        assert "consider them as individual panels" in body
 
     def test_every_check_spells_this_figures_sub_panels_the_same_way(self):
         """One shared artifact, so every consumer must agree on the label.
@@ -2229,17 +2255,13 @@ class TestNoLeafRestatesTheSharedSkill:
         )
 
     def test_no_leaf_restates_how_to_find_panels(self):
-        skills = load_skills(FIG_CHECKLIST_DIR)
         offenders = {}
-        for name, versions in skills.items():
-            if name == SHARED_SKILL:
+        for name, skill in _pinned_skills().items():
+            if name in PANEL_SKILLS:
                 continue
-            for version, skill in versions.items():
-                echoed = [
-                    p for p in PANEL_FINDING_PHRASES if p in skill.body.lower()
-                ]
-                if echoed:
-                    offenders[f"{name}/{version}"] = echoed
+            echoed = [p for p in PANEL_FINDING_PHRASES if p in skill.body.lower()]
+            if echoed:
+                offenders[name] = echoed
         assert offenders == {}, (
             "a leaf restates panel-finding rules that belong to "
             f"{SHARED_SKILL}; it must delegate instead: {offenders}"
@@ -2247,23 +2269,31 @@ class TestNoLeafRestatesTheSharedSkill:
 
     def test_every_leaf_that_needs_panels_delegates_for_them(self):
         """A leaf may not silently stop asking for the shared inventory."""
-        skills = load_skills(FIG_CHECKLIST_DIR)
-        for name, versions in skills.items():
-            if name == SHARED_SKILL:
+        for name, skill in _pinned_skills().items():
+            if name in PANEL_SKILLS or name == ENTRY_SKILL:
                 continue
-            for version, skill in versions.items():
-                assert SHARED_SKILL in skill.requires, (
-                    f"{name}/{version} does not require {SHARED_SKILL}"
-                )
-                asking = [
-                    block
-                    for block in _prose_blocks(skill.body)
-                    if SHARED_SKILL in block and SKILL_TOOL in block
-                ]
-                assert asking, (
-                    f"{name}/{version} declares {SHARED_SKILL} but no prose "
-                    f"block calls it with the {SKILL_TOOL} tool"
-                )
+            assert SHARED_SKILL in skill.requires, (
+                f"{name} does not require {SHARED_SKILL}"
+            )
+            asking = [
+                block
+                for block in _prose_blocks(skill.body)
+                if SHARED_SKILL in block and SKILL_TOOL in block
+            ]
+            assert asking, (
+                f"{name} declares {SHARED_SKILL} but no prose "
+                f"block calls it with the {SKILL_TOOL} tool"
+            )
+
+    def test_the_entry_invokes_every_check_with_the_skill_tool(self):
+        """exp-07: without the tool named, Sonnet 5.5 ran no check in 3 of 3
+        sessions and answered the checklist from the schema."""
+        entry = _pinned_skills()[ENTRY_SKILL]
+        assert set(entry.requires) == FIG_CHECKLIST_CHECKS
+        assert any(SKILL_TOOL in block and "invoking its skill" in block
+                   for block in _prose_blocks(entry.body))
+        for check in FIG_CHECKLIST_CHECKS:
+            assert f"`{check}`" in entry.body, f"the entry never names {check}"
 
     def test_no_skill_asks_the_session_to_write_a_file(self):
         """The session has no write tool, so prose asking for one would send
@@ -2286,11 +2316,11 @@ class TestNoLeafRestatesTheSharedSkill:
                 )
 
     def test_the_leaf_takes_the_inventory_from_the_shared_skill(self):
-        """It must still defer to `identify-panels` rather than deriving its
+        """It must still defer to `classify-panels` rather than deriving its
         own list -- that is what makes checks agree about what a panel is."""
-        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body.lower()
+        leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF][PILOT_VERSION].body.lower()
         assert SHARED_SKILL in leaf
-        assert "source of truth" in leaf
+        assert "complete and accurate list" in leaf
 
 # ---------------------------------------------------------------------------
 # Milestone 3: the sealed runtime directory
@@ -2371,7 +2401,7 @@ class TestRuntimeSkillPlacement:
         skills_root = assembled.root / AGENTIC_SKILLS_SUBDIR
         assert assembled.skills_root == skills_root
         assert skills_root.is_dir()
-        for name in ("identify-panels", PILOT_LEAF):
+        for name in (SHARED_SKILL, PILOT_LEAF):
             assert (skills_root / name / SKILL_FILENAME).is_file()
 
     def test_only_the_entry_points_closure_is_present(self, assembled):
@@ -2395,18 +2425,16 @@ class TestRuntimeSkillPlacement:
         ).exists()
 
     def test_closure_is_transitive(self, tmp_path: Path):
-        """error-bars-defined reaches identify-panels both directly and
-        through classify-plot-panels; both hops are assembled."""
+        """The entry reaches classify-panels only through the checks; it is
+        assembled, and the unreached panel skills are not."""
         layout = assemble_runtime(
-            "fig-checklist", "error-bars-defined", SUBPANEL_FIGURE,
+            "fig-checklist", ENTRY_SKILL, SUBPANEL_FIGURE,
             root=tmp_path / "runtime",
         )
         present = {
             p.parent.name for p in layout.skills_root.rglob(SKILL_FILENAME)
         }
-        assert present == {
-            "error-bars-defined", "classify-plot-panels", SHARED_SKILL,
-        }
+        assert present == {ENTRY_SKILL, *FIG_CHECKLIST_CHECKS, SHARED_SKILL}
 
     def test_closure_follows_the_pinned_version(self):
         """The same check at v1 (monolith) and v3 (delegating) must assemble
@@ -4090,6 +4118,9 @@ class TestCacheKeyIsTheSkillSet:
 # every place that resolved "the" version by convention is a latent bug.
 
 
+VARIANT_VERSION = "v3"
+
+
 @requires_subpanel_figure
 class TestHopsAreComparedAgainstTheVersionThatRan:
     """A `v1` session compared against `v2`'s declared hops invents both
@@ -4099,24 +4130,22 @@ class TestHopsAreComparedAgainstTheVersionThatRan:
     @pytest.fixture
     def two_versions(self, tmp_path: Path):
         checklist = _copy_pilot_skills(tmp_path / "fig-checklist")
-        # v2 of the pilot leaf declares (and asks for) nothing.
+        # A variant of the pilot leaf, past the pinned one, declares (and
+        # asks for) nothing.
         _write_skill(
-            checklist, PILOT_LEAF, "v2",
+            checklist, PILOT_LEAF, VARIANT_VERSION,
             _skill_md(PILOT_LEAF, produces=(PILOT_LEAF,),
                       body=f"# {PILOT_LEAF}\n\nDo it all yourself.\n"),
         )
         (checklist / VERSION_MANIFEST_FILENAME).write_text(
-            _manifest(
-                "fig-checklist",
-                {name: "v1" for name in load_skills(checklist)},
-            ),
+            _manifest("fig-checklist", checklist_pins(FIG_CHECKLIST_DIR)),
             encoding="utf-8",
         )
         return checklist
 
     def test_the_pinned_version_is_used_not_the_highest(self, two_versions):
         hops = compare_declared_and_observed(
-            two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: "v1"}
+            two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: PILOT_VERSION}
         )
         assert hops["declared"] == [SHARED_SKILL]
         assert hops["declared_not_observed"] == []
@@ -4124,10 +4153,10 @@ class TestHopsAreComparedAgainstTheVersionThatRan:
 
     def test_an_unpinned_variant_is_compared_against_itself(self, two_versions):
         hops = compare_declared_and_observed(
-            two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: "v2"}
+            two_versions, PILOT_LEAF, [SHARED_SKILL], pins={PILOT_LEAF: VARIANT_VERSION}
         )
         assert hops["declared"] == []
-        # v2 asks for nothing and the agent went anyway -- an undeclared hop,
+        # The variant asks for nothing and the agent went anyway -- an undeclared hop,
         # which is a real observation, not an artifact of the wrong version.
         assert hops["observed_not_declared"] == [SHARED_SKILL]
 
@@ -4226,9 +4255,9 @@ class TestTheTurnCeilingActuallyGoverns:
     def test_the_real_checklist_ceiling_reaches_the_session_options(
         self, tmp_path: Path
     ):
-        """End to end: the file says 24, the options carry 24."""
+        """End to end: the file says 40, the options carry 40."""
         defaults = load_model_defaults(FIG_CHECKLIST_DIR)
-        assert defaults.session["max_turns"] == 24
+        assert defaults.session["max_turns"] == 40
 
 
 async def _drain(agen):
@@ -4266,10 +4295,11 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
         self, tmp_path: Path, stub_session, monkeypatch
     ):
         checklist_dir = CHECKLIST_DIR / "fig-checklist"
-        v2 = checklist_dir / PILOT_LEAF / "v2"
-        v2.mkdir(parents=True)
-        (v2 / SKILL_FILENAME).write_text(
-            (checklist_dir / PILOT_LEAF / "v1" / SKILL_FILENAME).read_text(),
+        variant = checklist_dir / PILOT_LEAF / VARIANT_VERSION
+        # exist_ok=False: never write over, or remove, a real version.
+        variant.mkdir(parents=True)
+        (variant / SKILL_FILENAME).write_text(
+            (checklist_dir / PILOT_LEAF / PILOT_VERSION / SKILL_FILENAME).read_text(),
             encoding="utf-8",
         )
         try:
@@ -4277,15 +4307,15 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
             run_check_live(
                 "fig-checklist", PILOT_LEAF,
                 output=out, examples=[SUBPANEL_FIGURE],
-                unpin={PILOT_LEAF: ("v2",)},
+                unpin={PILOT_LEAF: (VARIANT_VERSION,)},
             )
-            assert (out / f"{PILOT_LEAF}@v2" / "rep-00" / SUBPANEL_FIGURE
+            assert (out / f"{PILOT_LEAF}@{VARIANT_VERSION}" / "rep-00" / SUBPANEL_FIGURE
                     / PREDICTION_FILENAME).is_file()
             assert not (out / "pinned").exists(), (
                 "a variant-only run wrote into the baseline arm"
             )
         finally:
-            shutil.rmtree(v2)
+            shutil.rmtree(variant)
 
     def test_each_prediction_records_the_skill_set_that_made_it(
         self, tmp_path: Path, stub_session

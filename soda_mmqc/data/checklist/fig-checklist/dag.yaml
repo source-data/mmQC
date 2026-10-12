@@ -1,7 +1,17 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist --write` instead. `graph fig-checklist` fails when it and the skills disagree.
 checklist: fig-checklist
-skill_set: 06f1bd24e21502c21f480fdbc7045c32ce6d79254a18570d9d0a743300887c47
+skill_set: bd3b1ab371cd9c089bd0ff3b83b5996c74a000ae97bea2d9621d552b393706d3
 skills:
+- name: classify-panels
+  version: v1
+  content_hash: 7463d21a2a5dcefab0db7603f243ec8a2fc69772da84d493298758cc8b54d17b
+  kind: shared
+  description: Classify panels by labelling them with the kind of content it shows
+    (micrograph, plot, blot, molecular or protein structure, sequence, schematic,
+    photograph, table). Use when a check applies to only some kinds of panel.
+  calls: []
+  produces:
+  - panel_classes
 - name: classify-plot-panels
   version: v1
   content_hash: 4e8a64b6a4faecae6a583a7914c2a8bf05ad138f7108eb3266429b5c549839f6
@@ -17,170 +27,140 @@ skills:
   - identify-panels
   produces:
   - plot_panels
-- name: error-bars-defined
+- name: do-fig-checklist-cm
   version: v1
-  content_hash: d2203129482f8793b0cff25d4b2fbd8e8dcc3228f82c844b29d7c7e77e310ce5
+  content_hash: 29aa9a684b4a4ee93c532012f2aa0531d4ec7c53943001f293caa5a617709a25
   kind: check
-  description: Check that error bars and box-plot elements shown in a figure are defined
-    in its caption. Use this for the error-bars-defined quality-control check. Decides,
-    for each panel, whether error bars or box/whisker elements are present, whether
-    the caption says what they represent, extracts that definition, and gives a PASS
-    or FAIL verdict.
+  description: Run the whole figure checklist on a figure.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - error-bars-defined
+  - image-annotation-defined
+  - individual-data-points
+  - micrograph-scale-bar
+  - panel-image-matches-caption
+  - plot-axis-units
+  - plot-gap-labeling
+  - replication-reporting
+  - single-channel-for-overlay
+  - stat-significance-level
+  - stat-test
+  produces:
+  - do-fig-checklist-cm
+- name: error-bars-defined
+  version: v2
+  content_hash: cf17496f61799d430d3e79c86bada3d2381d0297e84104897c88094027e02743
+  kind: check
+  description: Check that error bars, and box or violin plot elements, are explained
+    in the caption.
+  calls:
+  - classify-panels
   produces:
   - error-bars-defined
 - name: identify-panels
-  version: v1
-  content_hash: bf111ce27d340029fbca91f3ee6b01aa92d6d3a5886bebf33d87926b9302c7df
+  version: v2
+  content_hash: e160683ccb461857d589c708c8f6506f8cd4e79a5e1e3b41f5a8e0ea0be72177
   kind: shared
-  description: Identify every labeled panel of a scientific figure and map each panel
-    to the caption text that describes it. Use this first, whenever a task needs the
-    list of panels, their labels, where each panel sits in the figure image, what
-    each panel shows, or which caption sentence applies to which panel. Produces the
-    shared panels artifact. Makes no quality-control judgement about what a panel
-    contains.
+  description: Find every labelled panel in a figure. Use before any per-panel check.
   calls: []
   produces:
   - panels
 - name: image-annotation-defined
-  version: v1
-  content_hash: 6f4144d259c959a64c369c6e163304053f75ac9d98628a1f7aede71cb8935693
+  version: v2
+  content_hash: ff0036306983839a1c9727ee6a939f642d3c0f89fc9f19da01a03d26d58658d7
   kind: check
   description: Check that graphical annotations drawn on imaging panels — arrows,
-    arrowheads, circles, boxes, dashed lines — are explained in the figure caption.
-    Use this for the image-annotation-defined quality-control check. Decides, for
-    each panel, whether it holds imaging data, lists each unique annotation by shape
-    and colour, and extracts the caption text defining each one. Scale bars are excluded
-    entirely.
+    arrowheads, circles, boxes, dashed lines — are explained in the caption.
   calls:
-  - identify-panels
+  - classify-panels
   produces:
   - image-annotation-defined
 - name: individual-data-points
-  version: v1
-  content_hash: 5bd843649041a100c2a23fe340ab410698dec1bf36951354513187a8012a8481
+  version: v2
+  content_hash: 573362592cda71cb7e7d08940d6a1b9a99a28d8639f1ce3d4d6d05984c7d1333
   kind: check
-  description: Check that plots which should show individual data points actually
-    do. Use this for the individual-data-points quality-control check. Decides, for
-    each panel, whether it is a plot with axes, whether individual values are displayed
-    or are not required for that plot type, and gives a PASS or FAIL verdict with
-    an explanation.
+  description: Check that a plot showing averages also shows the individual data points
+    behind them.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - individual-data-points
 - name: micrograph-scale-bar
-  version: v1
-  content_hash: e5b9c8bd8291823ce3253a25eb6880ab968ee05e78fe95c138fb4d8471ccec69
+  version: v2
+  content_hash: 4d351f2e022affb30bdc9d8e84b8a10531764a03f92f43f6993fe5387456b5ec
   kind: check
-  description: Check that every micrograph panel of a scientific figure carries a
-    scale bar, and that the scale bar length is defined either on the image itself
-    or in the figure caption. Use this for the micrograph-scale-bar quality-control
-    check. Decides, for each panel, whether the panel is a micrograph, whether a scale
-    bar is present on it, whether its length is written on the image or in the caption,
-    and extracts that definition.
+  description: Check that every micrograph panel carries a scale bar, and that its
+    length is stated on the image or in the caption.
   calls:
-  - identify-panels
+  - classify-panels
   produces:
   - micrograph-scale-bar
 - name: panel-image-matches-caption
-  version: v1
-  content_hash: ce11c419e3ae49b4590fe85e078aa532ba00b448d9a46b54c6fa59246057b000
+  version: v2
+  content_hash: 6005e11f520cd75e16745e208c7e00c9fb745d435cd283005c741bdb97eedba1
   kind: check
-  description: Judge whether what a panel's image actually shows contradicts what
-    its caption claims is shown. Use this for the panel-image-matches-caption quality-control
-    check. Returns a yes/no/not_applicable verdict per panel plus a description of
-    any substantive discrepancy — wrong plot type, missing conditions, contradictory
-    labels, or elements present in one and absent from the other. It does not identify
-    panels and does not map caption text to panels; it compares content that has already
-    been identified.
+  description: Judge whether what a panel's image shows contradicts what its caption
+    says is shown.
   calls:
-  - identify-panels
+  - classify-panels
   produces:
   - panel-image-matches-caption
 - name: plot-axis-units
-  version: v1
-  content_hash: c4da5817381aec76929f2fd4f177f8bcdbafa9fd88d623eb0cf4b250250d06db
+  version: v2
+  content_hash: 6a2b4f5240e86969e8f04fe45af093749fcd527aa0226fadd8d29a4ca448502b
   kind: check
-  description: Check that the axes of quantitative plots carry the units of the quantity
-    they measure. Use this for the plot-axis-units quality-control check. Decides,
-    for each panel, whether it is a quantitative plot with axes, whether units are
-    provided on each axis, extracts the unit definitions as printed, and gives a PASS
-    or FAIL verdict.
+  description: Check that the axes of quantitative plots state the units of what they
+    measure.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - plot-axis-units
 - name: plot-gap-labeling
-  version: v1
-  content_hash: 77187b92ee71b0bf64d0136e66cf018e3890e1424b4220ff07ef398a240358a5
+  version: v2
+  content_hash: 66d7c88ab894ce01cd42b5c992fdd58916c39c51e10e650a659137a8a2f5d3d0
   kind: check
-  description: Check that discontinuities in a plot's axis are marked with a visible
-    break indicator. Use this for the plot-gap-labeling quality-control check. Decides,
-    for each panel, whether the tick label sequence jumps anomalously and, if so,
-    whether the break is visually marked, and gives a PASS or FAIL verdict.
+  description: Check that any discontinuity in a quantitative plot's axis is marked
+    with a visual break indicator.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - plot-gap-labeling
 - name: replication-reporting
-  version: v1
-  content_hash: 2254ea50f176c525e329e5a45453d58687b58a8a5cfae8f1df667314678df69d
+  version: v2
+  content_hash: aff003964066fcd09a1194a318840e8d80ad9b968c39279423697db1581ab68d
   kind: check
-  description: Check that panels showing replicated quantitative data report how many
-    replicates were used and what they represent. Use this for the replication-reporting
-    quality-control check. Decides, for each panel, whether replicates apply, extracts
-    the n-number and replicate type verbatim from the figure and legend, and gives
-    a PASS or FAIL verdict.
+  description: Check that panels showing replicated data report the number of replicates
+    and what they represent.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - replication-reporting
 - name: single-channel-for-overlay
-  version: v1
-  content_hash: a5af9265db199825898bd729aceb0185c02d2adf3707290dd72cccad8d7d71d9
+  version: v2
+  content_hash: 88ece78f34a05bb0b8828859b43eea9156511141602c1febc3844635747018fe
   kind: check
-  description: Check that multicolour fluorescence overlay micrographs are accompanied
-    by the corresponding single-channel images. Use this for the single-channel-for-overlay
-    quality-control check. Decides, for each panel, whether a merged multi-channel
-    microscopy image is present, counts the channels merged into it and the separate
-    single-channel images shown beside it, and judges whether every channel is also
-    shown on its own.
+  description: Check that each channel of a multicoloured overlay micrograph is also
+    shown as a single-channel image.
   calls:
-  - identify-panels
+  - classify-panels
   produces:
   - single-channel-for-overlay
 - name: stat-significance-level
-  version: v1
-  content_hash: a7f56feda82b8bd445ea92bee10f399e711a6da24c8be24864939993234be594
+  version: v2
+  content_hash: 38ab16cc83a34804f15200bb4870dc7348ecac4cb6ebec42abc13eda07ee0711
   kind: check
-  description: Check that significance symbols drawn on a plot — asterisks, hashes,
-    letters — are defined in the caption with the p-value thresholds they stand for.
-    Use this for the stat-significance-level quality-control check. Decides, for each
-    panel, which symbols appear, whether each is defined, extracts those definitions,
-    and gives a PASS or FAIL verdict.
+  description: Check that significance symbols shown on plots, such as asterisks,
+    are defined in the caption.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - stat-significance-level
 - name: stat-test
-  version: v1
-  content_hash: bfa81bf3be74e94da5241f4cec1470de550c60c473b9b2c1b9f615afee27e602
+  version: v2
+  content_hash: 29b9d56f3899b759846a57b501e9b045a4c6bc8c32e40690514e3dc275e74c92
   kind: check
-  description: Check that figures claiming statistical significance say which statistical
-    test produced it. Use this for the stat-test quality-control check. Decides, for
-    each panel, whether it plots quantitative data, whether a significance claim makes
-    a test mandatory, whether the caption names one, extracts that text, and gives
-    a PASS or FAIL verdict.
+  description: Check that a panel claiming statistical significance names the statistical
+    test behind the claim.
   calls:
-  - classify-plot-panels
-  - identify-panels
+  - classify-panels
   produces:
   - stat-test

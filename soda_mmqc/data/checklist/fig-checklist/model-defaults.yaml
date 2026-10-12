@@ -13,14 +13,14 @@ models:
   # invalidates the comparison in 2026-09-15-milestone-5-results.md.
   openai: gpt-5-mini
 
-  # The bare alias tracks the current Sonnet rather than pinning a dated
-  # snapshot. Sonnet rather than Opus because these runs are small and
-  # diagnostic, and cost should not discourage rerunning them.
-  claude-sdk: sonnet
+  # Sonnet 5.5, named exactly: exp-07 (2026-10-12) found it level with Opus
+  # 5.5 on the checklist, ahead where they differ, at under half the cost;
+  # a bare alias would move with the next Sonnet and the comparison with it.
+  claude-sdk: claude-sonnet-5-5
 
 session:
-  # Turn ceiling for one example. A reduction from the MAX_TURNS = 40
-  # hard-coded in agentic_openai.py: a session that has not produced an
-  # answer in 24 turns is looping, not thinking, and the observed runs
-  # finish well inside it.
-  max_turns: 24
+  # Turn ceiling for one example: a guard against a looping session, not a
+  # budget. The whole checklist in one session takes 25-30 turns (exp-07:
+  # at most 30, and more than 24 in nine sessions in ten), so the earlier 24
+  # -- set for single checks -- would cut nearly every session short.
+  max_turns: 40
