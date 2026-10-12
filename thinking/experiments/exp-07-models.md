@@ -53,6 +53,7 @@ are run afresh, and nothing is compared with exp-06.
 | Concurrency | 50, as exp-06; the models run one after another, not side by side |
 | Sessions | 3 models × 37 figures × 3 replicates = **333**; **555** if extended |
 | Turn limit | none, as exp-06 |
+| Thinking | adaptive, **summarized** in the transcript (`fig-checklist-exp07/model-defaults.yaml`, 2026-10-12): the default left thinking blocks empty |
 
 ### Two changes from exp-06's skills
 
@@ -202,6 +203,13 @@ replicate, 9 sessions, none failed.
 - **Size**: Opus 28–29 turns, $0.39–0.57; Sonnet 26 turns, $0.17 (8 turns,
   $0.19 for the partial one); Haiku 26–28 turns, $0.014–0.022, with 15,000–
   28,000 output tokens. Costs are the CLI's estimates.
+
+**Smoke 4 and 5, 2026-10-12: Opus 5.5 alone, runtimes kept.** Without, then
+with summarized thinking; 3 sessions each, all eleven checks in 6/6, Opus 5.5
+throughout (no fallback; content/1, which fell back in smoke 3, did not), $1.26
+and $1.30. With the default display the transcripts' thinking blocks were
+empty; with `display: summarized` each session had 5–8 thinking summaries of
+80–780 characters, at the same cost and turns.
 
 ## Gold this is scored against
 
