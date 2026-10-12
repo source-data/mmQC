@@ -190,7 +190,8 @@ round.
 | 2026-10-12 | smoke 3, `fig-checklist-exp07` | `run.py --smoke` | $2.08 | below |
 | 2026-10-12 | smoke 4 and 5, Opus 5.5 only, runtimes kept | `run.py --smoke --model claude-opus-5-5 --keep-runtime` | $1.26, $1.30 | below |
 | 2026-10-12 | smoke 6, three models, runtime `CLAUDE.md` naming the `Skill` tool | `run.py --smoke` | $1.94 | below |
-| 2026-10-12 | the run, 3 replicates | `caffeinate -i python experiments/exp-07-models/run.py` | (notebook) | `experiments/runs/exp-07-models/`; 332 of 333 sessions answered |
+| 2026-10-12 | the run, 3 replicates | `caffeinate -i python experiments/exp-07-models/run.py` | $56.75 | `experiments/runs/exp-07-models/`; 332 of 333 sessions answered |
+| 2026-10-12 | the extension, replicates 4 and 5 | `caffeinate -i python experiments/exp-07-models/run.py --extend` | | `experiments/runs/exp-07-models/` |
 
 **One failure, kept as one** (decided with the author, 2026-10-12): Haiku 5.5,
 rep-01, `s44318-026-00715-1` content/4, ended its turn with prose — "I haven't
@@ -201,6 +202,12 @@ scores average its two other replicates. The harness kept nothing of a failed
 session but the log line; from now on it keeps the trace, the audit and the
 error (`intermediates/failure.json`), so a failure can be read like any other
 session.
+
+**The extension rule fired after three replicates** (2026-10-12), for all
+three pairs: Opus − Sonnet with E1 undecided (−0.008 [−0.021, 0.000]) and 5
+decisions undecided; Opus − Haiku with E1 undecided and 4 decisions; Sonnet −
+Haiku with 4 decisions. Reported to the author, who decided to extend: all
+three models to five replicates, `run.py --extend`.
 
 **Smoke 3, 2026-10-12.** Each model on `s44318-026-00715-1` content/1–3, one
 replicate, 9 sessions, none failed.
