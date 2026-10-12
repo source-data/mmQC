@@ -179,7 +179,7 @@ round.
 | P2 | Runner records the CLI's per-model usage in each session's `tool_audit.json` | this commit |
 | P3 | `experiments/exp-07-models/run.py`: the three models in turn, replicates 3, `--extend` to 5, concurrency 50; the smoke report names the model that answered | this commit |
 | P4 | Smoke test: each model on exp-06's three smoke figures, one replicate | |
-| P5 | Notebook: exp-06's, per model, with the pairwise classification | |
+| P5 | Notebook `notebooks/experiments/exp-07-models.ipynb`: exp-06's readings per model, the model that answered, the pairwise classification and the extension rule; run on the smoke output during the run | this commit |
 
 ## Runs
 
