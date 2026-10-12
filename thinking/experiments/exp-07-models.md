@@ -45,6 +45,7 @@ are run afresh, and nothing is compared with exp-06.
 | Entry skill | `do-fig-checklist-cm` **v2**, the eleven checks in exp-06's order |
 | Contract | exp-06's derivation, into `fig-checklist-exp07` (`experiments/exp-07-models/build_contract.py`) |
 | Harness | `claude-agent-sdk` 0.2.165, bundled CLI 2.1.294 (exp-06: 0.2.152, CLI 2.1.259, which does not run Opus 5.5) |
+| Runtime `CLAUDE.md` | "Whenever a skill mentions another skill, invoke that skill with the `Skill` tool" (2026-10-12; exp-06: "If it names another skill, invoke that skill") — harness-wide, not pinned by the checklist |
 | Gold | **`gold-v6`** |
 | Figures | exp-06's 37 |
 | Models | **`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`**, provider `claude-sdk` |

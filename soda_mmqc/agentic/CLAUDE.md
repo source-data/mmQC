@@ -14,7 +14,8 @@ available and it is not needed.
 
 ## How to work
 
-1. Follow the skill you were dispatched with. If it names another skill,
-   invoke that skill rather than reimplementing what it does.
+1. Follow the skill you were dispatched with. Whenever a skill mentions
+   another skill, invoke that skill with the `Skill` tool rather than
+   reimplementing what it does.
 2. Answer with the structured output you were given a schema for. Report what
    you observe; do not guess to fill a field.
