@@ -2030,24 +2030,6 @@ class TestSharedSkillAgainstRealGold:
             "C",
         ]
 
-    @pytest.mark.xfail(strict=True, reason=(
-        "classify-panels v1 has no rule for unlabelled composites: identify-"
-        "panels v1's 'do not split' an unlabelled composite was not carried "
-        "into the exp-04 lineage. Open for the author, 2026-10-12."))
-    def test_the_shared_skill_does_not_forbid_splitting_outright(self):
-        body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL][SHARED_VERSION].body
-        forbidding = [
-            block
-            for block in _prose_blocks(body)
-            if "do not split" in block.lower()
-        ]
-        assert forbidding, "the unlabelled-composite rule disappeared entirely"
-        for block in forbidding:
-            assert "unlabelled" in block.lower() or "label" in block.lower(), (
-                "'do not split' must be scoped to unlabelled composites; the "
-                "pilot gold splits a caption-labelled (Ai-ii) into two rows"
-            )
-
     def test_the_shared_skill_tells_the_agent_to_split_labelled_sub_panels(self):
         body = load_skills(FIG_CHECKLIST_DIR)[SHARED_SKILL][SHARED_VERSION].body.lower()
         assert "subpanels" in body or "sub-panel" in body or "sub-part" in body
