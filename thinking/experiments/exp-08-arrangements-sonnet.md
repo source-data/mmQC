@@ -85,7 +85,7 @@ extension.
 | P1 | `classify-panels` v3 in `fig-checklist-exp07`, not pinned | this commit |
 | P2 | `experiments/exp-08-arrangements-sonnet/run.py` | this commit |
 | P3 | Smoke test: 3 figures, one replicate | below |
-| P4 | Notebook: exp-07's, two arrangements | |
+| P4 | Notebook `notebooks/experiments/exp-08-arrangements-sonnet.ipynb`: exp-07's, two arrangements, each a run root and an arm; run on the smoke output during the run | this commit |
 
 ## Runs
 
