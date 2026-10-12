@@ -80,6 +80,8 @@ def run(root: Path, *, replicates: int, limit: Optional[int], force: bool,
             CHECKLIST, ENTRY, output=root / model, model=model, provider=PROVIDER,
             limit=limit, replicates=replicates, force=force, assembly=ASSEMBLY,
             concurrency=CONCURRENCY, keep_runtime=keep_runtime,
+            # A failure is kept as one (decided with the author, 2026-10-12).
+            retry_failed=False,
         )
         for e in report:
             if e["status"] == "failed":

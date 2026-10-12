@@ -184,6 +184,8 @@ experiments/runs/**/analysis.json
 # cannot re-include a file inside a directory it has excluded.
 experiments/runs/**/intermediates/*
 !experiments/runs/**/intermediates/skill_trace.json
+# A failed session's error is a result too (2026-10-12).
+!experiments/runs/**/intermediates/failure.json
 
 # exp-03 makes tool_audit.json a result too, for its runs only: its cost and
 # time endpoint reads `usage` -- cost, turns, duration, tokens -- from it, and

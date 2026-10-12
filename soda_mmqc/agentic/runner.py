@@ -351,6 +351,7 @@ def run_check_live(
     force: bool = False,
     assembly: str = ASSEMBLY_CLOSURE,
     concurrency: int = 1,
+    retry_failed: bool = True,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -378,6 +379,11 @@ def run_check_live(
     sessions run in a pool of that many workers; the report keeps the
     sequential order. Each session records the concurrency it ran at in its
     ``tool_audit.json``, because wall time and prompt-cache hits depend on it.
+
+    ``retry_failed`` False leaves a session that failed -- one with
+    ``intermediates/failure.json`` and no prediction -- as it is, so that
+    extending a run does not quietly turn a recorded failure into a success.
+    ``force`` still reruns it.
 
     Returns:
         ``(run root, per-example report)``. The root holds one directory per
@@ -448,6 +454,15 @@ def run_check_live(
                 "Skipping %s on %s [%s rep-%02d]: already has a "
                 "prediction",
                 check_name, relative_source_path, label, replicate,
+            )
+            entry["status"] = "skipped"
+            return entry
+        failed_before = (predictions_dir / relative_source_path
+                         / INTERMEDIATES_DIRNAME / FAILURE_FILENAME)
+        if failed_before.is_file() and not retry_failed and not force:
+            logger.info(
+                "Skipping %s on %s [%s rep-%02d]: failed before, and kept as "
+                "a failure", check_name, relative_source_path, label, replicate,
             )
             entry["status"] = "skipped"
             return entry

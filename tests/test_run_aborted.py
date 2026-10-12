@@ -175,3 +175,17 @@ def test_a_failed_session_keeps_its_trace_audit_and_error(tmp_path: Path, monkey
     assert audit["usage"]["total_cost_usd"] == 0.02 and audit["session"]["concurrency"] == 1
     assert (kept.parent / SKILL_TRACE_FILENAME).is_file()
     assert not (kept.parent.parent / "prediction.json").exists()
+
+
+def test_a_kept_failure_is_not_rerun_unless_asked(tmp_path: Path, monkeypatch):
+    """exp-07: extending a run must not turn a recorded failure into a success."""
+    (example,) = _examples(1)
+    calls = _answering(monkeypatch, tmp_path)
+    leaf = tmp_path / "pinned" / "rep-00" / example / "intermediates"
+    leaf.mkdir(parents=True)
+    (leaf / "failure.json").write_text('{"error": "declined to answer"}')
+    _, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example],
+                               retry_failed=False)
+    assert calls == [] and [e["status"] for e in report] == ["skipped"]
+    _, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example])
+    assert len(calls) == 1 and [e["status"] for e in report] == ["ok"]
