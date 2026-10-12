@@ -1,7 +1,7 @@
 ---
 title: exp-08 — the two arrangements again, on exp-07's configuration
 date: 2026-10-12
-status: planned        # draft | planned | running | done | abandoned
+status: done           # draft | planned | running | done | abandoned
 kind: experiment
 extends: exp-07
 tags: [experiment, skills, dag, arrangements, sonnet]
@@ -92,6 +92,7 @@ extension.
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-12 | smoke, `A ← B ← C_i ← D` | `run.py --smoke` | $0.59 | `experiments/runs/exp-08-arrangements-sonnet/smoke/` (not committed) |
+| 2026-10-12 | `A ← B ← C_i ← D`, 5 replicates | `caffeinate -i python experiments/exp-08-arrangements-sonnet/run.py` | $27.62 | `experiments/runs/exp-08-arrangements-sonnet/classify-panels@v3/`; 185 of 185 answered |
 
 **Smoke test, 2026-10-12.** `s44318-026-00715-1` content/1–3, one replicate,
 3 sessions, none failed, Sonnet 5.5 throughout, every one assembled with
@@ -104,10 +105,63 @@ extension.
   and answered the rest in 8 turns — exp-07's partial dispatch.
 - 28–30 turns and $0.19–0.27 for the full sessions.
 
+## Findings
+
+Run 2026-10-12, the same day as exp-07's Sonnet 5.5 arm, which it is set
+beside; 185 new sessions, none failed, no fallback, no refusal. Analysis in
+`notebooks/experiments/exp-08-arrangements-sonnet.ipynb`, against `gold-v6`.
+
+### Numbers
+
+**Dispatch.**
+
+| | all eleven checks | partial (all: only the first check) | no check | `classify-panels` invoked | `identify-panels` invoked |
+|---|---|---|---|---|---|
+| `A\|B ← C_i ← D` | 168/185 | 17 (14) | 0 | 95/185 | — |
+| `A ← B ← C_i ← D` | **126/185** | **57 (57)** | 2 | 115/185 | **27/185** |
+
+In `A ← B ← C_i ← D`, `classify-panels` v3 reached `identify-panels` in 27
+sessions; in the others it listed the panels itself. Panels missing from some
+check lists but not others: 0 against 142 — the partial sessions' lists.
+
+**Primary endpoints**, `A ← B ← C_i ← D` minus `A|B ← C_i ← D`:
+
+| | `A\|B ← C_i ← D` | `A ← B ← C_i ← D` | difference [95%] | verdict |
+|---|---|---|---|---|
+| E1 layer S | 0.997 | 0.977 | −0.020 [−0.037, −0.005] | **`A\|B ← C_i ← D` better** |
+| E2 layer 1 | 0.981 | 0.970 | −0.011 [−0.021, −0.002] | **`A\|B ← C_i ← D` better** |
+| E1, complete sessions only | 0.997 | 0.999 | | |
+| E2, complete sessions only | 0.984 | 0.984 | | |
+| E3, eleven decisions | | | all within ±0.01 | **9 equivalent**, 2 undecided (`individual-data-points`, `replication-reporting`) |
+
+**Cost and time per figure**: $0.149 against $0.157; 21 turns against 25;
+54 s against 60 s — the partial sessions are short.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**`A|B ← C_i ← D` stays the baseline, for the same reason as before:
+dispatch.** On the sessions that ran all eleven checks the two arrangements
+are level — layer S 0.999 against 0.997, layer 1 0.984 both — and nine of
+eleven decisions are equivalent. But the deeper arrangement stops after the
+first check in nearly a third of its sessions (57 of 185, against 14), and
+that is what lowers its layer S and layer 1. A shared step two levels down
+makes the session more likely to treat the first check as the whole job.
+
+**The panel inventory skill is rarely used even when it is there.** Named
+with the `Skill` tool, `identify-panels` was invoked in 27 of 185 sessions;
+`classify-panels` lists the panels itself the rest of the time, as it does in
+`A|B ← C_i ← D` when it is invoked at all (95 of 185). Splitting the
+inventory into its own skill does not, with Sonnet 5.5, make the inventory a
+separate step.
+
 ## Gold this is scored against
 
 **`gold-v6`**.
 
 ## Status and next
 
-Planned 2026-10-12. Next: P3, the run, the notebook.
+Run and analysed, 2026-10-12. The series' configuration stands:
+`A|B ← C_i ← D`, Sonnet 5.5. Partial dispatch is the open problem in both
+arrangements.
