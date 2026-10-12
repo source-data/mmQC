@@ -54,7 +54,7 @@ are run afresh, and nothing is compared with exp-06.
 | Concurrency | 50, as exp-06; the models run one after another, not side by side |
 | Sessions | 3 models × 37 figures × 3 replicates = **333**; **555** if extended |
 | Turn limit | none, as exp-06 |
-| Thinking | adaptive, **summarized** in the transcript (`fig-checklist-exp07/model-defaults.yaml`, 2026-10-12): the default left thinking blocks empty |
+| Thinking | the models' default (adaptive, not displayed). Summarized display was tried in smoke 5 and works; switched off again, as the summaries add little (decided with the author, 2026-10-12) |
 
 ### Two changes from exp-06's skills
 
