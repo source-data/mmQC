@@ -150,3 +150,28 @@ def test_an_account_error_stops_a_concurrent_run(tmp_path: Path, monkeypatch):
 def test_concurrency_is_refused_where_it_cannot_work(tmp_path: Path, kwargs):
     with pytest.raises(ValueError):
         run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=["x"], **kwargs)
+
+
+def test_a_failed_session_keeps_its_trace_audit_and_error(tmp_path: Path, monkeypatch):
+    """exp-07: a session that declined to answer left no record at all."""
+    from soda_mmqc.agentic.session import SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME
+    (example,) = _examples(1)
+
+    async def fake_session(layout, *, versions, approver, options, client):
+        intermediates = layout.artifacts_root / "intermediates"
+        audit = ToolAuditLog(intermediates / TOOL_AUDIT_FILENAME)
+        audit.note_usage({"total_cost_usd": 0.02, "num_turns": 9})
+        (intermediates / SKILL_TRACE_FILENAME).write_text('[{"skill": "micrograph-scale-bar"}]')
+        raise ValueError("The session's result is not JSON, which means it declined to answer")
+
+    monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+    monkeypatch.setattr(runner, "_openai_session_client", lambda layout, model: None)
+    root, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example],
+                                  concurrency=1)
+    assert [e["status"] for e in report] == ["failed"]
+    (kept,) = list(root.rglob("intermediates/failure.json"))
+    assert "declined to answer" in json.loads(kept.read_text())["error"]
+    audit = json.loads((kept.parent / TOOL_AUDIT_FILENAME).read_text())
+    assert audit["usage"]["total_cost_usd"] == 0.02 and audit["session"]["concurrency"] == 1
+    assert (kept.parent / SKILL_TRACE_FILENAME).is_file()
+    assert not (kept.parent.parent / "prediction.json").exists()

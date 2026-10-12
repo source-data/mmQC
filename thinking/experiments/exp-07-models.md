@@ -190,6 +190,17 @@ round.
 | 2026-10-12 | smoke 3, `fig-checklist-exp07` | `run.py --smoke` | $2.08 | below |
 | 2026-10-12 | smoke 4 and 5, Opus 5.5 only, runtimes kept | `run.py --smoke --model claude-opus-5-5 --keep-runtime` | $1.26, $1.30 | below |
 | 2026-10-12 | smoke 6, three models, runtime `CLAUDE.md` naming the `Skill` tool | `run.py --smoke` | $1.94 | below |
+| 2026-10-12 | the run, 3 replicates | `caffeinate -i python experiments/exp-07-models/run.py` | (notebook) | `experiments/runs/exp-07-models/`; 332 of 333 sessions answered |
+
+**One failure, kept as one** (decided with the author, 2026-10-12): Haiku 5.5,
+rep-01, `s44318-026-00715-1` content/4, ended its turn with prose — "I haven't
+called StructuredOutput yet because the checklist isn't finished. So far I've
+run only two of the eleven checks" — and no answer. It is not rerun: it is
+Haiku's behaviour, reported as a non-response, and that figure's Haiku
+scores average its two other replicates. The harness kept nothing of a failed
+session but the log line; from now on it keeps the trace, the audit and the
+error (`intermediates/failure.json`), so a failure can be read like any other
+session.
 
 **Smoke 3, 2026-10-12.** Each model on `s44318-026-00715-1` content/1–3, one
 replicate, 9 sessions, none failed.

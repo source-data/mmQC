@@ -459,60 +459,70 @@ def run_check_live(
                 checklist, check, relative_source_path,
                 keep=keep_runtime, pins=versions, assembly=assembly,
             ) as layout:
-                options = effective_session_options(
-                    layout, skills, defaults=defaults
-                )
-                options["model"] = model
-                client = (
-                    _openai_session_client(layout, model)
-                    if provider == "openai"
-                    else None
-                )
-                prediction, recorder, audit = asyncio.run(
-                    _run_agent_session(
-                        layout,
-                        versions=versions,
-                        approver=approver,
-                        options=options,
-                        client=client,
+                try:
+                    options = effective_session_options(
+                        layout, skills, defaults=defaults
                     )
-                )
-                # The file-production contract is gone with the write
-                # tool: nothing the session does touches the filesystem.
-                # What that check protected -- a shared skill that was
-                # declared but never fired -- is answered by the hop
-                # trace below, which reads the session's own tool calls
-                # and needs no artifact to exist.
-                entry["hops"] = compare_declared_and_observed(
-                    checklist_dir, check, recorder.invoked, pins=versions
-                )
-                entry["tools"] = audit.summary()
-                entry["reported_tools"] = audit.session_info.get("tools")
-                # What this session spent, so a caller can total a run
-                # without reopening every sidecar.
-                if audit.usage:
-                    entry["usage"] = dict(audit.usage)
-                _write_prediction(
-                    predictions_dir,
-                    relative_source_path,
-                    prediction,
-                    recorder.entries,
-                    skill_set,
-                    arm=label,
-                    replicate=replicate,
-                    assembled=runtime_skill_set(layout, versions),
-                    assembly=assembly,
-                )
-                # How many sessions ran at once: wall time and prompt-cache
-                # hits depend on it, so time and cost are comparable only
-                # between runs that share it.
-                audit.note_session({**audit.session_info, "concurrency": concurrency})
-                _copy_sidecar(
-                    audit.path,
-                    predictions_dir / relative_source_path
-                    / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
-                )
-                entry["status"] = "ok"
+                    options["model"] = model
+                    client = (
+                        _openai_session_client(layout, model)
+                        if provider == "openai"
+                        else None
+                    )
+                    prediction, recorder, audit = asyncio.run(
+                        _run_agent_session(
+                            layout,
+                            versions=versions,
+                            approver=approver,
+                            options=options,
+                            client=client,
+                        )
+                    )
+                    # The file-production contract is gone with the write
+                    # tool: nothing the session does touches the filesystem.
+                    # What that check protected -- a shared skill that was
+                    # declared but never fired -- is answered by the hop
+                    # trace below, which reads the session's own tool calls
+                    # and needs no artifact to exist.
+                    entry["hops"] = compare_declared_and_observed(
+                        checklist_dir, check, recorder.invoked, pins=versions
+                    )
+                    entry["tools"] = audit.summary()
+                    entry["reported_tools"] = audit.session_info.get("tools")
+                    # What this session spent, so a caller can total a run
+                    # without reopening every sidecar.
+                    if audit.usage:
+                        entry["usage"] = dict(audit.usage)
+                    _write_prediction(
+                        predictions_dir,
+                        relative_source_path,
+                        prediction,
+                        recorder.entries,
+                        skill_set,
+                        arm=label,
+                        replicate=replicate,
+                        assembled=runtime_skill_set(layout, versions),
+                        assembly=assembly,
+                    )
+                    # How many sessions ran at once: wall time and prompt-cache
+                    # hits depend on it, so time and cost are comparable only
+                    # between runs that share it.
+                    audit.note_session({**audit.session_info, "concurrency": concurrency})
+                    _copy_sidecar(
+                        audit.path,
+                        predictions_dir / relative_source_path
+                        / INTERMEDIATES_DIRNAME / TOOL_AUDIT_FILENAME,
+                    )
+                    entry["status"] = "ok"
+                except Exception as exc:
+                    # The session's own record of what it did lives in the
+                    # runtime, which is removed on the way out; keep it, so
+                    # a failure can be read like any other session.
+                    _keep_failed_session(
+                        layout, predictions_dir / relative_source_path, exc,
+                        concurrency=concurrency,
+                    )
+                    raise
         except Exception as exc:  # noqa: BLE001 - one example must not end the run
             logger.error("%s failed: %s", relative_source_path, exc)
             entry["status"] = "failed"
@@ -575,6 +585,36 @@ def run_check_live(
 
 
 
+
+
+FAILURE_FILENAME = "failure.json"
+
+
+def _keep_failed_session(layout, example_dir: Path, exc: Exception, *, concurrency: int) -> None:
+    """Copy a failed session's trace and audit out of its runtime, with the error.
+
+    Written beside where the prediction would have been, under
+    ``intermediates/``; there is no ``prediction.json``, so a rerun still runs
+    the session (and overwrites these). Best effort: a failure to keep the
+    record must not hide the session's own failure.
+    """
+    try:
+        source = layout.artifacts_root / INTERMEDIATES_DIRNAME
+        target = example_dir / INTERMEDIATES_DIRNAME
+        for name in (SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME):
+            _copy_sidecar(source / name, target / name)
+        audit_path = target / TOOL_AUDIT_FILENAME
+        if audit_path.is_file():
+            audit = json.loads(audit_path.read_text(encoding="utf-8"))
+            audit["session"] = {**(audit.get("session") or {}), "concurrency": concurrency}
+            audit_path.write_text(json.dumps(audit, indent=2, ensure_ascii=False) + "\n",
+                                  encoding="utf-8")
+        target.mkdir(parents=True, exist_ok=True)
+        (target / FAILURE_FILENAME).write_text(
+            json.dumps({"error": str(exc), "type": type(exc).__name__}, indent=2,
+                       ensure_ascii=False) + "\n", encoding="utf-8")
+    except Exception as keep_error:  # noqa: BLE001
+        logger.warning("could not keep the failed session's record: %s", keep_error)
 
 
 def _copy_sidecar(source: Path, destination: Path) -> None:
