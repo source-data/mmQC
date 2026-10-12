@@ -4873,6 +4873,15 @@ class TestTheRunRecordsWhatItCost:
         written = json.loads(audit.path.read_text(encoding="utf-8"))
         assert written["usage"] == {}
 
+    def test_the_extractor_keeps_the_model_that_answered(self):
+        """exp-07: which model ran is recorded, not only which was requested."""
+        from types import SimpleNamespace
+        per_model = {"claude-sonnet-5-5": {"outputTokens": 900, "costUSD": 0.11,
+                                           "canonicalModel": "claude-sonnet-5-5"}}
+        message = SimpleNamespace(total_cost_usd=0.12, num_turns=4, duration_ms=9000,
+                                  usage={"input_tokens": 1}, model_usage=per_model)
+        assert _extract_usage(message)["model_usage"] == per_model
+
     def test_the_extractor_reads_a_result_message(self):
         info = _extract_usage({
             "subtype": "success",

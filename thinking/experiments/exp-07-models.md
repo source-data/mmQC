@@ -147,8 +147,8 @@ round.
 | # | step | done |
 |---|---|---|
 | P1 | `individual-data-points` v4 pinned; contract and merged gold rebuilt; `gold-v6` | `ac4fa2e80` |
-| P2 | Runner records the CLI's per-model usage in each session's `tool_audit.json` | |
-| P3 | `experiments/exp-07-models/run.py`: the three models in turn, replicates 3, `--extend` to 5, concurrency 50 | |
+| P2 | Runner records the CLI's per-model usage in each session's `tool_audit.json` | this commit |
+| P3 | `experiments/exp-07-models/run.py`: the three models in turn, replicates 3, `--extend` to 5, concurrency 50; the smoke report names the model that answered | this commit |
 | P4 | Smoke test: each model on exp-06's three smoke figures, one replicate | |
 | P5 | Notebook: exp-06's, per model, with the pairwise classification | |
 

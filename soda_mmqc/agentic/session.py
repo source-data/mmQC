@@ -339,13 +339,17 @@ def _extract_usage(message: Any) -> Optional[Dict[str, Any]]:
     The SDK reports all of it and the harness was keeping only `result`. It
     is the only place the numbers exist: a provider bills per call, and
     nothing downstream can reconstruct what a session spent.
+
+    ``model_usage`` is the CLI's per-model breakdown, keyed by the model that
+    answered (with its ``canonicalModel`` where an alias resolved): the only
+    record of which model ran, beside the one requested.
     """
     def get(obj, key):
         if isinstance(obj, Mapping):
             return obj.get(key)
         return getattr(obj, key, None)
 
-    fields = ("total_cost_usd", "num_turns", "duration_ms", "usage")
+    fields = ("total_cost_usd", "num_turns", "duration_ms", "usage", "model_usage")
     captured = {key: get(message, key) for key in fields}
     if all(value is None for value in captured.values()):
         return None
