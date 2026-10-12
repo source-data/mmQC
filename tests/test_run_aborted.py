@@ -189,3 +189,29 @@ def test_a_kept_failure_is_not_rerun_unless_asked(tmp_path: Path, monkeypatch):
     assert calls == [] and [e["status"] for e in report] == ["skipped"]
     _, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example])
     assert len(calls) == 1 and [e["status"] for e in report] == ["ok"]
+
+
+NO_NETWORK = ("Claude Code returned an error result: API Error: Can't reach the API server "
+              "\u2014 check your internet or DNS (ENOTFOUND) (exit code: 1)")
+
+
+def test_a_lost_connection_stops_the_run_and_is_never_kept(tmp_path: Path, monkeypatch):
+    """exp-07: 99 sessions failed in seconds on a dropped network."""
+    examples = _two_examples()
+    calls = _failing_with(monkeypatch, NO_NETWORK)
+    assert runner.is_connection_error(RuntimeError(NO_NETWORK))
+    assert not runner.is_connection_error(RuntimeError("declined to answer within the schema"))
+    with pytest.raises(RunAborted):
+        run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=examples)
+    assert len(calls) == 1
+
+
+def test_a_transient_failure_is_rerun_even_when_failures_are_kept(tmp_path: Path, monkeypatch):
+    (example,) = _examples(1)
+    calls = _answering(monkeypatch, tmp_path)
+    leaf = tmp_path / "pinned" / "rep-00" / example / "intermediates"
+    leaf.mkdir(parents=True)
+    (leaf / "failure.json").write_text(json.dumps({"error": NO_NETWORK, "transient": True}))
+    _, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example],
+                               retry_failed=False)
+    assert len(calls) == 1 and [e["status"] for e in report] == ["ok"]

@@ -196,7 +196,7 @@ def main(argv: List[str] | None = None) -> int:
             failures = run(root, replicates=1, limit=limit, force=True, models=models,
                            keep_runtime=args.keep_runtime)
         except RunAborted as stopped:
-            logger.error("smoke test stopped on an account error: %s", stopped)
+            logger.error("smoke test stopped on an account or connection error: %s", stopped)
             return 2
         for line in failures:
             logger.error("  %s", line)
@@ -214,8 +214,8 @@ def main(argv: List[str] | None = None) -> int:
     try:
         failures = run(RUNS, replicates=replicates, limit=args.limit, force=args.force)
     except RunAborted as stopped:
-        logger.error("exp-07 stopped on an account error: %s", stopped)
-        logger.error("Fix the API key or the account, then rerun the same command: "
+        logger.error("exp-07 stopped on an account or connection error: %s", stopped)
+        logger.error("Fix the API key, the account or the network, then rerun the same command: "
                      "predictions already written are skipped.")
         return 2
     if failures:

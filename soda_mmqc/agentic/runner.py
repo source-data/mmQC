@@ -122,6 +122,21 @@ def is_account_error(exc: BaseException) -> bool:
     return bool(_ACCOUNT_ERROR.search(str(exc)))
 
 
+#: The API could not be reached at all. exp-07's extension (2026-10-12) lost
+#: 99 sessions in a few seconds to a dropped network: like an account error,
+#: it recurs in every later session, and it says nothing about the model.
+_CONNECTION_ERROR = re.compile(
+    r"can't reach the api server|ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT"
+    r"|EAI_AGAIN|getaddrinfo|network is unreachable|connection error",
+    re.IGNORECASE,
+)
+
+
+def is_connection_error(exc: BaseException) -> bool:
+    """Whether a session failed because the API could not be reached."""
+    return bool(_CONNECTION_ERROR.search(str(exc)))
+
+
 def default_predictions_dir(checklist: str, check: str, model: str) -> Path:
     """The root a run writes under, when no ``--output`` is given.
 
@@ -383,7 +398,8 @@ def run_check_live(
     ``retry_failed`` False leaves a session that failed -- one with
     ``intermediates/failure.json`` and no prediction -- as it is, so that
     extending a run does not quietly turn a recorded failure into a success.
-    ``force`` still reruns it.
+    A failure to reach the API is ``transient`` and always rerun; ``force``
+    reruns any.
 
     Returns:
         ``(run root, per-example report)``. The root holds one directory per
@@ -459,7 +475,8 @@ def run_check_live(
             return entry
         failed_before = (predictions_dir / relative_source_path
                          / INTERMEDIATES_DIRNAME / FAILURE_FILENAME)
-        if failed_before.is_file() and not retry_failed and not force:
+        if (failed_before.is_file() and not retry_failed and not force
+                and not json.loads(failed_before.read_text(encoding="utf-8")).get("transient")):
             logger.info(
                 "Skipping %s on %s [%s rep-%02d]: failed before, and kept as "
                 "a failure", check_name, relative_source_path, label, replicate,
@@ -544,12 +561,12 @@ def run_check_live(
             entry["error"] = str(exc)
             # ...but an account that cannot run this session cannot run the
             # next one either; the caller stops the run on this flag.
-            entry["account_error"] = is_account_error(exc)
+            entry["account_error"] = is_account_error(exc) or is_connection_error(exc)
         return entry
 
     def stop(entry: Dict[str, Any], done: List[Dict[str, Any]]) -> None:
         logger.error(
-            "Stopping the run: %s is an account error, and every later session "
+            "Stopping the run: %s failed on the account or the connection, and every later session "
             "would fail the same way. Predictions written so far are kept; "
             "rerun to resume.",
             entry["example"],
@@ -626,7 +643,9 @@ def _keep_failed_session(layout, example_dir: Path, exc: Exception, *, concurren
                                   encoding="utf-8")
         target.mkdir(parents=True, exist_ok=True)
         (target / FAILURE_FILENAME).write_text(
-            json.dumps({"error": str(exc), "type": type(exc).__name__}, indent=2,
+            json.dumps({"error": str(exc), "type": type(exc).__name__,
+                        # Not the model's doing: rerun even when failures are kept.
+                        "transient": is_connection_error(exc)}, indent=2,
                        ensure_ascii=False) + "\n", encoding="utf-8")
     except Exception as keep_error:  # noqa: BLE001
         logger.warning("could not keep the failed session's record: %s", keep_error)
