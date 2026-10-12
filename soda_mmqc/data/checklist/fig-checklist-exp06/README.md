@@ -4,7 +4,7 @@
 
 1 check(s) and 13 shared skill(s), pinned by [`version-manifest.yaml`](version-manifest.yaml).
 
-- **SkillSet digest:** `572376e610086ee694ff0e23d3aa753ade92a6917744349ab9c4879effce5d6c`
+- **SkillSet digest:** `355fae4c42f94c1bca5697a3b1936f0c0606d98c4456701a75a81c2b1d59eac6`
 
 A check is a skill that owns the evaluation contracts (schema.json, benchmark.json). Nothing else distinguishes a check from a shared skill: the hierarchy below is carried entirely by what each skill's own prose asks for, never by where its directory sits.
 
@@ -17,7 +17,7 @@ A check is a skill that owns the evaluation contracts (schema.json, benchmark.js
 | `error-bars-defined` | v3 | shared | Check that error bars, and box or violin plot elements, are explained in the caption. |
 | `identify-panels` | v1 | shared | Find every labelled panel in a figure. Use before any per-panel check. |
 | `image-annotation-defined` | v1 | shared | Check that graphical annotations drawn on imaging panels — arrows, arrowheads, circles, boxes, dashed lines — are explained in the caption. |
-| `individual-data-points` | v4 | shared | Check that a plot showing averages also shows the individual data points behind them. |
+| `individual-data-points` | v3 | shared | Check that a plot showing averages also shows the individual data points behind them. |
 | `micrograph-scale-bar` | v3 | shared | Check that every micrograph panel carries a scale bar, and that its length is stated on the image or in the caption. |
 | `panel-image-matches-caption` | v1 | shared | Judge whether what a panel's image shows contradicts what its caption says is shown. |
 | `plot-axis-units` | v1 | shared | Check that the axes of quantitative plots state the units of what they measure. |

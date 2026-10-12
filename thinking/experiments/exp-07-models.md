@@ -40,10 +40,11 @@ are run afresh, and nothing is compared with exp-06.
 
 | | |
 |---|---|
-| Checklist | `fig-checklist-exp06`, as pinned now: exp-06's skills with `individual-data-points` **v4** |
+| Checklist | **`fig-checklist-exp07`**, copied from `fig-checklist-exp06` (which stays as it ran), with two changes below |
 | Arrangement | **`A\|B ← C_i ← D`** only — the pins: each check invokes `classify-panels` v1 |
-| Entry skill | `do-fig-checklist-cm` v1, the eleven checks in exp-06's order |
-| Contract | exp-06's, rebuilt for v4 (`build_contract.py`, 2026-10-11) |
+| Entry skill | `do-fig-checklist-cm` **v2**, the eleven checks in exp-06's order |
+| Contract | exp-06's derivation, into `fig-checklist-exp07` (`experiments/exp-07-models/build_contract.py`) |
+| Harness | `claude-agent-sdk` 0.2.165, bundled CLI 2.1.294 (exp-06: 0.2.152, CLI 2.1.259, which does not run Opus 5.5) |
 | Gold | **`gold-v6`** |
 | Figures | exp-06's 37 |
 | Models | **`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`**, provider `claude-sdk` |
@@ -52,6 +53,20 @@ are run afresh, and nothing is compared with exp-06.
 | Concurrency | 50, as exp-06; the models run one after another, not side by side |
 | Sessions | 3 models × 37 figures × 3 replicates = **333**; **555** if extended |
 | Turn limit | none, as exp-06 |
+
+### Two changes from exp-06's skills
+
+- **`individual-data-points` v4**: `plot` → `is_a_plot_with_axes`, as in
+  `plot-axis-units`, with heat maps not plots with axes; scored against
+  `gold-v6` (2026-10-11).
+- **Every skill call names the `Skill` tool** (2026-10-12, decided with the
+  author after the first smoke test): `do-fig-checklist-cm` v2 says to run
+  each check "by invoking its skill with the `Skill` tool, one at a time",
+  and each check's next version invokes `classify-panels` "with the `Skill`
+  tool". With exp-06's wording, Sonnet 5.5 invoked no check in 3 of 3 smoke
+  sessions and Opus 5.5 in 1 of 3, answering from the schema in 4 turns; Haiku
+  5.5 dispatched in 3 of 3. The wording is the only change; each skill is
+  otherwise its exp-06 version.
 
 Running the models one after another keeps each model's wall time free of the
 others' load, so time per figure is comparable between models.
@@ -146,7 +161,8 @@ round.
 
 | # | step | done |
 |---|---|---|
-| P1 | `individual-data-points` v4 pinned; contract and merged gold rebuilt; `gold-v6` | `ac4fa2e80` |
+| P1 | `individual-data-points` v4; contract and merged gold rebuilt; `gold-v6` | `ac4fa2e80` |
+| P1b | `fig-checklist-exp07` from `fig-checklist-exp06`, restored to its run state; D v2 and the checks' next versions name the `Skill` tool; SDK 0.2.165 | this commit |
 | P2 | Runner records the CLI's per-model usage in each session's `tool_audit.json` | this commit |
 | P3 | `experiments/exp-07-models/run.py`: the three models in turn, replicates 3, `--extend` to 5, concurrency 50; the smoke report names the model that answered | this commit |
 | P4 | Smoke test: each model on exp-06's three smoke figures, one replicate | |

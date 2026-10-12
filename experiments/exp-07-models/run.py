@@ -1,8 +1,9 @@
 """Run exp-07: three models on the full checklist.
 
-exp-06's baseline configuration -- `fig-checklist-exp06`, check-major
-`A|B <- C_i <- D`, its pins with `individual-data-points` v4 -- run by each
-model in turn (thinking/experiments/exp-07-models.md):
+exp-06's baseline configuration, check-major `A|B <- C_i <- D`, in
+`fig-checklist-exp07` -- exp-06's skills with `individual-data-points`'
+`is_a_plot_with_axes` and every skill call naming the `Skill` tool -- run by
+each model in turn (thinking/experiments/exp-07-models.md):
 
     claude-opus-5-5, claude-sonnet-5-5, claude-haiku-5-5
 
@@ -39,7 +40,7 @@ from soda_mmqc.agentic.runner import RunAborted, run_check_live   # noqa: E402
 from soda_mmqc.agentic.runtime import ASSEMBLY_CLOSURE            # noqa: E402
 from soda_mmqc.agentic.skills import resolve_check_dir            # noqa: E402
 
-CHECKLIST = "fig-checklist-exp06"
+CHECKLIST = "fig-checklist-exp07"
 ENTRY = "do-fig-checklist-cm"
 #: In D's order.
 CHECKS = (

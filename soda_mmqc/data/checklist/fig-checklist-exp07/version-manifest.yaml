@@ -1,0 +1,39 @@
+# Pinned skill versions for fig-checklist-exp07.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# exp-07 runs exp-06's baseline, check-major A|B <- C_i <- D, with three
+# models (thinking/experiments/exp-07-models.md). Copied 2026-10-12 from
+# fig-checklist-exp06, which stays frozen as it ran, with every version it
+# held. Two changes since, each a new version:
+#
+# - individual-data-points: plot -> is_a_plot_with_axes, as in
+#   plot-axis-units (v4, 2026-10-11), scored against gold-v6;
+# - every skill call names the `Skill` tool: do-fig-checklist-cm v2 for the
+#   checks, each check's next version for classify-panels (2026-10-12).
+#   Sonnet 5.5 and Opus 5.5 read "run the following checks" as doing them
+#   inline (exp-07 smoke test, 2026-10-12). The wording is the only change.
+#
+# The entry point owns the one contract; it is derived before the run.
+skills:
+  # Entry point.
+  do-fig-checklist-cm: v2
+
+  # Shared skills: A|B, invoked by every check; A <- B kept for later
+  # arrangements.
+  classify-panels: v1
+  identify-panels: v1
+
+  # Checks, invoked by the entry point; each calls classify-panels.
+  error-bars-defined: v4
+  image-annotation-defined: v2
+  individual-data-points: v5
+  micrograph-scale-bar: v4
+  panel-image-matches-caption: v2
+  plot-axis-units: v2
+  plot-gap-labeling: v2
+  replication-reporting: v2
+  single-channel-for-overlay: v2
+  stat-significance-level: v2
+  stat-test: v2
