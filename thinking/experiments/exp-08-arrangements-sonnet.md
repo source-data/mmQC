@@ -84,13 +84,25 @@ extension.
 |---|---|---|
 | P1 | `classify-panels` v3 in `fig-checklist-exp07`, not pinned | this commit |
 | P2 | `experiments/exp-08-arrangements-sonnet/run.py` | this commit |
-| P3 | Smoke test: 3 figures, one replicate | |
+| P3 | Smoke test: 3 figures, one replicate | below |
 | P4 | Notebook: exp-07's, two arrangements | |
 
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
+| 2026-10-12 | smoke, `A ← B ← C_i ← D` | `run.py --smoke` | $0.59 | `experiments/runs/exp-08-arrangements-sonnet/smoke/` (not committed) |
+
+**Smoke test, 2026-10-12.** `s44318-026-00715-1` content/1–3, one replicate,
+3 sessions, none failed, Sonnet 5.5 throughout, every one assembled with
+`classify-panels` v3 and `identify-panels` v1.
+
+- `identify-panels` invoked in 1 of 3 sessions (content/1); in the other two
+  `classify-panels` listed the panels itself, as exp-06 saw Sonnet 5 do in 55
+  of 185 sessions.
+- All eleven checks in 2 of 3; content/3 invoked `micrograph-scale-bar` only
+  and answered the rest in 8 turns — exp-07's partial dispatch.
+- 28–30 turns and $0.19–0.27 for the full sessions.
 
 ## Gold this is scored against
 
