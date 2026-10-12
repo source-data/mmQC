@@ -191,7 +191,14 @@ round.
 | 2026-10-12 | smoke 4 and 5, Opus 5.5 only, runtimes kept | `run.py --smoke --model claude-opus-5-5 --keep-runtime` | $1.26, $1.30 | below |
 | 2026-10-12 | smoke 6, three models, runtime `CLAUDE.md` naming the `Skill` tool | `run.py --smoke` | $1.94 | below |
 | 2026-10-12 | the run, 3 replicates | `caffeinate -i python experiments/exp-07-models/run.py` | $56.75 | `experiments/runs/exp-07-models/`; 332 of 333 sessions answered |
-| 2026-10-12 | the extension, replicates 4 and 5 | `caffeinate -i python experiments/exp-07-models/run.py --extend` | | `experiments/runs/exp-07-models/` |
+| 2026-10-12 | the extension, replicates 4 and 5 | `caffeinate -i python experiments/exp-07-models/run.py --extend` | | Opus 5.5 complete; then the network dropped: 25 Sonnet and all 74 Haiku sessions failed in seconds (`ENOTFOUND`) |
+| 2026-10-12 | the extension, resumed | same command | | `experiments/runs/exp-07-models/` |
+
+**The network outage.** The 99 failures were the connection's, not the
+models', and are not kept: their records were deleted and the sessions rerun.
+The harness now stops a run on a connection error, as on an account error,
+and marks such a failure `transient`, so that keeping failures never keeps
+one. The Haiku failure of the first run stays kept.
 
 **One failure, kept as one** (decided with the author, 2026-10-12): Haiku 5.5,
 rep-01, `s44318-026-00715-1` content/4, ended its turn with prose — "I haven't
