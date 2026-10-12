@@ -232,6 +232,33 @@ list. A session that invoked no check still answered all eleven from the
 schema. No skill outside the closure. **One empty answer**, in
 `A ← B ← C_i ← D`: all eleven checks empty.
 
+**The four sessions that invoked no check**, each beside the same figure's
+other replicates in the same arrangement, which all dispatched (layer S and
+layer 1 pooled over the eleven checks; at layer 2, errors on the eleven
+decisions listed under Layer 2, counted, not averaged across properties):
+
+| arrangement · figure | what the figure shows | layer S found / both | layer 1 | decision errors / instances | turns | cost |
+|---|---|---|---|---|---|---|
+| `A\|B ← C_i ← D` · `s44320-025-00092-7` Fig. 1 | mostly schematics | 1.000 / 1.000 — 1.000 / 1.000 | **0.912** — 1.000 | 0 — 0.25 / 18 | 5 — 27.5 | $0.33 — $0.20 |
+| `A ← B ← C_i ← D` · `embor.2009.217` Fig. 4 | western blots | 1.000 / 1.000 — 1.000 / 1.000 | **0.951** — 0.997 | 0 — 0.75 / 28–36 | 4 — 28 | $0.12 — $0.15 |
+| `A ← B ← C_i ← D` · `s44319-025-00415-7` Fig. 2 | mostly cartoons | 1.000 / 0.857 — 1.000 / 0.917 | **0.936** — 0.963 | **3.9** — 0.7 / 15 | 8 — 29.5 | $0.13 — $0.27 |
+| `A ← B ← C_i ← D` · `s44319-025-00432-6` Fig. 7 | FACS only | 1.000 / 1.000 — 1.000 / 1.000 | **0.902** — 0.984 | 0 — 0 / 35 | 4 — 27 | $0.16 — $0.16 |
+
+(no-check session — mean of the figure's four dispatched sessions.) Layer S
+does not move: every panel found, and the 11 spurious rows in `00415-7` are
+one spurious panel in all eleven lists, which the dispatched sessions state
+too (8.25 rows on average). **Layer 1 is lower in all four**, by 0.03 to 0.09:
+the loss is in deciding whether a check applies. Where the session and the
+gold agree that it does, the decisions are right — no decision error in three
+of the four, against 0 to 0.75 in the dispatched sessions — except in
+`00415-7`, with 3.9 errors in 15 against 0.7. Pooled over the four, layer 1
+falls most in `replication-reporting` (0.77 against 0.93), then `stat-test`,
+`error-bars-defined`, `plot-gap-labeling` and `individual-data-points`. The
+four figures have little in common — schematics, western blots, cartoons,
+FACS — and no pattern shows.
+A no-check session takes 4–8 turns instead of about 28; its cost is not
+consistently lower. Four sessions: cases, not an estimate.
+
 **Layer S**, per check (`found` = correct ÷ (correct + missing); `both` also
 counts spurious rows):
 
@@ -271,6 +298,17 @@ decisions 0.95–1.00. The weakest:
 | `replication-reporting · decision` | 0.96 | 33 |
 | `stat-significance-level · decision` | 0.95 | 33 |
 
+**Each check's decision on its own** (one decision-like property per check,
+not averaged with the others; `A|B ← C_i ← D`, mean over figures): 0.92
+`single-channel-for-overlay · all_channels_shown_separately` (13 figures,
+interval down to 0.77), 0.94 `plot-axis-units`, 0.95 `stat-significance-level`,
+0.96–0.97 `replication-reporting`, `individual-data-points`,
+`panel-image-matches-caption · image_matches_caption`,
+`image-annotation-defined · annotation_defined_in_caption` and
+`micrograph-scale-bar · scale_bar_defined_in_caption`, 0.99–1.00 `stat-test`,
+`error-bars-defined`, `plot-gap-labeling`. The arrangements differ by no more
+than 0.03 on any of them, intervals overlapping.
+
 **The arrangements side by side**, `A ← B ← C_i ← D` minus `A|B ← C_i ← D`:
 lower at layer S for every check (about −0.005, intervals [−0.016, 0.000]) and
 at layer 1 for every check (−0.001 to −0.008; `micrograph-scale-bar`'s interval
@@ -293,7 +331,12 @@ is the noisier.
 dispatch: when D dispatched it dispatched all eleven, in order, and position in
 the list cost nothing. The inventory held across eleven lists. The failure mode
 that remains is the one exp-03 named — a session answering every check without
-invoking any — at 1–3 sessions in 185.
+invoking any — at 1–3 sessions in 185. It costs little at the panel level and
+something at applicability: such a session finds the same panels, and its
+decisions are mostly right where a check applies, but it decides less well
+whether a check applies — consistently in the four cases, most in
+`replication-reporting` — as if answering from the schema instead of from the
+check's instructions. The four figures share nothing obvious.
 
 **`A|B ← C_i ← D` is the baseline.** It is ahead of `A ← B ← C_i ← D` on
 dispatch, layer S, layer 1 and panel completeness, at the same cost, and its
