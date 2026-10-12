@@ -12,6 +12,7 @@ Output:
     experiments/runs/exp-07-models/<model>/pinned/rep-NN/<example>/
 
     python experiments/exp-07-models/run.py --smoke
+    python experiments/exp-07-models/run.py --smoke --model claude-opus-5-5 --keep-runtime
     python experiments/exp-07-models/run.py --dry-run
     python experiments/exp-07-models/run.py
     python experiments/exp-07-models/run.py --extend    # only on the author's go-ahead
@@ -30,7 +31,7 @@ import json
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
@@ -70,14 +71,15 @@ def example_count() -> int:
                           .read_text(encoding="utf-8"))["examples"])
 
 
-def run(root: Path, *, replicates: int, limit: Optional[int], force: bool) -> List[str]:
+def run(root: Path, *, replicates: int, limit: Optional[int], force: bool,
+        models: Sequence[str] = MODELS, keep_runtime: bool = False) -> List[str]:
     failures: List[str] = []
-    for model in MODELS:
+    for model in models:
         logger.info("--- %s ---", model)
         _, report = run_check_live(
             CHECKLIST, ENTRY, output=root / model, model=model, provider=PROVIDER,
             limit=limit, replicates=replicates, force=force, assembly=ASSEMBLY,
-            concurrency=CONCURRENCY,
+            concurrency=CONCURRENCY, keep_runtime=keep_runtime,
         )
         for e in report:
             if e["status"] == "failed":
@@ -97,9 +99,20 @@ def run(root: Path, *, replicates: int, limit: Optional[int], force: bool) -> Li
 def _session(example_dir: Path) -> Dict[str, Any]:
     intermediates = example_dir / "intermediates"
     trace = json.loads((intermediates / "skill_trace.json").read_text(encoding="utf-8"))
-    usage = json.loads((intermediates / "tool_audit.json").read_text(encoding="utf-8")
-                       ).get("usage") or {}
+    audit = json.loads((intermediates / "tool_audit.json").read_text(encoding="utf-8"))
+    usage = audit.get("usage") or {}
+    # The models in the order they wrote, consecutive repeats collapsed;
+    # a subagent's messages are marked.
+    sequence: List[str] = []
+    for turn in audit.get("turns") or []:
+        label = turn["model"] + (" (subagent)" if turn.get("parent_tool_use_id") else "")
+        if not sequence or sequence[-1] != label:
+            sequence.append(label)
     return {
+        "sequence": sequence,
+        "events": sorted({e["subtype"] for e in audit.get("events") or []}),
+        "stop_reason": usage.get("stop_reason"),
+        "runtime": (audit.get("session") or {}).get("cwd"),
         "skills": [e.get("skill") for e in trace if isinstance(e, dict)],
         "answered_by": sorted(usage.get("model_usage") or {}),
         "cost": usage.get("total_cost_usd") or 0.0,
@@ -109,11 +122,11 @@ def _session(example_dir: Path) -> Dict[str, Any]:
     }
 
 
-def report_smoke(root: Path) -> int:
+def report_smoke(root: Path, models: Sequence[str] = MODELS) -> int:
     worst = 0
     skipped: Counter = Counter()
     logger.info("--- smoke test: the model that answered, the eleven checks, cost ---")
-    for model in MODELS:
+    for model in models:
         found = sorted((root / model / ARM).glob("rep-00/**/prediction.json"))
         if not found:
             logger.error("  %s: no sessions", model)
@@ -136,6 +149,10 @@ def report_smoke(root: Path) -> int:
                         "in order" if in_order else "OUT OF ORDER",
                         s["cost"], s["output_tokens"], s["turns"], s["ms"] / 1000,
                         s["answered_by"])
+            logger.info("    models in order: %s; stop %s; events %s",
+                        " -> ".join(s["sequence"]) or "none", s["stop_reason"], s["events"])
+            if s["runtime"]:
+                logger.info("    runtime %s", s["runtime"])
             if model not in s["answered_by"]:
                 logger.error("    %s is not among the models that answered", model)
                 worst = 1
@@ -161,20 +178,27 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--smoke", action="store_true",
                         help="Each model on a few figures, one replicate")
+    parser.add_argument("--model", choices=MODELS, default=None,
+                        help="With --smoke: that model only")
+    parser.add_argument("--keep-runtime", action="store_true",
+                        help="With --smoke: keep each session's runtime and transcript")
     args = parser.parse_args(argv)
 
     if args.smoke:
         root = RUNS / "smoke"
         limit = args.limit or 3
-        logger.info("exp-07 smoke test: %d figure(s), 1 replicate, %d models", limit, len(MODELS))
+        models = (args.model,) if args.model else MODELS
+        logger.info("exp-07 smoke test: %d figure(s), 1 replicate, %s%s", limit, ", ".join(models),
+                    ", runtimes kept" if args.keep_runtime else "")
         try:
-            failures = run(root, replicates=1, limit=limit, force=True)
+            failures = run(root, replicates=1, limit=limit, force=True, models=models,
+                           keep_runtime=args.keep_runtime)
         except RunAborted as stopped:
             logger.error("smoke test stopped on an account error: %s", stopped)
             return 2
         for line in failures:
             logger.error("  %s", line)
-        return report_smoke(root) or (1 if failures else 0)
+        return report_smoke(root, models) or (1 if failures else 0)
 
     replicates = EXTENDED if args.extend else REPLICATES
     n = example_count()

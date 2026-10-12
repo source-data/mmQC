@@ -333,6 +333,47 @@ def _extract_session_info(message: Any) -> Optional[Dict[str, Any]]:
     }
 
 
+def _extract_turn(message: Any) -> Optional[Dict[str, Any]]:
+    """The model behind one assistant message, and whether a subagent sent it.
+
+    A session can change model mid-run: Claude Code re-runs a request its
+    safety classifier flags on a fallback model and continues there
+    (code.claude.com/docs/en/model-config, "Automatic model fallback"). The
+    result's ``model_usage`` says how much each model did; this says when.
+    """
+    def get(obj, key):
+        if isinstance(obj, Mapping):
+            return obj.get(key)
+        return getattr(obj, key, None)
+
+    if get(message, "subtype") is not None or get(message, "content") is None:
+        return None
+    model = get(message, "model")
+    if not model:
+        return None
+    turn = {"model": model, "parent_tool_use_id": get(message, "parent_tool_use_id"),
+            "message_id": get(message, "message_id"), "stop_reason": get(message, "stop_reason")}
+    error = get(message, "error")
+    if error is not None:
+        turn["error"] = str(error)
+    return turn
+
+
+def _extract_event(message: Any) -> Optional[Dict[str, Any]]:
+    """A system message other than ``init``, kept short: where a fallback
+    notice, if the CLI sends one, would appear."""
+    def get(obj, key):
+        if isinstance(obj, Mapping):
+            return obj.get(key)
+        return getattr(obj, key, None)
+
+    subtype = get(message, "subtype")
+    data = get(message, "data")
+    if subtype in (None, "init") or data is None or get(message, "total_cost_usd") is not None:
+        return None
+    return {"subtype": subtype, "data": json.dumps(data, default=str)[:500]}
+
+
 def _extract_usage(message: Any) -> Optional[Dict[str, Any]]:
     """Pull cost, turns and token usage out of the SDK's result message.
 
@@ -349,7 +390,8 @@ def _extract_usage(message: Any) -> Optional[Dict[str, Any]]:
             return obj.get(key)
         return getattr(obj, key, None)
 
-    fields = ("total_cost_usd", "num_turns", "duration_ms", "usage", "model_usage")
+    fields = ("total_cost_usd", "num_turns", "duration_ms", "usage", "model_usage",
+              "stop_reason", "terminal_reason")
     captured = {key: get(message, key) for key in fields}
     if all(value is None for value in captured.values()):
         return None
@@ -428,6 +470,12 @@ async def _run_agent_session(
         spent = _extract_usage(message)
         if spent:
             audit.note_usage(spent)
+        turn = _extract_turn(message)
+        if turn:
+            audit.note_turn(turn)
+        event = _extract_event(message)
+        if event:
+            audit.note_event(event)
         result_text = _extract_result_text(message) or result_text
         for tool_name, tool_input, tool_use_id in _extract_tool_calls(message):
             recorder.record(tool_name, tool_input, tool_use_id)
@@ -512,6 +560,12 @@ class ToolAuditLog:
         #: the provider reports nothing, so a free-looking run is
         #: distinguishable from an unreported one.
         self.usage: Dict[str, Any] = {}
+        #: One entry per assistant message: the model that wrote it, and the
+        #: subagent call it belongs to, if any. A message streamed in several
+        #: parts is recorded once.
+        self.turns: List[Dict[str, Any]] = []
+        #: System messages other than init, truncated; capped.
+        self.events: List[Dict[str, Any]] = []
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._flush()
 
@@ -541,6 +595,8 @@ class ToolAuditLog:
                 {
                     "session": self.session_info,
                     "usage": self.usage,
+                    "turns": self.turns,
+                    "events": self.events,
                     "calls": self.entries,
                 },
                 indent=2,
@@ -557,6 +613,20 @@ class ToolAuditLog:
     def note_usage(self, info: Mapping[str, Any]) -> None:
         self.usage = dict(info)
         self._flush()
+
+    def note_turn(self, turn: Mapping[str, Any]) -> None:
+        last = self.turns[-1] if self.turns else None
+        if last and turn.get("message_id") and last.get("message_id") == turn.get("message_id"):
+            if turn.get("stop_reason"):
+                last["stop_reason"] = turn["stop_reason"]
+            return
+        self.turns.append(dict(turn))
+        self._flush()
+
+    def note_event(self, event: Mapping[str, Any]) -> None:
+        if len(self.events) < 200:
+            self.events.append(dict(event))
+            self._flush()
 
     @property
     def denied(self) -> List[Dict[str, Any]]:

@@ -82,7 +82,18 @@ per figure.
 
 Each session also records **the model that answered**, from the CLI's
 per-model usage (P2), so that every session documents its model and not only
-the one requested. The CLI's background model (`claude-haiku-4-5` in
+the one requested; and, per assistant message, the model that wrote it and
+whether a subagent did, so that a change of model mid-session is dated.
+
+**Safety-classifier fallback is allowed and recorded** (decided with the
+author, 2026-10-12). Claude Code re-runs a request its classifier flags on a
+fallback model and continues there: on Opus 5.5, biology to Opus 5 and
+cybersecurity to Opus 4.8; on Sonnet 5.5, cybersecurity to Sonnet 5 and
+biology ends in a refusal; Haiku 5.5 is not listed
+(code.claude.com/docs/en/model-config, "Automatic model fallback", read
+2026-10-12). Every session's models are reported per model arm: how many
+switched, to what, and when; and refusals, from the stop reason. The
+CLI's background model (`claude-haiku-4-5` in
 2026-10-12's check) appears in every session's cost; it is reported apart.
 
 ## The comparison
@@ -172,6 +183,25 @@ round.
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
+| 2026-10-12 | smoke 1, three models, exp-06 wording, SDK 0.2.152 | `run.py --smoke` | $3.88 | Opus 5.5 refused by CLI 2.1.259; Sonnet 5.5 no check in 2/3 |
+| 2026-10-12 | smoke 2, SDK 0.2.165, exp-06 wording | `run.py --smoke` | $1.37 | no check: Sonnet 5.5 3/3, Opus 5.5 1/3, Haiku 5.5 0/3 |
+| 2026-10-12 | smoke 3, `fig-checklist-exp07` | `run.py --smoke` | $2.08 | below |
+
+**Smoke 3, 2026-10-12.** Each model on `s44318-026-00715-1` content/1–3, one
+replicate, 9 sessions, none failed.
+
+- **Dispatch**: Opus 5.5 all eleven checks in 3/3; Sonnet 5.5 in 2/3 — on
+  content/2 it invoked `micrograph-scale-bar` (and `classify-panels`) and then
+  answered all eleven in 8 turns; Haiku 5.5 in 2/3 — on content/1 it skipped
+  `single-channel-for-overlay` alone. Always in D's order; nothing outside the
+  closure. Partial dispatch, which exp-06 never saw, appears in two models.
+- **The model that answered**: in one Opus 5.5 session (content/1), most of
+  the output — 8,874 of 10,381 tokens, $0.36 of $0.57 — came from
+  `claude-opus-5`, not `claude-opus-5-5`; the runner sets no fallback model.
+  The CLI's background model is `claude-haiku-5-5`.
+- **Size**: Opus 28–29 turns, $0.39–0.57; Sonnet 26 turns, $0.17 (8 turns,
+  $0.19 for the partial one); Haiku 26–28 turns, $0.014–0.022, with 15,000–
+  28,000 output tokens. Costs are the CLI's estimates.
 
 ## Gold this is scored against
 

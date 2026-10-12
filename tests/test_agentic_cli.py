@@ -3410,7 +3410,7 @@ class TestToolAudit:
         path = tmp_path / "a.json"
         ToolAuditLog(path)
         assert json.loads(path.read_text()) == {
-            "session": {}, "usage": {}, "calls": [],
+            "session": {}, "usage": {}, "turns": [], "events": [], "calls": [],
         }
 
     def test_the_audit_records_what_the_sdk_reported_at_startup(
@@ -4881,6 +4881,27 @@ class TestTheRunRecordsWhatItCost:
         message = SimpleNamespace(total_cost_usd=0.12, num_turns=4, duration_ms=9000,
                                   usage={"input_tokens": 1}, model_usage=per_model)
         assert _extract_usage(message)["model_usage"] == per_model
+
+    def test_each_assistant_message_records_its_model(self, tmp_path: Path):
+        """A safety-classifier fallback changes the model mid-session; the
+        audit says when, and whether a subagent was speaking."""
+        from types import SimpleNamespace
+        from soda_mmqc.agentic.session import _extract_turn
+        audit = ToolAuditLog(tmp_path / "audit.json")
+        for model, mid in (("claude-opus-5-5", "m1"), ("claude-opus-5-5", "m1"),
+                           ("claude-opus-5", "m2")):
+            message = SimpleNamespace(content=[], model=model, parent_tool_use_id=None,
+                                      message_id=mid, stop_reason=None, error=None)
+            audit.note_turn(_extract_turn(message))
+        written = json.loads(audit.path.read_text(encoding="utf-8"))
+        assert [t["model"] for t in written["turns"]] == ["claude-opus-5-5", "claude-opus-5"]
+
+    def test_a_result_message_is_not_a_turn_and_keeps_its_stop_reason(self):
+        from soda_mmqc.agentic.session import _extract_turn
+        result = {"subtype": "success", "total_cost_usd": 0.1, "stop_reason": "refusal",
+                  "content": None}
+        assert _extract_turn(result) is None
+        assert _extract_usage(result)["stop_reason"] == "refusal"
 
     def test_the_extractor_reads_a_result_message(self):
         info = _extract_usage({
