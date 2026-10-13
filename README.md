@@ -1,452 +1,310 @@
 # mmQC
 
+An open library of multimodal editorial AI skills for manuscript quality
+control, benchmarked against curated gold.
 
-An open library of multimodal editorial AI skills for manuscript quality control.
+A check — *is every micrograph given a scale bar?*, *are the error bars
+defined in the caption?* — is an **agent skill**: a `SKILL.md` an agent reads
+and follows, with a JSON contract for its answer and a benchmark of curated
+examples to score it against. Checks are grouped into **checklists**; the
+production one, `fig-checklist`, runs eleven figure checks over one figure in
+a single agent session.
+
+## Hierarchical skills
+
+Checks share work. Every figure check first needs the figure's panels — what
+they are labelled, what each shows — before it can judge any of them. In
+agentic mmQC that shared work is **a skill of its own**, which the checks
+invoke instead of repeating it, and the checklist is **a skill that invokes
+the checks**. Skills form a directed acyclic graph: each one names, in its
+prose, the skills it calls with the agent's `Skill` tool, and the runner
+assembles exactly the skills an entry point reaches.
+
+Four roles, in the notation of the experiments:
+
+| | skill | role |
+|---|---|---|
+| **A** | `identify-panels` | list the figure's panels |
+| **B** | `classify-panels` | classify each panel by content (micrograph, plot, blot, …) |
+| **C_i** | the eleven checks | judge one thing, panel by panel |
+| **D** | `do-fig-checklist-cm` | the entry point: run every check, return one answer |
+
+`A ← B` reads "A is invoked by B", and `A|B` is A and B done by one skill.
+How far the shared work is split out, and where it sits, gives different
+arrangements of the same skills:
+
+```mermaid
+flowchart TB
+    subgraph flat["A|B|C_i ← D — each check lists and classifies the panels itself"]
+        direction TB
+        D1["D · do-fig-checklist-cm"]
+        D1 --> C1a["C₁ · lists, classifies, checks"]
+        D1 --> C1b["C₂ · lists, classifies, checks"]
+        D1 --> C1c["… C₁₁"]
+    end
+
+    subgraph prod["A|B ← C_i ← D — production: one shared skill lists and classifies"]
+        direction TB
+        D2["D · do-fig-checklist-cm"]
+        D2 --> C2a["C₁ · micrograph-scale-bar"]
+        D2 --> C2b["C₂ · image-annotation-defined"]
+        D2 --> C2c["… C₁₁"]
+        C2a --> AB2["A|B · classify-panels"]
+        C2b --> AB2
+        C2c --> AB2
+    end
+
+    subgraph deep["A ← B ← C_i ← D — listing and classifying split into two skills"]
+        direction TB
+        D3["D · do-fig-checklist-cm"]
+        D3 --> C3a["C₁"]
+        D3 --> C3b["C₂"]
+        D3 --> C3c["… C₁₁"]
+        C3a --> B3["B · classify-panels"]
+        C3b --> B3
+        C3c --> B3
+        B3 --> A3["A · identify-panels"]
+    end
+
+    classDef entry fill:#e8eefc,stroke:#3b5bdb,color:#1c2a5a
+    classDef shared fill:#e6f4ea,stroke:#2b8a3e,color:#14361f
+    class D1,D2,D3 entry
+    class AB2,B3,A3 shared
+```
+
+Arrows point from caller to callee. A session holds one figure; the entry
+point is the only skill the runner names, and every other hop is the agent's
+own call, recorded in the session's skill trace.
+
+**Which arrangement, and why.** The experiments compared them on the same
+figures, gold and contracts (layer S: the share of panels correctly found,
+counting both missing and spurious ones):
+
+| | `A\|B\|C_i ← D` | **`A\|B ← C_i ← D`** | `A ← B ← C_i ← D` |
+|---|---|---|---|
+| exp-04 — three checks, Sonnet 5 | 0.979 | **0.997** | 0.991 |
+| exp-08 — eleven checks, Sonnet 5.5 | | **0.997** | 0.977 |
+
+Sharing the panel inventory makes every check work from the same list of
+panels — the eleven checks' lists agree in nearly every session. Splitting it
+further costs more than it gains: one level deeper, the agent more often stops
+after the first check (exp-08: in 57 of 185 sessions, against 14), and on the
+sessions that run every check the two are level. **Production is
+`A|B ← C_i ← D`**, run by Sonnet 5.5, which exp-07 found level with Opus 5.5
+and ahead where they differ, at under half the cost.
+
+## The figure checklist
+
+`soda_mmqc/data/checklist/fig-checklist/`, eleven checks, each one panel by
+panel:
+
+| check | asks |
+|---|---|
+| `micrograph-scale-bar` | does every micrograph carry a scale bar, with its length stated on the image or in the caption? |
+| `image-annotation-defined` | are arrows, boxes, dashed lines and other annotations on images explained in the caption? |
+| `single-channel-for-overlay` | is each channel of a multicoloured overlay also shown on its own? |
+| `individual-data-points` | does a plot of averages also show the individual data points? |
+| `error-bars-defined` | are error bars, and box or violin plot elements, explained in the caption? |
+| `plot-axis-units` | do the axes of quantitative plots state their units? |
+| `plot-gap-labeling` | is any break in a plot's axis marked? |
+| `stat-significance-level` | are significance symbols, such as asterisks, defined in the caption? |
+| `stat-test` | does a panel claiming significance name the test behind it? |
+| `replication-reporting` | is the number of replicates reported, and what they represent? |
+| `panel-image-matches-caption` | does the image contradict what the caption says it shows? |
+
+Each check also runs on its own: it invokes `classify-panels` itself.
+
+Other checklists — `doc-checklist`, `data-checklist` — hold earlier,
+prompt-based checks not yet converted to skills.
 
 ## Installation
 
-Requires **Python 3.12+**. Dependencies are managed in `pyproject.toml`. Use **uv** (recommended) or pip.
-
-### With uv (recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/source-data/mmQC.git
-cd mmQC
-
-# Install uv if needed: https://docs.astral.sh/uv/
-# Then create venv and install dependencies (generates uv.lock)
-uv sync
-
-# Activate the environment for shell commands
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-### With pip
+Requires **Python 3.12+**. Dependencies are in `pyproject.toml`; use **uv**
+(recommended) or pip.
 
 ```bash
-# Clone the repository
 git clone https://github.com/source-data/mmQC.git
 cd mmQC
-
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e .
+uv sync                       # or: python -m venv .venv && pip install -e .
+source .venv/bin/activate
 ```
 
-For TIFF, PDF, and other non-JPEG/PNG figure inputs, install [ImageMagick](https://imagemagick.org/download/) on your system (see [mmqc-utils](mmqc_utils/README.md)).
+The agent runtime is the Claude Agent SDK (`claude-agent-sdk`, pinned in
+`pyproject.toml`: a silently updated runtime would make scores
+non-comparable). For TIFF, PDF and other non-JPEG/PNG figure inputs, install
+[ImageMagick](https://imagemagick.org/download/) (see
+[mmqc-utils](mmqc_utils/README.md)).
 
 ## Configuration
 
-### API Provider Setup
-
-mmQC supports both OpenAI and Anthropic APIs with structured output capabilities. You need to configure your API provider before using the system.
-
-Create a `.env` file in the project root:
+Create a `.env` in the project root:
 
 ```bash
-# API Provider Configuration
-API_PROVIDER=openai  # Choose: 'openai' or 'anthropic'
-
-# OpenAI Configuration (required if API_PROVIDER=openai)
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Anthropic Configuration (required if API_PROVIDER=anthropic)  
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-# Optional: Device configuration for ML operations
-DEVICE=cpu  # Options: 'cpu', 'cuda', 'mps' (Apple Silicon). Use cpu if PyTorch crashes on import.
+ANTHROPIC_API_KEY=...     # for --provider claude-sdk, the default
+OPENAI_API_KEY=...        # for --provider openai
+DEVICE=cpu                # cpu, cuda or mps, for the scorer's sentence embeddings
 ```
 
-### Model configuration
-
-Set `API_PROVIDER` and the matching API key as above, then pass a model name with `--model` on the CLI (or use the provider default). See [API Provider Documentation](soda_mmqc/docs/api_providers.md) for details.
-
-### Langfuse Integration (Optional)
-
-[Langfuse](https://langfuse.com) can be used for two purposes:
-
-1. **Remote prompt management** — fetch prompts from Langfuse instead of local `.txt` files. Prompts are looked up using the key `checklists/{checklist_name}/{check_name}`.
-2. **Tracing** — model calls are logged as Langfuse spans for observability.
-
-If `LANGFUSE_PUBLIC_KEY` is not set, the system silently falls back to local prompt files and tracing is disabled.
-
-Add the following to your `.env` file (or export as environment variables):
-
-```bash
-# Langfuse configuration (optional)
-LANGFUSE_PUBLIC_KEY=pk-lf-...
-LANGFUSE_SECRET_KEY=sk-lf-...
-LANGFUSE_BASE_URL=https://cloud.langfuse.com  # omit to use the default Langfuse Cloud endpoint
-```
-
-Self-hosted Langfuse users should set `LANGFUSE_BASE_URL` to their own instance URL.
-
-## Testing
-
-```bash
-source .venv/bin/activate
-pytest
-```
-
-Tests live under `tests/`. Integration tests that call live APIs are skipped unless the matching API key is set (`OPENAI_API_KEY` or `ANTHROPIC_API_KEY`).
+The model comes from the checklist's `model-defaults.yaml`
+(`claude-sonnet-5-5` for `fig-checklist`) unless `--model` says otherwise.
+[Langfuse](https://langfuse.com) is optional, for the curation app's prompt
+management and for tracing (`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`,
+`LANGFUSE_BASE_URL`); without it, local files are used and tracing is off.
+See [API providers](soda_mmqc/docs/api_providers.md).
 
 ## Usage
 
-After installation, you can use the following commands to benchmark checks or curate benchmarking examples:
+One command, `mmqc`:
 
 ```bash
-# Run all checks in a checklist
-evaluate CHECKLIST_NAME [--model MODEL_NAME] [--mock] [--no-cache]
+# Run the whole figure checklist on every benchmark figure, 38 sessions at a time.
+# A live run must be scoped with --limit or --example.
+mmqc run fig-checklist --check do-fig-checklist-cm --limit 37 --concurrency 38 \
+    --output runs/fig-checklist
 
-# Run a specific check in a checklist
-evaluate CHECKLIST_NAME --check CHECK_NAME [--model MODEL_NAME] [--mock] [--no-cache]
+# One check on its own, on one figure.
+mmqc run fig-checklist --check micrograph-scale-bar --example <doc>/content/<n>
 
-# Run multiple specific checks in a checklist
-evaluate CHECKLIST_NAME --checks CHECK_NAME_1 CHECK_NAME_2 [--model MODEL_NAME]
+# Offline: each example's gold becomes its prediction; exercises the whole path
+# -- assembly, prediction layout, trace, scoring -- with no credentials.
+mmqc run fig-checklist --check do-fig-checklist-cm --mock
 
-# Initialize expected output files for a checklist
-init CHECKLIST_NAME [--no-cache]
+# Score a run against the gold.
+mmqc score fig-checklist --check do-fig-checklist-cm --predictions runs/fig-checklist/pinned/rep-00
 
-# Curate and manage checklists
-curate CHECKLIST_NAME
+# Draft gold for new examples from a run, so curation is correction, not typing.
+mmqc init fig-checklist --check micrograph-scale-bar --from-run runs/...
 
-# Interactive Layer 2 mean-score reporting (Streamlit)
-report
+# Build one example's sealed runtime and print its permission profile, without a session.
+mmqc assemble fig-checklist --check do-fig-checklist-cm --example <doc>/content/<n> --keep-runtime
+
+# Check, or regenerate, a checklist's generated dag.yaml and README.md.
+mmqc graph fig-checklist [--write]
+
+# Curation and reporting apps (Streamlit).
+mmqc curate fig-checklist
+mmqc report
 ```
 
-Command line options:
-- `--model`: Model name to use for API calls (provider must match `API_PROVIDER`)
-- `--mock`: Use expected outputs as model outputs (no API calls)
-- `--no-cache`: Disable caching of model outputs
-- `--check`: Specify a particular check to run within a checklist
-- `--checks`: Specify multiple checks to run within a checklist (space-separated)
-- `--initialize`: Initialize expected output files (alternative to `init` command)
-- `--sentence-transformer-model`: SentenceTransformer model to use for semantic similarity scoring
-- `--prompt-version`: Prompt version to run; accepts a version id/index or one of `production`, `latest`
-- `--config-from-version`: When `--prompt-version` is set, use that version's config instead of the production config
-- `--config-source-check`: Use the prompt config from this check (and the selected `--prompt-version`) for all selected checks
+`--replicates N` runs each configuration N times (a non-deterministic system
+has no seed; replicates are how its variance is measured). `--unpin SKILL
+--versions v1,v2` compares versions of one skill with everything else pinned,
+each version's predictions in its own directory. A rerun skips what already
+has a prediction, so an interrupted run resumes; an account or connection
+error stops the run at once.
 
-**Note**: If no model is specified, the system automatically uses the default model for your configured API provider (see [Configuration](#configuration)).
+A run writes `<output>/<arm>/rep-NN/<example>/prediction.json`, with
+`intermediates/` beside it: `skill_trace.json` (which skills the agent
+invoked), `tool_audit.json` (every tool call, cost, tokens, and the model that
+wrote each message), and, for a session that failed, `failure.json`.
 
-## Checklists and checks
-
-mmQC is an open library of multimodal editorial AI skills for manuscript quality control that are benchmarked against curated examples.
-
-A **check** is a directory under `soda_mmqc/data/checklist/{checklist}/{check}/` that contains the following files:
-
-- `prompts/` — prompt templates (compare versions with `--prompt-version`)
-- `schema.json` — model structured output contract
-- `eval-manifest.json` — scoring policy (see [Benchmarking and evaluation](soda_mmqc/docs/benchmarking.md))
-- `model_config.json` *(optional)* — tools, reasoning, and related OpenAI options
-- `benchmark.json` — which examples under `data/examples/` to include in the evaluation of the AI check
-
-A **checklist** is a directory of related checks run together (`evaluate fig-checklist`). 
-```text
-soda_mmqc/data/checklist/
-├── fig-checklist/
-│   └── error-bars-defined/
-│       ├── prompts/
-│       │   └── prompt.1.txt
-│       │   └── prompt.2.txt
-│       │   └── ...                            # other prompt versions
-│       ├── schema.json
-│       ├── eval-manifest.json
-│       ├── model_config.json   # optional
-│       └── benchmark.json
-│   └── micrograph-scale-bar/...
-│   └── ...                                    # other checks in this checklist
-└── ...                                        # other checklists
-```
-
-### Output schema
-
-`schema.json` defines the structured format for model responses. SODA MMQC enforces it for both OpenAI (structured output) and Anthropic (tool calling).
-
-```json
-{
-    "format": {
-        "type": "json_schema",
-        "name": "error-bars-defined",
-        "schema": {
-            "type": "object",
-            "properties": {
-                "outputs": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "panel_label": {
-                                "type": "string",
-                                "description": "Label of the panel (e.g., A, B, C)"
-                            },
-                            "error_bar_on_figure": {
-                                "type": "string",
-                                "enum": ["yes", "no"],
-                                "description": "Whether error bars are present"
-                            },
-                            "error_bar_defined_in_caption": {
-                                "type": "string",
-                                "enum": ["yes", "no", "not needed"],
-                                "description": "Whether error bars are defined in caption"
-                            },
-                            "from_the_caption": {
-                                "type": "string",
-                                "description": "Text from caption describing error bars, when error bars are present"
-                            }
-                        },
-                        "required": [
-                            "panel_label",
-                            "error_bar_on_figure",
-                            "error_bar_defined_in_caption",
-                            "from_the_caption"
-                        ],
-                        "additionalProperties": false
-                    }
-                }
-            },
-            "required": ["outputs"],
-            "additionalProperties": false
-        },
-        "strict": true
-    }
-}
-```
-
-### Model config (OpenAI, optional)
-
-Per-check `model_config.json` enables tools (e.g. `web_search_preview`), reasoning (`reasoning: { "effort": "medium" }` for gpt-5/o-series), and the code interpreter for that check:
-
-```json
-{
-  "tools": [
-    { "type": "web_search_preview" },
-    { "type": "code_interpreter", "container": { "type": "auto", "memory_limit": "4g" } }
-  ],
-  "tool_choice": "auto",
-  "max_tool_calls": 20,
-  "reasoning": { "effort": "medium" },
-  "max_output_tokens": 16384
-}
-```
-
-Use a reasoning-capable model (e.g. `gpt-5`, `gpt-5-mini`) when setting `reasoning`. Full options: [API Provider Documentation](soda_mmqc/docs/api_providers.md#per-check-model-config-openai).
-
-## Agentic checklists (in development)
-
-A second, **experimental** way to run a check. Instead of one prompt producing
-the whole answer, a check is a *skill* whose prose asks the agent to call other
-skills — so work shared between checks is written once and reused.
-
-`micrograph-scale-bar` is the pilot. Its `v1/SKILL.md` no longer explains how
-to find figure panels; it asks the agent to call `identify-panels`, a skill
-that sits beside the checks and is shared by all of them.
+## Checklists and skills on disk
 
 ```text
 soda_mmqc/data/checklist/fig-checklist/
 ├── version-manifest.yaml        # pins one version of every skill
-├── model-defaults.yaml          # provider-neutral defaults
-├── dag.yaml                     # generated; never hand-edit
-├── README.md                    # generated; never hand-edit
-├── micrograph-scale-bar/        # a check: owns the evaluation contracts
-│   ├── schema.json
+├── model-defaults.yaml          # model and session knobs (e.g. max_turns)
+├── dag.yaml, README.md          # generated by `mmqc graph --write`; never hand-edit
+├── do-fig-checklist-cm/         # D: the entry point
+│   ├── schema.json              #   its contract, derived from the checks'
 │   ├── eval-manifest.json
 │   ├── benchmark.json
-│   ├── prompts/                 # legacy, still used by `evaluate`
-│   └── v1/SKILL.md              # agentic
-└── identify-panels/             # a shared skill: no evaluation contracts,
-    ├── schema.json              # so it is not a check and is never scored
-    └── v1/SKILL.md
+│   └── v1/SKILL.md
+├── classify-panels/             # A|B: a shared skill -- no contract, never scored
+│   └── v1/SKILL.md
+├── micrograph-scale-bar/        # C_i: a check
+│   ├── schema.json              #   the answer's structure
+│   ├── eval-manifest.json       #   how each field is scored
+│   ├── benchmark.json           #   which examples it is scored on
+│   ├── prompts/                 #   earlier prompt versions, kept for curation
+│   ├── v1/SKILL.md
+│   └── v2/SKILL.md
+└── …
 ```
 
-The only on-disk difference between a check and a shared skill is that a check
-owns `schema.json` **and** `benchmark.json`. There is no naming convention and
-no marker file.
+A check owns `schema.json` and `benchmark.json`; a shared skill does not, and
+is never scored on its own. The contracts sit above the version directories,
+so two versions of a skill are scored against the same contract.
 
-### Commands
+**Versions.** A run uses the versions `version-manifest.yaml` pins, and it
+must pin every skill: a missing pin, or one naming a skill or version that
+does not exist, refuses. Adding `v3/SKILL.md` changes nothing until its pin
+moves, so a result is attributed to a reviewed set of versions, not to
+whatever is highest on disk. Experiments keep their own frozen copies
+(`fig-checklist-exp04` … `-exp07`).
 
-```bash
-# Write predictions without contacting any model or provider. Fully offline:
-# each example's expected output becomes its prediction, so the whole path --
-# runtime assembly, prediction layout, trace sidecar, scoring -- is exercised
-# without credentials.
-python -m soda_mmqc.cli run fig-checklist --check micrograph-scale-bar --mock
+**Skill frontmatter.** `requires` names the skills a skill calls — its edges
+in the DAG — and `produces` what it returns; the prose must call each
+required skill with the `Skill` tool, and the tests check that it does.
 
-# Score stored predictions through the same evaluator the legacy path uses.
-python -m soda_mmqc.cli score fig-checklist --check micrograph-scale-bar \
-    --predictions path/to/predictions
+## How a session is contained
 
-# Build the sealed runtime directory for one example and print the permission
-# profile, without running a session. Useful for inspecting what an agent
-# would and would not be able to reach.
-python -m soda_mmqc.cli assemble fig-checklist --check micrograph-scale-bar \
-    --example <doc>/content/<n> --keep-runtime
+Each example gets a throwaway directory **outside the repository**, holding
+the entry point's closure of skills, that one figure's image and caption, and
+nothing else: no other example, no gold, no benchmark, no repository path. The
+agent has one tool, `Skill`, and answers through the structured output its
+contract defines. Shells, subagents, network access and every egress or
+scheduling tool are removed by name (`soda_mmqc/config.py` gives the reason
+for each); widening that set is a deliberate decision, not a configuration
+edit.
 
-# Check the generated `dag.yaml` and `README.md` still match the skills.
-# Metadata only: no example is read and no session is opened.
-python -m soda_mmqc.cli graph fig-checklist
+## Benchmarking and scoring
 
-# Regenerate them after changing a skill's prose or frontmatter.
-python -m soda_mmqc.cli graph fig-checklist --write
-```
-
-A live run additionally needs `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY` with
-the default `--provider openai`) and must be scoped with `--limit` or
-`--example`; `--approve-tools` asks before every tool call.
-
-### Versions
-
-Which version of each skill a run uses comes from `version-manifest.yaml`,
-which pins **every** skill in the checklist — a missing pin, a pin naming a
-skill that is gone, or a pin naming a version that does not exist all refuse.
-Adding a `v2/SKILL.md` therefore changes nothing until its pin moves, which is
-the point: results are attributed to a reviewed set of versions, not to
-whatever happened to be the highest number on disk.
-
-`model-defaults.yaml` holds provider-neutral defaults (which model each
-provider should use, and session knobs like `max_turns`). It may not touch the
-permission profile; the loader refuses the file if it tries.
-
-To compare two versions of one skill, unpin it — everything else stays pinned,
-and each version's predictions land in their own subdirectory, scored against
-the same shared `schema.json` and `eval-manifest.json` so the results are
-comparable:
-
-```bash
-python -m soda_mmqc.cli run fig-checklist --check micrograph-scale-bar \
-    --unpin micrograph-scale-bar --versions v1,v2 --limit 2
-```
-
-### How a session is contained
-
-Each example gets a throwaway directory **outside the repository**, holding the
-checklist's skills, that one figure's caption and image, and an empty output
-directory. Nothing else is reachable: no other example, no gold, no benchmark,
-no repository path, and no symlinks. The agent's tools are scoped to that
-directory, writes are confined to its artifacts folder, and shells, subagents
-and network access are removed outright.
-
-Each run leaves two diagnostic sidecars beside its prediction:
-`skill_trace.json`, recording which skills the agent actually invoked, and
-`tool_audit.json`, recording every tool call it attempted.
-
-> **Status:** the runner works end to end offline. Whether an agent reliably
-> finds a shared skill from a leaf's prose has **not** yet been measured
-> against a real model. Until it has, the legacy `evaluate` path remains the
-> one in use and is unchanged.
-
-## Benchmarking system
-
-The benchmarking system:
-
-- Evaluates how well models execute checks against curated gold labels
-- Supports prompt comparison and policy refinement
-- Documents expected outcomes on concrete examples
-
-See **[Benchmarking and evaluation](soda_mmqc/docs/benchmarking.md)** for the scoring model, manifest reference, and reporting layers.
-
-### End-to-end flow
+Gold lives beside the examples:
 
 ```text
-data/examples/…/document/content/figure/     curated gold + inputs (caption, image)
-        │
-        ▼
-   model call (one per benchmark example; metadata.source identifies the path)
-        │
-        ▼
-   predicted JSON  +  expected_output.json
-        │
-        ▼
-   FlatEvaluator + eval-manifest.json  →  analysis.json (per prompt/model)
+soda_mmqc/data/examples/{doc_id}/content/{figure_id}/
+├── content/{image, caption.txt}
+└── checks/{check}/expected_output.json      # curated gold for one check
 ```
 
-Each **benchmark example** is one document slice (for example a figure or a section of a document) under `data/examples/`. The runner loads the content of each slice (for example, figure image and caption), calls the model once, and stores the prediction. Evaluation compares prediction to gold and writes scored results under `data/evaluation/{checklist}/{check}/{model}/`.
+`FlatEvaluator` compares a prediction with its gold, field by field, under
+the check's `eval-manifest.json`, and reports three layers:
 
-### Example layout
+| layer | question |
+|---|---|
+| **S** | were the right rows found — every gold panel, and no invented one? |
+| **1** | was each field judged applicable or not applicable as in the gold? |
+| **2** | where both say it applies, does the value match? |
 
-```text
-data/examples/{doc_id}/
-├── content/
-│   └── {figure_id}/
-│       ├── content/
-│           └── image.png
-│           └── caption.txt
-│       └── checks/
-│           └── {check-name}/
-│               └── expected_output.json  # curated gold labels for the check
-└── checks/                               # document-level checks
-    └── {check-name}/
-        └── expected_output.json
-```
+Gold changes are curated and **tagged** (`gold-v1` … `gold-v6`); an
+experiment pins the tag it is scored against with `soda_mmqc.gold.pin_gold`,
+so later curation never moves its numbers. Details in
+[Benchmarking and evaluation](soda_mmqc/docs/benchmarking.md).
 
-Gold labels are curated per check in `expected_output.json`. Each check's `benchmark.json` selects which paths under `data/examples/` to run:
+## Experiments
 
-```json
-{
-  "name": "error-bars-defined",
-  "example_class": "figure",
-  "examples": [
-    "10.1038_s44318-026-00715-1/content/1",
-    "10.1038_s44319-025-00631-1/content/7"
-  ]
-}
-```
+How skills are written, arranged and run is studied in preregistered
+experiments: the question, endpoints and decision rules are committed before
+the run, the runs and their notebooks after. See
+[`thinking/experiments/`](thinking/experiments/README.md).
 
-### Scoring overview
+| | question | result |
+|---|---|---|
+| [exp-03](thinking/experiments/exp-03-checklist-entry.md) | does running the checks through one entry skill degrade them? | not two of three; `error-bars-defined` lost applicability |
+| [exp-04](thinking/experiments/exp-04-panel-major.md) | three arrangements; answers per check or per panel | `A\|B ← C_i ← D`, per check |
+| [exp-05](thinking/experiments/exp-05-shared-step-first.md) | the shared step first, run by the entry point | breaks dispatch |
+| [exp-06](thinking/experiments/exp-06-full-checklist.md) | all eleven checks in one session | holds; the baseline |
+| [exp-07](thinking/experiments/exp-07-models.md) | Opus 5.5, Sonnet 5.5, Haiku 5.5 | Sonnet 5.5 |
+| [exp-08](thinking/experiments/exp-08-arrangements-sonnet.md) | the arrangements again, on exp-07's configuration | `A\|B ← C_i ← D` stays |
 
-Evaluation uses a **flat leaf model**: scoring happens at **leaf properties** only — primitive values (`string`, `number`, `boolean`, …) and **arrays of primitives**. Nested objects are containers; paths look like `outputs[].panel_label`.
+The open problem is **partial dispatch**: in 5–15% of sessions, depending on
+the model, the agent runs the first check and answers the rest without
+invoking them.
 
-`FlatEvaluator` compares each prediction to gold using `schema.json` (model contract) and `eval-manifest.json` (scoring rules). Results use three reporting layers:
+## Reporting
 
-| Layer | Question |
-|-------|----------|
-| **S** | Were rows in object lists (e.g. `outputs[]`) correctly paired within this example? |
-| **1** | Were the non-applicable fields (out of scope) correctly omitted? |
-| **2** | Did the applicable fields match gold? |
+`mmqc report` opens a local app for layer-2 scores with drill-down to each
+instance — figure, caption, gold and prediction. `export-fig-report` freezes a
+snapshot as static HTML. The experiments' notebooks, under
+`notebooks/experiments/`, use `soda_mmqc.reporting` directly.
 
-Comparison methods, manifest fields, match thresholds, and output structure are documented in **[Benchmarking and evaluation](soda_mmqc/docs/benchmarking.md)**. After editing `eval-manifest.json`, re-run `evaluate` (cached model outputs can be reused).
-
-### Results and reporting
-
-Scored runs are written to `data/evaluation/{checklist}/{check}/{model}/analysis.json`. Use `metadata.source` (not `doc_id` alone) to identify a specific figure when a paper has multiple benchmark examples.
-
-The `soda_mmqc.reporting` package loads `analysis.json` and supports dashboards and drill-down across layers, models, and prompts. See `notebooks/comparative-reporting.ipynb` for comparative plots and instance inspection in Jupyter.
-
-#### Interactive reporting (`report`)
-
-After running `evaluate`, launch a local Streamlit app to explore **Layer 2 mean scores** and drill into individual instances:
+## Testing
 
 ```bash
-source .venv/bin/activate
-report
+pytest
 ```
 
-The app opens at [http://localhost:8502](http://localhost:8502). You can also run it directly:
-
-```bash
-streamlit run soda_mmqc/reporting/streamlit_app.py
-```
-
-**Prerequisites:** at least one `analysis.json` under `data/evaluation/{checklist}/{check}/{model}/`, and an `eval-manifest.json` for that check (checks without a manifest appear in the sidebar but cannot be loaded).
-
-**What you can do:**
-
-- **Select a check** from evaluation results discovered under `data/evaluation/`.
-- **Contrast runs** by a single model/prompt pair, by prompt (fixed model), or by model (fixed prompt).
-- **Inspect mean scores** per leaf field (applicable instances only): black bars show the mean; red dots are individual instances.
-- **Click a red dot** to open instance drill-down: figure image (zoom/pan), caption, gold vs prediction at the scored path, and the prompt text.
-
-#### Static fig-checklist snapshot (`export-fig-report`)
-
-To freeze the current evaluation state as shareable HTML (mean-score charts per model, Layer overlays, winner lines, and score tables):
-
-```bash
-export-fig-report
-export-fig-report --models gpt-5.4,gpt-5-mini-2025-08-07
-export-fig-report --checks stat-significance-level,plot-gap-labeling --out reports/fig-checklist/demo
-```
-
-Open `reports/fig-checklist/<date>/index.html` in a browser. Interactive drill-down remains in the Streamlit app.
-
-Programmatic use of the same plots and tables remains available via `soda_mmqc.reporting` and the comparative-reporting notebook.
-
+Tests under `tests/` hold the production design in place — the skill graph,
+the pins, the containment profile, the contracts and the gold conventions.
+Tests that call a live API are skipped unless the matching key is set.
