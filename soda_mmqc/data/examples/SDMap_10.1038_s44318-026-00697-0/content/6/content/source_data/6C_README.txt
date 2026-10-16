@@ -1,1 +1,0 @@
-This table contains the fluorescence intensity data of the TOP reporter in different gene knockdown conditions. This data was used to generate the graph in Figure 6C.
