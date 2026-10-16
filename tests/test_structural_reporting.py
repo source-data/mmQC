@@ -4,15 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 
 from soda_mmqc.core.eval_manifest import load_eval_manifest
 from soda_mmqc.core.object_list_pairing import align_object_rows
 from soda_mmqc.core.structural_reporting import (
     StructuralOutcome,
     build_by_list,
-    list_precision,
-    list_recall,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -76,7 +73,6 @@ class TestBuildByList:
         assert result.row_counts.correct_row == 1
         assert result.row_counts.missing_row == 1
         assert result.row_counts.spurious_row == 0
-        assert list_recall(result.row_counts) == pytest.approx(0.5)
 
         correct = [r for r in result.rows if r.structural is StructuralOutcome.CORRECT_ROW]
         missing = [r for r in result.rows if r.structural is StructuralOutcome.MISSING_ROW]
@@ -96,7 +92,6 @@ class TestBuildByList:
         assert result.row_counts.correct_row == 2
         assert result.row_counts.missing_row == 0
         assert result.row_counts.spurious_row == 1
-        assert list_precision(result.row_counts) == pytest.approx(2 / 3)
 
         spurious = [r for r in result.rows if r.structural is StructuralOutcome.SPURIOUS_ROW]
         assert len(spurious) == 1
@@ -111,8 +106,6 @@ class TestBuildByList:
         assert result.row_counts.missing_row == 0
         assert result.row_counts.spurious_row == 0
         assert result.rows == ()
-        assert list_recall(result.row_counts) is None
-        assert list_precision(result.row_counts) is None
 
     def test_below_threshold_emits_missing_and_spurious(self):
         """Hungarian pair below τ → missing_row + spurious_row, not correct_row."""

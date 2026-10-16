@@ -109,11 +109,6 @@ class Skill:
     needs: Tuple[str, ...] = ()
 
     @property
-    def directory(self) -> Path:
-        """Directory holding this version's ``SKILL.md``."""
-        return self.path.parent
-
-    @property
     def skill_dir(self) -> Path:
         """Directory holding every version of this skill.
 

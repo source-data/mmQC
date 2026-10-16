@@ -48,7 +48,7 @@ import base64
 import json
 import mimetypes
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from soda_mmqc import logger
 

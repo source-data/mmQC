@@ -10,17 +10,18 @@ from __future__ import annotations
 
 import difflib
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 import yaml
 
-from soda_mmqc import config, logger
+from soda_mmqc import config
 from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     owns_evaluation_contracts,
 )
 from soda_mmqc.agentic.pinning import (
     VERSION_MANIFEST_FILENAME,
+    SkillSet,
     load_version_manifest,
     resolve_skill_set,
     skill_content_hash,
@@ -29,7 +30,6 @@ from soda_mmqc.agentic.pinning import (
 from soda_mmqc.agentic.skills import (
     Skill,
     invoked_skills,
-    load_skills,
     validate_skills,
 )
 

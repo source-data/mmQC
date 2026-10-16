@@ -11,7 +11,7 @@ from unittest.mock import patch
 from soda_mmqc.core.evaluation import FlatEvaluator
 from soda_mmqc.reporting.aggregate import aggregate_run
 from soda_mmqc.reporting.context import inspect_instance, inspect_layer_s_row, inspect_source
-from soda_mmqc.reporting.display import _display_figure_image, show_instance_context
+from soda_mmqc.reporting.display import show_instance_context
 from soda_mmqc.reporting.load import (
     FlatRecord,
     FlatRun,

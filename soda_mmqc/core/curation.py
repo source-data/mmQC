@@ -92,12 +92,6 @@ def _extract_body_html(document_content):
     return document_content[content_start:body_tag_end].strip()
 
 
-def get_workspace_root():
-    """Get the workspace root directory."""
-    current_dir = Path(__file__).resolve().parent
-    return current_dir.parent.parent
-
-
 def get_example_class(checklist):
     """Return example_class from the first check with benchmark metadata."""
     for check_data in checklist.values():

@@ -18,9 +18,11 @@ from soda_mmqc.core.leaves import (
     compare_strings,
     exact_primitive_similarity,
 )
-from soda_mmqc.core.matching import hungarian_match_pairs, pairs_at_threshold
-
-MatchedPair = tuple[int, int, float]
+from soda_mmqc.core.matching import (
+    MatchedPair,
+    hungarian_match_pairs,
+    pairs_at_threshold,
+)
 
 
 def mapping_rows_only(rows: Sequence[Any]) -> tuple[Mapping[str, Any], ...]:

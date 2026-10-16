@@ -237,15 +237,6 @@ class Example(ABC):
         with open(expected_output_path, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=4, ensure_ascii=False)
 
-        # Write HTML version for easier viewing
-        try:
-            from soda_mmqc.lib.expected_output_html import output_to_html
-            html_path = expected_output_dir / "expected_output.html"
-            with open(html_path, "w", encoding="utf-8") as f:
-                f.write(output_to_html(output, title=f"Expected output — {check_name}"))
-        except Exception as e:
-            logger.debug("Could not write expected_output.html: %s", e)
-
         logger.info(
             f"Saved expected output: {expected_output_path}"
         )
@@ -264,8 +255,6 @@ class FigureExample(Example):
         # Table handling: include CSV/TSV and spreadsheet files alongside images
         # If enabled, these will be included in hashing and model input preview.
         self.include_tables: bool = True
-        # How many lines of table text preview to include for text tables
-        self.table_preview_lines: int = 10
 
     def load_from_source(self) -> None:
         """Load the example's content from the provided path.

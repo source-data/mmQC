@@ -13,7 +13,6 @@ from soda_mmqc.core.eval_manifest import (
     instance_to_leaf_property,
     load_eval_manifest,
     parse_eval_manifest,
-    path_matches_pattern,
 )
 from soda_mmqc.core.leaves import PrimitiveListCompareMode, StringCompareMode
 
@@ -68,10 +67,6 @@ class TestPathPatterns:
         assert instance_to_leaf_property("outputs[3].from_the_caption") == (
             "outputs[].from_the_caption"
         )
-
-    def test_path_matches_pattern(self):
-        assert path_matches_pattern("panels[].status", "panels[1].status")
-        assert not path_matches_pattern("panels[].status", "item.status")
 
 
 class TestProfileLookup:

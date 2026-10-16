@@ -8,11 +8,9 @@ from typing import Any, Mapping, Optional, Sequence
 from soda_mmqc.core.eval_manifest import EvalManifest
 from soda_mmqc.core.schema_discovery import (
     LeafKind,
-    LeafPropertySpec,
     ObjectListSpec,
     discover_object_lists,
     discover_schema,
-    list_name_to_by_list_key,
 )
 
 
@@ -168,11 +166,6 @@ def validate_manifest_list_alignment(
                 f"list_alignment[{binding.by_list_key!r}] keys {unknown!r} "
                 f"not in schema row properties for {binding.schema_list_name!r}"
             )
-
-
-def alignment_list_name_to_by_list_key(alignment_list_name: str) -> str:
-    """``figures[].panels`` → ``figures.panels``."""
-    return list_name_to_by_list_key(alignment_list_name)
 
 
 def _binding_for_schema_list(

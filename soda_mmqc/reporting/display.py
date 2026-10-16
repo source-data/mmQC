@@ -12,7 +12,6 @@ from soda_mmqc import logger
 from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary
 from soda_mmqc.reporting.context import ExampleContext, inspect_instance, inspect_source
 from soda_mmqc.reporting.tables import (
-    filter_by_doc,
     filter_by_field,
     filter_by_source,
     layer1_instance_table,

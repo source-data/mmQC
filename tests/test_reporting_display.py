@@ -20,7 +20,6 @@ from soda_mmqc.reporting import (
 from soda_mmqc.reporting.display import (
     _column_search_cols,
     _itables_available,
-    sort_frame as sort_frame_fn,
 )
 
 from pathlib import Path

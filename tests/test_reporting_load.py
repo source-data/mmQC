@@ -130,3 +130,28 @@ def test_the_prompt_axis_is_gone():
         assert not hasattr(load, name), f"{name} belongs to the prompt path"
     assert not hasattr(aggregate.RunSummaries, "for_prompt")
     assert not hasattr(aggregate.RunSummaries, "prompts")
+
+
+def test_the_cache_key_changes_when_a_replicate_is_rescored(
+    tmp_path, monkeypatch
+):
+    """The Streamlit cache must notice an analysis.json under an arm/replicate.
+
+    It used to look for ``<model>/analysis.json``, a layout from before arms
+    and replicates, so rescoring a run never changed the key.
+    """
+    import os
+
+    import soda_mmqc.reporting.load as load
+
+    monkeypatch.setattr(load, "EVALUATION_DIR", tmp_path)
+    leaf = tmp_path / CHECKLIST / CHECK / MODEL / "pinned" / "rep-00"
+    leaf.mkdir(parents=True)
+    analysis = leaf / "analysis.json"
+    analysis.write_text("{}", encoding="utf-8")
+
+    before = load.evaluation_data_cache_key(CHECKLIST, CHECK)
+    stat = analysis.stat()
+    os.utime(analysis, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1_000_000))
+
+    assert load.evaluation_data_cache_key(CHECKLIST, CHECK) != before

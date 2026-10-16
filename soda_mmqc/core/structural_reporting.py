@@ -113,22 +113,6 @@ def build_by_list(
     return ByListResult(row_counts=row_counts, rows=tuple(rows))
 
 
-def list_recall(row_counts: RowCounts) -> Optional[float]:
-    """``correct_row / (correct_row + missing_row)``, or ``None`` if undefined."""
-    denom = row_counts.correct_row + row_counts.missing_row
-    if denom == 0:
-        return None
-    return row_counts.correct_row / denom
-
-
-def list_precision(row_counts: RowCounts) -> Optional[float]:
-    """``correct_row / (correct_row + spurious_row)``, or ``None`` if undefined."""
-    denom = row_counts.correct_row + row_counts.spurious_row
-    if denom == 0:
-        return None
-    return row_counts.correct_row / denom
-
-
 def _row_counts_from_rows(rows: Sequence[StructuralRow]) -> RowCounts:
     correct = sum(1 for r in rows if r.structural is StructuralOutcome.CORRECT_ROW)
     missing = sum(1 for r in rows if r.structural is StructuralOutcome.MISSING_ROW)

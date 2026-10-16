@@ -19,7 +19,7 @@ from soda_mmqc.reporting import (
     split_layer2_by_metric,
     summarize_runs,
 )
-from soda_mmqc.reporting.styles import LAYER1_ORDER, LAYER2_BINARY_ORDER
+from soda_mmqc.reporting.styles import LAYER1_ORDER
 
 DEMO_DIR = Path(__file__).resolve().parents[1] / "tests/fixtures/flat_eval_demo"
 FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/reporting_snapshots"
@@ -188,7 +188,6 @@ class TestCollatedLayerSIssues:
         pred = json.loads((DEMO_DIR / "pred.json").read_text())
         result = evaluator.evaluate(gold, pred)
 
-        from soda_mmqc.reporting.aggregate import RunSummary
         from soda_mmqc.reporting.load import FlatRecord, FlatRun, RunRef
         from soda_mmqc.core.eval_manifest import load_eval_manifest
 

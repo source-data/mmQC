@@ -14,12 +14,10 @@ import json
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import shutil
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
-from soda_mmqc.config import DEFAULT_MODEL
-from soda_mmqc import config, logger
+from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_DEFAULT_MODEL,
     EVALUATION_DIR,
@@ -35,9 +33,6 @@ from soda_mmqc.agentic.pinning import (
 from soda_mmqc.agentic.runtime import (
     ASSEMBLY_CLOSURE,
     effective_session_options,
-    RuntimeLayout,
-    _leaf_schema,
-    assemble_runtime,
     runtime_skill_set,
 )
 from soda_mmqc.agentic.session import (
@@ -48,21 +43,17 @@ from soda_mmqc.agentic.session import (
     SKILL_SET_FILENAME,
     SKILL_TRACE_FILENAME,
     TOOL_AUDIT_FILENAME,
-    ToolAuditLog,
     _openai_session_client,
     _run_agent_session,
     interactive_approver,
 )
 from soda_mmqc.agentic.skills import (
-    Skill,
     load_skills,
     _read_json,
-    invoked_skills,
     resolve_check_dir,
     select_versions,
     validate_skills,
 )
-from soda_mmqc.config import list_checks
 
 #: Top-level key under which scored records are stored in `analysis.json`.
 DEFAULT_RUN_LABEL = "agentic"
@@ -268,7 +259,7 @@ def run_check_mock(
     check: str,
     *,
     output: Optional[Path] = None,
-    model: str = DEFAULT_MODEL,
+    model: str = AGENTIC_DEFAULT_MODEL,
     examples: Optional[Sequence[str]] = None,
 ) -> Path:
     """Write each benchmark example's gold as its prediction, offline.

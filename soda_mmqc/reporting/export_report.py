@@ -15,7 +15,6 @@ import plotly.graph_objects as go
 from soda_mmqc.config import CHECKLIST_DIR
 from soda_mmqc.reporting.aggregate import (
     RunSummaries,
-    RunSummary,
     field_order,
     leaf_property_tail,
     summarize_runs,

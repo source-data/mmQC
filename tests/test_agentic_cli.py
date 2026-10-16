@@ -16,9 +16,9 @@ so they run without the (untracked) examples dataset.
 
 On top of that, the classes at the bottom of the file drive the same code
 against a **real** example from the dataset,
-``D4R_10.1038_s44318-026-00693-4`` -- a five-figure EMBO J submission with
-real captions, real JPEGs, real source-data files and real gold. Those tests
-skip when the dataset is absent.
+``10.1038_s44318-026-00715-1`` -- a seven-figure EMBO J paper with real
+captions, real images, real source-data files and real gold. Those tests skip
+when the dataset is absent.
 """
 
 from __future__ import annotations
@@ -44,7 +44,6 @@ from soda_mmqc.config import CHECKLIST_DIR, EXAMPLES_DIR
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
-    require_leaf_contracts,
     list_checks,
     owns_evaluation_contracts,
 )
@@ -149,15 +148,6 @@ FIG_CHECKLIST_CHECKS = {
     "stat-test",
 }
 
-# Checklists that stay on the legacy layout: every subdirectory of these is
-# still a check, so enumeration there must not lose anything.
-LEGACY_CHECKLISTS = ("data-checklist", "doc-checklist", "Retired-checklist")
-
-# `fig-checklist` is fully converted, so a genuinely legacy check now has to
-# come from a checklist that is not.
-LEGACY_CHECKLIST = "doc-checklist"
-LEGACY_CHECK = "AB-target-reagent-consistency"
-
 # Smallest valid PNG (1x1, transparent). The scoring path never decodes the
 # image, but FigureExample refuses to load without one.
 _PNG_1X1 = base64.b64decode(
@@ -229,16 +219,6 @@ class TestListChecks:
         for name, path in checks.items():
             assert path == CHECKLIST_DIR / "fig-checklist" / name
 
-    @pytest.mark.parametrize("checklist", LEGACY_CHECKLISTS)
-    def test_legacy_checklists_enumerate_every_subdirectory(
-        self, checklist: str
-    ):
-        checklist_dir = CHECKLIST_DIR / checklist
-        every_subdir = {
-            child.name for child in checklist_dir.iterdir() if child.is_dir()
-        }
-        assert set(list_checks(checklist_dir)) == every_subdir
-
     def test_shared_skill_sibling_is_not_enumerated(self, tmp_path: Path):
         """A shared skill carries no schema, which is what makes it shared."""
         checklist_dir = tmp_path / "fig-checklist"
@@ -272,22 +252,6 @@ class TestListChecks:
         (leaf / "schema.json").write_text("{}", encoding="utf-8")
 
         assert set(list_checks(checklist_dir)) == {"micrograph-scale-bar"}
-
-    def test_a_leaf_missing_its_benchmark_says_so(self, tmp_path: Path):
-        """A half-built leaf must fail loudly rather than vanish.
-
-        Under the old rule a leaf that lost its benchmark silently stopped
-        being a check, which is the confusing failure: the check disappears
-        and nothing says why.
-        """
-        checklist_dir = tmp_path / "fig-checklist"
-        checklist_dir.mkdir()
-        leaf = checklist_dir / "micrograph-scale-bar"
-        leaf.mkdir()
-        (leaf / "schema.json").write_text("{}", encoding="utf-8")
-
-        with pytest.raises(ValueError, match="benchmark.json"):
-            require_leaf_contracts(leaf)
 
     def test_no_checklist_has_a_skill_with_a_schema_but_no_benchmark(self):
         """The repo-wide invariant, checked against the real data.
@@ -718,22 +682,14 @@ class TestCli:
 # ``source_data/`` siblings), gold read off disk, and the ``doc_id`` the
 # factory derives from the directory layout.
 #
-# ``D4R_10.1038_s44318-026-00693-4`` is used for that. It carries five
-# figures, each with gold for ``panelisation-and-classification`` and
-# ``panel-label-detection``, and it is listed in three real benchmarks.
+# ``10.1038_s44318-026-00715-1`` is used for that: seven figures, all listed
+# in the production ``micrograph-scale-bar`` benchmark, each with gold.
 
-REAL_DOC_ID = "D4R_10.1038_s44318-026-00693-4"
-REAL_EXAMPLES = [f"{REAL_DOC_ID}/content/{n}" for n in range(1, 6)]
-REAL_CHECK = "panelisation-and-classification"
-REAL_CHECK_DIR = CHECKLIST_DIR / "Retired-checklist" / REAL_CHECK
-
-# The real benchmarks that list this document, and whether the example tree
-# carries gold for them.
-REAL_BENCHMARKS_WITH_GOLD = (
-    ("Retired-checklist", "panelisation-and-classification"),
-    ("Retired-checklist", "panel-label-detection"),
-)
-REAL_BENCHMARK_WITHOUT_GOLD = ("data-checklist", "panel-data-replication-validation")
+REAL_DOC_ID = "10.1038_s44318-026-00715-1"
+REAL_EXAMPLES = [f"{REAL_DOC_ID}/content/{n}" for n in range(1, 8)]
+REAL_CHECKLIST = "fig-checklist"
+REAL_CHECK = "micrograph-scale-bar"
+REAL_CHECK_DIR = CHECKLIST_DIR / REAL_CHECKLIST / REAL_CHECK
 
 requires_real_example = pytest.mark.skipif(
     not (EXAMPLES_DIR / REAL_DOC_ID).is_dir(),
@@ -743,33 +699,21 @@ requires_real_example = pytest.mark.skipif(
     ),
 )
 
-# An eval manifest for the real panelisation-and-classification schema. The
-# check ships without one (see TestRealChecksWithoutAnEvalManifest), so
-# scoring it needs a manifest supplied here. Deliberately free of semantic
-# fields: no SentenceTransformer model is ever loaded.
-REAL_EVAL_MANIFEST = {
-    "checklist": REAL_CHECK,
-    "defaults": {
-        "matching_metric": "binary_polarity",
-        "positive_value": "yes",
-        "negative_value": "no",
-        "na_values": [""],
-    },
-    "list_alignment": {"outputs": ["panel_label"]},
-    "fields": {
-        "outputs[].panel_label": {
-            "matching_metric": "graded_string",
-            "string_compare": "exact",
-            "match_threshold": 1.0,
-        },
-        "outputs[].is_a_micrograph": {"matching_metric": "binary_polarity"},
-        "outputs[].is_a_nummerical_data_plot": {
-            "matching_metric": "binary_polarity"
-        },
-        "outputs[].is_a_scheme": {"matching_metric": "binary_polarity"},
-        "outputs[].is_mixed": {"matching_metric": "binary_polarity"},
-    },
-}
+
+def _real_eval_manifest() -> Dict[str, Any]:
+    """The check's real manifest, with semantic comparisons made exact.
+
+    Scoring gold against gold-derived predictions needs no embedding, and
+    an exact comparison means no SentenceTransformer model is ever loaded.
+    """
+    manifest = json.loads(
+        (REAL_CHECK_DIR / "eval-manifest.json").read_text(encoding="utf-8")
+    )
+    for profile in manifest["fields"].values():
+        if profile.get("string_compare") == "semantic":
+            profile["string_compare"] = "exact"
+            profile["match_threshold"] = 1.0
+    return manifest
 
 
 def _real_gold(relative_path: str, check_name: str = REAL_CHECK) -> Dict[str, Any]:
@@ -783,20 +727,20 @@ def _real_gold(relative_path: str, check_name: str = REAL_CHECK) -> Dict[str, An
 
 @pytest.fixture
 def real_pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """A scoreable check over the five real figures of ``REAL_DOC_ID``.
+    """A scoreable check over the seven real figures of ``REAL_DOC_ID``.
 
     Only the checklist is synthesized -- from the check's *real* schema, plus
-    the eval manifest it lacks and a benchmark narrowed to this one document.
-    ``EXAMPLES_DIR`` is left pointing at the real dataset, so the examples,
-    their content and their gold are the ones on disk.
+    its manifest made embedding-free and a benchmark narrowed to this one
+    document. ``EXAMPLES_DIR`` is left pointing at the real dataset, so the
+    examples, their content and their gold are the ones on disk.
     """
     checklist_root = tmp_path / "checklist"
-    check_dir = checklist_root / "Retired-checklist" / REAL_CHECK
+    check_dir = checklist_root / REAL_CHECKLIST / REAL_CHECK
     check_dir.mkdir(parents=True)
 
     shutil.copyfile(REAL_CHECK_DIR / "schema.json", check_dir / "schema.json")
     (check_dir / "eval-manifest.json").write_text(
-        json.dumps(REAL_EVAL_MANIFEST), encoding="utf-8"
+        json.dumps(_real_eval_manifest()), encoding="utf-8"
     )
     (check_dir / "benchmark.json").write_text(
         json.dumps(
@@ -826,7 +770,15 @@ def real_pilot(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 def _score_real(predictions: Dict[str, Dict[str, Any]], tmp_path: Path, **kwargs):
     root = _write_predictions_dir(tmp_path / "real-preds", predictions)
     return score_check(
-        "Retired-checklist", REAL_CHECK, root, save=False, **kwargs
+        REAL_CHECKLIST, REAL_CHECK, root, save=False, **kwargs
+    )
+
+
+def _first_micrograph(gold: Dict[str, Any]) -> int:
+    return next(
+        index
+        for index, panel in enumerate(gold["outputs"])
+        if panel["micrograph"] == "yes"
     )
 
 
@@ -834,23 +786,21 @@ def _score_real(predictions: Dict[str, Dict[str, Any]], tmp_path: Path, **kwargs
 class TestRealExampleWiring:
     """The plumbing ``score_check`` relies on, against a real example."""
 
-    def test_the_dataset_holds_the_five_figures_the_benchmarks_list(self):
+    def test_the_dataset_holds_the_figures_the_benchmark_lists(self):
+        image_suffixes = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff"}
         for figure in REAL_EXAMPLES:
             source = EXAMPLES_DIR / figure
             assert source.is_dir()
             assert (source / "content" / "caption.txt").is_file()
-            assert list(source.glob("content/*.jpg")), (
-                f"no figure image under {source / 'content'}"
-            )
+            assert [
+                path
+                for path in (source / "content").iterdir()
+                if path.suffix.lower() in image_suffixes
+            ], f"no figure image under {source / 'content'}"
 
-    @pytest.mark.parametrize("checklist,check", REAL_BENCHMARKS_WITH_GOLD)
-    def test_real_benchmarks_reference_this_document_and_it_has_gold(
-        self, checklist: str, check: str
-    ):
+    def test_the_real_benchmark_references_this_document_and_it_has_gold(self):
         benchmark = json.loads(
-            (CHECKLIST_DIR / checklist / check / "benchmark.json").read_text(
-                encoding="utf-8"
-            )
+            (REAL_CHECK_DIR / "benchmark.json").read_text(encoding="utf-8")
         )
         listed = [
             path
@@ -859,8 +809,7 @@ class TestRealExampleWiring:
         ]
         assert listed == REAL_EXAMPLES
         for figure in listed:
-            gold = _real_gold(figure, check)
-            assert gold["outputs"], f"empty gold for {figure} / {check}"
+            assert _real_gold(figure)["outputs"], f"empty gold for {figure}"
 
     def test_factory_derives_the_metadata_score_check_records(self):
         """``doc_id``/``source``/``example_type`` come from the real tree."""
@@ -869,8 +818,8 @@ class TestRealExampleWiring:
         assert example.doc_id == REAL_DOC_ID
         assert example.relative_source_path == REAL_EXAMPLES[0]
         assert example.example_class_name == "figure"
-        # The five figures share one doc_id; the source path is what tells
-        # the flat records apart.
+        # The figures share one doc_id; the source path is what tells the
+        # flat records apart.
         assert {
             EXAMPLE_FACTORY.create(path, "figure").doc_id
             for path in REAL_EXAMPLES
@@ -888,7 +837,7 @@ class TestRealExampleWiring:
         """Real example paths are three segments deep, not one."""
         payload = {path: _real_gold(path) for path in REAL_EXAMPLES}
         root = _write_predictions_dir(tmp_path / "predictions", payload)
-        # A debug sidecar of the kind the Milestone 4 runner will write.
+        # A debug sidecar of the kind the runner writes.
         trace = root / REAL_EXAMPLES[0] / "intermediates"
         trace.mkdir()
         (trace / "skill_trace.json").write_text("[]", encoding="utf-8")
@@ -900,7 +849,7 @@ class TestRealExampleWiring:
 
 @requires_real_example
 class TestScoreCheckOnRealExamples:
-    """``score_check`` end to end over the five real figures."""
+    """``score_check`` end to end over the real figures."""
 
     def test_scoring_real_gold_against_itself_is_a_perfect_run(
         self, real_pilot, tmp_path: Path
@@ -922,7 +871,7 @@ class TestScoreCheckOnRealExamples:
                 instance["score"] == 1.0
                 for instance in analysis["instances"]
             )
-            rollups = _rollups(analysis, "Retired-checklist", REAL_CHECK)
+            rollups = _rollups(analysis, REAL_CHECKLIST, REAL_CHECK)
             assert all(
                 rollup.mean_score == 1.0
                 for rollup in rollups.values()
@@ -938,7 +887,7 @@ class TestScoreCheckOnRealExamples:
         scored = _score_real(dict(real_pilot["golds"]), tmp_path)
         records = scored["flat"]
 
-        assert len(records) == 5
+        assert len(records) == len(REAL_EXAMPLES)
         for figure, record in zip(REAL_EXAMPLES, records):
             assert record["doc_id"] == REAL_DOC_ID
             assert record["metadata"] == {
@@ -949,7 +898,7 @@ class TestScoreCheckOnRealExamples:
             assert record["expected_output"] == _real_gold(figure)
             assert record["model_output"] == _real_gold(figure)
 
-    def test_matches_the_legacy_analyze_results_output_on_real_examples(
+    def test_matches_analyze_results_on_real_examples(
         self, real_pilot, tmp_path: Path
     ):
         """Parity with ``analyze_results``, on real gold this time.
@@ -959,9 +908,7 @@ class TestScoreCheckOnRealExamples:
         """
         predictions = copy.deepcopy(real_pilot["golds"])
         panel = predictions[REAL_EXAMPLES[1]]["outputs"][0]
-        panel["is_a_micrograph"] = (
-            "no" if panel["is_a_micrograph"] == "yes" else "yes"
-        )
+        panel["micrograph"] = "no" if panel["micrograph"] == "yes" else "yes"
 
         scored = _score_real(predictions, tmp_path)
 
@@ -989,29 +936,23 @@ class TestScoreCheckOnRealExamples:
     def test_a_misclassified_real_panel_is_penalised(
         self, real_pilot, tmp_path: Path
     ):
+        figure = REAL_EXAMPLES[1]
+        index = _first_micrograph(real_pilot["golds"][figure])
         predictions = copy.deepcopy(real_pilot["golds"])
-        # Figure 1 panel A is a micrograph in the gold; claim it is not.
-        assert (
-            real_pilot["golds"][REAL_EXAMPLES[0]]["outputs"][0][
-                "is_a_micrograph"
-            ]
-            == "yes"
-        )
-        predictions[REAL_EXAMPLES[0]]["outputs"][0]["is_a_micrograph"] = "no"
+        # A micrograph in the gold; claim it is not.
+        predictions[figure]["outputs"][index]["micrograph"] = "no"
 
-        records = _score_real(predictions, tmp_path)[
-            "flat"
-        ]
+        records = _score_real(predictions, tmp_path)["flat"]
 
         wrong = [
             instance
-            for instance in records[0]["analysis"]["instances"]
+            for instance in records[1]["analysis"]["instances"]
             if instance["score"] != 1.0
         ]
         assert wrong == [
             {
-                "path": "outputs[0].is_a_micrograph",
-                "leaf_property": "outputs[].is_a_micrograph",
+                "path": f"outputs[{index}].micrograph",
+                "leaf_property": "outputs[].micrograph",
                 "exp_value": "yes",
                 "pred_value": "no",
                 "score": 0.0,
@@ -1020,11 +961,11 @@ class TestScoreCheckOnRealExamples:
             }
         ]
         rollups = _rollups(
-            records[0]["analysis"], "Retired-checklist", REAL_CHECK
+            records[1]["analysis"], REAL_CHECKLIST, REAL_CHECK
         )
-        assert rollups["outputs[].is_a_micrograph"].layer2_counts["FN"] == 1
-        # The other four figures are untouched.
-        for record in records[1:]:
+        assert rollups["outputs[].micrograph"].layer2_counts["FN"] == 1
+        # The other figures are untouched.
+        for record in records[:1] + records[2:]:
             assert all(
                 instance["score"] == 1.0
                 for instance in record["analysis"]["instances"]
@@ -1034,17 +975,24 @@ class TestScoreCheckOnRealExamples:
         self, real_pilot, tmp_path: Path
     ):
         predictions = copy.deepcopy(real_pilot["golds"])
+        n_panels = len(predictions[REAL_EXAMPLES[0]]["outputs"])
         dropped = predictions[REAL_EXAMPLES[0]]["outputs"].pop()
 
-        records = _score_real(predictions, tmp_path)[
-            "flat"
-        ]
+        records = _score_real(predictions, tmp_path)["flat"]
         analysis = records[0]["analysis"]
 
         assert analysis["by_list"]["outputs"]["row_counts"] == {
-            "correct_row": 4,
+            "correct_row": n_panels - 1,
             "missing_row": 1,
             "spurious_row": 0,
+        }
+        manifest = _real_eval_manifest()
+        default_na = manifest["defaults"]["na_values"]
+        applicable = {
+            path.removeprefix("outputs[].")
+            for path, profile in manifest["fields"].items()
+            if dropped[path.removeprefix("outputs[].")]
+            not in profile.get("na_values", default_na)
         }
         withheld = [
             instance
@@ -1052,14 +1000,7 @@ class TestScoreCheckOnRealExamples:
             if instance["layer1"] == "withheld_applicable"
         ]
         assert {instance["path"] for instance in withheld} == {
-            f"outputs[4].{field}"
-            for field in (
-                "panel_label",
-                "is_a_micrograph",
-                "is_a_nummerical_data_plot",
-                "is_a_scheme",
-                "is_mixed",
-            )
+            f"outputs[{n_panels - 1}].{field}" for field in applicable
         }
         assert all(instance["pred_value"] is None for instance in withheld)
         assert any(
@@ -1070,13 +1011,11 @@ class TestScoreCheckOnRealExamples:
     def test_a_partial_run_over_real_figures_is_scoreable(
         self, real_pilot, tmp_path: Path
     ):
-        """Milestone 4's human gate scopes runs to a handful of examples."""
+        """A run scoped to a handful of examples still scores."""
         subset = [REAL_EXAMPLES[0], REAL_EXAMPLES[3]]
         predictions = {figure: _real_gold(figure) for figure in subset}
 
-        records = _score_real(predictions, tmp_path)[
-            "flat"
-        ]
+        records = _score_real(predictions, tmp_path)["flat"]
         assert [record["metadata"]["source"] for record in records] == subset
 
     def test_predictions_for_another_document_are_ignored(
@@ -1088,9 +1027,7 @@ class TestScoreCheckOnRealExamples:
                 REAL_EXAMPLES[0]
             ),
         }
-        records = _score_real(predictions, tmp_path)[
-            "flat"
-        ]
+        records = _score_real(predictions, tmp_path)["flat"]
         assert [record["metadata"]["source"] for record in records] == [
             REAL_EXAMPLES[0]
         ]
@@ -1106,7 +1043,7 @@ class TestScoreCheckOnRealExamples:
         exit_code = cli.main(
             [
                 "score",
-                "Retired-checklist",
+                REAL_CHECKLIST,
                 "--check",
                 REAL_CHECK,
                 "--predictions",
@@ -1122,88 +1059,6 @@ class TestScoreCheckOnRealExamples:
         assert [
             record["metadata"]["source"] for record in saved["flat"]
         ] == REAL_EXAMPLES
-
-
-@requires_real_example
-class TestRealChecksWithoutAnEvalManifest:
-    """Enumeration and scoring disagree, on purpose -- pin the boundary.
-
-    ``owns_evaluation_contracts`` tests for ``schema.json`` +
-    ``benchmark.json`` only, deliberately not ``eval-manifest.json``, so that
-    ``data-checklist`` and ``Retired-checklist`` keep enumerating. Those
-    checks are therefore reachable but not scoreable, and the failure has to
-    name the missing file rather than blow up somewhere in the evaluator.
-
-    Every check exercised here really does list ``REAL_DOC_ID``.
-    """
-
-    @pytest.mark.parametrize(
-        "checklist,check",
-        list(REAL_BENCHMARKS_WITH_GOLD) + [REAL_BENCHMARK_WITHOUT_GOLD],
-    )
-    def test_the_check_is_enumerated_and_resolvable(
-        self, checklist: str, check: str
-    ):
-        check_dir = CHECKLIST_DIR / checklist / check
-        assert check in list_checks(CHECKLIST_DIR / checklist)
-        assert owns_evaluation_contracts(check_dir) is True
-        assert resolve_check_dir(checklist, check) == check_dir
-        # ...and yet it cannot be scored:
-        assert not (check_dir / "eval-manifest.json").exists()
-
-    @pytest.mark.parametrize("checklist,check", REAL_BENCHMARKS_WITH_GOLD)
-    def test_scoring_it_names_the_missing_manifest(
-        self, checklist: str, check: str, tmp_path: Path
-    ):
-        root = _write_predictions_dir(
-            tmp_path / "preds",
-            {figure: _real_gold(figure, check) for figure in REAL_EXAMPLES},
-        )
-        with pytest.raises(FileNotFoundError, match="Missing eval manifest"):
-            score_check(checklist, check, root, save=False)
-
-    def test_the_cli_reports_it_as_exit_1(self, tmp_path: Path):
-        root = _write_predictions_dir(
-            tmp_path / "preds",
-            {figure: _real_gold(figure) for figure in REAL_EXAMPLES},
-        )
-        assert (
-            cli.main(
-                [
-                    "score",
-                    "Retired-checklist",
-                    "--check",
-                    REAL_CHECK,
-                    "--predictions",
-                    str(root),
-                ]
-            )
-            == 1
-        )
-
-    def test_benchmark_examples_without_gold_are_skipped(
-        self, tmp_path: Path
-    ):
-        """The document is benchmarked for a check it has no gold for.
-
-        ``data-checklist/panel-data-replication-validation`` lists all five
-        figures, but the example tree carries no ``expected_output.json`` for
-        it. Every example is skipped and the run fails before reaching the
-        evaluator -- it must not score predictions against empty gold.
-        """
-        checklist, check = REAL_BENCHMARK_WITHOUT_GOLD
-        for figure in REAL_EXAMPLES:
-            assert not (
-                EXAMPLES_DIR / figure / "checks" / check /
-                "expected_output.json"
-            ).exists()
-
-        root = _write_predictions_dir(
-            tmp_path / "preds",
-            {figure: _real_gold(figure) for figure in REAL_EXAMPLES},
-        )
-        with pytest.raises(ValueError, match="No expected outputs found"):
-            score_check(checklist, check, root, save=False)
 
 
 # ---------------------------------------------------------------------------
@@ -1279,14 +1134,11 @@ class TestCurationEnumeration:
             "micrograph-scale-bar"
         }
 
-    @pytest.mark.parametrize(
-        "checklist", ("fig-checklist",) + LEGACY_CHECKLISTS
-    )
-    def test_curation_and_runner_agree_on_every_real_checklist(
-        self, local_curation, checklist: str
+    def test_curation_and_runner_agree_on_the_real_checklist(
+        self, local_curation
     ):
         """Neither enumerator may drift from the other on real data."""
-        checklist_dir = CHECKLIST_DIR / checklist
+        checklist_dir = CHECKLIST_DIR / "fig-checklist"
         assert sorted(local_curation.load_checklist(checklist_dir)) == sorted(
             list_checks(checklist_dir)
         )
@@ -1417,7 +1269,6 @@ class TestLoadSkill:
         assert skill.needs == ("WebSearch",)
         assert "Do the thing." in skill.body
         assert "---" not in skill.body.splitlines()[0]
-        assert skill.directory == path.parent
         assert skill.skill_dir == path.parent.parent
 
     def test_name_comes_from_frontmatter_not_the_directory(self, tmp_path: Path):
@@ -2328,7 +2179,6 @@ class TestNoLeafRestatesTheSharedSkill:
 
 from soda_mmqc.config import (  # noqa: E402
     AGENTIC_ARTIFACTS_SUBDIR,
-    AGENTIC_INPUT_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_SETTING_SOURCES,
     AGENTIC_SKILLS_SUBDIR,

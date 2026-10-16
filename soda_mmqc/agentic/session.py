@@ -9,42 +9,34 @@ written on every call rather than only on success.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 import json
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import (
     Any, Dict, Iterator, List, Mapping, Optional, Sequence, Set, Tuple,
 )
 
+import yaml
+
 from soda_mmqc import logger
-from soda_mmqc.config import (
-    AGENTIC_DEFAULT_MODEL,
-    AGENTIC_FORBIDDEN_TOOLS,
-    AGENTIC_MAX_BUFFER_BYTES,
-)
-from soda_mmqc.agentic.pinning import SkillSet, checklist_pins
+from soda_mmqc.agentic.pinning import checklist_pins
 from soda_mmqc.agentic.render import render_anthropic
 from soda_mmqc.agentic.runtime import (
     ASSEMBLY_CLOSURE,
     RuntimeLayout,
     _leaf_schema,
     assemble_runtime,
-    effective_session_options,
     session_options,
 )
 from soda_mmqc.agentic.skills import (
     _FRONTMATTER,
     SKILL_FILENAME,
     SKILL_TOOL,
-    Skill,
-    _read_json,
-    invoked_skills,
     load_skills,
     select_versions,
-    validate_skills,
 )
 
 #: Directory of debug sidecars beside each prediction, and the scratch
@@ -242,7 +234,6 @@ async def _default_client(
     """
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher, query
 
-    from soda_mmqc.agentic.render import render_anthropic
 
     payload = dict(options)
     # `hooks` travels through session_options() as plain callables so the

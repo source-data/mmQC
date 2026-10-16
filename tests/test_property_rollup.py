@@ -9,7 +9,6 @@ from __future__ import annotations
 from soda_mmqc.core.applicability_and_matching import Layer1Label
 from soda_mmqc.core.property_rollup import (
     instance_is_scored,
-    property_mean_score,
     rollup_property,
 )
 
@@ -22,7 +21,7 @@ def test_profiled_mean_excludes_instances_that_were_not_applicable():
         {"score": 1.0, "layer1": NOT_APPLICABLE},
         {"score": 0.0, "layer1": APPLICABLE},
     ]
-    assert property_mean_score(instances, profiled=True) == 0.0
+    assert rollup_property(instances, profiled=True).mean_score == 0.0
 
 
 def test_no_applicable_instance_is_not_a_score_of_zero():

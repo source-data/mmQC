@@ -17,9 +17,11 @@ import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import (
+    Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple,
+)
 
-from soda_mmqc import config, logger
+from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_AGENT_HOME_SUBDIR,
     AGENTIC_ALLOWED_TOOL_NAMES,
@@ -43,7 +45,6 @@ from soda_mmqc.agentic.pinning import (
     SkillSet,
     SkillSetEntry,
     checklist_pins,
-    load_model_defaults,
     validate_version_manifest,
 )
 from soda_mmqc.agentic.skills import (
@@ -451,7 +452,7 @@ def session_options(layout: RuntimeLayout) -> Dict[str, Any]:
         # there are no file tools: the content arrives in the request and the
         # runner serialises the structured result, so nothing the session
         # does touches the filesystem.
-        "allowed_tools": ["Skill"],
+        "allowed_tools": list(AGENTIC_ALLOWED_TOOL_NAMES),
         "disallowed_tools": sorted(AGENTIC_FORBIDDEN_TOOLS),
         "permission_mode": AGENTIC_PERMISSION_MODE,
         # Without this the session dies the moment it opens the figure: the

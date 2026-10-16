@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from collections import Counter
+from dataclasses import asdict, dataclass
 from typing import Any, Mapping, Optional, Protocol, Sequence
 
 from soda_mmqc.core.applicability_and_matching import report_layers

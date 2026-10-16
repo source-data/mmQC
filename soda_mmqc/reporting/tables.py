@@ -219,29 +219,6 @@ def layer2_instance_table(summary: RunSummary) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def instance_culprits_table(summary: RunSummary) -> pd.DataFrame:
-    """Instances with layer-1 outliers or layer-2 errors."""
-    rows: list[dict[str, Any]] = []
-    for instance in _iter_instances(summary.records):
-        layer1 = instance.get("layer1")
-        layer2 = instance.get("layer2")
-        if layer1 not in LAYER1_OUTLIER_OUTCOMES and layer2 not in LAYER2_ERROR_OUTCOMES:
-            continue
-        rows.append(
-            {
-                "source": instance.get("source"),
-                "path": instance.get("path"),
-                "leaf_property": instance.get("leaf_property"),
-                "layer1": layer1,
-                "layer2": layer2,
-                "score": instance.get("score"),
-                "exp_value": instance.get("exp_value"),
-                "pred_value": instance.get("pred_value"),
-            }
-        )
-    return pd.DataFrame(rows)
-
-
 def per_doc_property_table(summary: RunSummary) -> pd.DataFrame:
     """Per (doc, leaf property) rollups, derived per document.
 

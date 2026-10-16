@@ -5,7 +5,6 @@ Run only when OPENAI_API_KEY is set; otherwise skipped.
 Load .env before checking so that OPENAI_API_KEY from .env is available.
 Run explicitly with: pytest tests/test_model_api_integration.py -v
 """
-import os
 import pytest
 
 # .env is loaded by tests/conftest.py, before this module is imported, so the

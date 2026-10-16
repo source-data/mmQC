@@ -15,12 +15,11 @@ from rapidfuzz import fuzz
 
 from soda_mmqc.config import DEFAULT_SENTENCE_TRANSFORMER_MODEL
 from soda_mmqc.core.matching import (
+    ElementSimilarity,
     build_similarity_matrix,
     hungarian_match_pairs,
     mean_gated_similarity,
 )
-
-ElementSimilarity = Callable[[Any, Any], float]
 
 
 class StringCompareMode(str, Enum):

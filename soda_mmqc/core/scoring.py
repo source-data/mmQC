@@ -26,7 +26,7 @@ from soda_mmqc.core.eval_manifest import load_eval_manifest
 from soda_mmqc.core.evaluation import FlatEvaluator
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.core.leaves import _default_semantic_embedder
-from soda_mmqc.agentic.runner import DEFAULT_RUN_LABEL, PREDICTION_FILENAME
+from soda_mmqc.agentic.runner import PREDICTION_FILENAME
 from soda_mmqc.agentic.skills import _read_json, resolve_check_dir
 
 __all__ = [
@@ -73,7 +73,6 @@ def analyze_results(
     expected_outputs: List[Dict[str, Any]],
     *,
     check_dir: Path,
-    match_threshold: float = 1.0,
     sentence_transformer_model: str = (
         DEFAULT_SENTENCE_TRANSFORMER_MODEL
     ),
@@ -91,13 +90,6 @@ def analyze_results(
     if not manifest_path.exists():
         raise FileNotFoundError(
             f"Missing eval manifest for check {check_dir.name}: {manifest_path}"
-        )
-
-    if match_threshold != 1.0:
-        logger.warning(
-            "match_threshold=%s is ignored; per-field thresholds are set in "
-            "eval-manifest.json",
-            match_threshold,
         )
 
     manifest = load_eval_manifest(manifest_path)

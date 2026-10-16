@@ -179,11 +179,6 @@ def instance_to_leaf_property(instance_path: str) -> str:
     return ".".join(segments)
 
 
-def path_matches_pattern(pattern: str, instance_path: str) -> bool:
-    """True when ``instance_path`` is an instance of manifest pattern ``pattern``."""
-    return instance_to_leaf_property(instance_path) == pattern
-
-
 def _parse_list_alignment(raw: Mapping[str, Any]) -> dict[str, tuple[str, ...]]:
     result: dict[str, tuple[str, ...]] = {}
     for list_name, keys in raw.items():

@@ -1,8 +1,6 @@
 import unittest
 import base64
-import os
 from pathlib import Path
-from unittest.mock import patch
 
 from soda_mmqc.lib.api import _compress_image_if_needed, _convert_content_for_anthropic
 from soda_mmqc.core.examples import FigureExample

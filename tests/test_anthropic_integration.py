@@ -34,7 +34,7 @@ class TestAnthropicIntegration:
     
     def test_schema_conversion_with_real_schema(self):
         """Test schema conversion with a real schema file."""
-        schema_path = Path("soda_mmqc/data/checklist/doc-checklist/section-order/schema.json")
+        schema_path = Path("soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar/schema.json")
         
         if not schema_path.exists():
             pytest.skip(f"Schema file not found: {schema_path}")
@@ -274,7 +274,7 @@ class TestAnthropicIntegration:
     def test_anthropic_api_with_nested_schema(self):
         """Test with a nested schema (like our actual schemas)."""
         # Use a real nested schema
-        schema_path = Path("soda_mmqc/data/checklist/doc-checklist/section-order/schema.json")
+        schema_path = Path("soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar/schema.json")
         
         if not schema_path.exists():
             pytest.skip(f"Schema file not found: {schema_path}")
@@ -298,7 +298,7 @@ class TestAnthropicIntegration:
                 }
         
         example = SimpleExample()
-        prompt = "Analyze this document structure and provide section information."
+        prompt = "List the panels of this figure and whether each is a micrograph."
         
         try:
             result, metadata = generate_response_anthropic(

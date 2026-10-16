@@ -37,10 +37,6 @@ class TestProjectArchitecture(unittest.TestCase):
         self.assertTrue((PACKAGE_ROOT / "scripts" / "curate.py").exists())
         self.assertTrue((PACKAGE_ROOT / "scripts" / "report.py").exists())
         
-        # Check that utils exist
-        self.assertTrue((PACKAGE_ROOT / "utils").exists())
-        self.assertTrue((PACKAGE_ROOT / "utils" / "hash_utils.py").exists())
-        
         # Check that data directory exists
         self.assertTrue((PACKAGE_ROOT / "data").exists())
         
@@ -89,16 +85,6 @@ class TestProjectArchitecture(unittest.TestCase):
                 f"{retired} was deleted as dead code; do not restore it "
                 "without a caller",
             )
-    
-    def test_utils_imports(self):
-        """Test that utils modules can be imported."""
-        try:
-            from soda_mmqc.utils import hash_utils
-            self.assertTrue(hasattr(hash_utils, 'hash_document_and_json'))
-            self.assertTrue(hasattr(hash_utils, 'verify_hash'))
-            logger.info("Utils imports successful")
-        except ImportError as e:
-            self.fail(f"Failed to import utils modules: {e}")
     
     def test_config_paths(self):
         """Test that configuration paths are correct."""
@@ -197,7 +183,6 @@ class TestProjectArchitecture(unittest.TestCase):
         
         # Check that there are some checklists
         checklist_dir = DATA_DIR / "checklist"
-        self.assertTrue((checklist_dir / "doc-checklist").exists())
         self.assertTrue((checklist_dir / "fig-checklist").exists())
         
         # Check that there are some examples

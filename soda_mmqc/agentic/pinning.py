@@ -21,7 +21,6 @@ import yaml
 from soda_mmqc import logger
 from soda_mmqc.config import AGENTIC_SKILLSET_WARN_THRESHOLD
 from soda_mmqc.agentic.skills import (
-    SKILL_FILENAME,
     Skill,
     load_skills,
 )

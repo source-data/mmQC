@@ -131,9 +131,8 @@ def owns_evaluation_contracts(candidate_dir: Path) -> bool:
     then advertising an output contract nobody asked it to satisfy.
 
     A leaf also needs ``benchmark.json`` to be scored, but that is a
-    *completeness* question rather than an identity one:
-    :func:`require_leaf_contracts` raises for a leaf that lacks it, so a
-    half-built check fails by name instead of silently ceasing to be a check.
+    *completeness* question rather than an identity one, so a half-built
+    check still enumerates and fails by name when it is run or scored.
 
     ``eval-manifest.json`` is deliberately not part of this test. It is
     required when scoring, but several legacy checklists predate it and must
@@ -145,31 +144,6 @@ def owns_evaluation_contracts(candidate_dir: Path) -> bool:
     if not candidate_dir.is_dir():
         return False
     return (candidate_dir / LEAF_SCHEMA_FILE).is_file()
-
-
-def require_leaf_contracts(candidate_dir: Path) -> None:
-    """Raise unless a leaf carries every contract it needs to be scored.
-
-    Raises:
-        ValueError: If the directory is not a leaf, or is one with a contract
-            missing. The message names the file.
-    """
-    if not owns_evaluation_contracts(candidate_dir):
-        raise ValueError(
-            f"{candidate_dir} is not a leaf: it has no {LEAF_SCHEMA_FILE}. "
-            f"Intermediate skills carry no schema, no benchmark and no "
-            f"manifest."
-        )
-    missing = [
-        name
-        for name in EVALUATION_CONTRACT_FILES
-        if not (candidate_dir / name).is_file()
-    ]
-    if missing:
-        raise ValueError(
-            f"{candidate_dir} owns {LEAF_SCHEMA_FILE} and so is a leaf, but "
-            f"cannot be scored: missing {', '.join(missing)}"
-        )
 
 
 def list_checks(checklist_dir: Path) -> Dict[str, Path]:
@@ -188,9 +162,6 @@ def list_checks(checklist_dir: Path) -> Dict[str, Path]:
         if owns_evaluation_contracts(check_dir)
     }
 
-
-# Default model/API options when a check has no model_config.json
-DEFAULT_MODEL_CONFIG_PATH = DATA_DIR / "model_config.json"
 
 # ---------------------------------------------------------------------------
 # Agentic runtime root
@@ -301,7 +272,7 @@ AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
 #:
 #: Naming what the session may have turns "enumerate everything dangerous"
 #: into "enumerate what is needed", which is a list the checks can justify:
-#: Read for the staged inputs and Skill to reach the DAG. That is all.
+#: Skill to reach the DAG. That is all.
 #:
 #: **The session writes nothing.** A check observes an example; it does not
 #: change one. The final answer is a structured result the runner serialises,
@@ -456,19 +427,14 @@ AGENTIC_FORBIDDEN_TOOLS = {
     # Filesystem navigation beyond the runtime.
     "EnterWorktree": "moves the session out of the sealed runtime",
     "ExitWorktree": "moves the session out of the sealed runtime",
-    # Discovery surfaces. Gate 3B decided Read/Edit/Skill is sufficient, so
-    # these are excluded by that decision rather than by a new one.
-    "Glob": "gate 3B: Read/Write/Skill is sufficient",
-    "Grep": "gate 3B: Read/Write/Skill is sufficient",
+    # Discovery surfaces: the content arrives in the request, so there is
+    # nothing to search for.
+    "Glob": "no file tools: the content arrives in the request",
+    "Grep": "no file tools: the content arrives in the request",
     "ToolSearch": "tool discovery, unused by any check",
     "ListAgents": "agent enumeration; subagents are already denied",
     "DesignSync": "unused by any check",
     "ReportFindings": "unused by any check",
-    # NOTE: `Write` is deliberately NOT denied. The session must create
-    # prediction.json, and the SDK documents `Edit(path)` as governing every
-    # file-writing tool including `Write` -- so the scoped Edit rule confines
-    # it to the artifacts directory. Denying it by name would leave only
-    # `Edit`, which cannot create a file that does not yet exist.
 }
 
 #: Model for agentic sessions.

@@ -182,15 +182,3 @@ def rollup_by_property(
     return rollups
 
 
-def property_mean_score(
-    instances: Sequence[Any],
-    *,
-    profiled: bool,
-) -> float | None:
-    """Mean instance score for one leaf property, or ``None``.
-
-    A thin alias over :func:`rollup_property` for callers that want only
-    the mean. Prefer the rollup: the mean without its denominator is not
-    a reportable number.
-    """
-    return rollup_property(instances, profiled=profiled).mean_score

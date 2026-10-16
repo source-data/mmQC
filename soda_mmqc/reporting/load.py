@@ -5,13 +5,16 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterator, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Iterator, Mapping, Sequence
 
 from soda_mmqc import logger
 from soda_mmqc.config import CHECKLIST_DIR, EVALUATION_DIR
 from soda_mmqc.core.eval_manifest import EvalManifest, load_eval_manifest
 from soda_mmqc.core.run_layout import iter_leaves
 from soda_mmqc.core.scoring import ANALYSIS_FILENAME
+
+if TYPE_CHECKING:
+    from soda_mmqc.reporting.aggregate import RunSummaries
 
 
 def _as_list(value: str | Sequence[str] | None) -> list[str] | None:
@@ -294,11 +297,13 @@ def evaluation_data_cache_key(checklist: str, check: str) -> str:
         for model_dir in sorted(eval_dir.iterdir()):
             if not model_dir.is_dir():
                 continue
-            analysis_path = model_dir / "analysis.json"
-            if analysis_path.is_file():
-                parts.append(
-                    f"{model_dir.name}:{analysis_path.stat().st_mtime_ns}"
-                )
+            for arm, replicate, leaf_dir in iter_leaves(model_dir):
+                analysis_path = leaf_dir / ANALYSIS_FILENAME
+                if analysis_path.is_file():
+                    parts.append(
+                        f"{model_dir.name}/{arm}/{replicate}:"
+                        f"{analysis_path.stat().st_mtime_ns}"
+                    )
     return "|".join(parts)
 
 
@@ -307,7 +312,7 @@ def try_load_run_summaries(
     check: str,
 ) -> tuple[RunSummaries | None, str | None]:
     """Load aggregated run summaries, or return ``(None, user_message)``."""
-    from soda_mmqc.reporting.aggregate import RunSummaries, summarize_runs
+    from soda_mmqc.reporting.aggregate import summarize_runs
 
     manifest_path = eval_manifest_path(checklist, check)
     if not manifest_path.is_file():
