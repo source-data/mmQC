@@ -23,7 +23,7 @@ Two files define the contract:
 
 | File | Role |
 |------|------|
-| `schema.json` | What the model **must** return (types, required fields, enums). Used for API validation and prompting. |
+| `schema.json` | What the model **must** return (types, required fields, enums). The structured output the agent session is constrained to. |
 | `eval-manifest.json` | How predictions are **scored and reported** (alignment, applicability, match rules). Applied at evaluation time only. |
 
 Changing `eval-manifest.json` does not change what the model is asked to produce; it changes how strictly predictions are judged.
@@ -136,6 +136,8 @@ For object lists (`outputs[]`), row pairing (Layer S) runs before leaf scoring �
 ## Three reporting layers
 
 Reporting is organized in three layers that answer the three questions above.
+
+![The three scoring layers on one micrograph-scale-bar prediction: Layer S pairs rows, Layer 1 judges applicability, Layer 2 matches values](scoring-layers.svg)
 
 ### Layer S — row alignment within a list
 
@@ -326,9 +328,9 @@ JSON Schema `enum` lists allowed literals but does not define which mean N/A or 
 | `by_property` | Per leaf property: `mean_score` (Layer 2 mean over applicable instances only), `layer1_counts`, `layer2_counts` |
 | `by_list` | Per object list (e.g. `outputs`): `row_counts`, per-row alignment detail |
 
-The `evaluate` CLI stores one such result per benchmark example in `data/evaluation/{checklist}/{check}/{model}/analysis.json`, under each prompt key’s `flat` array. See the README **Benchmarking system** section for the on-disk layout.
+`mmqc score` stores one such result per benchmark example in the run leaf's `analysis.json` (`<run root>/<arm>/rep-NN/analysis.json`), under its `flat` array. See the README **Benchmarking and scoring** section for the on-disk layout.
 
-After editing `eval-manifest.json`, re-run `evaluate` to recompute analysis. Model responses can be served from cache when only scoring rules change.
+After editing `eval-manifest.json`, re-run `mmqc score` on the existing predictions to recompute the analysis; the agent does not need to run again when only scoring rules change.
 
 ---
 

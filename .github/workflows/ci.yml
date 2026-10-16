@@ -1,4 +1,4 @@
-name: Lint & test mmqc_utils
+name: CI
 
 on:
   push:
@@ -8,13 +8,10 @@ permissions:
 
 jobs:
   agentic-checklists:
-    # Scoped deliberately to the agentic checklist suite rather than the whole
-    # of tests/. The repository's wider suite has 38 pre-existing failures and
-    # 23 collection errors (five modules import a `JSONEvaluator` that no
-    # longer exists), so `pytest tests/` would make CI red on arrival and
-    # teach everyone to ignore it. Widening this job is the right thing to do
-    # once those are fixed; until then a narrow green job that actually
-    # protects the new work beats a broad red one that protects nothing.
+    # Scoped to the agentic checklist suite rather than the whole of tests/.
+    # The full suite passes locally (2026-10-16); widening this job to
+    # `pytest tests/` is the next step, once its needs on a bare runner
+    # (ImageMagick, the sentence-embedding model) are confirmed.
     #
     # No credentials are needed: every test drives the agent session through a
     # fake client, and `run --mock` never imports the SDK.

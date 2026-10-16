@@ -114,8 +114,8 @@ panel:
 
 Each check also runs on its own: it invokes `classify-panels` itself.
 
-Other checklists — `doc-checklist`, `data-checklist` — hold earlier,
-prompt-based checks not yet converted to skills.
+`doc-checklist` holds earlier, prompt-based checks not yet converted to
+skills.
 
 ## Installation
 
@@ -267,6 +267,8 @@ the check's `eval-manifest.json`, and reports three layers:
 | **1** | was each field judged applicable or not applicable as in the gold? |
 | **2** | where both say it applies, does the value match? |
 
+![The three scoring layers on one micrograph-scale-bar prediction: Layer S pairs rows, Layer 1 judges applicability, Layer 2 matches values](soda_mmqc/docs/scoring-layers.svg)
+
 Gold changes are curated and **tagged** (`gold-v1` … `gold-v6`); an
 experiment pins the tag it is scored against with `soda_mmqc.gold.pin_gold`,
 so later curation never moves its numbers. Details in
@@ -307,4 +309,6 @@ pytest
 
 Tests under `tests/` hold the production design in place — the skill graph,
 the pins, the containment profile, the contracts and the gold conventions.
-Tests that call a live API are skipped unless the matching key is set.
+Tests that call a live API are marked `integration` and deselected by
+default; `pytest -m integration` runs them, each skipping without its
+provider's key.
