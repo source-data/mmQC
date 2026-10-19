@@ -174,17 +174,91 @@ def plot_mean_score_with_instances(
     """Layer 2 mean score bars with jittered applicable instance scores."""
     frame = mean_scores_frame(summary)
     inst = applicable_instance_scores_frame(summary)
+    hover = []
+    for row in inst.itertuples(index=False):
+        text = f"{row.source}<br>{row.path}<br>score: {row.score:.3f}"
+        if row.layer2:
+            text += f"<br>{row.layer2}"
+        hover.append(text)
+    fig = _mean_score_figure(
+        frame, inst, hover, label_column="field", title=title, seed=seed
+    )
+    return (fig, inst) if return_instances else fig
+
+
+def plot_replicate_mean_scores(
+    summaries: Sequence[RunSummary],
+    *,
+    check: str | None = None,
+    title: str | None = None,
+    seed: int = 0,
+) -> tuple[go.Figure, pd.DataFrame]:
+    """Mean score bars, one dot per instance averaged over replicates.
+
+    ``summaries`` are the replicates of one (model, arm); ``check`` keeps
+    one top-level list of a merged checklist run. See
+    :mod:`soda_mmqc.reporting.replicates` for what is averaged over what.
+    Returns the instance frame too: a dot's ``customdata`` is its row.
+    """
+    from soda_mmqc.reporting.replicates import (
+        pooled_instance_scores_frame,
+        pooled_mean_scores_frame,
+    )
+
+    frame = pooled_mean_scores_frame(summaries, check=check)
+    inst = pooled_instance_scores_frame(summaries, check=check)
+    inst = inst[inst["leaf_property"].isin(frame["leaf_property"])].reset_index(
+        drop=True
+    )
+    hover = []
+    for row in inst.itertuples(index=False):
+        outcomes = "<br>".join(
+            f"rep-{replicate:02d}: "
+            + (
+                f"{score:.3f}" + (f" ({layer2})" if layer2 else "")
+                if score is not None
+                else f"not scored ({layer1})"
+            )
+            for replicate, score, layer1, layer2 in row.replicates
+        )
+        hover.append(
+            f"{row.source}<br>{row.path}<br>"
+            f"mean: {row.score:.3f} over {row.n_scored}<br>{outcomes}"
+        )
+    fig = _mean_score_figure(
+        frame, inst, hover, label_column="label", title=title, seed=seed
+    )
+    return fig, inst
+
+
+def _mean_score_figure(
+    frame: pd.DataFrame,
+    inst: pd.DataFrame,
+    hover: Sequence[str],
+    *,
+    label_column: str,
+    title: str | None,
+    seed: int,
+) -> go.Figure:
+    """Bars per property, with its instances jittered over each bar.
+
+    ``frame`` has ``leaf_property``, ``label_column`` and ``mean_score``;
+    ``inst`` has ``leaf_property`` and ``score``. Bars are positioned by
+    leaf property, so two properties sharing a label stay apart.
+    """
     if title is None:
         title = MEAN_SCORE_PLOT_TITLE
     if frame.empty:
         fig = go.Figure()
         fig.update_layout(title=title)
-        fig = _apply_plot_template(fig)
-        return (fig, inst) if return_instances else fig
+        return _apply_plot_template(fig)
 
-    fields = frame["field"].tolist()
-    field_to_x = _field_numeric_positions(fields, spacing=MEAN_SCORE_BAR_SPACING)
-    bar_x = [field_to_x[field] for field in fields]
+    properties = frame["leaf_property"].tolist()
+    labels = frame[label_column].tolist()
+    property_to_x = _field_numeric_positions(
+        properties, spacing=MEAN_SCORE_BAR_SPACING
+    )
+    bar_x = [property_to_x[p] for p in properties]
 
     fig = go.Figure()
     fig.add_trace(
@@ -195,8 +269,10 @@ def plot_mean_score_with_instances(
             marker_color=MEAN_SCORE_BAR_COLOR,
             name="mean score",
             hovertext=[
-                f"{field}<br>mean: {score:.3f}"
-                for field, score in zip(fields, frame["mean_score"], strict=True)
+                f"{label}<br>mean: {score:.3f}"
+                if score is not None and score == score
+                else f"{label}<br>nothing scored"
+                for label, score in zip(labels, frame["mean_score"], strict=True)
             ],
             hoverinfo="text",
         )
@@ -206,15 +282,11 @@ def plot_mean_score_with_instances(
         rng = np.random.default_rng(seed)
         jitter = rng.normal(0, MEAN_SCORE_JITTER_STDDEV, size=len(inst))
         scatter_x = [
-            field_to_x[row.field] + offset
-            for row, offset in zip(inst.itertuples(index=False), jitter, strict=True)
+            property_to_x[leaf_property] + offset
+            for leaf_property, offset in zip(
+                inst["leaf_property"], jitter, strict=True
+            )
         ]
-        hover_lines = []
-        for row in inst.itertuples(index=False):
-            text = f"{row.source}<br>{row.path}<br>score: {row.score:.3f}"
-            if row.layer2:
-                text += f"<br>{row.layer2}"
-            hover_lines.append(text)
         fig.add_trace(
             go.Scatter(
                 x=scatter_x,
@@ -231,7 +303,7 @@ def plot_mean_score_with_instances(
                         color=INSTANCE_SCORE_MARKER_BORDER_COLOR,
                     ),
                 ),
-                hovertext=hover_lines,
+                hovertext=list(hover),
                 hoverinfo="text",
             )
         )
@@ -242,13 +314,12 @@ def plot_mean_score_with_instances(
         xaxis=dict(
             tickmode="array",
             tickvals=bar_x,
-            ticktext=fields,
+            ticktext=labels,
             title="leaf field",
         ),
         yaxis=dict(range=[0, MEAN_SCORE_Y_MAX], title="score"),
     )
-    fig = _apply_plot_template(fig)
-    return (fig, inst) if return_instances else fig
+    return _apply_plot_template(fig)
 
 
 def _primary_layer_s_counts(summary: RunSummary) -> dict[str, int]:

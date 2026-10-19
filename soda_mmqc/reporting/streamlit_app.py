@@ -1,115 +1,67 @@
-"""Streamlit UI for Layer 2 mean scores and instance drill-down."""
+"""Streamlit UI: find the panels that pull a check's properties down.
+
+For one check, each property is a bar (its mean score over examples and
+replicates) with one dot per panel (that panel's score, averaged over the
+replicates that scored it). Clicking a dot shows the figure, its caption,
+and the panel's gold against every replicate's prediction.
+
+Launched by ``mmqc report``. With a run root it reads that run::
+
+    mmqc report experiments/runs/<run> --checklist fig-checklist \\
+        --check do-fig-checklist-cm
+
+and without one it lists what ``mmqc score`` wrote under
+``data/evaluation/``.
+"""
 
 from __future__ import annotations
 
+import argparse
 import json
-from typing import Any, Literal
+import sys
+from pathlib import Path
+from typing import Any, Literal, Sequence
 
 import pandas as pd
 import streamlit as st
 
-from soda_mmqc.reporting.aggregate import RunSummary, RunSummaries
-from soda_mmqc.reporting.context import ExampleContext, inspect_instance
+from soda_mmqc.reporting.aggregate import RunSummaries, RunSummary, summarize_runs
+from soda_mmqc.reporting.context import inspect_source
 from soda_mmqc.reporting.display import build_figure_image_plot
 from soda_mmqc.reporting.load import (
     EvaluationCheckRef,
     discover_evaluation_checks,
     evaluation_data_cache_key,
+    load_run_root,
+    run_root_cache_key,
     try_load_run_summaries,
 )
-from soda_mmqc.reporting.navigate import instance_object_path
-from soda_mmqc.reporting.plots import plot_mean_score_with_instances
+from soda_mmqc.reporting.plots import plot_replicate_mean_scores
+from soda_mmqc.reporting.replicates import (
+    checks_in,
+    panel_comparison,
+    panel_row_path,
+    spurious_rows_frame,
+)
 from soda_mmqc.reporting.styles import MEAN_SCORE_PLOT_TITLE, PLOTLY_TEMPLATE
-from soda_mmqc.reporting.tables import layer2_instance_table
 
 CompareMode = Literal["single", "arm", "model"]
 
-# Match comparative-reporting.ipynb drill-down defaults
-INSTANCE_FIGURE_HEIGHT = 1200
-INSTANCE_FIGURE_WIDTH = 800
+FIGURE_HEIGHT = 900
+FIGURE_WIDTH = 800
 
 
-def _format_value(value: Any) -> str:
-    if isinstance(value, (dict, list)):
-        return json.dumps(value, indent=2, ensure_ascii=False)
-    return repr(value)
-
-
-def render_instance_context(
-    ctx: ExampleContext,
-    *,
-    figure_height: int = INSTANCE_FIGURE_HEIGHT,
-    figure_width: int | None = INSTANCE_FIGURE_WIDTH,
-) -> None:
-    """Render gold/pred drill-down (Streamlit backend)."""
-    st.subheader("Selected instance")
-    st.caption(
-        f"`{ctx.checklist}` / `{ctx.check}` / `{ctx.model}` / `{ctx.arm}` · "
-        f"`source={ctx.ref.source}`"
-    )
-    if ctx.steps:
-        st.write("Path:", f"`{'.'.join(str(step) for step in ctx.steps)}`")
-    if ctx.pred_missing:
-        st.warning("Prediction row missing for this instance.")
-
-    preview = ctx.example_preview
-    if preview is not None:
-        if preview.caption:
-            st.markdown(f"**Caption**  \n{preview.caption}")
-        if preview.image_path is not None and preview.image_path.is_file():
-            fig = build_figure_image_plot(
-                preview.image_path,
-                height=figure_height,
-                width=figure_width,
-            )
-            if fig is not None:
-                st.plotly_chart(
-                    fig,
-                    width="stretch",
-                    height=figure_height,
-                    config={
-                        "scrollZoom": True,
-                        "displayModeBar": True,
-                        "modeBarButtonsToRemove": ["select2d", "lasso2d"],
-                    },
-                )
-            else:
-                st.image(str(preview.image_path))
-
-    pred_label = "pred (missing)" if ctx.pred_missing else "pred"
-    leaf_name = ctx.steps[-1] if ctx.steps and isinstance(ctx.steps[-1], str) else None
-
-    if not ctx.steps:
-        col_gold, col_pred = st.columns(2)
-        with col_gold:
-            st.markdown("**Gold (full model output)**")
-            st.code(_format_value(ctx.expected_output), language="json")
-        with col_pred:
-            st.markdown(f"**{pred_label.title()} (full model output)**")
-            st.code(_format_value(ctx.model_output), language="json")
-    elif leaf_name is not None and ctx.exp_row is not None:
-        col_gold, col_pred = st.columns(2)
-        with col_gold:
-            st.markdown("**Gold row**")
-            st.code(_format_value(ctx.exp_row), language="json")
-        with col_pred:
-            st.markdown(f"**{pred_label.title()} row**")
-            st.code(_format_value(ctx.pred_row), language="json")
-        col_gold, col_pred = st.columns(2)
-        with col_gold:
-            st.markdown(f"**Gold `{leaf_name}`**")
-            st.code(_format_value(ctx.exp_value), language="json")
-        with col_pred:
-            st.markdown(f"**{pred_label.title()} `{leaf_name}`**")
-            st.code(_format_value(ctx.pred_value), language="json")
-    else:
-        col_gold, col_pred = st.columns(2)
-        with col_gold:
-            st.markdown("**Gold at path**")
-            st.code(_format_value(ctx.exp_subtree), language="json")
-        with col_pred:
-            st.markdown(f"**{pred_label.title()} at path**")
-            st.code(_format_value(ctx.pred_subtree), language="json")
+def parse_app_args(argv: Sequence[str]) -> argparse.Namespace:
+    """The arguments ``mmqc report`` passes after streamlit's ``--``."""
+    parser = argparse.ArgumentParser(prog="mmqc report")
+    parser.add_argument("root", nargs="?", type=Path)
+    parser.add_argument("--checklist")
+    parser.add_argument("--check")
+    parser.add_argument("--model", default="")
+    args = parser.parse_args(list(argv))
+    if args.root is not None and not (args.checklist and args.check):
+        parser.error("a run root needs --checklist and --check")
+    return args
 
 
 def _selected_instance_index(selection: Any) -> int | None:
@@ -128,12 +80,34 @@ def _selected_instance_index(selection: Any) -> int | None:
 
 
 @st.cache_data(show_spinner="Loading evaluation runs…")
-def _load_summaries(
+def _load_evaluation_summaries(
     checklist: str,
     check: str,
     _cache_key: str,
 ) -> tuple[RunSummaries | None, str | None]:
     return try_load_run_summaries(checklist, check)
+
+
+@st.cache_data(show_spinner="Loading run…")
+def _load_root_summaries(
+    root: str,
+    checklist: str,
+    check: str,
+    model: str,
+    _cache_key: str,
+) -> tuple[RunSummaries | None, str | None]:
+    try:
+        runs = load_run_root(
+            Path(root), checklist=checklist, check=check, model=model
+        )
+    except (FileNotFoundError, OSError, ValueError) as exc:
+        return None, str(exc)
+    if len(runs) == 0:
+        return None, (
+            f"No scored replicate under `{root}`: run `mmqc score` on it "
+            "first -- predictions alone are not enough."
+        )
+    return summarize_runs(runs), None
 
 
 def _check_label(ref: EvaluationCheckRef) -> str:
@@ -143,208 +117,228 @@ def _check_label(ref: EvaluationCheckRef) -> str:
     return label
 
 
-def _render_mean_score_panel(
-    summary: RunSummary,
-    *,
-    chart_key: str,
-    enable_selection: bool,
-) -> pd.Series | None:
-    title = (
-        f"{summary.check} — {summary.model} / {summary.arm} — "
-        f"{MEAN_SCORE_PLOT_TITLE}"
+def _replicates(summaries: RunSummaries, model: str, arm: str) -> list[RunSummary]:
+    """Every replicate of one (model, arm) -- the most that may be pooled."""
+    return [s for s in summaries.for_model(model) if s.arm == arm]
+
+
+def _cell(value: Any) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def _score_style(score: Any) -> str:
+    if score is None or score != score:
+        return "color: #888"
+    if score < 1.0:
+        alpha = 0.15 + 0.5 * (1.0 - float(score))
+        return f"background-color: rgba(220, 60, 60, {alpha:.2f})"
+    return ""
+
+
+def render_panel(
+    replicates: Sequence[RunSummary],
+    row: pd.Series,
+) -> None:
+    """The figure, its caption, and one panel's gold against each replicate."""
+    source = str(row["source"])
+    path = str(row["path"])
+    row_path = panel_row_path(path)
+    field = path[len(row_path) + 1:]
+
+    st.subheader(f"{source} · {row_path}")
+    st.caption(
+        f"`{row['leaf_property']}` · mean {row['score']:.3f} over "
+        f"{row['n_scored']} of {len(replicates)} replicate(s)"
     )
-    fig, inst = plot_mean_score_with_instances(
-        summary,
-        title=title,
-        seed=0,
-        return_instances=True,
+
+    try:
+        preview = inspect_source(replicates[0], source=source).example_preview
+    except (FileNotFoundError, KeyError, OSError) as exc:
+        st.warning(f"Could not load the example: {exc}")
+        preview = None
+
+    col_figure, col_panel = st.columns([3, 2])
+    with col_figure:
+        if preview is not None and preview.image_path is not None:
+            fig = build_figure_image_plot(
+                preview.image_path, height=FIGURE_HEIGHT, width=FIGURE_WIDTH
+            )
+            if fig is not None:
+                st.plotly_chart(
+                    fig,
+                    width="stretch",
+                    config={
+                        "scrollZoom": True,
+                        "displayModeBar": True,
+                        "modeBarButtonsToRemove": ["select2d", "lasso2d"],
+                    },
+                )
+            else:
+                st.image(str(preview.image_path))
+    with col_panel:
+        values, scores = panel_comparison(
+            replicates, source=source, row_path=row_path
+        )
+        st.markdown("**Gold vs prediction**")
+        st.caption(
+            "Red: scored below 1 (darker is lower). Grey: not scored in that "
+            "replicate. The selected field is marked ▶."
+        )
+        shown = values.map(_cell)
+        shown.index = [
+            f"▶ {name}" if name == field else name for name in shown.index
+        ]
+        styled = shown.style.apply(
+            lambda column: [
+                ""
+                if column.name == "gold"
+                else _score_style(scores[column.name].iloc[i])
+                for i in range(len(column))
+            ],
+            axis=0,
+        )
+        st.dataframe(styled, width="stretch")
+        if preview is not None and preview.caption:
+            st.markdown("**Caption**")
+            st.markdown(preview.caption)
+
+
+def _render_check(
+    replicates: Sequence[RunSummary],
+    *,
+    check: str | None,
+    title: str,
+    chart_key: str,
+) -> None:
+    fig, inst = plot_replicate_mean_scores(
+        replicates, check=check, title=title, seed=0
     )
     fig.update_layout(template=PLOTLY_TEMPLATE, height=450)
-
-    if enable_selection and not inst.empty:
-        event = st.plotly_chart(
-            fig,
-            width="stretch",
-            on_select="rerun",
-            selection_mode="points",
-            key=chart_key,
-        )
-        idx = _selected_instance_index(getattr(event, "selection", None))
-        if idx is not None and 0 <= idx < len(inst):
-            return inst.iloc[idx]
-    else:
+    if inst.empty:
         st.plotly_chart(fig, width="stretch", key=chart_key)
-    return None
-
-
-def _render_culprit(summary: RunSummary, row: pd.Series) -> None:
-    path = str(row["path"])
-    leaf = str(row["field"])
-    source = str(row["source"])
-    st.markdown("**Instance row**")
-    st.dataframe(
-        pd.DataFrame(
-            [
-                {
-                    "source": source,
-                    "path": path,
-                    "leaf": leaf,
-                    "score": row.get("score"),
-                    "layer2": row.get("layer2"),
-                }
-            ]
-        ),
+        return
+    event = st.plotly_chart(
+        fig,
         width="stretch",
-        hide_index=True,
+        on_select="rerun",
+        selection_mode="points",
+        key=chart_key,
     )
+    spurious = spurious_rows_frame(replicates, check=check)
+    if not spurious.empty:
+        with st.expander(
+            f"{len(spurious)} predicted row(s) with no gold row (no dot)"
+        ):
+            st.dataframe(spurious, width="stretch", hide_index=True)
 
-    errors = layer2_instance_table(summary)
-    if not errors.empty:
-        match = errors[(errors["source"] == source) & (errors["path"] == path)]
-        if not match.empty:
-            st.markdown("**Layer 2 error record**")
-            st.dataframe(match, width="stretch", hide_index=True)
-
-    ctx = inspect_instance(
-        summary,
-        source=source,
-        object_path=instance_object_path(path),
-        leaf=leaf,
-    )
-    try:
-        render_instance_context(ctx)
-    except (FileNotFoundError, KeyError, OSError) as exc:
-        st.warning(f"Could not load full example context: {exc}")
+    idx = _selected_instance_index(getattr(event, "selection", None))
+    if idx is not None and 0 <= idx < len(inst):
+        render_panel(replicates, inst.iloc[idx])
 
 
 def main() -> None:
-    st.set_page_config(
-        page_title="MMQC evaluation reporting",
-        layout="wide",
-    )
-    st.title("Layer 2 mean scores")
-    st.caption(
-        "Mean score per leaf field (applicable instances only). "
-        "Click a red dot to inspect gold vs pred."
-    )
-
-    checks = discover_evaluation_checks()
-    if not checks:
-        st.warning(
-            "No evaluation results found under `data/evaluation/`. "
-            "Run `evaluate` first."
-        )
-        return
-
-    compare_mode: CompareMode = "single"
-    active_summaries: list[tuple[str, RunSummary]] = []
-    summaries: RunSummaries | None = None
-    load_error: str | None = None
+    st.set_page_config(page_title="mmQC report", layout="wide")
+    args = parse_app_args(sys.argv[1:])
 
     with st.sidebar:
-        check_labels = [_check_label(ref) for ref in checks]
-        selected_label = st.selectbox("Check", check_labels)
-        ref = checks[check_labels.index(selected_label)]
+        if args.root is not None:
+            checklist, check = args.checklist, args.check
+            st.markdown(f"**Run** `{args.root}`  \n`{checklist}` / `{check}`")
+            summaries, load_error = _load_root_summaries(
+                str(args.root),
+                checklist,
+                check,
+                args.model,
+                run_root_cache_key(args.root, checklist, check),
+            )
+        else:
+            refs = discover_evaluation_checks()
+            if not refs:
+                st.warning(
+                    "No scored runs under `data/evaluation/`. Pass a run "
+                    "root: `mmqc report <root> --checklist … --check …`."
+                )
+                return
+            labels = [_check_label(ref) for ref in refs]
+            ref = refs[labels.index(st.selectbox("Check", labels))]
+            checklist, check = ref.checklist, ref.check
+            summaries, load_error = _load_evaluation_summaries(
+                checklist, check, evaluation_data_cache_key(checklist, check)
+            )
 
-        compare_mode = st.radio(
+    if load_error or summaries is None or len(summaries) == 0:
+        st.error(load_error or "No runs loaded.")
+        return
+
+    with st.sidebar:
+        lists = checks_in(list(summaries.values()))
+        selected_list = (
+            st.selectbox("Check within the run", lists)
+            if len(lists) > 1
+            else None
+        )
+        compare_mode: CompareMode = st.radio(
             "Contrast by",
             options=("single", "arm", "model"),
             format_func=lambda value: {
-                "single": "Single run",
+                "single": "Single arm",
                 "arm": "Arm",
                 "model": "Model",
             }[value],
             horizontal=True,
         )
+        models, arms = summaries.models, summaries.arms
+        if compare_mode == "single":
+            model = st.selectbox("Model", models) if len(models) > 1 else models[0]
+            arm = st.selectbox("Arm", arms) if len(arms) > 1 else arms[0]
+            panels = [(f"{arm}", _replicates(summaries, model, arm))]
+        elif compare_mode == "arm":
+            model = st.selectbox("Model (fixed)", models)
+            panels = [(arm, _replicates(summaries, model, arm)) for arm in arms]
+        else:
+            arm = st.selectbox("Arm (fixed)", arms)
+            panels = [
+                (model, _replicates(summaries, model, arm)) for model in models
+            ]
+        panels = [(label, reps) for label, reps in panels if reps]
 
-        summaries, load_error = _load_summaries(
-            ref.checklist,
-            ref.check,
-            evaluation_data_cache_key(ref.checklist, ref.check),
+    shown_check = selected_list or check
+    st.title(shown_check)
+    st.caption(
+        "Bars: mean score over examples and replicates. Dots: one panel each, "
+        "its score averaged over the replicates that scored it. Click a dot "
+        "to see the figure, its caption, and gold against each prediction."
+    )
+
+    def title_for(label: str, reps: Sequence[RunSummary]) -> str:
+        return (
+            f"{shown_check} — {label} — {len(reps)} replicate(s) — "
+            f"{MEAN_SCORE_PLOT_TITLE}"
         )
 
-        if load_error:
-            st.error("Cannot load")
-        elif summaries is not None and len(summaries) == 0:
-            st.warning("No runs loaded")
-        elif summaries is not None:
-            models = summaries.models
-            arms = summaries.arms
-
-            def _pick(model: str, arm: str) -> list:
-                """Every replicate of one (model, arm), in order.
-
-                A RunRef carries a replicate too, so one (model, arm)
-                can name several runs. They are listed rather than
-                pooled: pooling replicates is a statistic, and this
-                selector only chooses what to show.
-                """
-                return [
-                    summary
-                    for summary in summaries.for_model(model)
-                    if summary.arm == arm
-                ]
-
-            def _label(summary) -> str:
-                reps = summaries.replicates
-                suffix = f" rep-{summary.replicate:02d}" if len(reps) > 1 else ""
-                return f"{summary.arm}{suffix}"
-
-            if compare_mode == "single":
-                model = st.selectbox("Model", models)
-                arm = st.selectbox("Arm", arms)
-                active_summaries = [
-                    (f"{model} / {_label(summary)}", summary)
-                    for summary in _pick(model, arm)
-                ]
-            elif compare_mode == "arm":
-                model = st.selectbox("Model (fixed)", models)
-                active_summaries = [
-                    (_label(summary), summary)
-                    for arm in arms
-                    for summary in _pick(model, arm)
-                ]
-            else:
-                arm = st.selectbox("Arm (fixed)", arms)
-                active_summaries = [
-                    (model, summary)
-                    for model in models
-                    for summary in _pick(model, arm)
-                ]
-
-    if load_error or not active_summaries:
-        if load_error:
-            st.error("Cannot load this check")
-            st.markdown(load_error)
-            if not ref.has_manifest:
-                st.info(
-                    "Checks need an `eval-manifest.json` beside `schema.json` before "
-                    "reporting can aggregate results."
-                )
-        elif summaries is not None and len(summaries) == 0:
-            st.warning("No runs loaded for this check.")
+    if len(panels) == 1:
+        label, reps = panels[0]
+        _render_check(
+            reps,
+            check=selected_list,
+            title=title_for(label, reps),
+            chart_key=f"mean_score_{label}_{selected_list}",
+        )
         return
-
-    if compare_mode == "single":
-        _, summary = active_summaries[0]
-        selected = _render_mean_score_panel(
-            summary,
-            chart_key="mean_score_single",
-            enable_selection=True,
-        )
-        if selected is not None:
-            _render_culprit(summary, selected)
-    else:
-        tabs = st.tabs([label for label, _ in active_summaries])
-        for tab, (label, summary) in zip(tabs, active_summaries, strict=True):
-            with tab:
-                selected = _render_mean_score_panel(
-                    summary,
-                    chart_key=f"mean_score_{compare_mode}_{label}",
-                    enable_selection=True,
-                )
-                if selected is not None:
-                    _render_culprit(summary, selected)
+    for tab, (label, reps) in zip(
+        st.tabs([label for label, _ in panels]), panels, strict=True
+    ):
+        with tab:
+            _render_check(
+                reps,
+                check=selected_list,
+                title=title_for(label, reps),
+                chart_key=f"mean_score_{compare_mode}_{label}_{selected_list}",
+            )
 
 
 if __name__ == "__main__":

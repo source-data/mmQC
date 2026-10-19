@@ -307,6 +307,21 @@ def evaluation_data_cache_key(checklist: str, check: str) -> str:
     return "|".join(parts)
 
 
+def run_root_cache_key(root: Path, checklist: str, check: str) -> str:
+    """Fingerprint a run root's analyses and the manifest that scores them."""
+    parts = [str(root), checklist, check]
+    manifest_path = eval_manifest_path(checklist, check)
+    if manifest_path.is_file():
+        parts.append(f"manifest:{manifest_path.stat().st_mtime_ns}")
+    for arm, replicate, leaf_dir in iter_leaves(Path(root)):
+        analysis_path = leaf_dir / ANALYSIS_FILENAME
+        if analysis_path.is_file():
+            parts.append(
+                f"{arm}/{replicate}:{analysis_path.stat().st_mtime_ns}"
+            )
+    return "|".join(parts)
+
+
 def try_load_run_summaries(
     checklist: str,
     check: str,

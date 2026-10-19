@@ -183,7 +183,7 @@ mmqc graph fig-checklist [--write]
 
 # Curation and reporting apps (Streamlit).
 mmqc curate fig-checklist
-mmqc report
+mmqc report runs/fig-checklist --checklist fig-checklist --check do-fig-checklist-cm
 ```
 
 `--replicates N` runs each configuration N times (a non-deterministic system
@@ -296,8 +296,13 @@ invoking them.
 
 ## Reporting
 
-`mmqc report` opens a local app for layer-2 scores with drill-down to each
-instance — figure, caption, gold and prediction. `export-fig-report` freezes a
+`mmqc report <run root> --checklist … --check …` opens a local app for
+finding the panels that pull a check's scores down. For one check of the run
+(a checklist run holds all eleven), each property is a bar — its mean score
+over examples and replicates — with one dot per panel, at that panel's score
+averaged over the replicates that scored it. Clicking a dot shows the figure,
+its caption, and the panel's gold against each replicate's prediction. Without
+a run root it lists what `mmqc score` wrote under `data/evaluation/`. `export-fig-report` freezes a
 snapshot as static HTML. The experiments' notebooks, under
 `notebooks/experiments/`, use `soda_mmqc.reporting` directly.
 

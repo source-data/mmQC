@@ -6,9 +6,17 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from typing import Optional, Sequence
 
 
-def main() -> None:
+def main(app_args: Optional[Sequence[str]] = None) -> None:
+    """Run the app; ``app_args`` reach it after streamlit's ``--``.
+
+    ``None`` forwards this process's own arguments, for the ``report``
+    console script.
+    """
+    if app_args is None:
+        app_args = sys.argv[1:]
     os.environ.setdefault("STREAMLIT_SERVER_RUN_ON_SAVE", "false")
     os.environ.setdefault("STREAMLIT_BROWSER_GATHER_USAGE_STATS", "false")
     os.environ.setdefault("STREAMLIT_SERVER_FILE_WATCHER_TYPE", "none")
@@ -30,6 +38,8 @@ def main() -> None:
         "--global.developmentMode=false",
         "--server.fileWatcherType=none",
     ]
+    if app_args:
+        sys.argv += ["--", *app_args]
     sys.exit(stcli.main())
 
 

@@ -306,8 +306,27 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Load prompts from the local checklist files (the default)",
     )
-    subparsers.add_parser(
+    report = subparsers.add_parser(
         "report", help="Launch the evaluation reporting app (Streamlit)",
+    )
+    report.add_argument(
+        "root",
+        nargs="?",
+        type=Path,
+        help=(
+            "A run root (its children are arms, e.g. "
+            "experiments/runs/<run>). Without one, the app lists what "
+            "`mmqc score` wrote under data/evaluation/."
+        ),
+    )
+    report.add_argument(
+        "--checklist", help="Checklist the run was made from (with ROOT)"
+    )
+    report.add_argument(
+        "--check", help="The check, or checklist entry skill, run (with ROOT)"
+    )
+    report.add_argument(
+        "--model", default="", help="Model label for the run (optional)"
     )
     return parser
 
@@ -453,7 +472,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "report":
         from soda_mmqc.scripts.report import main as report_main
 
-        return report_main() or 0
+        if args.root is not None and not (args.checklist and args.check):
+            logger.error("report ROOT needs --checklist and --check")
+            return 1
+        forwarded: List[str] = []
+        if args.root is not None:
+            forwarded = [
+                str(args.root.resolve()),
+                "--checklist", args.checklist,
+                "--check", args.check,
+            ] + (["--model", args.model] if args.model else [])
+        return report_main(forwarded) or 0
 
     if args.command == "assemble":
         try:
