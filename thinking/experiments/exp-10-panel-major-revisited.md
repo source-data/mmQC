@@ -209,6 +209,13 @@ none panel-major). For the author.
 
 ## Status and next
 
-Run and analysed, 2026-10-22. Check-major is non-inferior to panel-major and
-stays production; panel-major no longer has the drawbacks exp-04 found. Next,
-for the author: whether that changes the production shape.
+Run and analysed, 2026-10-22. Check-major is non-inferior to panel-major;
+panel-major no longer has the drawbacks exp-04 found.
+
+**Decided with the author (2026-10-22): production switches to panel-major.**
+The reasons: it is the more logical shape — a panel is stated once, so the
+eleven checks cannot disagree about which panels exist, and evaluation has
+one panel list to align instead of eleven; on layer S it trends better
+(0.996 against 0.994, not significant); it dispatches a little more reliably
+(90% against 86%); and it is marginally cheaper ($0.155 against $0.161 per
+figure).
