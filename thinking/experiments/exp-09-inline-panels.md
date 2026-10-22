@@ -116,7 +116,7 @@ equivalent on each endpoint, by exp-07's rule.
 | P1 | The eleven inline checks in `fig-checklist-exp07`, unpinned; `fig-checklist-exp09` pinning them | this commit |
 | P2 | `experiments/exp-09-inline-panels/run.py`: `inline` 5 replicates, `drift` 2, `--extend-drift` | this commit |
 | P3 | Smoke test: `inline` on 3 figures, one replicate | below |
-| P4 | Notebook: exp-08's, three arrangements and the drift arm | |
+| P4 | Notebook `notebooks/experiments/exp-09-inline-panels.ipynb`: exp-08's, four conditions (each a run root, arm and checklist), the drift check, the non-inferiority verdict, the arrangements side by side; run on the smoke output during the run | this commit |
 
 ## Runs
 
