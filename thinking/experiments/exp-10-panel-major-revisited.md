@@ -115,7 +115,7 @@ check-major one does in each list it appears in.
 | P3 | `build_contract.py`: both contracts, verified (6,919 scorings check-major, 2,442 panel-major, identical to each check's own); panel-major gold. It found a scorer bug: a list inside an object of a row (`outputs[].plot-axis-units.units_provided[]`) was never read; fixed in `core/evaluation.py`, with a test, affecting no earlier run | this commit |
 | P4 | `run.py`: both shapes, 5 replicates, concurrency 50 | this commit |
 | P5 | Smoke test: both shapes on 3 figures, one replicate | below |
-| P6 | Notebook: exp-09's, two shapes, plus spurious panels and output tokens | |
+| P6 | Notebook `notebooks/experiments/exp-10-panel-major-revisited.ipynb`: exp-09's, two shapes, a panel-major answer read per check (the panel row once for every check), `classify-panels` before the first check, spurious panels per figure; run on the smoke output during the run | this commit |
 
 ## Runs
 
