@@ -1,7 +1,7 @@
 ---
 title: exp-10 — check-major against panel-major, revisited on eleven checks
 date: 2026-10-22
-status: planned        # draft | planned | running | done | abandoned
+status: done           # draft | planned | running | done | abandoned
 kind: experiment
 extends: exp-04
 tags: [experiment, contracts, check-major, panel-major, sonnet, non-inferiority]
@@ -122,6 +122,7 @@ check-major one does in each list it appears in.
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-22 | smoke, both shapes | `run.py --smoke` | $1.25 | `experiments/runs/exp-10-panel-major-revisited/smoke/` (not committed) |
+| 2026-10-22 | both shapes, 5 replicates | `caffeinate -i python experiments/exp-10-panel-major-revisited/run.py` | $58.31 ($29.72 + $28.59) | `experiments/runs/exp-10-panel-major-revisited/`; 370 of 370 answered |
 
 **Smoke test, 2026-10-22.** `s44318-026-00715-1` content/1–3, one replicate
 per shape, 6 sessions, none failed: all eleven checks in 6 of 6, every answer
@@ -131,10 +132,83 @@ the entry point invoke it more often under panel-major. 28 against 26 turns;
 $0.21–0.25 against $0.17–0.25; output tokens 9,800–16,200 against
 9,600–17,300.
 
+## Findings
+
+Run 2026-10-22, both shapes the same day: 370 sessions, none failed, no
+fallback, no refusal, no empty answer. Analysis in
+`notebooks/experiments/exp-10-panel-major-revisited.ipynb`, against `gold-v7`.
+
+### Numbers
+
+**Dispatch.**
+
+| | all eleven checks | partial | no check | `classify-panels` invoked | before the first check |
+|---|---|---|---|---|---|
+| check-major | 159/185 (86%) | 25: 23 after the first check, 2 after 4–5 | 1 | 129/185 | 0 |
+| panel-major | **167/185 (90%)** | 16: 8 after the first check, 7 after 5, 1 after 3 | 2 | 106/185 | **2** |
+
+**The hypothesis**, check-major minus panel-major:
+
+| | check-major | panel-major | difference [95%] | verdict |
+|---|---|---|---|---|
+| E1 layer S | 0.994 | 0.996 | −0.002 [−0.012, +0.009] | **non-inferior** |
+| E2 layer 1 | 0.981 | 0.983 | −0.002 [−0.006, +0.003] | **non-inferior** |
+| E1, complete sessions | 0.998 | 1.000 | | |
+| E2, complete sessions | 0.985 | 0.985 | | |
+
+By exp-07's rule E1 and E2 are also **equivalent**. Secondary, the eleven
+decisions: non-inferior on eight; inconclusive on `micrograph-scale-bar`
+(−0.012 [−0.037, 0.000]) and `single-channel-for-overlay` (−0.015 [−0.046,
+0.000], 13 figures); **inferior on `individual-data-points`**: 0.947 against
+0.974, −0.027 [−0.052, −0.007]. Check-major's largest leads, intervals
+including 0: `plot-axis-units` +0.020, `replication-reporting` +0.015.
+
+**Panels per figure**: spurious 0.011 [0.000, 0.032] against 0.005 [0.000,
+0.016] (2 and 1 in 185 sessions); missing 1 and 2; partly missing — named in
+some check lists, not others — 26 check-major, none possible panel-major.
+
+**Cost and size per figure**: $0.161 against $0.155; output tokens 9,430
+against 9,640; input tokens 113,000 against 65,000; 25 and 26 turns; 55 s and
+53 s.
+
+### Reading
+
+*Interpretation, separable from the numbers above.*
+
+**The hypothesis holds: the series lost nothing by running check-major.** On
+the panels and on applicability the shapes are equivalent, overall and on the
+sessions that ran every check.
+
+**But exp-04's reasons for check-major are gone.** With every skill call
+naming the `Skill` tool, the panel-major entry point no longer takes on the
+classification: `classify-panels` came before the first check in 2 sessions
+in 185, and no session classified the panels and then skipped every check —
+where exp-04 found the panel-major entry point taking on the shared step
+(`classify-panels` reached in 95–97% of sessions) and, in 20 sessions,
+answering every check without invoking one. It no longer writes more: output
+tokens are level and cost is 4% lower, where exp-04 measured 20–25% more. And
+it now dispatches slightly *better* (90% against 86%), with fewer stops after
+the first check (8 against 23).
+
+**Where the shapes differ, panel-major is ahead on one decision.**
+`individual-data-points` is the one endpoint with an interval wholly on one
+side, in panel-major's favour; the others are level or undecided, two leaning
+each way. One interval in thirteen is within what chance gives.
+
+**What it leaves open**: the choice between the shapes no longer rests on
+accuracy, dispatch or cost — they are level, or near enough. It rests on what
+production needs from the answer: check-major hands each check its own list,
+as the checks produce it and as the curation and scoring of single checks
+expect; panel-major states each panel once, so the eleven lists cannot
+disagree about which panels exist (26 partly missing panels check-major,
+none panel-major). For the author.
+
 ## Gold this is scored against
 
 **`gold-v7`**.
 
 ## Status and next
 
-Planned 2026-10-22. Next: P1 to P5, then the run.
+Run and analysed, 2026-10-22. Check-major is non-inferior to panel-major and
+stays production; panel-major no longer has the drawbacks exp-04 found. Next,
+for the author: whether that changes the production shape.

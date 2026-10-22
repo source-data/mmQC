@@ -1,0 +1,552 @@
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": [
+        "micrograph"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "no",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "no",
+        "from_the_image": ""
+      },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [
+          "green: HMGB1-GFP",
+          "red: Atxn1(86Q)-DsRed / DsRed",
+          "magenta: MitoTracker Deep Red"
+        ],
+        "number_of_channels_in_overlay": 3,
+        "number_of_single_channel_images_shown": 3,
+        "all_channels_shown_separately": "yes"
+      },
+      "individual-data-points": {
+        "decision": "not_applicable",
+        "explanation": "Not a plot.",
+        "individual_values": "not_applicable",
+        "is_a_plot_with_axes": "no"
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Not a plot."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "symbols_defined": [],
+        "symbol_definition": [],
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Representative images, no quantification."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
+      }
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "yes",
+        "from_the_image": "Scale:10µm"
+      },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [
+          "red: JC-1 aggregates (normal membrane potential)",
+          "green: JC-1 monomers (abnormal membrane potential)"
+        ],
+        "number_of_channels_in_overlay": 2,
+        "number_of_single_channel_images_shown": 0,
+        "all_channels_shown_separately": "no"
+      },
+      "individual-data-points": {
+        "decision": "FAIL",
+        "explanation": "Bar charts with error bars show no individual data points.",
+        "individual_values": "no",
+        "is_a_plot_with_axes": "yes"
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "yes",
+        "error_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "Error bars are present but the caption does not say what they represent."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": ""
+          },
+          {
+            "axis": "y",
+            "definition": "Relative intensity (Green/Red); Intensity [AU]"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": [
+          {
+            "axis": "x",
+            "explanation": "Categorical axis (siRNA groups)."
+          },
+          {
+            "axis": "y",
+            "explanation": "Green/Red ratio is dimensionless; the other plot gives [AU]."
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "*",
+          "**"
+        ],
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "* p<0.05",
+          "**p<0.01"
+        ],
+        "decision": "PASS",
+        "explanation": "Symbols are defined on the image."
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "Significance symbols are shown but no statistical test is named."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "n=20"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 20,
+        "replicate_type_reported": "no",
+        "replicate_type": "",
+        "decision": "FAIL",
+        "explanation": "n=20 is given on the image but what was counted (cells, mitochondria, experiments) is not stated."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
+      }
+    },
+    {
+      "panel_label": "C",
+      "panel_classes": [
+        "blot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
+      "individual-data-points": {
+        "decision": "not_applicable",
+        "explanation": "Not a plot.",
+        "individual_values": "not_applicable",
+        "is_a_plot_with_axes": "no"
+      },
+      "error-bars-defined": {
+        "is_a_plot": "no",
+        "error_bar_on_figure": "not_applicable",
+        "error_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": "Not a plot."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "symbols_defined": [],
+        "symbol_definition": [],
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Representative blot."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
+      }
+    },
+    {
+      "panel_label": "D",
+      "panel_classes": [
+        "micrograph",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "yes",
+        "scale_bar_on_image": "yes",
+        "scale_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "yes",
+        "from_the_image": "20µm"
+      },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
+      "individual-data-points": {
+        "decision": "FAIL",
+        "explanation": "Bar charts with error bars show no individual data points.",
+        "individual_values": "no",
+        "is_a_plot_with_axes": "yes"
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "yes",
+        "error_bar_defined_in_caption": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "Error bars are present but not defined in the caption or on the image."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "no"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": ""
+          },
+          {
+            "axis": "y",
+            "definition": ""
+          }
+        ],
+        "decision": "FAIL",
+        "explanation": [
+          {
+            "axis": "x",
+            "explanation": "Categorical axis (genotypes)."
+          },
+          {
+            "axis": "y",
+            "explanation": "'Signal intensity' is a dimensional quantity and has no unit such as a.u."
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "##"
+        ],
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "##: p<0.01"
+        ],
+        "decision": "PASS",
+        "explanation": "## is defined on the image."
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "Tukey's test follows One-way ANOVA",
+        "decision": "PASS",
+        "explanation": "The test is named in the figure text below the panel."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "N: indicated in the bars",
+          "15",
+          "15",
+          "15",
+          "23",
+          "26",
+          "23"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 15,
+        "replicate_type_reported": "no",
+        "replicate_type": "",
+        "decision": "FAIL",
+        "explanation": "n is shown in the bars but the replicate type (cells, animals) is not stated."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
+      }
+    },
+    {
+      "panel_label": "E",
+      "panel_classes": [
+        "schematic",
+        "plot"
+      ],
+      "micrograph-scale-bar": {
+        "micrograph": "no",
+        "scale_bar_on_image": "not_applicable",
+        "scale_bar_defined_in_caption": "not_applicable",
+        "from_the_caption": "",
+        "scale_bar_defined_in_image": "not_applicable",
+        "from_the_image": ""
+      },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
+      "individual-data-points": {
+        "decision": "PASS",
+        "explanation": "Flow cytometry histograms; individual points not required.",
+        "individual_values": "not_required",
+        "is_a_plot_with_axes": "yes"
+      },
+      "error-bars-defined": {
+        "is_a_plot": "yes",
+        "error_bar_on_figure": "no",
+        "error_bar_defined_in_caption": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "No error bars in the histograms."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "no"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": ""
+          },
+          {
+            "axis": "y",
+            "definition": ""
+          }
+        ],
+        "decision": "FAIL",
+        "explanation": [
+          {
+            "axis": "x",
+            "explanation": "FL2-H fluorescence intensity (log scale) has no unit such as a.u."
+          },
+          {
+            "axis": "y",
+            "explanation": "Counts are dimensionless."
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "symbols_defined": [],
+        "symbol_definition": [],
+        "decision": "PASS",
+        "explanation": "No significance symbols shown."
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": "No significance claim, so no test is needed."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "The results from three sets of independent transfection experiments"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "independent transfection experiments",
+        "decision": "PASS",
+        "explanation": "n=3 and the replicate type are both given."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
+      }
+    }
+  ]
+}
