@@ -1,6 +1,6 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist --write` instead. `graph fig-checklist` fails when it and the skills disagree.
 checklist: fig-checklist
-skill_set: bd3b1ab371cd9c089bd0ff3b83b5996c74a000ae97bea2d9621d552b393706d3
+skill_set: d8781aae5baea937dd66e39dc99f0e3b73f7ceaeffd37f2e8b27d34d57de6279
 skills:
 - name: classify-panels
   version: v1
@@ -46,6 +46,25 @@ skills:
   - stat-test
   produces:
   - do-fig-checklist-cm
+- name: do-fig-checklist-pm
+  version: v1
+  content_hash: 224a662568ec46431b2376827d5f6fa65fba643580a7474da7e831f9be7ff8ad
+  kind: check
+  description: Run the whole figure checklist on a figure.
+  calls:
+  - error-bars-defined
+  - image-annotation-defined
+  - individual-data-points
+  - micrograph-scale-bar
+  - panel-image-matches-caption
+  - plot-axis-units
+  - plot-gap-labeling
+  - replication-reporting
+  - single-channel-for-overlay
+  - stat-significance-level
+  - stat-test
+  produces:
+  - do-fig-checklist-pm
 - name: error-bars-defined
   version: v2
   content_hash: cf17496f61799d430d3e79c86bada3d2381d0297e84104897c88094027e02743

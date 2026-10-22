@@ -231,6 +231,11 @@ def test_an_identifier_holds_in_a_contract_that_combines_checks(tmp_path):
     assert _combined_identifier("stat-significance-level[].significance_level_symbols_on_image",
                                 IDENTIFIERS)
     assert _combined_identifier("stat-test[].from_the_caption", IDENTIFIERS) is None
+    # Panel-major (exp-10): the check's fields in an object of the panel row.
+    assert _combined_identifier("outputs[].stat-significance-level.significance_level_symbols_on_image",
+                                IDENTIFIERS)
+    assert _combined_identifier("outputs[].stat-test.from_the_caption", IDENTIFIERS) is None
+    assert _combined_identifier("outputs[].panel_label", IDENTIFIERS) is None
 
 
 def test_an_explanation_beside_a_decision_must_be_unscored(tmp_path):

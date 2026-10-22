@@ -83,3 +83,37 @@ def test_the_entry_manifest_holds_each_checks_fields_under_its_key():
         for field, profile in own.get("fields", {}).items():
             key = check + field[len("outputs"):] if field.startswith("outputs") else field
             assert entry["fields"].get(key) == profile, f"{check} · {field}: rederive"
+
+
+# Production answers panel-major since exp-10 (2026-10-22): one row per panel,
+# each check's row fields under its name, derived by
+# experiments/exp-10-panel-major-revisited/build_contract.py --target fig-checklist.
+_PM = "do-fig-checklist-pm"
+
+
+def test_the_panel_major_contract_holds_each_checks_row_fields_verbatim():
+    row = _read(_PM, "schema.json")["format"]["schema"]["properties"]["outputs"]["items"]
+    assert list(row["properties"])[:2] == ["panel_label", "panel_classes"]
+    for check in _checks():
+        own = _read(check, "schema.json")["format"]["schema"]["properties"]["outputs"]["items"]
+        assert row["properties"]["panel_label"] == own["properties"]["panel_label"]
+        assert row["properties"][check]["properties"] == {
+            k: v for k, v in own["properties"].items() if k != "panel_label"}, f"{check}: rederive"
+        assert row["properties"][check]["required"] == [
+            k for k in own["required"] if k != "panel_label"], f"{check}: rederive"
+
+
+def test_the_panel_major_manifest_holds_each_checks_fields_under_its_name():
+    entry = _read(_PM, "eval-manifest.json")
+    assert entry["fields"]["outputs[].panel_classes"] == {"scored": False}
+    for check in _checks():
+        own = _read(check, "eval-manifest.json")
+        for field, profile in own.get("fields", {}).items():
+            if field == "outputs[].panel_label":
+                assert entry["fields"][field] == profile
+                continue
+            key = f"outputs[].{check}." + field[len("outputs[]."):]
+            assert entry["fields"].get(key) == profile, f"{check} · {field}: rederive"
+        for nested, by in own["list_alignment"].items():
+            if nested != "outputs":
+                assert entry["list_alignment"][f"{check}.{nested}"] == by

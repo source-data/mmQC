@@ -34,6 +34,7 @@ comparison one of scorers.
     python experiments/exp-10-panel-major-revisited/build_contract.py           # contracts
     python experiments/exp-10-panel-major-revisited/build_contract.py --gold    # and gold
     python experiments/exp-10-panel-major-revisited/build_contract.py --check   # drift only
+    python experiments/exp-10-panel-major-revisited/build_contract.py --target fig-checklist   # production
 """
 
 from __future__ import annotations
@@ -246,12 +247,18 @@ def verify_pm(schema, manifest, src, examples: List[str]) -> int:
 # --------------------------------------------------------------------------
 
 def main(argv: List[str] | None = None) -> int:
+    global TARGET
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--gold", action="store_true",
                         help="Also write the merged gold into the examples tree")
     parser.add_argument("--check", action="store_true",
                         help="Write nothing; fail if a committed file differs from what would be built")
+    parser.add_argument("--target", default=TARGET.name,
+                        help="Checklist to write the contracts into (default: %(default)s); "
+                             "production fig-checklist since 2026-10-22")
     args = parser.parse_args(argv)
+    TARGET = cm.CHECKLISTS / args.target
+    cm.TARGET = TARGET
 
     src = cm.sources()
     cm.check_sources(src)

@@ -27,7 +27,7 @@ Four roles, in the notation of the experiments:
 | **A** | `identify-panels` | list the figure's panels |
 | **B** | `classify-panels` | classify each panel by content (micrograph, plot, blot, …) |
 | **C_i** | the eleven checks | judge one thing, panel by panel |
-| **D** | `do-fig-checklist-cm` | the entry point: run every check, return one answer |
+| **D** | `do-fig-checklist-pm` | the entry point: run every check, return one answer — one row per panel |
 
 `A ← B` reads "A is invoked by B", and `A|B` is A and B done by one skill.
 How far the shared work is split out, and where it sits, gives different
@@ -37,7 +37,7 @@ arrangements of the same skills:
 flowchart TB
     subgraph flat["A|B|C_i ← D — each check lists and classifies the panels itself"]
         direction TB
-        D1["D · do-fig-checklist-cm"]
+        D1["D · do-fig-checklist-pm"]
         D1 --> C1a["C₁ · lists, classifies, checks"]
         D1 --> C1b["C₂ · lists, classifies, checks"]
         D1 --> C1c["… C₁₁"]
@@ -45,7 +45,7 @@ flowchart TB
 
     subgraph prod["A|B ← C_i ← D — production: one shared skill lists and classifies"]
         direction TB
-        D2["D · do-fig-checklist-cm"]
+        D2["D · do-fig-checklist-pm"]
         D2 --> C2a["C₁ · micrograph-scale-bar"]
         D2 --> C2b["C₂ · image-annotation-defined"]
         D2 --> C2c["… C₁₁"]
@@ -56,7 +56,7 @@ flowchart TB
 
     subgraph deep["A ← B ← C_i ← D — listing and classifying split into two skills"]
         direction TB
-        D3["D · do-fig-checklist-cm"]
+        D3["D · do-fig-checklist-pm"]
         D3 --> C3a["C₁"]
         D3 --> C3b["C₂"]
         D3 --> C3c["… C₁₁"]
@@ -84,6 +84,7 @@ counting both missing and spurious ones):
 |---|---|---|---|
 | exp-04 — three checks, Sonnet 5 | 0.979 | **0.997** | 0.991 |
 | exp-08 — eleven checks, Sonnet 5.5 | | **0.997** | 0.977 |
+| exp-09 — eleven checks, Sonnet 5.5 | 0.995 | **0.997** | |
 
 Sharing the panel inventory makes every check work from the same list of
 panels — the eleven checks' lists agree in nearly every session. Splitting it
@@ -91,7 +92,14 @@ further costs more than it gains: one level deeper, the agent more often stops
 after the first check (exp-08: in 57 of 185 sessions, against 14), and on the
 sessions that run every check the two are level. **Production is
 `A|B ← C_i ← D`**, run by Sonnet 5.5, which exp-07 found level with Opus 5.5
-and ahead where they differ, at under half the cost.
+and ahead where they differ, at under half the cost. Every check doing its
+own panels (`A|B|C_i ← D`) is as accurate (exp-09) but costs a third more.
+
+**The answer is panel-major.** One row per panel — its label, its content
+classes, then each check's fields under the check's name — rather than one
+list per check (exp-10). The two shapes are level on accuracy; panel-major
+states each panel once, so the eleven checks cannot disagree about which
+panels exist, and it dispatched a little more reliably and cost a little less.
 
 ## The figure checklist
 
@@ -159,7 +167,7 @@ One command, `mmqc`:
 ```bash
 # Run the whole figure checklist on every benchmark figure, 38 sessions at a time.
 # A live run must be scoped with --limit or --example.
-mmqc run fig-checklist --check do-fig-checklist-cm --limit 37 --concurrency 38 \
+mmqc run fig-checklist --check do-fig-checklist-pm --limit 37 --concurrency 38 \
     --output runs/fig-checklist
 
 # One check on its own, on one figure.
@@ -167,23 +175,23 @@ mmqc run fig-checklist --check micrograph-scale-bar --example <doc>/content/<n>
 
 # Offline: each example's gold becomes its prediction; exercises the whole path
 # -- assembly, prediction layout, trace, scoring -- with no credentials.
-mmqc run fig-checklist --check do-fig-checklist-cm --mock
+mmqc run fig-checklist --check do-fig-checklist-pm --mock
 
 # Score a run against the gold.
-mmqc score fig-checklist --check do-fig-checklist-cm --predictions runs/fig-checklist/pinned/rep-00
+mmqc score fig-checklist --check do-fig-checklist-pm --predictions runs/fig-checklist/pinned/rep-00
 
 # Draft gold for new examples from a run, so curation is correction, not typing.
 mmqc init fig-checklist --check micrograph-scale-bar --from-run runs/...
 
 # Build one example's sealed runtime and print its permission profile, without a session.
-mmqc assemble fig-checklist --check do-fig-checklist-cm --example <doc>/content/<n> --keep-runtime
+mmqc assemble fig-checklist --check do-fig-checklist-pm --example <doc>/content/<n> --keep-runtime
 
 # Check, or regenerate, a checklist's generated dag.yaml and README.md.
 mmqc graph fig-checklist [--write]
 
 # Curation and reporting apps (Streamlit).
 mmqc curate fig-checklist
-mmqc report runs/fig-checklist --checklist fig-checklist --check do-fig-checklist-cm
+mmqc report runs/fig-checklist --checklist fig-checklist --check do-fig-checklist-pm
 ```
 
 `--replicates N` runs each configuration N times (a non-deterministic system
@@ -205,11 +213,12 @@ soda_mmqc/data/checklist/fig-checklist/
 ├── version-manifest.yaml        # pins one version of every skill
 ├── model-defaults.yaml          # model and session knobs (e.g. max_turns)
 ├── dag.yaml, README.md          # generated by `mmqc graph --write`; never hand-edit
-├── do-fig-checklist-cm/         # D: the entry point
+├── do-fig-checklist-pm/         # D: the entry point, answering one row per panel
 │   ├── schema.json              #   its contract, derived from the checks'
 │   ├── eval-manifest.json
 │   ├── benchmark.json
 │   └── v1/SKILL.md
+├── do-fig-checklist-cm/         # the same entry point, one list per check (pre-exp-10)
 ├── classify-panels/             # A|B: a shared skill -- no contract, never scored
 │   └── v1/SKILL.md
 ├── micrograph-scale-bar/        # C_i: a check
@@ -289,6 +298,8 @@ the run, the runs and their notebooks after. See
 | [exp-06](thinking/experiments/exp-06-full-checklist.md) | all eleven checks in one session | holds; the baseline |
 | [exp-07](thinking/experiments/exp-07-models.md) | Opus 5.5, Sonnet 5.5, Haiku 5.5 | Sonnet 5.5 |
 | [exp-08](thinking/experiments/exp-08-arrangements-sonnet.md) | the arrangements again, on exp-07's configuration | `A\|B ← C_i ← D` stays |
+| [exp-09](thinking/experiments/exp-09-inline-panels.md) | every check doing its own panels, `A\|B\|C_i ← D` | as accurate, a third dearer; `A\|B ← C_i ← D` stays |
+| [exp-10](thinking/experiments/exp-10-panel-major-revisited.md) | per check or per panel, on eleven checks | level; production switches to per panel |
 
 The open problem is **partial dispatch**: in 5–15% of sessions, depending on
 the model, the agent runs the first check and answers the rest without

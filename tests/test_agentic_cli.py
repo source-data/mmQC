@@ -215,7 +215,7 @@ class TestListChecks:
     def test_fig_checklist_enumeration_unchanged(self):
         checks = list_checks(CHECKLIST_DIR / "fig-checklist")
         # The entry skill owns a contract too, so it is enumerated with them.
-        assert set(checks) == FIG_CHECKLIST_CHECKS | {ENTRY_SKILL}
+        assert set(checks) == FIG_CHECKLIST_CHECKS | set(ENTRY_SKILLS)
         for name, path in checks.items():
             assert path == CHECKLIST_DIR / "fig-checklist" / name
 
@@ -1175,6 +1175,10 @@ SHARED_VERSION = "v1"
 PILOT_LEAF = "micrograph-scale-bar"
 PILOT_VERSION = "v2"
 ENTRY_SKILL = "do-fig-checklist-cm"
+#: Production answers panel-major since exp-10 (2026-10-22); the check-major
+#: entry point stays pinned beside it.
+PM_ENTRY_SKILL = "do-fig-checklist-pm"
+ENTRY_SKILLS = (ENTRY_SKILL, PM_ENTRY_SKILL)
 #: Skills whose job is the panels themselves; the rest must not restate it.
 PANEL_SKILLS = {SHARED_SKILL, "identify-panels", "classify-plot-panels"}
 
@@ -1740,7 +1744,7 @@ class TestEvaluationContractsStayAtSkillLevel:
 
     def test_the_shared_skill_is_not_enumerated_as_a_check(self):
         assert SHARED_SKILL not in list_checks(FIG_CHECKLIST_DIR)
-        assert set(list_checks(FIG_CHECKLIST_DIR)) == FIG_CHECKLIST_CHECKS | {ENTRY_SKILL}
+        assert set(list_checks(FIG_CHECKLIST_DIR)) == FIG_CHECKLIST_CHECKS | set(ENTRY_SKILLS)
 
     def test_the_shared_skill_cannot_be_scored(self):
         with pytest.raises(ValueError, match=r"is not a check"):
@@ -2103,7 +2107,7 @@ class TestNoLeafRestatesTheSharedSkill:
     def test_every_leaf_that_needs_panels_delegates_for_them(self):
         """A leaf may not silently stop asking for the shared inventory."""
         for name, skill in _pinned_skills().items():
-            if name in PANEL_SKILLS or name == ENTRY_SKILL:
+            if name in PANEL_SKILLS or name in ENTRY_SKILLS:
                 continue
             assert SHARED_SKILL in skill.requires, (
                 f"{name} does not require {SHARED_SKILL}"
@@ -2118,15 +2122,23 @@ class TestNoLeafRestatesTheSharedSkill:
                 f"block calls it with the {SKILL_TOOL} tool"
             )
 
-    def test_the_entry_invokes_every_check_with_the_skill_tool(self):
+    @pytest.mark.parametrize("entry_name", ENTRY_SKILLS)
+    def test_the_entry_invokes_every_check_with_the_skill_tool(self, entry_name):
         """exp-07: without the tool named, Sonnet 5.5 ran no check in 3 of 3
         sessions and answered the checklist from the schema."""
-        entry = _pinned_skills()[ENTRY_SKILL]
+        entry = _pinned_skills()[entry_name]
         assert set(entry.requires) == FIG_CHECKLIST_CHECKS
         assert any(SKILL_TOOL in block and "invoking its skill" in block
                    for block in _prose_blocks(entry.body))
         for check in FIG_CHECKLIST_CHECKS:
             assert f"`{check}`" in entry.body, f"the entry never names {check}"
+
+    def test_the_two_entry_points_differ_in_their_name_only(self):
+        """The answer's shape is the contract's, not the prose's (exp-04, exp-10)."""
+        pinned = _pinned_skills()
+        texts = {name: pinned[name].path.read_text(encoding="utf-8") for name in ENTRY_SKILLS}
+        assert (texts[ENTRY_SKILL].replace(ENTRY_SKILL, "<entry>")
+                == texts[PM_ENTRY_SKILL].replace(PM_ENTRY_SKILL, "<entry>"))
 
     def test_no_skill_asks_the_session_to_write_a_file(self):
         """The session has no write tool, so prose asking for one would send

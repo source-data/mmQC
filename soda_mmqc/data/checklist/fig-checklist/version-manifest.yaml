@@ -19,14 +19,23 @@
 # per-check runs before the experiments -- stay, unpinned or unreached.
 # A single check still runs on its own: it invokes classify-panels itself.
 #
-# The entry point owns one contract, derived from the checks' own
-# (experiments/exp-06-full-checklist/build_contract.py, the derivation exp-07
-# used), and the merged gold of gold-v6.
+# 2026-10-22, exp-10: production answers **panel-major**, decided with the
+# author -- one row per panel, `panel_label` and the unscored `panel_classes`
+# once, each check's fields under its name. Check-major was non-inferior; the
+# shapes were level on accuracy, panel-major a little ahead on dispatch and
+# cost, and it states each panel once. do-fig-checklist-pm v1 is
+# do-fig-checklist-cm v1 under another name. The check-major entry point stays
+# pinned, for runs that compare with the earlier ones.
+#
+# Each entry point owns one contract, derived from the checks' own and
+# verified against them (experiments/exp-10-panel-major-revisited/
+# build_contract.py --target fig-checklist), and a merged gold (gold-v7).
 checklist: fig-checklist
 
 skills:
-  # Entry point: the whole checklist in one session.
+  # Entry points: the whole checklist in one session. Production: -pm.
   do-fig-checklist-cm: v1
+  do-fig-checklist-pm: v1
 
   # Shared skills. classify-panels is invoked by every check;
   # identify-panels and classify-plot-panels are reached by no pinned skill.

@@ -1,0 +1,340 @@
+{
+  "checklist": "do-fig-checklist-pm",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": [
+      "panel_label"
+    ],
+    "plot-axis-units.units_provided": [
+      "axis"
+    ],
+    "plot-axis-units.unit_definition_as_provided": [
+      "axis"
+    ],
+    "plot-axis-units.explanation": [
+      "axis"
+    ]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].panel_classes": {
+      "scored": false
+    },
+    "outputs[].micrograph-scale-bar.micrograph": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].micrograph-scale-bar.scale_bar_on_image": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].micrograph-scale-bar.scale_bar_defined_in_caption": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].micrograph-scale-bar.from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].micrograph-scale-bar.scale_bar_defined_in_image": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].micrograph-scale-bar.from_the_image": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].image-annotation-defined.image_data": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].image-annotation-defined.any_annotation_present_on_image": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].image-annotation-defined.annotation_description_on_image": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].image-annotation-defined.annotation_defined_in_caption": {
+      "primitive_list_compare": "positional"
+    },
+    "outputs[].image-annotation-defined.from_the_caption": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].single-channel-for-overlay.multicolored_overlay_micrograph": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].single-channel-for-overlay.overlay_channels": {
+      "scored": false
+    },
+    "outputs[].single-channel-for-overlay.number_of_channels_in_overlay": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].single-channel-for-overlay.number_of_single_channel_images_shown": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].single-channel-for-overlay.all_channels_shown_separately": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].individual-data-points.is_a_plot_with_axes": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].individual-data-points.individual_values": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].individual-data-points.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].individual-data-points.explanation": {
+      "scored": false
+    },
+    "outputs[].error-bars-defined.is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].error-bars-defined.error_bar_on_figure": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].error-bars-defined.error_bar_defined_in_caption": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].error-bars-defined.from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].error-bars-defined.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].error-bars-defined.explanation": {
+      "scored": false
+    },
+    "outputs[].plot-axis-units.is_a_plot_with_axes": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].plot-axis-units.units_provided[].axis": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-axis-units.units_provided[].answer": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-axis-units.unit_definition_as_provided[].axis": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-axis-units.unit_definition_as_provided[].definition": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].plot-axis-units.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-axis-units.explanation[].axis": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-axis-units.explanation[].explanation": {
+      "scored": false
+    },
+    "outputs[].plot-gap-labeling.is_a_plot_with_axes": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].plot-gap-labeling.tick_sequence_anomaly": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].plot-gap-labeling.gap_visually_marked": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-gap-labeling.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].plot-gap-labeling.explanation": {
+      "scored": false
+    },
+    "outputs[].stat-significance-level.is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].stat-significance-level.significance_level_symbols_on_image": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].stat-significance-level.symbols_defined": {
+      "primitive_list_compare": "positional"
+    },
+    "outputs[].stat-significance-level.symbol_definition": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8,
+      "na_values": [
+        ""
+      ]
+    },
+    "outputs[].stat-significance-level.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].stat-significance-level.explanation": {
+      "scored": false
+    },
+    "outputs[].stat-test.is_a_plot": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].stat-test.statistical_significance_claim": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].stat-test.statistical_test_mentioned": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].stat-test.from_the_caption": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].stat-test.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].stat-test.explanation": {
+      "scored": false
+    },
+    "outputs[].replication-reporting.involves_replicates": {
+      "matching_metric": "multiclass"
+    },
+    "outputs[].replication-reporting.replicate_statements": {
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].replication-reporting.n_reported": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].replication-reporting.replicate_type_reported": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].replication-reporting.n_value_min": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].replication-reporting.replicate_type": {
+      "na_values": [
+        ""
+      ],
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].replication-reporting.decision": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "multiclass"
+    },
+    "outputs[].replication-reporting.explanation": {
+      "scored": false
+    },
+    "outputs[].panel-image-matches-caption.image_matches_caption": {
+      "na_values": [
+        "not_applicable"
+      ],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].panel-image-matches-caption.discrepancies": {
+      "matching_metric": "graded_string",
+      "na_values": [
+        ""
+      ],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

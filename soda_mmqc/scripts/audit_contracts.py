@@ -94,11 +94,16 @@ def _combined_identifier(pattern: str, identifiers) -> Optional[str]:
 
     A check-major contract carries each check's fields under its name:
     ``<check>[].x`` is that check's ``outputs[].x``, scored by the same profile
-    (exp-03 and exp-06 verify it), so its declaration still holds.
+    (exp-03 and exp-06 verify it), so its declaration still holds. A
+    panel-major one carries them in an object of the panel row:
+    ``outputs[].<check>.x`` (exp-04 and exp-10 verify it).
     """
     head, sep, rest = pattern.partition("[].")
     if not sep:
         return None
+    if head == "outputs":
+        check, dot, field = rest.partition(".")
+        return identifiers.get((check, f"outputs[].{field}")) if dot else None
     return identifiers.get((head, f"outputs[].{rest}"))
 
 
