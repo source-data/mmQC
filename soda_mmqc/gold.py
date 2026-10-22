@@ -30,6 +30,9 @@ Tags:
              gold (2026-10-11); heat maps not plots with axes in it,
              plot-axis-units and plot-gap-labeling; and the merged gold of
              do-fig-checklist-cm rebuilt with both, for exp-07
+``gold-v7``  ``gold-v6`` with embor.2009.233 Fig. 2's panel C one panel in
+             plot-axis-units, and the panel-major merged gold of
+             do-fig-checklist-pm for eleven checks (exp-10, 2026-10-22)
 
 A snapshot holds only gold files -- ``<example>/checks/<check>/expected_output.*``
 -- extracted with ``git archive`` into ``.gold-snapshots/<tag>/`` (gitignored),

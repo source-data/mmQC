@@ -114,13 +114,22 @@ check-major one does in each list it appears in.
 | P2 | `fig-checklist-exp10`: exp-07's pins and `do-fig-checklist-pm` v1 | this commit |
 | P3 | `build_contract.py`: both contracts, verified (6,919 scorings check-major, 2,442 panel-major, identical to each check's own); panel-major gold. It found a scorer bug: a list inside an object of a row (`outputs[].plot-axis-units.units_provided[]`) was never read; fixed in `core/evaluation.py`, with a test, affecting no earlier run | this commit |
 | P4 | `run.py`: both shapes, 5 replicates, concurrency 50 | this commit |
-| P5 | Smoke test: both shapes on 3 figures, one replicate | |
+| P5 | Smoke test: both shapes on 3 figures, one replicate | below |
 | P6 | Notebook: exp-09's, two shapes, plus spurious panels and output tokens | |
 
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
+| 2026-10-22 | smoke, both shapes | `run.py --smoke` | $1.25 | `experiments/runs/exp-10-panel-major-revisited/smoke/` (not committed) |
+
+**Smoke test, 2026-10-22.** `s44318-026-00715-1` content/1–3, one replicate
+per shape, 6 sessions, none failed: all eleven checks in 6 of 6, every answer
+in its shape. Check-major invoked `classify-panels` once per session;
+**panel-major never** — the panels classified in the answer, where exp-04 saw
+the entry point invoke it more often under panel-major. 28 against 26 turns;
+$0.21–0.25 against $0.17–0.25; output tokens 9,800–16,200 against
+9,600–17,300.
 
 ## Gold this is scored against
 
