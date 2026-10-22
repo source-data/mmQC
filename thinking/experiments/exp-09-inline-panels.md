@@ -115,13 +115,20 @@ equivalent on each endpoint, by exp-07's rule.
 |---|---|---|
 | P1 | The eleven inline checks in `fig-checklist-exp07`, unpinned; `fig-checklist-exp09` pinning them | this commit |
 | P2 | `experiments/exp-09-inline-panels/run.py`: `inline` 5 replicates, `drift` 2, `--extend-drift` | this commit |
-| P3 | Smoke test: `inline` on 3 figures, one replicate | |
+| P3 | Smoke test: `inline` on 3 figures, one replicate | below |
 | P4 | Notebook: exp-08's, three arrangements and the drift arm | |
 
 ## Runs
 
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
+| 2026-10-22 | smoke, `inline` | `run.py --smoke` | $0.76 | `experiments/runs/exp-09-inline-panels/smoke/` (not committed) |
+
+**Smoke test, 2026-10-22.** `s44318-026-00715-1` content/1–3, one replicate,
+3 sessions, none failed, Sonnet 5.5 throughout: all eleven checks in 3 of 3,
+in order, no skill outside the closure and `classify-panels` never invoked —
+it is not assembled; 26 turns, $0.21–0.29 per session, above exp-07's
+$0.16 for `A|B ← C_i ← D`.
 
 ## Gold this is scored against
 
