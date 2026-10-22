@@ -1,0 +1,35 @@
+# Pinned skill versions for fig-checklist-exp09.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# exp-09 (thinking/experiments/exp-09-inline-panels.md) runs A|B|C_i <- D:
+# each check lists and classifies the panels itself, with classify-panels v1's
+# prose inline in place of the paragraph that invoked it, and invokes no
+# skill. Copied 2026-10-22 from fig-checklist-exp07, which stays as exp-07 and
+# exp-08 ran it; the inline versions were drafted there (unpinned) and are
+# pinned here. Everything else -- the entry point, its contract, the gold --
+# is exp-07's. classify-panels stays in the checklist; no pinned skill reaches it.
+#
+# The entry point owns the one contract; it is derived before the run.
+skills:
+  # Entry point.
+  do-fig-checklist-cm: v2
+
+  # Shared skills, reached by no pinned skill in this arrangement.
+  classify-panels: v1
+  identify-panels: v1
+
+  # Checks, invoked by the entry point; each lists and classifies the panels
+  # itself (A|B inline).
+  error-bars-defined: v5
+  image-annotation-defined: v3
+  individual-data-points: v6
+  micrograph-scale-bar: v5
+  panel-image-matches-caption: v3
+  plot-axis-units: v3
+  plot-gap-labeling: v3
+  replication-reporting: v3
+  single-channel-for-overlay: v3
+  stat-significance-level: v3
+  stat-test: v3
