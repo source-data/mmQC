@@ -1,0 +1,36 @@
+# Pinned skill versions for fig-checklist-exp10.
+#
+# Every skill in the checklist must appear here. A run assembles one
+# version per skill; the agent never sees the alternatives.
+#
+# exp-10 (thinking/experiments/exp-10-panel-major-revisited.md) compares the
+# two answer shapes of exp-04 on exp-07's configuration: A|B <- C_i <- D, the
+# eleven checks, Sonnet 5.5. Copied 2026-10-22 from fig-checklist-exp07, with
+# its pins, plus a second entry point: do-fig-checklist-pm v1 is
+# do-fig-checklist-cm v2 with its name changed and nothing else. Each entry
+# point owns one contract, derived from the checks' own by
+# experiments/exp-10-panel-major-revisited/build_contract.py: check-major
+# (exp-06's) and panel-major (exp-04's shape, eleven checks).
+#
+skills:
+  # Entry point.
+  do-fig-checklist-cm: v2
+  do-fig-checklist-pm: v1
+
+  # Shared skills: A|B, invoked by every check; A <- B kept for later
+  # arrangements.
+  classify-panels: v1
+  identify-panels: v1
+
+  # Checks, invoked by the entry point; each calls classify-panels.
+  error-bars-defined: v4
+  image-annotation-defined: v2
+  individual-data-points: v5
+  micrograph-scale-bar: v4
+  panel-image-matches-caption: v2
+  plot-axis-units: v2
+  plot-gap-labeling: v2
+  replication-reporting: v2
+  single-channel-for-overlay: v2
+  stat-significance-level: v2
+  stat-test: v2

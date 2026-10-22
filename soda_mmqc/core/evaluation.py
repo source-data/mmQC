@@ -511,7 +511,9 @@ def _rows_at_field(doc: Mapping[str, Any], field_name: str) -> list[Mapping[str,
 
 
 def _rows_in_parent(parent_row: Mapping[str, Any], field: str) -> list[Mapping[str, Any]]:
-    rows = parent_row.get(field)
+    # A list nested in an object of the row -- `outputs[].<check>.<list>` in a
+    # panel-major answer -- is named by its dotted path from the row.
+    rows = _get_value_at_eval_pattern(parent_row, field)
     if not isinstance(rows, list):
         return []
     return list(mapping_rows_only(rows))

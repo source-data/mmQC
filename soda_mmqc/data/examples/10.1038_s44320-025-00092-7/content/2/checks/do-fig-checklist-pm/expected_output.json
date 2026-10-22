@@ -11,8 +11,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panels shows individual data points. "
@@ -24,6 +38,71 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "no"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Lag is indicated in hours (h)."
+          }
+        ],
+        "decision": "FAIL",
+        "explanation": [
+          {
+            "axis": "y",
+            "explanation": "the axis represents the rhythmicity index with unknown units"
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "n = 141 samples represented as individual measurements"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 141,
+        "replicate_type_reported": "yes",
+        "replicate_type": "samples represented as individual measurements",
+        "decision": "PASS",
+        "explanation": "Panel A reports n = 141 samples (type described as samples), which is >2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +116,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Plot does not require individual data points."
@@ -50,6 +143,61 @@
         "from_the_caption": "mean +/- s.d. ",
         "decision": "PASS",
         "explanation": "Error bars are present and the caption defines them as mean +/- s.d., with  sample-size details provided."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data represents the mean ± s.d. of 6 samples per reporter (n = 2 biological replicates á technical triplicates or duplicates [HCC1806 Per2-Luc, n = 5]). n = 3 for MCF10A and MDAMB468-Per2-Luc (single experiment)."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 2,
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates á technical triplicates or duplicates; samples per reporter",
+        "decision": "PASS",
+        "explanation": "Panel B reports mixed replicate information including 'n = 2 biological replicates' (biological replicates = 2) which is 3not greater than 2; reporting is also a mix of biological and technical replicates and includes exceptions (e.g. n = 5, n = 3)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +211,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Plot does not require individual data points."
@@ -76,6 +238,78 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          },
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Period is given in hours (h)."
+          },
+          {
+            "axis": "y",
+            "definition": "log(amplitude) in arb. u."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "n = 1–4 cell lines models per subtype, see legends of (A) and (B) for exact numbers)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 1,
+        "replicate_type_reported": "yes",
+        "replicate_type": "cell lines models per subtype; replicates per cell model",
+        "decision": "PASS",
+        "explanation": "Panel C reports 'n = 11' cell lines per subtype and some groups therefore have n=1, which is insufficient for summary statistics."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +323,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -102,6 +350,66 @@
         "from_the_caption": "bottom and top edges of the boxes representing the 25th and 75th percentiles, respectively. Extending whiskers represent data points within 1.5 times the interquartile range from lower and upper quartile. Median values are marked by red horizontal lines",
         "decision": "PASS",
         "explanation": "this is a boxplot and all features are described in the figure caption."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Ridge length is indicated in hours (h)."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "n = 4–12 samples per cell line (see (B) for exact numbers)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 4,
+        "replicate_type_reported": "yes",
+        "replicate_type": "samples per cell line",
+        "decision": "PASS",
+        "explanation": "Panel D reports 'n = 4' (range 4) which is >2 and type is specified as samples per cell line."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,11 +423,25 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
-        "individual_values": "not_required",
-        "decision": "PASS",
-        "explanation": "Plot does not require individual data points."
+        "is_a_plot_with_axes": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Polar histograms without drawn axes: the check does not apply."
       },
       "error-bars-defined": {
         "is_a_plot": "yes",
@@ -128,6 +450,68 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "The number n of Bmal1-Per2-combinations per cell line is indicated next to the cell line name.",
+          "HCC1143 (n=36)",
+          "HCC1937 (n=30)",
+          "HCC38 (n=16)",
+          "MDAMB468 (n=18)",
+          "HCC1806 (n=15)",
+          "HCC70 (n=15)",
+          "SUM149PT (n=3)",
+          "BT549 (n=15)",
+          "CAL51 (n=27)",
+          "MDAMB231 (n=8)",
+          "MDAMB436 (n=15)",
+          "HCC1428 (n=6)",
+          "MCF7 (n=25)",
+          "T47D (n=36)",
+          "U2OS (n=36)",
+          "MCF10A (n=9)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "Bmal1-Per2-combinations per cell line",
+        "decision": "PASS",
+        "explanation": "Panel E lists per-cell-line n values (smallest shown n = 3) and specifies that these are Bmal1-Per2 combinations per cell line."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -141,11 +525,25 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
-        "individual_values": "not_required",
-        "decision": "PASS",
-        "explanation": "Plot does not require individual data points."
+        "is_a_plot_with_axes": "no",
+        "individual_values": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": "Polar histogram without drawn axes: the check does not apply."
       },
       "error-bars-defined": {
         "is_a_plot": "yes",
@@ -154,6 +552,52 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          " (n = 1–4 cell line models, see (E) for exact numbers)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 1,
+        "replicate_type_reported": "yes",
+        "replicate_type": "cell line models",
+        "decision": "PASS",
+        "explanation": "Panel F reports 'n = 1' (1), which includes cases with only one cell-line model per subtype, insufficient for averaging/statistics."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -167,8 +611,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Plot does not require individual data points."
@@ -180,6 +638,64 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Time is indicated in hours (h)."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Panel G shows an example fit/representative signal rather than replicated quantitative summary data."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -193,8 +709,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Plot does not require individual data points."
@@ -206,6 +736,66 @@
         "from_the_caption": "standard deviation of the fitted parameters",
         "decision": "PASS",
         "explanation": "Error bars are present and the caption explicitly states they represent the standard deviation of the fitted parameters."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "no"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "FAIL",
+        "explanation": [
+          {
+            "axis": "x",
+            "explanation": "the decay rate (ɣ) should be dimensionless per hour (h^-1) but this is not indicated"
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "samples of different cell line models (n = 117 samples)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 117,
+        "replicate_type_reported": "yes",
+        "replicate_type": "samples",
+        "decision": "PASS",
+        "explanation": "Panel H reports n = 117 samples (type described as samples) and error bars are provided; n is >2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]

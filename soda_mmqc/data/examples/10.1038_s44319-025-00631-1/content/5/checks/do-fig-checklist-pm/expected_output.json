@@ -11,8 +11,22 @@
         "scale_bar_defined_in_image": "no",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply."
@@ -24,6 +38,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Panel A shows representative spatial deconvolution maps (representative images) and the legend does not report sample/replicate numbers specific to these images."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +95,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Box plot already displays data distribution — individual points not required"
@@ -50,6 +122,75 @@
         "from_the_caption": "extending from the 25th percentile to the 75th percentile;",
         "decision": "PASS",
         "explanation": "this is a boxplot and the CIs are defined in the figure caption."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Y-axis labeled as 'Fraction of cells (%)' (percent)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****",
+          "***"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P = 7.96E-78 (Classical monocyte), ****P = 4.74E-17 (Alveolar macrophage), ****P = 6.04E-133 (Leukocyte)",
+          "***P = 2.31E-05 (Non-classical monocyte)"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "two-sided Mann–Whitney–Wilcoxon test",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "T11b-high LUSC n = 344, LUAD n = 1148, biological replicates"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 344,
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "PASS",
+        "explanation": "Panel B quantifies immune cell populations and the legend reports group sample sizes and explicitly states 'biological replicates'; the minimum n (344) is > 2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +204,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "GSEA analysis  does not require individual data points."
@@ -76,6 +231,80 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "NES=3.671",
+          "FDR=0.0",
+          "p=0.0",
+          "NES=3.405",
+          "FDR=0.0",
+          "p=0.0"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "NES=3.671",
+          "FDR=0.0",
+          "p=0.0",
+          "NES=3.405",
+          "FDR=0.0",
+          "p=0.0"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "The nominal P and FDR values were obtained from the “GSEA Preranked” tool (from Broad Institute) using a weighted scoring scheme. Gene sets were evaluated based on the default normalized enrichment score method, and statistical significance was determined by bootstrapping with 1000 permutations.",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "no",
+        "replicate_type": "",
+        "decision": "FAIL",
+        "explanation": "Panel C presents GSEA results (a statistical analysis derived from sample data) but the figure legend does not state the number or type of replicates used for this panel."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +318,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "no",
         "decision": "FAIL",
         "explanation": "Bar chart showing averaged data but is missing individual data points overlaid "
@@ -102,6 +345,95 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "p=2.22E-190",
+          "p=2.17E-71",
+          "p=3.09E-109",
+          "p=1.56E-121",
+          "p=5.56E-115",
+          "p=1.33E-43",
+          "p=1.67E-86",
+          "p=2.59E-88",
+          "p=1.02E-105",
+          "p=1.43E-130",
+          "p=2.32E-40"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "p=2.22E-190",
+          "p=2.17E-71",
+          "p=3.09E-109",
+          "p=1.56E-121",
+          "p=5.56E-115",
+          "p=1.33E-43",
+          "p=1.67E-86",
+          "p=2.59E-88",
+          "p=1.02E-105",
+          "p=1.43E-130",
+          "p=2.32E-40"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "P-values are shown for differential expression (labels above bars) but the caption does not state which statistical test or method was used to compute them."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "no",
+        "replicate_type": "",
+        "decision": "FAIL",
+        "explanation": "Panel D shows differential expression summary (bar graph) derived from sample comparisons but the legend does not provide an explicit n-number or replicate type for this analysis in the panel caption."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,8 +447,22 @@
         "scale_bar_defined_in_image": "no",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply."
@@ -128,6 +474,52 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "staining was repeated with lung sections from different mice (n=3-4, biological replicates)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "PASS",
+        "explanation": "Panel E presents representative H&E/IHC images and the legend explicitly states the staining was repeated with lung sections from different mice (n = 3–4, biological replicates); the minimum n (3) is > 2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]

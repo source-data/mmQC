@@ -11,8 +11,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -24,6 +38,76 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are explicitly defined in the caption as mean +/- SEM, which adequately defines the plotted variability."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "GFP+ (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "***",
+          "****"
+        ],
+        "decision": "FAIL",
+        "explanation": "'***' is not defined in the figure caption",
+        "symbols_defined": [
+          "no",
+          "yes"
+        ],
+        "symbol_definition": [
+          "",
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data were presented as mean ± SEM from biological replicates, represented by green dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "FAIL",
+        "explanation": "Replicate type (biological replicates) is stated but the number of replicates (n) is not reported in the figure legend (referred to Table EV6 instead)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +121,28 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "5 μm (main panels); 2 μm (overlay inset)"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "yes",
+        "annotation_description_on_image": [
+          "red dotted line"
+        ],
+        "annotation_defined_in_caption": [
+          "yes"
+        ],
+        "from_the_caption": [
+          "The right panel shows colocalization of mTurquoise and mVenus fluorescent signals along the red line in the overlay image."
+        ]
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": 2,
+        "number_of_single_channel_images_shown": 2,
+        "all_channels_shown_separately": "yes"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Line graph does not require individual data points. "
@@ -50,6 +154,68 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Distance (µm)"
+          },
+          {
+            "axis": "y",
+            "definition": "Intensity (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Epifluorescence microscopy images appear to be representative images without quantified replicated data."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +229,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -76,6 +256,76 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are specified in the caption as mean +/- SEM from individual cells, which is adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Fluorescence intensity (A.U.)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****",
+          "0.08"
+        ],
+        "decision": "PASS",
+        "explanation": "the level of significance is defined in the figure legend and in the figure image itsself.",
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001",
+          "0.08"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Results are presented as mean ± SEM from individual cells, represented by yellow or blue dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "individual cells",
+        "decision": "FAIL",
+        "explanation": "Replicate type (individual cells) is specified but the number of replicates (n) is not provided in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +339,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -102,6 +366,79 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are explicitly described in the caption as mean +/- SEM from individual cells, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Fluorescence intensity (A.U.)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "**",
+          "****",
+          "0.22"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "**P < 0.01",
+          "****P < 0.0001",
+          "0.22"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Results are presented as mean ± SEM from individual cells, represented by yellow or blue dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "individual cells",
+        "decision": "FAIL",
+        "explanation": "Replicate type is given (individual cells) but no numeric n is reported in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,8 +452,28 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "5 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "yes",
+        "annotation_description_on_image": [
+          "red dotted line"
+        ],
+        "annotation_defined_in_caption": [
+          "yes"
+        ],
+        "from_the_caption": [
+          "The right panel shows colocalization of mTurquoise and mVenus fluorescent signals along the red line in the overlay image."
+        ]
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": 2,
+        "number_of_single_channel_images_shown": 2,
+        "all_channels_shown_separately": "yes"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Line graph does not require individual data points. "
@@ -128,6 +485,68 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Distance (µm)"
+          },
+          {
+            "axis": "y",
+            "definition": "Intensity (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Epifluorescence microscopy images shown as representative panels without associated quantified replicated data."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -141,8 +560,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -154,6 +587,73 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SEM from biological replicates, which is adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "GFP+ (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data were presented as mean ± SEM from biological replicates, represented by green dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "FAIL",
+        "explanation": "Biological replicates are stated but the number of replicates (n) is not provided in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -167,8 +667,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -180,6 +694,73 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Caption specifies error bars as mean +/- SEM, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "GFP+ (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data were presented as mean ± SEM from biological replicates, represented by green dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "FAIL",
+        "explanation": "Replicate type is specified but the n-number is not reported in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -193,8 +774,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -206,6 +801,73 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SEM from biological replicates, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "GFP+ (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test; ",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data were presented as mean ± SEM from biological replicates, represented by green dots.",
+          "Exact p values and biological replicate numbers presented in Table EV6."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "FAIL",
+        "explanation": "Biological replicates are referenced but the number of replicates is not given in the caption."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -219,8 +881,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -232,6 +908,72 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Caption explicitly states error bars are mean +/- SEM from biological replicates, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Inhibition zone (%)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA with a Dunnett post-test",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Inhibition zone diameters normalized to the empty vector control (tet-empty) are shown as mean ± SEM from biological replicates, with individual values indicated by gray dots."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological replicates",
+        "decision": "FAIL",
+        "explanation": "Replicate type (biological replicates) is stated but the number of replicates (n) is not reported in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -245,8 +987,22 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "5 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply"
@@ -258,6 +1014,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Panel shows epifluorescence images (representative), with no quantified replicated data in the panel itself."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -271,8 +1071,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -284,6 +1098,72 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SEM from individual cells, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Fluorescence intensity (A.U.)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "an unpaired t-test",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Results are presented as mean ± SEM from individual cells, represented by yellow or blue dots."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "individual cells",
+        "decision": "FAIL",
+        "explanation": "Replicates are individual cells (type given) but the figure legend does not report the numeric n."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -297,8 +1177,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown."
@@ -310,6 +1204,72 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Caption specifies error bars as mean +/- SEM from individual cells, adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Fluorescence intensity (A.U.)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "****"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "****P < 0.0001"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "an unpaired t-test",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Results are presented as mean ± SEM from individual cells, represented by yellow or blue dots."
+        ],
+        "n_reported": "no",
+        "n_value_min": "not_reported",
+        "replicate_type_reported": "yes",
+        "replicate_type": "individual cells",
+        "decision": "FAIL",
+        "explanation": "Replicate type is specified (individual cells) but the numeric n is not provided in the figure legend."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -323,8 +1283,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Line graph does not require individual data points. "
@@ -336,6 +1310,70 @@
         "from_the_caption": "means +/- SEM",
         "decision": "PASS",
         "explanation": "Error bars are explicitly defined as mean +/- SEM from biological triplicates, which is adequate."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Days"
+          },
+          {
+            "axis": "y",
+            "definition": "McFarland units (turbidity measurements) — from caption: \"evaluated by turbidity measurements (McFarland units)\""
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data represent mean ± SEM from biological triplicates."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "biological triplicates",
+        "decision": "PASS",
+        "explanation": "Both replicate type (biological triplicates) and number (triplicates, n=3) are explicitly reported and n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]

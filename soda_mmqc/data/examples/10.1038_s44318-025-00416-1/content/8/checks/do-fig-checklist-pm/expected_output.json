@@ -11,8 +11,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Bar chart showing means with individual data points overlaid."
@@ -24,6 +38,73 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=8.0e-6",
+          "P=6.5e-5",
+          "P=1.2e-4"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=8.0e-6",
+          "P=6.5e-5",
+          "P=1.2e-4"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed student’s t-test (A)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data are mean ± SD from three biological replicates (A, B)."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "three biological replicates",
+        "decision": "PASS",
+        "explanation": "Caption explicitly states data are mean from three biological replicates, and n=3 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +118,22 @@
         "scale_bar_defined_in_image": "no",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Bar chart showing means with individual data points overlaid."
@@ -50,6 +145,70 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.003",
+          "ns"
+        ],
+        "decision": "FAIL",
+        "explanation": "The significiance symbol 'ns' is not defiend.",
+        "symbols_defined": [
+          "yes",
+          "no"
+        ],
+        "symbol_definition": [
+          "P=0.003",
+          ""
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "one-way ANOVA (B)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Data are mean ± SD from three biological replicates (A, B)."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 3,
+        "replicate_type_reported": "yes",
+        "replicate_type": "three biological replicates",
+        "decision": "PASS",
+        "explanation": "Caption explicitly states data are mean from three biological replicates, and n=3 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +222,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a violin plot -individual data points are not required"
@@ -76,6 +249,74 @@
         "from_the_caption": "\"\"",
         "decision": "FAIL",
         "explanation": "Dashed lines in violin plot are not defined in the figure legend."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "count"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=3.7e-5"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=3.7e-5"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed student’s t-test (C)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "TCGA RNA-seq data of patients with COAD (C) and READ (D) were analyzed.",
+          "(n=240)",
+          "(n=187)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 187,
+        "replicate_type_reported": "yes",
+        "replicate_type": "patients with COAD",
+        "decision": "PASS",
+        "explanation": "Panel C shows patient counts (n=240 and n=187) from TCGA-COAD; replicate type (patients) is indicated in the caption and n_min = 187 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +330,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a violin plot -individual data points are not required"
@@ -102,6 +357,74 @@
         "from_the_caption": "\"\"",
         "decision": "FAIL",
         "explanation": "Dashed lines in violin plot are not defined in the figure legend."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "count"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.022"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=0.022"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed student’s t-test (D)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "TCGA RNA-seq data of patients with COAD (C) and READ (D) were analyzed.",
+          "(n=73)",
+          "(n=65)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 65,
+        "replicate_type_reported": "yes",
+        "replicate_type": "patients with READ",
+        "decision": "PASS",
+        "explanation": "Panel D shows patient counts (n=73 and n=65) from TCGA-READ; replicate type (patients) is indicated in the caption and n_min = 65 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,8 +438,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a Kaplan-Meier curve -individual data points are not required"
@@ -128,6 +465,74 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Overall survival in years."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.047"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=0.047"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "log-rank test (E)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Low PPA2 (n=93)",
+          "High PPA2 (n=94)",
+          "Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 93,
+        "replicate_type_reported": "yes",
+        "replicate_type": "TCGA-COAD dataset (patients)",
+        "decision": "PASS",
+        "explanation": "Kaplan-Meier analysis labels show n per group (n=93, n=94) and caption indicates TCGA-COAD patients; n_min = 93 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -141,8 +546,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a Kaplan-Meier curve -individual data points are not required"
@@ -154,6 +573,74 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Overall survival in years."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.008"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=0.008"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "log-rank test (F)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Low PPA2 (n=32)",
+          "High PPA2 (n=33)",
+          "Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 32,
+        "replicate_type_reported": "yes",
+        "replicate_type": "TCGA-READ dataset (patients)",
+        "decision": "PASS",
+        "explanation": "Kaplan-Meier plot labels show group sizes (n=32, n=33) and caption indicates TCGA dataset patients; n_min = 32 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -167,8 +654,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a Kaplan-Meier curve -individual data points are not required"
@@ -180,6 +681,74 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Overall survival in years."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.22"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=0.22"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "log-rank test (G)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Low PPA2 (n=120)",
+          "High PPA2 (n=120)",
+          "Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 120,
+        "replicate_type_reported": "yes",
+        "replicate_type": "TCGA-COAD dataset (patients)",
+        "decision": "PASS",
+        "explanation": "Kaplan-Meier legend shows n per group (n=120 each) and caption indicates TCGA-COAD patients; n_min = 120 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -193,8 +762,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a Kaplan-Meier curve -individual data points are not required"
@@ -206,6 +789,74 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Overall survival in years."
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "P=0.99"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "P=0.99"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "log-rank test (H)",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Low PPA2 (n=36)",
+          "High PPA2 (n=37)",
+          "Kaplan-Meier analysis ... from TCGA-COAD (E, G) or TCGA-READ (F, H) datasets."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 36,
+        "replicate_type_reported": "yes",
+        "replicate_type": "TCGA-READ dataset (patients)",
+        "decision": "PASS",
+        "explanation": "Kaplan-Meier legend shows group sizes (n=36, n=37) and caption indicates TCGA-READ patients; n_min = 36 (>2)."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]

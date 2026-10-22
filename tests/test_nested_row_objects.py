@@ -78,3 +78,31 @@ def test_nested_and_flat_score_identically():
     flat = json.dumps(_score(nested=False), sort_keys=True, default=str)
     nested = json.dumps(_score(nested=True), sort_keys=True, default=str).replace("chk.", "")
     assert nested == flat
+
+
+def test_a_list_nested_in_an_object_of_the_row_is_aligned():
+    """exp-10: plot-axis-units' per-axis list inside a panel-major row
+    (`outputs[].chk.axes[]`) was never read -- no rows, no instances."""
+    axis_row = {"type": "object", "properties": {"axis": TEXT, "answer": YES_NO_NA},
+                "required": ["axis", "answer"], "additionalProperties": False}
+    chk = {"type": "object", "properties": {"axes": {"type": "array", "items": axis_row}},
+           "required": ["axes"], "additionalProperties": False}
+    schema = {"type": "object", "required": ["outputs"], "additionalProperties": False,
+              "properties": {"outputs": {"type": "array", "items": {
+                  "type": "object", "properties": {"panel_label": TEXT, "chk": chk},
+                  "required": ["panel_label", "chk"], "additionalProperties": False}}}}
+    manifest = parse_eval_manifest({
+        "checklist": "t", "defaults": DEFAULTS,
+        "list_alignment": {"outputs": ["panel_label"], "chk.axes": ["axis"]},
+        "fields": {"outputs[].panel_label": EXACT, "outputs[].chk.axes[].axis": EXACT,
+                   "outputs[].chk.axes[].answer": {"matching_metric": "binary_polarity"}}})
+    gold = {"outputs": [{"panel_label": "A", "chk": {"axes": [{"axis": "x", "answer": "yes"},
+                                                              {"axis": "y", "answer": "no"}]}}]}
+    pred = {"outputs": [{"panel_label": "A", "chk": {"axes": [{"axis": "x", "answer": "no"},
+                                                              {"axis": "y", "answer": "no"}]}}]}
+    result = json.loads(json.dumps(asdict(FlatEvaluator(schema, manifest).evaluate(gold, pred)),
+                                   default=str))
+    assert result["by_list"]["chk.axes"]["row_counts"]["correct_row"] == 2
+    answers = {i["path"]: i["score"] for i in result["instances"]
+               if i["leaf_property"] == "outputs[].chk.axes[].answer"}
+    assert answers == {"outputs[0].chk.axes[0].answer": 0.0, "outputs[0].chk.axes[1].answer": 1.0}

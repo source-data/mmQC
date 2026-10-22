@@ -11,8 +11,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown. "
@@ -24,6 +38,78 @@
         "from_the_caption": "mean  +/- S.D.",
         "decision": "PASS",
         "explanation": "Dot/bar plots in panel A display error bars and the caption explicitly defines data as \"mean +/- S.D.\""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Body weight (g)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "p<0.001",
+          "p=0.002",
+          "p=0.047"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "p<0.001",
+          "p=0.002",
+          "p=0.047"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed Student’s T test.",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "were examined in male C57/BL6 mice fed with either a normal chow (NC) or high-fat diet (HFD) for 16 weeks, n = 5 in NC; n = 5 in HFD"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 5,
+        "replicate_type_reported": "yes",
+        "replicate_type": "male C57/BL6 mice",
+        "decision": "PASS",
+        "explanation": "n is reported (n=5 per group) and explicitly refers to mice; n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +123,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply"
@@ -50,6 +150,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Representative gross images (qualitative), no quantified replicates reported."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +207,22 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "100 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply"
@@ -76,6 +234,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Representative microscopy images (H&E, Oil Red O) without reported quantification."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +291,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative blot — check does not apply"
@@ -102,6 +318,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Dot blot/methylene blue images are presented as representative; quantification is in panel E."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,8 +375,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown. "
@@ -128,6 +402,73 @@
         "from_the_caption": "mean  +/- S.D.",
         "decision": "PASS",
         "explanation": "Quantification bar plot in panel E includes error bars and the caption states data are presented as \"mean +/- S.D.\""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "DNA (μg)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "p=0.002"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "p=0.002"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed Student’s T test.",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Quantification results of 5mC/methylene blue, n = 5 in NC; n = 5 in HFD",
+          "5mC dot blot and methylene blue staining were done using the genomic DNA of liver samples derived from NC and HFD mice"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 5,
+        "replicate_type_reported": "yes",
+        "replicate_type": "genomic DNA of liver samples derived from NC and HFD mice",
+        "decision": "PASS",
+        "explanation": "n is reported (n=5 per group) and the replicates are liver samples from mice; n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -141,8 +482,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "yes",
         "decision": "PASS",
         "explanation": "Individual data points are shown. "
@@ -154,6 +509,70 @@
         "from_the_caption": "mean  +/- S.D.",
         "decision": "PASS",
         "explanation": "Quantified TET/GAPDH ratios in panel F show error bars and the caption defines them as \"mean +/- S.D.\""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "p<0.001",
+          "p=0.031"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "p<0.001",
+          "p=0.031"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "unpaired two-tailed Student’s T test.",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "TET1, TET2, and TET3 protein expression levels were determined in NC and HFD treated mice. Bottom panel: The relative ratios of TET1, TET2, TET3 over GAPDH, n = 6 in NC; n = 7 in HFD"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 6,
+        "replicate_type_reported": "yes",
+        "replicate_type": "NC and HFD treated mice",
+        "decision": "PASS",
+        "explanation": "n is reported (n=6 NC, n=7 HFD) and refers to mice; n>2 and summary statistics reported."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]

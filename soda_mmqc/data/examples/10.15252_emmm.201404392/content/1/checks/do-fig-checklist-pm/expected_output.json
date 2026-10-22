@@ -11,8 +11,26 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "50 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "yes",
+        "annotation_description_on_image": [
+          "white box"
+        ],
+        "annotation_defined_in_caption": [
+          "no"
+        ],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": 3,
+        "number_of_single_channel_images_shown": 3,
+        "all_channels_shown_separately": "yes"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "no",
         "decision": "FAIL",
         "explanation": "Bar chart showing averaged data but is missing individual data points overlaid "
@@ -24,6 +42,72 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "no"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "FAIL",
+        "explanation": [
+          {
+            "axis": "y",
+            "explanation": "The lower graph plots HMGB1 signal intensity (continuous fluorescent signal) for nuclear and cytoplasmic compartments, but no units are given on the y-axis or in the caption. A unit such as 'arbitrary units (AU)' or similar fluorescence intensity units should be specified."
+          }
+        ]
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "**"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "p<0.01"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "The lower bar graph shows significance markers (**, p<0.01) but the caption for panel A does not specify which statistical test was used for these comparisons."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "N=4 n>100"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 4,
+        "replicate_type_reported": "no",
+        "replicate_type": "",
+        "decision": "FAIL",
+        "explanation": "Lower graph shows mean ± SD and the panel image reports 'N=4 n>100', but the caption/panel do not explicitly state what the replicates represent (animals vs cells) as a clear replication type."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -37,8 +121,26 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "25 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "yes",
+        "any_annotation_present_on_image": "yes",
+        "annotation_description_on_image": [
+          "white arrowhead"
+        ],
+        "annotation_defined_in_caption": [
+          "no"
+        ],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": 3,
+        "number_of_single_channel_images_shown": 3,
+        "all_channels_shown_separately": "yes"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "no",
         "decision": "FAIL",
         "explanation": "Bar chart showing averaged data but is missing individual data points overlaid "
@@ -50,6 +152,61 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [],
+        "decision": "PASS",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "no",
+        "statistical_test_mentioned": "not_required",
+        "from_the_caption": "",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "N=4 n>400"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 4,
+        "replicate_type_reported": "yes",
+        "replicate_type": "mice",
+        "decision": "PASS",
+        "explanation": "The caption explicitly states 'four ... mice' for the groups and the panel reports N=4 (and n>400), so number and replicate type (mice) are reported and n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -63,8 +220,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a western blot — check does not apply"
@@ -76,6 +247,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Panel C shows a representative Western blot without reported quantification or summary statistics; appears to be a representative image rather than replicated quantitative data."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -89,8 +304,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a line graph -individual data points are not required. "
@@ -102,6 +331,79 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Age is indicated in weeks (e.g., 5w, 7w, 9w shown on the x-axis)."
+          },
+          {
+            "axis": "y",
+            "definition": "Time on Rotarod (sec)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "*",
+          "**"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "*p < 0.05",
+          "** p<0.01"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "Bonferroni–Dunn test and Student's t‐test",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Atx1-KI (N=13), Atx1-KI;HMGB1 (N=9), HMGB1 (N=7), WT (N=13)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 7,
+        "replicate_type_reported": "yes",
+        "replicate_type": "mice",
+        "decision": "PASS",
+        "explanation": "Group Ns are reported in the figure (N=13, N=9, N=7, N=13) and the experiment is described in the caption as a test of mouse motor performance, so number and replicate type (mice) are reported and minimum n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -115,8 +417,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a line graph -individual data points are not required. "
@@ -128,6 +444,72 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Time on Rotarod (sec)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "*"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "*P < 0.05"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "no",
+        "from_the_caption": "",
+        "decision": "FAIL",
+        "explanation": "The rotarod performance line graph shows significance markers (*) but the caption for panel E only states that data are presented as mean ± SD and does not specify which statistical test was used."
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Atx1-KI (N=13), Atx1-KI;HMGB1 (N=9), HMGB1 (N=7), WT (N=13)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 7,
+        "replicate_type_reported": "yes",
+        "replicate_type": "mice",
+        "decision": "PASS",
+        "explanation": "Panel E shows detailed rotarod data with group Ns reported; replicate type (mice) is indicated by the experimental context, and n for each group is >2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "no",
+        "discrepancies": "Caption describes rotarod results for three genotypes (WT, Atxn1‑KI, double‑transgenic) from day 1–3 at 5, 9 and 21 weeks, but the panel displays four groups (includes an HMGB1-only genotype in addition to the three mentioned). The number of genotypes shown in the image does not match the caption description."
       }
     },
     {
@@ -141,8 +523,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "not_required",
         "decision": "PASS",
         "explanation": "Panel is a line graph -individual data points are not required. "
@@ -154,6 +550,72 @@
         "from_the_caption": "",
         "decision": "PASS",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "yes"
+          },
+          {
+            "axis": "y",
+            "answer": "not_required"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "x",
+            "definition": "Time axis labeled in weeks"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "p = 0.0025"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes"
+        ],
+        "symbol_definition": [
+          "p = 0.0025"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "Kaplan–Meier analysis, and the end‐point postponement was significant in the log‐rank test (P = 0.0025).",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "Atx1-KI (N=13), Atx1-KI;HMGB1 (N=12), HMGB1 (N=10), WT (N=10)"
+        ],
+        "n_reported": "yes",
+        "n_value_min": 10,
+        "replicate_type_reported": "yes",
+        "replicate_type": "mice",
+        "decision": "PASS",
+        "explanation": "Survival (Kaplan–Meier) plot includes group Ns in the figure legend; the experiment involves mice and reported group sizes are all >2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -167,8 +629,22 @@
         "scale_bar_defined_in_image": "yes",
         "from_the_image": "100 μm"
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "yes",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": 2,
+        "number_of_single_channel_images_shown": 2,
+        "all_channels_shown_separately": "yes"
+      },
       "individual-data-points": {
-        "plot": "no",
+        "is_a_plot_with_axes": "no",
         "individual_values": "not_applicable",
         "decision": "not_applicable",
         "explanation": "Panel is a representative micrograph — check does not apply."
@@ -180,6 +656,50 @@
         "from_the_caption": "",
         "decision": "not_applicable",
         "explanation": ""
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "no",
+        "units_provided": [],
+        "unit_definition_as_provided": [],
+        "decision": "not_applicable",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "no",
+        "tick_sequence_anomaly": "not_applicable",
+        "gap_visually_marked": "not_applicable",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "no",
+        "significance_level_symbols_on_image": [],
+        "decision": "not_applicable",
+        "explanation": "",
+        "symbols_defined": [],
+        "symbol_definition": []
+      },
+      "stat-test": {
+        "is_a_plot": "no",
+        "statistical_significance_claim": "not_applicable",
+        "statistical_test_mentioned": "not_applicable",
+        "from_the_caption": "",
+        "decision": "not_applicable",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "no",
+        "replicate_statements": [],
+        "n_reported": "not_applicable",
+        "n_value_min": "not_applicable",
+        "replicate_type_reported": "not_applicable",
+        "replicate_type": "",
+        "decision": "not_applicable",
+        "explanation": "Panel G displays histological images (representative images) without quantitative summary statistics; no replicated quantitative data are reported in the panel itself."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     },
     {
@@ -193,8 +713,22 @@
         "scale_bar_defined_in_image": "not_applicable",
         "from_the_image": ""
       },
+      "image-annotation-defined": {
+        "image_data": "no",
+        "any_annotation_present_on_image": "no",
+        "annotation_description_on_image": [],
+        "annotation_defined_in_caption": [],
+        "from_the_caption": []
+      },
+      "single-channel-for-overlay": {
+        "multicolored_overlay_micrograph": "no",
+        "overlay_channels": [],
+        "number_of_channels_in_overlay": "not_applicable",
+        "number_of_single_channel_images_shown": "not_applicable",
+        "all_channels_shown_separately": "not_applicable"
+      },
       "individual-data-points": {
-        "plot": "yes",
+        "is_a_plot_with_axes": "yes",
         "individual_values": "no",
         "decision": "FAIL",
         "explanation": "Bar chart showing averaged data but is missing individual data points overlaid "
@@ -206,6 +740,75 @@
         "from_the_caption": "mean +/- SD",
         "decision": "PASS",
         "explanation": "Error bars are defined in the caption as mean +/- SD (calculated for nine mice  per group)."
+      },
+      "plot-axis-units": {
+        "is_a_plot_with_axes": "yes",
+        "units_provided": [
+          {
+            "axis": "x",
+            "answer": "not_required"
+          },
+          {
+            "axis": "y",
+            "answer": "yes"
+          }
+        ],
+        "unit_definition_as_provided": [
+          {
+            "axis": "y",
+            "definition": "Thickness of molecular layer (µm)"
+          }
+        ],
+        "decision": "PASS",
+        "explanation": []
+      },
+      "plot-gap-labeling": {
+        "is_a_plot_with_axes": "yes",
+        "tick_sequence_anomaly": "no",
+        "gap_visually_marked": "not_required",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "stat-significance-level": {
+        "is_a_plot": "yes",
+        "significance_level_symbols_on_image": [
+          "*",
+          "#"
+        ],
+        "decision": "PASS",
+        "explanation": "All significance level symbols are defined.",
+        "symbols_defined": [
+          "yes",
+          "yes"
+        ],
+        "symbol_definition": [
+          "*P < 0.05",
+          "#P < 0.05"
+        ]
+      },
+      "stat-test": {
+        "is_a_plot": "yes",
+        "statistical_significance_claim": "yes",
+        "statistical_test_mentioned": "yes",
+        "from_the_caption": "(upper graph; Student's t‐test, P < 0.05). *P < 0.05 in Student's t‐test, #P < 0.05 in one‐way ANOVA followed by post hoc Tukey's HSD (honestly significant difference) test.",
+        "decision": "PASS",
+        "explanation": ""
+      },
+      "replication-reporting": {
+        "involves_replicates": "yes",
+        "replicate_statements": [
+          "The mean thickness was quantified in more than 10 visual fields per mouse, and the mean ± SD was calculated for nine mice in each group."
+        ],
+        "n_reported": "yes",
+        "n_value_min": 9,
+        "replicate_type_reported": "yes",
+        "replicate_type": "visual fields per mouse; mice",
+        "decision": "PASS",
+        "explanation": "The caption explicitly states the measurement was quantified in more than 10 visual fields per mouse and the mean ± SD was calculated for nine mice per group, so both number and type of replicates are reported and n>2."
+      },
+      "panel-image-matches-caption": {
+        "image_matches_caption": "yes",
+        "discrepancies": ""
       }
     }
   ]
