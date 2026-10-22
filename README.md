@@ -97,9 +97,54 @@ own panels (`A|B|C_i ← D`) is as accurate (exp-09) but costs a third more.
 
 **The answer is panel-major.** One row per panel — its label, its content
 classes, then each check's fields under the check's name — rather than one
-list per check (exp-10). The two shapes are level on accuracy; panel-major
-states each panel once, so the eleven checks cannot disagree about which
-panels exist, and it dispatched a little more reliably and cost a little less.
+list per check (exp-10). The same two panels and two of the eleven checks, in
+each shape (abridged):
+
+*Check-major* — one list per check; every list names the panels again:
+
+```json
+{
+  "micrograph-scale-bar": [
+    {"panel_label": "A", "micrograph": "yes", "scale_bar_on_image": "yes", "…": "…"},
+    {"panel_label": "B", "micrograph": "no", "scale_bar_on_image": "not_applicable", "…": "…"}
+  ],
+  "error-bars-defined": [
+    {"panel_label": "A", "is_a_plot": "no", "decision": "not_applicable", "…": "…"},
+    {"panel_label": "B", "is_a_plot": "yes", "error_bar_on_figure": "yes", "decision": "PASS", "…": "…"}
+  ],
+  "…": "nine more checks, each with its own list of panels"
+}
+```
+
+*Panel-major* — one list of panels; each check's fields under its name:
+
+```json
+{
+  "outputs": [
+    {
+      "panel_label": "A",
+      "panel_classes": ["micrograph"],
+      "micrograph-scale-bar": {"micrograph": "yes", "scale_bar_on_image": "yes", "…": "…"},
+      "error-bars-defined": {"is_a_plot": "no", "decision": "not_applicable", "…": "…"},
+      "…": "nine more checks"
+    },
+    {
+      "panel_label": "B",
+      "panel_classes": ["plot"],
+      "micrograph-scale-bar": {"micrograph": "no", "scale_bar_on_image": "not_applicable", "…": "…"},
+      "error-bars-defined": {"is_a_plot": "yes", "error_bar_on_figure": "yes", "decision": "PASS", "…": "…"},
+      "…": "nine more checks"
+    }
+  ]
+}
+```
+
+Check-major states panel A eleven times, once in each check's list, and
+nothing makes the lists agree; panel-major states it once, so the checks
+cannot disagree about which panels exist, and scoring aligns one panel list
+instead of eleven. Each check's fields are the same in both shapes — only
+where they sit differs. The two were level on accuracy; panel-major
+dispatched a little more reliably and cost a little less.
 
 ## The figure checklist
 
