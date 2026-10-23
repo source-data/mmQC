@@ -386,6 +386,9 @@ redesign, and keep the names separate as set out in
 
 ## Order of work
 
+Scheduled, with milestones and gates, in
+[`plans/2026-10-23-harness-in-mmqc-utils.md`](plans/2026-10-23-harness-in-mmqc-utils.md).
+
 1. **Refactor the seam inside mmQC.** Assembly takes parts, files and a
    checklist source. Configuration becomes an options object. Content
    builders are separated from gold. The existing tests must keep passing.
