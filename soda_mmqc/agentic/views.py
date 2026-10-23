@@ -19,7 +19,7 @@ from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     owns_evaluation_contracts,
 )
-from soda_mmqc.agentic.pinning import (
+from mmqc_utils.agentic.pinning import (
     VERSION_MANIFEST_FILENAME,
     SkillSet,
     load_version_manifest,
@@ -27,7 +27,7 @@ from soda_mmqc.agentic.pinning import (
     skill_content_hash,
     validate_version_manifest,
 )
-from soda_mmqc.agentic.skills import (
+from mmqc_utils.agentic.skills import (
     Skill,
     invoked_skills,
     validate_skills,

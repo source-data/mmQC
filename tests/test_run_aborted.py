@@ -39,7 +39,7 @@ def _failing_with(monkeypatch, message: str) -> list[str]:
         calls.append(str(layout))
         raise RuntimeError(message)
 
-    monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+    monkeypatch.setattr(runner, "run_session", fake_session)
     monkeypatch.setattr(runner, "_openai_session_client", lambda layout, model: None)
     return calls
 
@@ -79,7 +79,7 @@ def test_any_other_failure_is_recorded_and_the_run_goes_on(tmp_path: Path, monke
 # Concurrent runs: the same sessions, the same report, the same stop.
 # ---------------------------------------------------------------------------
 
-from soda_mmqc.agentic.session import ToolAuditLog  # noqa: E402
+from mmqc_utils.agentic.session import ToolAuditLog  # noqa: E402
 
 
 def _examples(n: int) -> list[str]:
@@ -107,7 +107,7 @@ def _answering(monkeypatch, tmp_path: Path, *, fail_on: str | None = None) -> li
         audit = ToolAuditLog(tmp_path / f"audit-{len(calls)}.json")
         return {"outputs": []}, _Recorder(), audit
 
-    monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+    monkeypatch.setattr(runner, "run_session", fake_session)
     monkeypatch.setattr(runner, "_openai_session_client", lambda layout, model: None)
     return calls
 
@@ -154,7 +154,7 @@ def test_concurrency_is_refused_where_it_cannot_work(tmp_path: Path, kwargs):
 
 def test_a_failed_session_keeps_its_trace_audit_and_error(tmp_path: Path, monkeypatch):
     """exp-07: a session that declined to answer left no record at all."""
-    from soda_mmqc.agentic.session import SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME
+    from mmqc_utils.agentic.session import SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME
     (example,) = _examples(1)
 
     async def fake_session(layout, *, versions, approver, options, client):
@@ -164,7 +164,7 @@ def test_a_failed_session_keeps_its_trace_audit_and_error(tmp_path: Path, monkey
         (intermediates / SKILL_TRACE_FILENAME).write_text('[{"skill": "micrograph-scale-bar"}]')
         raise ValueError("The session's result is not JSON, which means it declined to answer")
 
-    monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+    monkeypatch.setattr(runner, "run_session", fake_session)
     monkeypatch.setattr(runner, "_openai_session_client", lambda layout, model: None)
     root, report = run_check_live(CHECKLIST, CHECK, output=tmp_path, examples=[example],
                                   concurrency=1)

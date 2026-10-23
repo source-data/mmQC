@@ -8,8 +8,8 @@ production as well as in the tests, because the cost of a leak is a scored
 run that quietly saw the answer.
 
 Assembly knows nothing about where examples are stored or what kind they
-are. The caller states the content as an :class:`ExampleContent`; mmQC's
-benchmark does that in :mod:`soda_mmqc.agentic.benchmark`.
+are. The caller states the content as an :class:`ExampleContent`: mmQC's
+benchmark from its example store, an application from its own data.
 """
 
 from __future__ import annotations
@@ -26,13 +26,13 @@ from typing import (
     Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple,
 )
 
-from soda_mmqc.agentic.pinning import (
+from mmqc_utils.agentic.pinning import (
     SkillSet,
     SkillSetEntry,
     checklist_pins,
     validate_version_manifest,
 )
-from soda_mmqc.agentic.skills import (
+from mmqc_utils.agentic.skills import (
     SKILL_FILENAME,
     _read_json,
     Skill,

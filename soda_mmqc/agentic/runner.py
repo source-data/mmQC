@@ -27,20 +27,20 @@ from soda_mmqc.config import (
 )
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.agentic.benchmark import example_content
-from soda_mmqc.agentic.pinning import (
+from mmqc_utils.agentic.pinning import (
     validate_version_manifest,
     SkillSet,
     checklist_pins,
     expand_skill_sets,
     load_model_defaults,
 )
-from soda_mmqc.agentic.runtime import (
+from mmqc_utils.agentic.runtime import (
     ASSEMBLY_CLOSURE,
     RuntimeLayout,
     effective_session_options,
     runtime_skill_set,
 )
-from soda_mmqc.agentic.session import (
+from mmqc_utils.agentic.session import (
     compare_declared_and_observed,
     INTERMEDIATES_DIRNAME,
     runtime_session,
@@ -48,11 +48,11 @@ from soda_mmqc.agentic.session import (
     SKILL_SET_FILENAME,
     SKILL_TRACE_FILENAME,
     TOOL_AUDIT_FILENAME,
-    _run_agent_session,
+    run_session,
     interactive_approver,
     load_skill_file,
 )
-from soda_mmqc.agentic.skills import (
+from mmqc_utils.agentic.skills import (
     SKILL_FILENAME,
     load_skills,
     _read_json,
@@ -503,7 +503,7 @@ def run_check_live(
                         else None
                     )
                     prediction, recorder, audit = asyncio.run(
-                        _run_agent_session(
+                        run_session(
                             layout,
                             versions=versions,
                             approver=approver,

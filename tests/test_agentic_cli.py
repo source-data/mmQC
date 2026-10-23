@@ -59,12 +59,12 @@ import soda_mmqc.cli as cli
 import soda_mmqc.config as config
 import soda_mmqc.agentic.runner as runner
 import soda_mmqc.agentic.benchmark as agentic_benchmark
-import soda_mmqc.agentic.runtime as agentic_runtime
+import mmqc_utils.agentic.runtime as agentic_runtime
 
 # Imported from the module that defines each name, rather than
 # through a re-export surface on cli: patching and reading must
 # reach the one definition.
-from soda_mmqc.agentic.pinning import (
+from mmqc_utils.agentic.pinning import (
     MODEL_DEFAULTS_FILENAME,
     VERSION_MANIFEST_FILENAME,
     checklist_pins,
@@ -80,7 +80,7 @@ from soda_mmqc.agentic.runner import (
     run_check_mock,
 )
 from soda_mmqc.agentic.benchmark import example_content
-from soda_mmqc.agentic.runtime import (
+from mmqc_utils.agentic.runtime import (
     ASSEMBLY_ALL,
     EXAMPLE_GOLD_SUBDIR,
     assemble_runtime,
@@ -88,7 +88,7 @@ from soda_mmqc.agentic.runtime import (
     session_cache_key,
     session_options,
 )
-from soda_mmqc.agentic.session import (
+from mmqc_utils.agentic.session import (
     AUDIT_INPUT_MAX_BYTES,
     INTERMEDIATES_DIRNAME,
     PREDICTION_FILENAME,
@@ -98,7 +98,7 @@ from soda_mmqc.agentic.session import (
     ToolAuditLog,
     _extract_tool_calls,
     _extract_usage,
-    _run_agent_session,
+    run_session,
     _session_message,
     compare_declared_and_observed,
     interactive_approver,
@@ -106,7 +106,7 @@ from soda_mmqc.agentic.session import (
     runtime_session,
     validate_against_schema,
 )
-from soda_mmqc.agentic.skills import (
+from mmqc_utils.agentic.skills import (
     SKILL_FILENAME,
     SKILL_TOOL,
     _prose_blocks,
@@ -125,7 +125,7 @@ from soda_mmqc.agentic.views import (
     render_dag,
     render_readme,
 )
-from soda_mmqc.agentic.runtime import (
+from mmqc_utils.agentic.runtime import (
     AGENTIC_INPUT_MANIFEST_FILENAME,
     AGENTIC_INPUT_SUBDIR,
 )
@@ -2181,7 +2181,7 @@ class TestNoLeafRestatesTheSharedSkill:
 # The second is why "outside the repo" is necessary but not sufficient, and
 # why the setting sources are pinned to "project" alone.
 
-from soda_mmqc.agentic.runtime import (  # noqa: E402
+from mmqc_utils.agentic.runtime import (  # noqa: E402
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_SETTING_SOURCES,
@@ -2501,7 +2501,7 @@ class TestRuntimeLifecycle:
 # mistaken widening reports which guarantee it broke rather than just that a
 # set changed.
 
-from soda_mmqc.agentic.runtime import (  # noqa: E402
+from mmqc_utils.agentic.runtime import (  # noqa: E402
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_BASE_TOOLS,
     AGENTIC_FORBIDDEN_TOOLS,
@@ -2681,7 +2681,7 @@ class TestPermissionProfile:
         prediction.json itself. It does not: `output_format` constrains the
         answer to the leaf schema and the runner serialises the result, so
         the last reason for a write tool went with it."""
-        source = inspect.getsource(_run_agent_session)
+        source = inspect.getsource(run_session)
         assert "output_path.write_text" in source
         assert "json.loads(result_text)" in source
 
@@ -2854,7 +2854,7 @@ def _valid_prediction():
 
 def _run(layout, **kwargs):
     """Returns (prediction, trace recorder, audit log)."""
-    return asyncio.run(_run_agent_session(layout, **kwargs))
+    return asyncio.run(run_session(layout, **kwargs))
 
 
 @requires_subpanel_figure
@@ -4110,7 +4110,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
     def stub_session(self, monkeypatch):
         """Run the real `run_check_live` loop with the provider faked out."""
         seen = []
-        real = _run_agent_session
+        real = run_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             seen.append(dict(versions))
@@ -4122,7 +4122,7 @@ class TestUnpinnedRunsDoNotOverwriteTheBaseline:
                 client=_fake_client([], writes=_valid_prediction()),
             )
 
-        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "run_session", fake_session)
         monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
         return seen
 
@@ -4219,7 +4219,7 @@ class TestASessionNeedsNoFilesystem:
         ):
             return _valid_prediction(), _Recorder(), _Audit()
 
-        monkeypatch.setattr(runner, "_run_agent_session", fake_run_agent_session)
+        monkeypatch.setattr(runner, "run_session", fake_run_agent_session)
         monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
 
         _, report = run_check_live(
@@ -4273,7 +4273,7 @@ class TestNoRunIsDeniedOrSeeded:
         params = inspect.signature(make_pretooluse_hook).parameters
         assert "denied_shared_skills" not in params
         assert "denied_shared_skills" not in inspect.signature(
-            _run_agent_session
+            run_session
         ).parameters
 
     def test_the_runner_cannot_seed_a_runtime(self):
@@ -4482,7 +4482,7 @@ class TestEveryAxisIsADirectory:
     def stub_session(self, monkeypatch):
         """Run the real `run_check_live` loop with the provider faked out."""
         seen = []
-        real = _run_agent_session
+        real = run_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             seen.append(dict(versions))
@@ -4494,7 +4494,7 @@ class TestEveryAxisIsADirectory:
                 client=_fake_client([], writes=_valid_prediction()),
             )
 
-        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "run_session", fake_session)
         monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
         return seen
 
@@ -4662,7 +4662,7 @@ class TestAnInterruptedRunResumes:
     @pytest.fixture
     def stub_session(self, monkeypatch):
         calls = []
-        real = _run_agent_session
+        real = run_session
 
         async def fake_session(layout, *, versions, approver, options, client):
             calls.append(layout.example)
@@ -4671,7 +4671,7 @@ class TestAnInterruptedRunResumes:
                 client=_fake_client([], writes=_valid_prediction()),
             )
 
-        monkeypatch.setattr(runner, "_run_agent_session", fake_session)
+        monkeypatch.setattr(runner, "run_session", fake_session)
         monkeypatch.setattr(runner, "_openai_session_client", lambda l, m: None)
         return calls
 
@@ -4751,7 +4751,7 @@ class TestTheRunRecordsWhatItCost:
         """A safety-classifier fallback changes the model mid-session; the
         audit says when, and whether a subagent was speaking."""
         from types import SimpleNamespace
-        from soda_mmqc.agentic.session import _extract_turn
+        from mmqc_utils.agentic.session import _extract_turn
         audit = ToolAuditLog(tmp_path / "audit.json")
         for model, mid in (("claude-opus-5-5", "m1"), ("claude-opus-5-5", "m1"),
                            ("claude-opus-5", "m2")):
@@ -4762,7 +4762,7 @@ class TestTheRunRecordsWhatItCost:
         assert [t["model"] for t in written["turns"]] == ["claude-opus-5-5", "claude-opus-5"]
 
     def test_a_result_message_is_not_a_turn_and_keeps_its_stop_reason(self):
-        from soda_mmqc.agentic.session import _extract_turn
+        from mmqc_utils.agentic.session import _extract_turn
         result = {"subtype": "success", "total_cost_usd": 0.1, "stop_reason": "refusal",
                   "content": None}
         assert _extract_turn(result) is None
@@ -4830,7 +4830,7 @@ class TestTheCliIsAParser:
 
     def test_no_constant_is_defined_twice(self):
         from soda_mmqc.agentic import runner as _runner
-        from soda_mmqc.agentic import session as _session
+        from mmqc_utils.agentic import session as _session
 
         assert "PREDICTION_FILENAME" not in vars(cli), (
             "PREDICTION_FILENAME is owned by agentic.session; cli must not "

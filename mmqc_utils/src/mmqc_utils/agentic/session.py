@@ -22,9 +22,9 @@ from typing import (
 
 import yaml
 
-from soda_mmqc.agentic.pinning import checklist_pins
-from soda_mmqc.agentic.render import render_anthropic
-from soda_mmqc.agentic.runtime import (
+from mmqc_utils.agentic.pinning import checklist_pins
+from mmqc_utils.agentic.render import render_anthropic
+from mmqc_utils.agentic.runtime import (
     ASSEMBLY_CLOSURE,
     ExampleContent,
     RuntimeLayout,
@@ -32,7 +32,7 @@ from soda_mmqc.agentic.runtime import (
     assemble_runtime,
     session_options,
 )
-from soda_mmqc.agentic.skills import (
+from mmqc_utils.agentic.skills import (
     _FRONTMATTER,
     SKILL_TOOL,
     load_skills,
@@ -64,6 +64,7 @@ TOOL_AUDIT_FILENAME = "tool_audit.json"
 SKILL_SET_FILENAME = "skill_set.json"
 
 __all__ = [
+    "run_session",
     "runtime_session",
     "SkillTraceRecorder",
     "ToolAuditLog",
@@ -419,7 +420,7 @@ def _extract_tool_calls(message: Any) -> Iterator[Tuple[str, Any, Any]]:
             yield name, payload, use_id
 
 
-async def _run_agent_session(
+async def run_session(
     layout: RuntimeLayout,
     *,
     client=None,

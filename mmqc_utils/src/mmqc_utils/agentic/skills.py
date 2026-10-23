@@ -5,8 +5,7 @@ graph is path-independent: renaming a skill's directory, moving it under its
 caller or burying it three levels deep leaves the resolved graph identical.
 
 Nothing here knows where checklists are stored: every function takes a
-checklist's directory. Finding one by name is mmQC's business
-(:func:`soda_mmqc.config.resolve_check_dir`).
+checklist's directory. Finding one by name is the caller's business.
 """
 
 from __future__ import annotations

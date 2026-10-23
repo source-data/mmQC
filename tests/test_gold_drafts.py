@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 import pytest
 
-from soda_mmqc.agentic.session import PREDICTION_FILENAME
+from mmqc_utils.agentic.session import PREDICTION_FILENAME
 from soda_mmqc.core.gold_drafts import DRAFT_REPLICATE, init_expected_outputs
 
 CHECKLIST = "fig-checklist"

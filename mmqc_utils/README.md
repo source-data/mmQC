@@ -10,6 +10,7 @@ Reusable conversion utilities for MMQC projects.
 - Align a quote against a source text and return character-level spans, score, and match status
 - Align multiple quotes against a shared source with automatic resolution of duplicate-occurrence ambiguity
 - Render HTML fragments visualizing a single alignment or multi-quote coverage of a shared source
+- Run a structured checklist of agent skills on one example, in a sealed Claude Agent SDK session (`mmqc_utils.agentic`, optional extra `agentic`)
 
 ## System requirements
 
@@ -278,6 +279,53 @@ Required CSS classes:
 | `.coverage-view` | wrapper `<div>` |
 | `.cov-legend` | legend row above the source |
 | `.cov-chip` | each colored label chip in the legend |
+
+### Agentic checklist runs
+
+Requires the `agentic` extra, which pins the Claude Agent SDK exactly (it bundles the Claude Code CLI that each session runs):
+
+```bash
+pip install "mmqc-utils[agentic]"
+```
+
+A checklist is a directory of versioned skills, `<skill>/vN/SKILL.md`, that invoke each other in their prose. Its `version-manifest.yaml` picks one version of each. The entry point owns a `schema.json`, the structure of the answer. mmQC develops and benchmarks the checklists; an application runs them the same way:
+
+```python
+import asyncio
+from pathlib import Path
+
+from mmqc_utils.agentic import (
+    ExampleContent,
+    effective_session_options,
+    load_model_defaults,
+    run_session,
+    runtime_session,
+    validate_skills,
+)
+
+checklist = Path("fig-checklist")             # a checklist directory
+content = ExampleContent(
+    source_root=Path("figure-3"),             # staged into the runtime; paths below are relative to it
+    parts=(
+        {"kind": "text", "text": "Figure caption:\n" + caption},
+        {"kind": "image", "path": "figure.jpg"},
+    ),
+    files={},                                 # supporting files, by role (not sent; listed for the session)
+    label="figure-3",
+)
+
+skills = validate_skills(checklist)
+defaults = load_model_defaults(checklist)
+with runtime_session(checklist, "do-fig-checklist-pm", content, parent=Path("/var/tmp/runtimes")) as layout:
+    options = effective_session_options(layout, skills, defaults=defaults.session)
+    options["model"] = defaults.model_for("claude-sdk")
+    answer, trace, audit = asyncio.run(run_session(layout, options=options))
+```
+
+- `runtime_session` assembles a sealed runtime for the entry point: the skills its pinned prose reaches, one version each, and the example's content. It yields the runtime and removes it afterwards. The runtime is created under `parent` (default: the system temp directory); keep it off synced folders and outside any repository holding skills.
+- The session has one tool, `Skill`, and no shell, file, network or subagent tools. The example's content travels in the request.
+- `run_session` returns the answer, validated against the entry point's schema, the trace of the skills the session invoked (`trace.invoked`), and an audit of its tool calls and token usage. It raises `ValueError` when the session ends without an answer, or with one that is not JSON or does not satisfy the schema.
+- The harness logs under `mmqc_utils.agentic` and configures no handlers.
 
 ## Development
 

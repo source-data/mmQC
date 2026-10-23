@@ -31,6 +31,20 @@ dependencies = [
 ]
 requires-python = ">= 3.12"
 
+[project.optional-dependencies]
+# The agentic harness (mmqc_utils.agentic): sealed agent sessions running a
+# checklist of skills on one example.
+agentic = [
+    # Pinned exactly rather than floated: the SDK is 0.x with no semver
+    # promise and ships frequently, and a silently updated agent runtime would
+    # make scores non-comparable between runs, and production with the
+    # benchmark. Bumping it is a deliberate change. It bundles the Claude Code
+    # CLI that each session runs.
+    "claude-agent-sdk==0.2.165",
+    "jsonschema>=4.0.0",
+    "pyyaml>=6.0.0",
+]
+
 [dependency-groups]
 dev = [
     {include-group = "lint"},
@@ -78,6 +92,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 mmqc_utils = ["py.typed"]
+"mmqc_utils.agentic" = ["CLAUDE.md"]
 
 [tool.uv]
 package = true

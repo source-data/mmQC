@@ -357,6 +357,12 @@ validation), Anthropic rendering, `CLAUDE.md`.
   wanted by production. It plugs into the session through the client
   argument that already exists.
 
+> **Decision — 2026-10-23, Thomas Lemberger: proceed; consult the
+> maintainer when the work is done.** Nothing is published to PyPI before
+> then: mmQC uses the in-repo package (Milestone 0), and the integration
+> with soda-curation may still change the harness. Gate 3B still blocks
+> any release.
+
 **Step 1: Human gate 3A — the maintainer's agreement.**
 
 - **Decision:** does the maintainer of `mmqc-utils` agree to add an
@@ -397,6 +403,74 @@ fixture checklist inside `mmqc_utils/tests/fixtures/`, not `fig-checklist`.
 
 **Automatic gate:** both suites. `uv run pytest` at the root, and the
 `mmqc_utils` suite on its own.
+
+> **Done to the release gate — 2026-10-23.** Gate 3A was deferred by
+> decision (above), and gate 3B (release) is open. Nothing is published.
+>
+> **What moved:**
+>
+> - `skills`, `pinning`, `runtime`, `session`, `render` and `CLAUDE.md` are
+>   now `mmqc_utils/src/mmqc_utils/agentic/`, moved with `git mv`.
+> - The only edits were their imports and two docstrings that named mmQC
+>   modules.
+> - No re-export shims are left in `soda_mmqc/agentic/`. It keeps
+>   `benchmark`, `runner`, `views` and `openai_driver`, and its docstring
+>   says so.
+>
+> **Interface (Step 2):**
+>
+> - `mmqc_utils.agentic` re-exports the interface applications use:
+>   `ExampleContent`, `RuntimeLayout`, `runtime_session`,
+>   `assemble_runtime`, `run_session`, `session_options`,
+>   `effective_session_options`, `validate_skills`, `call_closure`,
+>   `checklist_pins`, `load_model_defaults`, `skill_content_hash`, `Skill`,
+>   `SkillSet`.
+> - `_run_agent_session` became `run_session`, since an application must
+>   call it.
+> - Documented in `mmqc_utils/README.md` with a worked example.
+>   `CHANGELOG.md` records it under "Unreleased".
+>
+> **Packaging:**
+>
+> - The `agentic` extra pins `claude-agent-sdk==0.2.165`, a pin that has
+>   moved from the root `pyproject.toml` so there is one, and adds
+>   `jsonschema` (until now an indirect dependency) and `pyyaml`.
+> - `CLAUDE.md` is package data.
+> - mmQC depends on `mmqc-utils[agentic]`.
+> - A wheel built from the tree contains the subpackage, the template and
+>   the extra.
+>
+> **Logging:** mmQC attaches its console and file handlers to the
+> `mmqc_utils` logger as well (`soda_mmqc/__init__.py`). The test
+> fixture that lets `caplog` see `soda_mmqc` records now does the same for
+> `mmqc_utils`.
+>
+> **Tests:**
+>
+> - `mmqc_utils/tests/test_agentic.py`: 16 tests on a toy checklist built
+>   in the test (closure vs all, the manifest picking prose, explicit pins,
+>   staging and the inputs manifest, `parent`, the entry-point schema rule,
+>   refusing gold unless excluded, atomicity, teardown, the permission
+>   profile, Anthropic rendering, and a session with a replaying client:
+>   validated answer and trace, an answer outside the schema, a prose
+>   answer).
+> - `mmqc_utils/tests/test_agentic_boundary.py` (replacing the root's
+>   `test_harness_boundary.py`): no harness module imports `soda_mmqc`. In a
+>   subprocess with an empty environment and a `.env` in its working
+>   directory, importing `mmqc_utils.agentic` writes no file, reads no
+>   `.env`, loads no `soda_mmqc` and does not import the SDK. That is the
+>   test Milestone 2 deferred.
+> - `test_agentic_cli.py` stays at the root: it tests the harness through
+>   mmQC's benchmark, and its imports now name `mmqc_utils.agentic`.
+>
+> **Checks:**
+>
+> - root suite: 972 passed, 7 skipped;
+> - `mmqc_utils` suite: 107 passed, 1 skipped, in its own environment with
+>   only the extra (`soda_mmqc` not installed; `MAGICK_HOME` set for the
+>   image tests);
+> - the gate 1A snapshot is byte-identical (493 runtimes);
+> - `mmqc assemble` logs to mmQC's console and file.
 
 ---
 
@@ -548,3 +622,6 @@ its code.
 - **1A, 2026-10-23: accepted.** Assembly takes a checklist directory and an
   `ExampleContent`. The benchmark adapter is `agentic/benchmark.py`. The
   493 assembled runtimes are byte-identical to the ones before the change.
+- **3A, 2026-10-23: deferred by decision.** Implementation proceeds; the
+  maintainer of `mmqc-utils` is consulted when it is done, before any
+  release.

@@ -49,3 +49,12 @@ logger.setLevel(logging.DEBUG)
 # Remove any existing handlers to prevent duplicate logging
 logger.propagate = False
 
+
+# The agentic harness logs under `mmqc_utils.agentic`, a package of its own
+# that configures no handlers; its messages belong in mmQC's console and log
+# file like the rest.
+_harness_logger = logging.getLogger("mmqc_utils")
+_harness_logger.addHandler(console_handler)
+_harness_logger.addHandler(file_handler)
+_harness_logger.setLevel(logging.DEBUG)
+_harness_logger.propagate = False

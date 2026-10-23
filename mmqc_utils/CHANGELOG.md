@@ -4,6 +4,9 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+### Added
+- `mmqc_utils.agentic` (optional extra `agentic`): the agentic harness developed in mmQC, so that applications run a checklist exactly as mmQC benchmarks it. Skills and their call graph, version pinning and model defaults, sealed runtime assembly from an `ExampleContent`, the session's permission profile, running a session (`run_session`) with its skill trace and tool audit, and rendering content for a provider. The extra pins `claude-agent-sdk==0.2.165` and adds `jsonschema` and `pyyaml`.
+
 ### Fixed
 - `postprocess_html` (and so `document_to_html`, since 0.3.4) turned the doctype into the text `html` at the start of the document, and dropped the delimiters of HTML comments: `str()` of a BeautifulSoup doctype or comment is its bare content.
 
