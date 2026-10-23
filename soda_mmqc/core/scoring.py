@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from tqdm import tqdm
 
@@ -36,6 +36,7 @@ __all__ = [
     "save_analysis",
     "load_predictions",
     "score_check",
+    "stale_examples",
 ]
 
 #: The scored result of one run leaf, written beside the ``<example>/``
@@ -221,6 +222,77 @@ def _read_prediction(path: Path) -> Dict[str, Any]:
     return payload
 
 
+def _pair_with_gold(
+    examples: Sequence[str],
+    predictions: Mapping[str, Dict[str, Any]],
+    example_class: str,
+    check_name: str,
+) -> List[Tuple[Any, Dict[str, Any], Dict[str, Any]]]:
+    """``(example, prediction, gold)`` for each example that has gold.
+
+    The one place that decides what a leaf's scoring reads, so that
+    :func:`stale_examples` compares against exactly what
+    :func:`score_check` would score.
+    """
+    pairs = []
+    for relative_source_path in examples:
+        example = EXAMPLE_FACTORY.create(relative_source_path, example_class)
+        expected_output = example.get_expected_output(check_name)
+        if not expected_output:
+            logger.warning(
+                "No expected output for %s; skipping", relative_source_path
+            )
+            continue
+        pairs.append(
+            (example, predictions[relative_source_path], expected_output)
+        )
+    return pairs
+
+
+def stale_examples(checklist: str, check: str, leaf: Path) -> List[str]:
+    """Examples whose scoring inputs differ from what ``analysis.json`` scored.
+
+    An example is stale when its prediction or its gold -- the gold in
+    force now, pinned or live -- is not what the leaf's analysis recorded,
+    or when it would be scored now and was not, or the other way round.
+    An empty list means the analysis is current.
+
+    Compared by content, never by file time: a branch checkout rewrites
+    ``prediction.json`` with a new mtime and the same bytes, extracting a
+    pinned gold snapshot does the same to the gold, and ``analysis.json``
+    is ignored by git, so its own mtime never moves with either.
+
+    Raises:
+        FileNotFoundError: If the leaf has no ``analysis.json``.
+    """
+    leaf = Path(leaf)
+    check_dir = resolve_check_dir(checklist, check)
+    benchmark = _read_json(check_dir / "benchmark.json")
+    predictions = load_predictions(leaf)
+    examples = [ex for ex in benchmark.get("examples") or [] if ex in predictions]
+    current = {
+        example.relative_source_path: (prediction, gold)
+        for example, prediction, gold in _pair_with_gold(
+            examples,
+            predictions,
+            benchmark["example_class"],
+            benchmark.get("name", check_dir.name),
+        )
+    }
+    scored = {
+        record["metadata"]["source"]: (
+            record.get("model_output"),
+            record.get("expected_output"),
+        )
+        for record in _read_json(leaf / ANALYSIS_FILENAME).get("flat", [])
+    }
+    return sorted(
+        source
+        for source in current.keys() | scored.keys()
+        if current.get(source) != scored.get(source)
+    )
+
+
 def score_check(
     checklist: str,
     check: str,
@@ -318,19 +390,14 @@ def score_check(
 
     results: List[ModelResult] = []
     expected_outputs: List[Dict[str, Any]] = []
-    for relative_source_path in scored_examples:
-        example = EXAMPLE_FACTORY.create(relative_source_path, example_class)
-        expected_output = example.get_expected_output(check_name)
-        if not expected_output:
-            logger.warning(
-                "No expected output for %s; skipping", relative_source_path
-            )
-            continue
+    for example, prediction, expected_output in _pair_with_gold(
+        scored_examples, predictions, example_class, check_name
+    ):
         expected_outputs.append(expected_output)
         results.append(
             ModelResult(
                 doc_id=example.doc_id,
-                model_output=predictions[relative_source_path],
+                model_output=prediction,
                 metadata={
                     "doc_id": example.doc_id,
                     "source": example.relative_source_path,

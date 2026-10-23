@@ -47,7 +47,11 @@ from soda_mmqc.config import (
     list_checks,
     owns_evaluation_contracts,
 )
-from soda_mmqc.core.scoring import ModelResult, analyze_results
+from soda_mmqc.core.scoring import (
+    ModelResult,
+    analyze_results,
+    stale_examples,
+)
 
 import soda_mmqc.cli as cli
 import soda_mmqc.config as config
@@ -669,6 +673,66 @@ class TestCli:
             )
             == 1
         )
+
+
+class TestStaleExamples:
+    """Whether a leaf's analysis.json still describes its inputs.
+
+    By content: a branch checkout gives every prediction a new mtime and
+    the same bytes, and that must not read as stale.
+    """
+
+    @pytest.fixture
+    def scored_leaf(self, pilot, tmp_path: Path) -> Path:
+        leaf = _write_predictions_dir(tmp_path / "leaf", dict(pilot["golds"]))
+        score_check(
+            "fig-checklist", "micrograph-scale-bar", leaf,
+            embedder=_mock_embedder, save=True,
+        )
+        return leaf
+
+    def test_a_freshly_scored_leaf_is_current(self, scored_leaf: Path):
+        assert stale_examples(
+            "fig-checklist", "micrograph-scale-bar", scored_leaf
+        ) == []
+
+    def test_a_newer_file_with_the_same_content_is_current(
+        self, scored_leaf: Path
+    ):
+        for prediction in scored_leaf.rglob("prediction.json"):
+            stat = prediction.stat()
+            os.utime(prediction, ns=(stat.st_atime_ns, stat.st_mtime_ns + 10**10))
+        assert stale_examples(
+            "fig-checklist", "micrograph-scale-bar", scored_leaf
+        ) == []
+
+    def test_a_changed_prediction_is_stale(self, pilot, scored_leaf: Path):
+        path = scored_leaf / "doc-a/content/1" / "prediction.json"
+        changed = json.loads(path.read_text(encoding="utf-8"))
+        changed["outputs"][0]["micrograph"] = "no"
+        path.write_text(json.dumps(changed), encoding="utf-8")
+        assert stale_examples(
+            "fig-checklist", "micrograph-scale-bar", scored_leaf
+        ) == ["doc-a/content/1"]
+
+    def test_changed_gold_is_stale(self, pilot, scored_leaf: Path):
+        gold = (
+            pilot["examples_root"] / "doc-b/content/1" / "checks"
+            / "micrograph-scale-bar" / "expected_output.json"
+        )
+        gold.write_text(json.dumps(_gold("B", micrograph="yes")), encoding="utf-8")
+        assert stale_examples(
+            "fig-checklist", "micrograph-scale-bar", scored_leaf
+        ) == ["doc-b/content/1"]
+
+    def test_a_prediction_removed_after_scoring_is_stale(
+        self, pilot, scored_leaf: Path
+    ):
+        removed = scored_leaf / "doc-b/content/1" / "prediction.json"
+        removed.unlink()
+        assert stale_examples(
+            "fig-checklist", "micrograph-scale-bar", scored_leaf
+        ) == ["doc-b/content/1"]
 
 
 # ---------------------------------------------------------------------------
