@@ -42,7 +42,7 @@ sys.path.insert(0, str(REPO))
 from soda_mmqc import logger                                      # noqa: E402
 from soda_mmqc.agentic.runner import RunAborted, run_check_live   # noqa: E402
 from soda_mmqc.agentic.runtime import ASSEMBLY_CLOSURE            # noqa: E402
-from soda_mmqc.agentic.skills import resolve_check_dir            # noqa: E402
+from soda_mmqc.config import resolve_check_dir                    # noqa: E402
 
 CHECKLIST = "fig-checklist-exp05"
 ENTRIES = {"cm": "do-fig-checklist-cm", "pm": "do-fig-checklist-pm"}

@@ -20,7 +20,10 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from soda_mmqc import logger
 from soda_mmqc.config import (
     AGENTIC_DEFAULT_MODEL,
+    AGENTIC_SKILLSET_WARN_THRESHOLD,
     EVALUATION_DIR,
+    resolve_agentic_runtime_root,
+    resolve_check_dir,
 )
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.agentic.benchmark import example_content
@@ -33,6 +36,7 @@ from soda_mmqc.agentic.pinning import (
 )
 from soda_mmqc.agentic.runtime import (
     ASSEMBLY_CLOSURE,
+    RuntimeLayout,
     effective_session_options,
     runtime_skill_set,
 )
@@ -44,14 +48,14 @@ from soda_mmqc.agentic.session import (
     SKILL_SET_FILENAME,
     SKILL_TRACE_FILENAME,
     TOOL_AUDIT_FILENAME,
-    _openai_session_client,
     _run_agent_session,
     interactive_approver,
+    load_skill_file,
 )
 from soda_mmqc.agentic.skills import (
+    SKILL_FILENAME,
     load_skills,
     _read_json,
-    resolve_check_dir,
     select_versions,
     validate_skills,
 )
@@ -424,7 +428,10 @@ def run_check_live(
     else:
         validate_version_manifest(skills, pins, checklist_dir)
 
-    skill_sets = expand_skill_sets(skills, pins, dict(unpin or {}))
+    skill_sets = expand_skill_sets(
+        skills, pins, dict(unpin or {}),
+        warn_above=AGENTIC_SKILLSET_WARN_THRESHOLD,
+    )
     model = resolve_model(checklist_dir, provider, model)
     defaults = load_model_defaults(checklist_dir).session
     root_dir = Path(output or default_predictions_dir(checklist, check, model))
@@ -482,6 +489,7 @@ def run_check_live(
             with runtime_session(
                 checklist_dir, check,
                 example_content(checklist, check, relative_source_path),
+                parent=resolve_agentic_runtime_root(),
                 keep=keep_runtime, pins=versions, assembly=assembly,
             ) as layout:
                 try:
@@ -613,6 +621,30 @@ def run_check_live(
 
 
 FAILURE_FILENAME = "failure.json"
+
+
+def _openai_session_client(layout: RuntimeLayout, model: str):
+    """Build the OpenAI-backed client for one assembled runtime.
+
+    Every assembled skill's description goes in; its *body* is handed over
+    only when the model invokes it, mirroring how the Agent SDK's `Skill`
+    tool behaves. Nothing tells the model which skill the entry point needs.
+    """
+    from soda_mmqc.agentic.openai_driver import RuntimeTools, make_openai_client
+
+    bodies, descriptions = {}, {}
+    for path in sorted(layout.skills_root.glob(f"*/{SKILL_FILENAME}")):
+        skill = load_skill_file(path)
+        bodies[path.parent.name] = skill["body"]
+        descriptions[path.parent.name] = skill["description"]
+
+    return make_openai_client(
+        bodies,
+        descriptions,
+        RuntimeTools(layout.root, layout.artifacts_root),
+        layout.orientation_path.read_text(encoding="utf-8"),
+        model=model,
+    )
 
 
 def _keep_failed_session(layout, example_dir: Path, exc: Exception, *, concurrency: int) -> None:

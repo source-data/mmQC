@@ -27,7 +27,8 @@ from soda_mmqc.core.evaluation import FlatEvaluator
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.core.leaves import _default_semantic_embedder
 from soda_mmqc.agentic.runner import PREDICTION_FILENAME
-from soda_mmqc.agentic.skills import _read_json, resolve_check_dir
+from soda_mmqc.agentic.skills import _read_json
+from soda_mmqc.config import resolve_check_dir
 
 __all__ = [
     "ANALYSIS_FILENAME",

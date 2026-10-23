@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -21,7 +22,6 @@ from typing import (
 
 import yaml
 
-from soda_mmqc import logger
 from soda_mmqc.agentic.pinning import checklist_pins
 from soda_mmqc.agentic.render import render_anthropic
 from soda_mmqc.agentic.runtime import (
@@ -34,7 +34,6 @@ from soda_mmqc.agentic.runtime import (
 )
 from soda_mmqc.agentic.skills import (
     _FRONTMATTER,
-    SKILL_FILENAME,
     SKILL_TOOL,
     load_skills,
     select_versions,
@@ -80,6 +79,8 @@ __all__ = [
     "SKILL_SET_FILENAME",
 ]
 
+logger = logging.getLogger(__name__)
+
 
 @contextlib.contextmanager
 def runtime_session(
@@ -88,6 +89,7 @@ def runtime_session(
     content: ExampleContent,
     *,
     root: Optional[Path] = None,
+    parent: Optional[Path] = None,
     keep: bool = False,
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
@@ -101,7 +103,7 @@ def runtime_session(
     which is when it is most wanted.
     """
     layout = assemble_runtime(
-        checklist_dir, check, content, root=root, pins=pins,
+        checklist_dir, check, content, root=root, parent=parent, pins=pins,
         assembly=assembly,
     )
     try:
@@ -715,30 +717,6 @@ def interactive_approver(
         return False, "denied by operator"
 
     return approve
-
-
-def _openai_session_client(layout: RuntimeLayout, model: str):
-    """Build the OpenAI-backed client for one assembled runtime.
-
-    Every assembled skill's description goes in; its *body* is handed over
-    only when the model invokes it, mirroring how the Agent SDK's `Skill`
-    tool behaves. Nothing tells the model which skill the entry point needs.
-    """
-    from soda_mmqc.agentic.openai_driver import RuntimeTools, make_openai_client
-
-    bodies, descriptions = {}, {}
-    for path in sorted(layout.skills_root.glob(f"*/{SKILL_FILENAME}")):
-        skill = load_skill_file(path)
-        bodies[path.parent.name] = skill["body"]
-        descriptions[path.parent.name] = skill["description"]
-
-    return make_openai_client(
-        bodies,
-        descriptions,
-        RuntimeTools(layout.root, layout.artifacts_root),
-        layout.orientation_path.read_text(encoding="utf-8"),
-        model=model,
-    )
 
 
 def load_skill_file(path: Path) -> Dict[str, str]:

@@ -11,10 +11,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from soda_mmqc.config import EXAMPLES_DIR
+from soda_mmqc.config import EXAMPLES_DIR, resolve_check_dir
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.agentic.runtime import EXAMPLE_GOLD_SUBDIR, ExampleContent
-from soda_mmqc.agentic.skills import _read_json, resolve_check_dir
+from soda_mmqc.agentic.skills import _read_json
 
 __all__ = ["EXAMPLE_INPUT_SUBDIR", "example_content"]
 

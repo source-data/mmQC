@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -25,24 +26,6 @@ from typing import (
     Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple,
 )
 
-from soda_mmqc import logger
-from soda_mmqc.config import (
-    AGENTIC_AGENT_HOME_SUBDIR,
-    AGENTIC_ALLOWED_TOOL_NAMES,
-    AGENTIC_ARTIFACTS_SUBDIR,
-    AGENTIC_BASE_TOOLS,
-    AGENTIC_CLAUDE_TEMPLATE,
-    AGENTIC_FORBIDDEN_TOOLS,
-    AGENTIC_INPUT_MANIFEST_FILENAME,
-    AGENTIC_INPUT_SUBDIR,
-    AGENTIC_MAX_BUFFER_BYTES,
-    AGENTIC_ORIENTATION_FILENAME,
-    AGENTIC_PERMISSION_MODE,
-    AGENTIC_RUNTIME_PREFIX,
-    AGENTIC_SETTING_SOURCES,
-    AGENTIC_SKILLS_SUBDIR,
-    resolve_agentic_runtime_root,
-)
 from soda_mmqc.agentic.pinning import (
     SkillSet,
     SkillSetEntry,
@@ -54,7 +37,6 @@ from soda_mmqc.agentic.skills import (
     _read_json,
     Skill,
     call_closure,
-    check_dir_in,
     select_versions,
     validate_skills,
 )
@@ -72,6 +54,232 @@ __all__ = [
     "ASSEMBLY_ALL",
     "_leaf_schema",
 ]
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# The runtime's layout and the session's permission profile
+# ---------------------------------------------------------------------------
+#
+# Fixed by the harness, not configurable by a caller: the containment
+# boundary is a property of the sealed runtime, as `model-defaults.yaml`'s
+# loader already insists for checklists.
+
+#: Directory name prefix of each runtime, under the runtime parent.
+AGENTIC_RUNTIME_PREFIX = "soda-mmqc-agentic-"
+
+#: Where the SDK expects to find skills, relative to the runtime root.
+AGENTIC_SKILLS_SUBDIR = Path(".claude") / "skills"
+
+#: Where the session writes intermediate artifacts and the final prediction,
+#: relative to the runtime root. The only writable location in the profile.
+AGENTIC_ARTIFACTS_SUBDIR = Path("artifacts")
+
+#: Where the current example's inputs are copied, relative to the runtime root.
+AGENTIC_INPUT_SUBDIR = Path("input")
+
+#: `CLAUDE_CONFIG_DIR` for the session, inside the runtime.
+#:
+#: Without it the session writes its transcript to
+#: `~/.claude/projects/<slugified-cwd>/` -- outside the runtime, surviving
+#: teardown, and holding the gold-derived reasoning the containment exists to
+#: keep in. Redirecting it also folds the transcript into the same artifact as
+#: the skills and the staged example, so `--keep-runtime` preserves what the
+#: session actually thought.
+AGENTIC_AGENT_HOME_SUBDIR = Path("agent-home")
+
+#: The base set of built-in tools the session *has*, as opposed to the ones it
+#: may use without prompting.
+#:
+#: `tools` and `allowed_tools` are different mechanisms and the distinction
+#: cost this project real containment. The SDK: `tools` is "the base set of
+#: available built-in tools"; `allowed_tools` is "tool names that are
+#: auto-allowed without prompting". Naming three tools in `allowed_tools`
+#: left roughly twenty in the model's context, and the profile then had to
+#: enumerate every dangerous one by name -- a list that grew on 2026-09-14
+#: after a live session reported what it actually had, missed
+#: `ShareOnboardingGuide` until 2026-09-19, and left `Write` reachable but
+#: unscoped, so a skill told to write `artifacts/panels.json` could equally
+#: have overwritten its own `SKILL.md`.
+#:
+#: Naming what the session may have turns "enumerate everything dangerous"
+#: into "enumerate what is needed", which is a list the checks can justify:
+#: Skill to reach the DAG. That is all.
+#:
+#: **The session writes nothing.** A check observes an example; it does not
+#: change one. The final answer is a structured result the runner serialises,
+#: so no file needs writing to deliver it, and the only remaining reason to
+#: write was to hand an intermediate to a later check -- which is a channel
+#: between runs that nothing bounds. "Only `panels.json`" is a convention,
+#: not a constraint: a session with a write tool can put anything anywhere it
+#: is allowed to write, and a later check picking that up would be an
+#: interaction nobody declared.
+#:
+#: Not a permanent position. Whether skills should exchange artefacts on disk
+#: is a real design question and deserves an experiment of its own, comparing
+#: arms that do and do not. Starting without means the comparison has a
+#: baseline; starting with means every arm already contains the thing under
+#: test.
+#:
+#: No Glob either: the manifest names every staged file, and searching is not
+#: the agent's job. The deny list below stays as defence in depth over a much
+#: smaller surface.
+AGENTIC_BASE_TOOLS = ("Skill",)
+
+#: Ceiling for the SDK's newline-delimited JSON reader.
+#:
+#: The SDK reads the CLI's stream with a 1 MB default buffer, and a figure the
+#: session opens arrives base64-encoded inside a single JSON message. Reading
+#: one overflows that buffer and kills the session with a decode error rather
+#: than anything that names an image. Nothing hit this until the harness began
+#: naming the staged figure: before that the agent guessed filenames, never
+#: opened one, and answered from the caption alone.
+#:
+#: A ceiling, not an allocation -- nothing is reserved.
+AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
+
+#: The generated per-run orientation file, relative to the runtime root.
+#: The runtime's project instructions. `CLAUDE.md` rather than a bespoke
+#: orientation file: the SDK loads it automatically when `setting_sources`
+#: includes "project" (which it does), so the session starts with the layout
+#: already in context instead of spending its first turn reading a file. It is
+#: static -- identical for every run -- and everything per-run lives in the
+#: manifest below.
+AGENTIC_ORIENTATION_FILENAME = "CLAUDE.md"
+
+#: Template copied verbatim into each runtime as `CLAUDE.md`. It lives
+#: beside the harness rather than under `data/` because it is what dictates
+#: the agent's general behaviour, not a data asset a checklist owns.
+AGENTIC_CLAUDE_TEMPLATE = Path(__file__).resolve().parent / "CLAUDE.md"
+
+#: Per-run manifest naming exactly what the harness staged. Machine-readable
+#: on purpose: which files exist is data, not prose, and the agent has no way
+#: to discover them otherwise.
+AGENTIC_INPUT_MANIFEST_FILENAME = "inputs.json"
+
+#: Setting sources passed to the SDK session.
+#:
+#: **"user" is deliberately absent.** It is what loads `~/.claude/skills/`,
+#: which has nothing to do with this repository and would put whatever the
+#: operator happens to have installed into a scored run -- silently, and
+#: differently on every machine. Only "project" is used, and because the
+#: runtime root is outside any repository, that resolves to exactly the
+#: skills assembled under the runtime root.
+#:
+#: Widening this is a containment change and needs the same scrutiny as
+#: widening the tool allowlist.
+AGENTIC_SETTING_SOURCES = ("project",)
+
+# ---------------------------------------------------------------------------
+# Agentic permission profile
+# ---------------------------------------------------------------------------
+#
+# Deny by default. The session may do exactly one thing: invoke a skill. It has
+# no file tools -- the example's content travels with the request, and the
+# runner serialises the structured result -- so nothing it does touches the
+# filesystem.
+#
+# Three facts from the Agent SDK's permission documentation shape this, and
+# each one invalidates an obvious-looking construction:
+#
+# 1. `allowed_tools` is NOT an allowlist. It is a list of *auto-approvals*.
+#    "Any other tool not listed in allowed_tools is still available to Claude,
+#    and a call to it that needs approval falls through to the permission mode
+#    and canUseTool." So listing one tool does not remove the rest.
+#
+# 2. `permission_mode="dontAsk"` is what turns it into one: "Any call that
+#    would otherwise prompt is denied [...] canUseTool is never called." The
+#    documentation names `allowed_tools` + `dontAsk` as *the* locked-down
+#    pairing. `default` -- what this profile used first -- leaves unlisted
+#    tools falling through to a callback that does not exist.
+#
+# 3. Even under `dontAsk`, some calls "need no approval" and run regardless:
+#    read-only shell commands, file reads inside the working directory, and
+#    "tools like Agent that don't ask before running". The only way to put a
+#    tool out of reach is a bare name in `disallowed_tools`, which removes it
+#    from the model's context entirely. That is why the denials below are not
+#    redundant with the allowlist -- for `Agent` in particular they are the
+#    only thing that works.
+
+#: Tool names the session may use. The options actually passed to the SDK are
+#: built per-runtime by session_options().
+#:
+#: If a file tool ever comes back, scope writes with `Edit(...)`, never
+#: `Write(...)`: "Edit(path) rules govern all built-in tools that write files,
+#: including Write and NotebookEdit; a Write(path) rule is never matched by the
+#: file permission checks." A scoped `Write(...)` rule would silently match
+#: nothing.
+AGENTIC_ALLOWED_TOOL_NAMES = ("Skill",)
+
+#: Tools removed from the model's context entirely, each for a specific
+#: reason. Bare names are required: a scoped rule leaves the tool available.
+AGENTIC_FORBIDDEN_TOOLS = {
+    # Shell and code execution: would let the session leave the runtime
+    # directory entirely, making every other control cosmetic. Note that
+    # read-only shell commands are auto-approved even under dontAsk, so the
+    # bare-name denial is the only thing that actually removes Bash.
+    "Bash": "shell access escapes the sealed runtime",
+    "BashOutput": "shell access escapes the sealed runtime",
+    "KillShell": "shell access escapes the sealed runtime",
+    "NotebookEdit": "executes code",
+    # Subagents: a spawned agent negotiates its own context and permissions,
+    # which reopens containment from another direction, and its skill calls
+    # do not appear in this session's trace -- so the per-example record of
+    # which skills actually fired would be incomplete. The SDK documents
+    # `Agent` as running without asking, so only a bare-name denial stops it.
+    "Task": "subagents reopen containment and break the Skill trace",
+    "Agent": "subagents reopen containment and break the Skill trace",
+    # Network: nothing in a figure check needs the internet, and a fetch is
+    # both an exfiltration path for gold-derived content and a source of
+    # irreproducibility between runs.
+    "WebFetch": "no network capability is justified by any skill's needs",
+    "WebSearch": "no network capability is justified by any skill's needs",
+    # --- Added 2026-09-14 after observing the SDK's *reported* tool set ---
+    # The first live session reported 20 tools where this profile names 3.
+    # `allowed_tools` auto-approves; it does not remove. Everything below was
+    # present in the model's context and none of it was considered when the
+    # profile was written -- which is precisely why gate 3B asks for the
+    # reported set rather than trusting the allowlist.
+    #
+    # Egress and persistence. These are the serious ones: a session that can
+    # message, notify or schedule can move gold-derived content out of the
+    # runtime and can act after the run is over.
+    "SendMessage": "egress path out of the sealed runtime",
+    # Observed in the reported tool set on 2026-09-19 and missing from this
+    # list: it uploads a local file and returns a shareable link, which is an
+    # exfiltration path for gold-derived content exactly like the three below.
+    "ShareOnboardingGuide": "egress path out of the sealed runtime",
+    "PushNotification": "egress path out of the sealed runtime",
+    "ScheduleWakeup": "would let the session act after the run ends",
+    "CronCreate": "would let the session act after the run ends",
+    "CronDelete": "scheduling surface, unused by any check",
+    "CronList": "scheduling surface, unused by any check",
+    "Monitor": "background observation, unused by any check",
+    "Workflow": "orchestration surface, unused by any check",
+    # Filesystem navigation beyond the runtime.
+    "EnterWorktree": "moves the session out of the sealed runtime",
+    "ExitWorktree": "moves the session out of the sealed runtime",
+    # Discovery surfaces: the content arrives in the request, so there is
+    # nothing to search for.
+    "Glob": "no file tools: the content arrives in the request",
+    "Grep": "no file tools: the content arrives in the request",
+    "ToolSearch": "tool discovery, unused by any check",
+    "ListAgents": "agent enumeration; subagents are already denied",
+    "DesignSync": "unused by any check",
+    "ReportFindings": "unused by any check",
+}
+
+#: Permission mode. `dontAsk` denies anything that would otherwise prompt,
+#: which is what makes the scoped allowlist total. The runtime is unattended,
+#: so there is no human to prompt anyway -- and `default` would leave unlisted
+#: tools resolving through a `canUseTool` callback that is not supplied.
+#:
+#: Consequence worth knowing: under `dontAsk` the SDK never calls
+#: `canUseTool`, so per-call human approval cannot be layered on top of this
+#: mode. Interactive review has to come from a `PreToolUse` hook, which runs
+#: before every other step in every mode. See the milestone 3 results doc.
+AGENTIC_PERMISSION_MODE = "dontAsk"
+
 
 #: Assemble the entry point and what its pinned prose reaches, transitively.
 #: The default: a session holds one copy of each instruction it can use, and
@@ -214,6 +422,7 @@ def assemble_runtime(
     content: ExampleContent,
     *,
     root: Optional[Path] = None,
+    parent: Optional[Path] = None,
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
 ) -> RuntimeLayout:
@@ -243,18 +452,26 @@ def assemble_runtime(
         check: The entry-point leaf.
         content: The example's content, as the caller states it.
         root: Where to put the runtime. Defaults to a fresh directory under
-            the configured runtime root, which is outside the repository.
+            ``parent``.
+        parent: Where fresh runtimes are created when ``root`` is not
+            given. Defaults to the system's temporary directory. It must lie
+            outside any repository whose skills the SDK could discover, and
+            off any synced folder; checking that is the caller's job, since
+            only the caller knows its repository.
         pins: Optional ``{skill: version}``. Defaults to the checklist's
             ``version-manifest.yaml``, and -- only when there is none -- to
             the highest version of each skill.
         assembly: ``"closure"`` (default) or ``"all"``.
 
     Raises:
-        FileNotFoundError: If the checklist, the check or the content's
-            source directory is absent.
-        ValueError: If the check is not a check, or the skills are invalid.
+        FileNotFoundError: If the checklist or the content's source
+            directory is absent.
+        ValueError: If the check is not a skill of the checklist, has no
+            ``schema.json``, or the skills are invalid.
     """
-    checklist_dir = check_dir_in(checklist_dir, check).parent
+    checklist_dir = Path(checklist_dir)
+    if not checklist_dir.is_dir():
+        raise FileNotFoundError(f"Checklist not found: {checklist_dir}")
 
     # Validate the graph before building anything from it: a runtime
     # assembled from an inconsistent checklist would fail confusingly, at
@@ -262,8 +479,15 @@ def assemble_runtime(
     skills = validate_skills(checklist_dir)
     if check not in skills:
         raise ValueError(
-            f"{check!r} owns the evaluation contracts but has no "
-            f"{SKILL_FILENAME}; it cannot be an agentic entry point"
+            f"{check!r} has no {SKILL_FILENAME} in {checklist_dir}; it "
+            "cannot be an agentic entry point"
+        )
+    # The entry point's schema is the answer's contract: the session is
+    # constrained to it, and the prediction validated against it.
+    if not (checklist_dir / check / "schema.json").is_file():
+        raise ValueError(
+            f"{check!r} has no schema.json in {checklist_dir}; an entry point "
+            "answers with structured output, and its schema is the contract"
         )
     if pins is None:
         pins = checklist_pins(checklist_dir)
@@ -287,7 +511,7 @@ def assemble_runtime(
         root = Path(
             tempfile.mkdtemp(
                 prefix=AGENTIC_RUNTIME_PREFIX,
-                dir=resolve_agentic_runtime_root(),
+                dir=parent if parent is not None else tempfile.gettempdir(),
             )
         )
         root.rmdir()  # mkdtemp reserved the name; staging is renamed onto it

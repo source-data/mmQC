@@ -291,6 +291,51 @@ patch the options object instead.
 
 **Automatic gate:** `uv run pytest`, including the Step 1 test.
 
+> **Done — 2026-10-23.** Two deviations from the steps above:
+>
+> - **No `HarnessOptions` object.** Of its three proposed fields, the
+>   default model belongs to the runner (`resolve_model`), and the
+>   skill-set warning threshold belongs to `--unpin` expansion.
+>   `expand_skill_sets` now warns only when the caller passes
+>   `warn_above`; the runner passes mmQC's `AGENTIC_SKILLSET_WARN_THRESHOLD`.
+>   That leaves one setting, where runtimes are created, and it became the
+>   `parent` argument of `assemble_runtime` and `runtime_session`. The
+>   harness defaults to the system temp directory. mmQC passes
+>   `resolve_agentic_runtime_root()`, which keeps the repository and
+>   cloud-sync refusals in `config.py`, since only mmQC knows its
+>   repository.
+> - **The clean-subprocess import test waits for Milestone 3.** While the
+>   modules live inside `soda_mmqc`, importing any of them runs
+>   `soda_mmqc/__init__.py`, which loads `.env` and opens a log file.
+>   Instead, `tests/test_harness_boundary.py` asserts by AST that
+>   `skills`, `pinning`, `runtime`, `session` and `render` import nothing
+>   from `soda_mmqc` outside themselves, lazy imports included. That
+>   property is what makes the move mechanical.
+>
+> **What moved:**
+>
+> - **Into `runtime.py`, with their comments:** the layout and containment
+>   constants (`AGENTIC_*_SUBDIR`, tools, permission mode, setting sources,
+>   buffer size, `CLAUDE.md` template path).
+> - **Into `config.py`, beside `list_checks`:** `resolve_check_dir` and
+>   `check_dir_in`. They are mmQC's checklist lookup and require
+>   `benchmark.json`.
+> - **In their place, the harness checks only** that the entry point is a
+>   skill of the checklist and has a `schema.json`, its answer's contract.
+>   Production will publish no `benchmark.json`.
+> - **Into `runner.py`:** the OpenAI client factory
+>   (`_openai_session_client`), since the OpenAI driver stays in mmQC.
+> - **Logging:** each harness module uses `logging.getLogger(__name__)`.
+>   Under `soda_mmqc.agentic.*` these propagate to mmQC's handlers, so the
+>   console and the log file are unchanged. After the move, mmQC will
+>   configure `mmqc_utils.agentic`.
+>
+> **Checks:**
+>
+> - 978 passed, 7 skipped (972 plus the 6 boundary tests);
+> - the gate 1A snapshot is still byte-identical (493 runtimes);
+> - `mmqc assemble` logs as before.
+
 ---
 
 ## Milestone 3: Move into `mmqc_utils.agentic`

@@ -4,10 +4,9 @@ A skill's identity is its frontmatter ``name``, never its directory, so the
 graph is path-independent: renaming a skill's directory, moving it under its
 caller or burying it three levels deep leaves the resolved graph identical.
 
-`CHECKLIST_DIR` is read from :mod:`soda_mmqc.config` at call time rather than
-bound at import. The agentic code is spread over several modules now, and a
-bound copy per module would mean a caller redirecting one of them and silently
-not the others.
+Nothing here knows where checklists are stored: every function takes a
+checklist's directory. Finding one by name is mmQC's business
+(:func:`soda_mmqc.config.resolve_check_dir`).
 """
 
 from __future__ import annotations
@@ -21,13 +20,6 @@ import json
 
 import yaml
 
-from soda_mmqc import config
-from soda_mmqc.config import (
-    EVALUATION_CONTRACT_FILES,
-    list_checks,
-    owns_evaluation_contracts,
-)
-
 __all__ = [
     "_read_json",
     "SKILL_FILENAME",
@@ -40,8 +32,6 @@ __all__ = [
     "invoked_skills",
     "validate_skills",
     "select_versions",
-    "resolve_check_dir",
-    "check_dir_in",
 ]
 
 
@@ -64,41 +54,6 @@ _FRONTMATTER = re.compile(r"\A---\r?\n(?P<yaml>.*?)\r?\n---[ \t]*\r?\n?(?P<body>
 _LIST_KEYS = ("requires", "produces", "needs")
 
 
-def resolve_check_dir(checklist: str, check: str) -> Path:
-    """Return the directory of ``check`` within the named ``checklist``.
-
-    Raises:
-        FileNotFoundError: If the checklist or the check directory is absent.
-        ValueError: If the directory exists but is not a check, i.e. it does
-            not own the evaluation contracts (a shared skill, for instance).
-    """
-    return check_dir_in(config.CHECKLIST_DIR / checklist, check)
-
-
-def check_dir_in(checklist_dir: Path, check: str) -> Path:
-    """Return the directory of ``check`` within the checklist at ``checklist_dir``.
-
-    Raises:
-        FileNotFoundError: If the checklist or the check directory is absent.
-        ValueError: If the directory exists but is not a check.
-    """
-    checklist_dir = Path(checklist_dir)
-    if not checklist_dir.is_dir():
-        raise FileNotFoundError(f"Checklist not found: {checklist_dir}")
-
-    check_dir = checklist_dir / check
-    if not check_dir.is_dir():
-        known = ", ".join(sorted(list_checks(checklist_dir))) or "none"
-        raise FileNotFoundError(
-            f"Check not found: {check_dir}. Known checks: {known}"
-        )
-    if not owns_evaluation_contracts(check_dir):
-        raise ValueError(
-            f"{check_dir} is not a check: it does not own "
-            f"{' and '.join(EVALUATION_CONTRACT_FILES)}. Shared skills sit "
-            "beside the checks but cannot be scored."
-        )
-    return check_dir
 
 @dataclass(frozen=True)
 class Skill:

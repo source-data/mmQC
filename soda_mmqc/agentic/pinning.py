@@ -12,14 +12,13 @@ import dataclasses
 import itertools
 import hashlib
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
-from soda_mmqc import logger
-from soda_mmqc.config import AGENTIC_SKILLSET_WARN_THRESHOLD
 from soda_mmqc.agentic.skills import (
     Skill,
     load_skills,
@@ -39,6 +38,8 @@ __all__ = [
     "load_model_defaults",
     "expand_skill_sets",
 ]
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -361,7 +362,7 @@ def expand_skill_sets(
     pins: Mapping[str, str],
     unpin: Mapping[str, Optional[Sequence[str]]],
     *,
-    warn_above: int = AGENTIC_SKILLSET_WARN_THRESHOLD,
+    warn_above: Optional[int] = None,
 ) -> List[SkillSet]:
     """Expand the manifest into one SkillSet per version combination.
 
@@ -373,7 +374,8 @@ def expand_skill_sets(
     versions is a legitimate thing to want -- but the result is a session
     count multiplied by the number of examples, so crossing ``warn_above``
     says so rather than refusing. Refusing would be the runner making a
-    spending decision that is the operator's.
+    spending decision that is the operator's. Where the line sits is the
+    caller's policy; without one, nothing is said.
 
     Raises:
         ValueError: If ``unpin`` names an unknown skill or version.

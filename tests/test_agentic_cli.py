@@ -46,6 +46,8 @@ from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     list_checks,
     owns_evaluation_contracts,
+    resolve_agentic_runtime_root,
+    resolve_check_dir,
 )
 from soda_mmqc.core.scoring import (
     ModelResult,
@@ -114,7 +116,6 @@ from soda_mmqc.agentic.skills import (
     invoked_skills,
     load_skill,
     load_skills,
-    resolve_check_dir,
     select_versions,
     validate_skills,
 )
@@ -124,7 +125,7 @@ from soda_mmqc.agentic.views import (
     render_dag,
     render_readme,
 )
-from soda_mmqc.config import (
+from soda_mmqc.agentic.runtime import (
     AGENTIC_INPUT_MANIFEST_FILENAME,
     AGENTIC_INPUT_SUBDIR,
 )
@@ -138,6 +139,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def _assemble(checklist: str, check: str, example: str, **kwargs):
     """Assemble a runtime for a benchmark example, as the runner does."""
+    kwargs.setdefault("parent", resolve_agentic_runtime_root())
     return assemble_runtime(
         resolve_check_dir(checklist, check).parent, check,
         example_content(checklist, check, example), **kwargs,
@@ -146,6 +148,7 @@ def _assemble(checklist: str, check: str, example: str, **kwargs):
 
 def _session(checklist: str, check: str, example: str, **kwargs):
     """A runtime session for a benchmark example, as the runner opens one."""
+    kwargs.setdefault("parent", resolve_agentic_runtime_root())
     return runtime_session(
         resolve_check_dir(checklist, check).parent, check,
         example_content(checklist, check, example), **kwargs,
@@ -2178,12 +2181,11 @@ class TestNoLeafRestatesTheSharedSkill:
 # The second is why "outside the repo" is necessary but not sufficient, and
 # why the setting sources are pinned to "project" alone.
 
-from soda_mmqc.config import (  # noqa: E402
+from soda_mmqc.agentic.runtime import (  # noqa: E402
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_SETTING_SOURCES,
     AGENTIC_SKILLS_SUBDIR,
-    resolve_agentic_runtime_root,
 )
 
 GOLD_FILENAMES = ("expected_output.json", "benchmark.json", "eval-manifest.json")
@@ -2499,7 +2501,7 @@ class TestRuntimeLifecycle:
 # mistaken widening reports which guarantee it broke rather than just that a
 # set changed.
 
-from soda_mmqc.config import (  # noqa: E402
+from soda_mmqc.agentic.runtime import (  # noqa: E402
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_BASE_TOOLS,
     AGENTIC_FORBIDDEN_TOOLS,
