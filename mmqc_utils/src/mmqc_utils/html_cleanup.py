@@ -6,6 +6,7 @@ import re
 from collections.abc import Callable
 
 from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4.element import PageElement, PreformattedString
 
 _BR_ONLY = re.compile(r"(<br\s*/?>|\s)+", re.I)
 
@@ -114,9 +115,20 @@ _POSTPROCESS_STEPS: tuple[Callable[[BeautifulSoup], int], ...] = (
 )
 
 
+def _serialize(node: PageElement) -> str:
+    """Return the markup of a top-level node.
+
+    ``str()`` drops the delimiters of a doctype or comment: ``str(Doctype)`` is
+    ``"html"``, not ``"<!DOCTYPE html>"``.
+    """
+    if isinstance(node, PreformattedString):
+        return node.output_ready()
+    return str(node)
+
+
 def postprocess_html(html: str) -> str:
     """Run all HTML cleanup steps and return cleaned markup."""
     soup = BeautifulSoup(html or "", "html.parser")
     for step in _POSTPROCESS_STEPS:
         step(soup)
-    return "".join(str(child) for child in soup.children if str(child).strip())
+    return "".join(_serialize(child) for child in soup.children if str(child).strip())

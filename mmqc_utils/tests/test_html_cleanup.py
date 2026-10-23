@@ -127,3 +127,14 @@ def test_postprocess_html_runs_all_steps() -> None:
 
 def test_postprocess_html_handles_empty_input() -> None:
     assert postprocess_html("") == ""
+
+
+def test_postprocess_html_keeps_doctype_and_comments() -> None:
+    """Pandoc's standalone output starts with a doctype; it must not become the text ``html``."""
+    html = "<!DOCTYPE html>\n<html><!-- generated --><body><p>text</p></body></html>"
+
+    cleaned = postprocess_html(html)
+
+    assert cleaned.startswith("<!DOCTYPE html>")
+    assert "<!-- generated -->" in cleaned
+    assert BeautifulSoup(cleaned, "html.parser").get_text().strip() == "text"
