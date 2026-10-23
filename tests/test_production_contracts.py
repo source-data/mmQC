@@ -47,17 +47,20 @@ def test_no_gold_holds_control_characters():
 
 
 # ---------------------------------------------------------------------------
-# The entry skill's contract is derived from the checks' own
-# (experiments/exp-06-full-checklist/build_contract.py) and copied into
-# production on 2026-10-12. A change to one check's contract that is not
-# rederived into the entry's would score that check differently in a
-# whole-checklist run than on its own.
+# The entry skill's contract is derived from the checks' own and copied into
+# production. A change to one check's contract that is not rederived into the
+# entry's would score that check differently in a whole-checklist run than on
+# its own.
+#
+# Production answers panel-major since exp-10 (2026-10-22): one row per panel,
+# each check's row fields under its name, derived by
+# experiments/exp-10-panel-major-revisited/build_contract.py --target fig-checklist.
 # ---------------------------------------------------------------------------
 
 from pathlib import Path  # noqa: E402
 
 _FIG = Path(__file__).resolve().parents[1] / "soda_mmqc" / "data" / "checklist" / "fig-checklist"
-_ENTRY = "do-fig-checklist-cm"
+_PM = "do-fig-checklist-pm"
 
 
 def _read(*parts):
@@ -65,30 +68,12 @@ def _read(*parts):
 
 
 def _checks():
-    return list(_read(_ENTRY, "schema.json")["format"]["schema"]["properties"])
+    row = _read(_PM, "schema.json")["format"]["schema"]["properties"]["outputs"]["items"]
+    return [name for name in row["properties"] if name not in ("panel_label", "panel_classes")]
 
 
-def test_the_entry_contract_holds_each_checks_row_schema_verbatim():
-    entry = _read(_ENTRY, "schema.json")["format"]["schema"]["properties"]
-    assert len(entry) == 11
-    for check in entry:
-        own = _read(check, "schema.json")["format"]["schema"]["properties"]["outputs"]
-        assert entry[check] == own, f"{check}: rederive the entry contract"
-
-
-def test_the_entry_manifest_holds_each_checks_fields_under_its_key():
-    entry = _read(_ENTRY, "eval-manifest.json")
-    for check in _checks():
-        own = _read(check, "eval-manifest.json")
-        for field, profile in own.get("fields", {}).items():
-            key = check + field[len("outputs"):] if field.startswith("outputs") else field
-            assert entry["fields"].get(key) == profile, f"{check} · {field}: rederive"
-
-
-# Production answers panel-major since exp-10 (2026-10-22): one row per panel,
-# each check's row fields under its name, derived by
-# experiments/exp-10-panel-major-revisited/build_contract.py --target fig-checklist.
-_PM = "do-fig-checklist-pm"
+def test_the_entry_contract_covers_the_eleven_checks():
+    assert len(_checks()) == 11
 
 
 def test_the_panel_major_contract_holds_each_checks_row_fields_verbatim():

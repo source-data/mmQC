@@ -35,6 +35,11 @@ comparison one of scorers.
     python experiments/exp-10-panel-major-revisited/build_contract.py --gold    # and gold
     python experiments/exp-10-panel-major-revisited/build_contract.py --check   # drift only
     python experiments/exp-10-panel-major-revisited/build_contract.py --target fig-checklist   # production
+
+Contracts are written for the entry points the target pins. Production
+(`fig-checklist`) has pinned only the panel-major one since 2026-10-23; both are
+still verified, and `--gold` still writes both, since gold is shared across
+checklists.
 """
 
 from __future__ import annotations
@@ -69,10 +74,18 @@ PANEL_CLASSES = ("micrograph", "plot", "blot", "molecular_or_protein_structure",
                  "sequence", "schematic", "photograph", "table", "other")
 
 
+def pinned_entries() -> Dict[str, str]:
+    """The entry points the target pins, with their versions."""
+    manifest = (TARGET / "version-manifest.yaml").read_text(encoding="utf-8")
+    found = {leaf: re.search(rf"^  {leaf}: (v\d+)$", manifest, re.M) for leaf in (CM, PM)}
+    return {leaf: match.group(1) for leaf, match in found.items() if match}
+
+
 def check_entry_prose() -> None:
     """The two entry points differ in their name and nothing else."""
-    manifest = (TARGET / "version-manifest.yaml").read_text(encoding="utf-8")
-    version = {leaf: re.search(rf"^  {leaf}: (v\d+)$", manifest, re.M).group(1) for leaf in (CM, PM)}
+    version = pinned_entries()
+    if set(version) != {CM, PM}:
+        return
     texts = {leaf: (TARGET / leaf / version[leaf] / "SKILL.md").read_text(encoding="utf-8")
              for leaf in (CM, PM)}
     if texts[CM].replace(CM, "<leaf>") != texts[PM].replace(PM, "<leaf>"):
@@ -273,8 +286,11 @@ def main(argv: List[str] | None = None) -> int:
           f"under {CM}, {n_pm} under {PM}, and each check's own contract")
 
     outputs: Dict[Path, str] = {}
+    entries = pinned_entries()
     for leaf, schema, manifest, shape in ((CM, cm_schema, cm_manifest, "check-major"),
                                           (PM, pm_schema, pm_manifest, "panel-major")):
+        if leaf not in entries:
+            continue
         outputs[TARGET / leaf / "schema.json"] = cm.dump(schema)
         outputs[TARGET / leaf / "eval-manifest.json"] = cm.dump(manifest)
         outputs[TARGET / leaf / "benchmark.json"] = cm.dump(build_benchmark(leaf, shape, examples, src))

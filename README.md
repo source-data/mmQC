@@ -263,16 +263,14 @@ soda_mmqc/data/checklist/fig-checklist/
 │   ├── eval-manifest.json
 │   ├── benchmark.json
 │   └── v1/SKILL.md
-├── do-fig-checklist-cm/         # the same entry point, one list per check (pre-exp-10)
 ├── classify-panels/             # A|B: a shared skill -- no contract, never scored
 │   └── v1/SKILL.md
 ├── micrograph-scale-bar/        # C_i: a check
 │   ├── schema.json              #   the answer's structure
 │   ├── eval-manifest.json       #   how each field is scored
 │   ├── benchmark.json           #   which examples it is scored on
-│   ├── prompts/                 #   earlier prompt versions, kept for curation
-│   ├── v1/SKILL.md
-│   └── v2/SKILL.md
+│   ├── prompts/                 #   prompt versions of the prompt-based runner
+│   └── v2/SKILL.md              #   earlier versions live in git history
 └── …
 ```
 

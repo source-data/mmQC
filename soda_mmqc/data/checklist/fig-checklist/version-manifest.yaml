@@ -15,8 +15,6 @@
 #   individual-data-points v2 <- exp07 v5   micrograph-scale-bar v2 <- exp07 v4
 #   the other eight checks v2 <- exp07 v2
 #
-# The v1 checks, identify-panels v1 and classify-plot-panels -- the skills of
-# per-check runs before the experiments -- stay, unpinned or unreached.
 # A single check still runs on its own: it invokes classify-panels itself.
 #
 # 2026-10-22, exp-10: production answers **panel-major**, decided with the
@@ -24,24 +22,28 @@
 # once, each check's fields under its name. Check-major was non-inferior; the
 # shapes were level on accuracy, panel-major a little ahead on dispatch and
 # cost, and it states each panel once. do-fig-checklist-pm v1 is
-# do-fig-checklist-cm v1 under another name. The check-major entry point stays
-# pinned, for runs that compare with the earlier ones.
+# do-fig-checklist-cm v1 under another name.
 #
-# Each entry point owns one contract, derived from the checks' own and
+# 2026-10-23: this checklist holds the production topology -- the entry point,
+# the skills it reaches, their contracts. Prose may vary across versions of a
+# skill; which skills call which, and what each check answers, may not. This
+# file picks the production prose; production.json is to name the checklist
+# for release (thinking/harness-production-integration.md). Removed, being
+# another topology: the check-major entry point, the v1 checks, identify-panels
+# and classify-plot-panels. Check-major lives on in fig-checklist-exp10; the rest
+# of what was removed is in git history.
+#
+# The entry point owns one contract, derived from the checks' own and
 # verified against them (experiments/exp-10-panel-major-revisited/
 # build_contract.py --target fig-checklist), and a merged gold (gold-v7).
 checklist: fig-checklist
 
 skills:
-  # Entry points: the whole checklist in one session. Production: -pm.
-  do-fig-checklist-cm: v1
+  # Entry point: the whole checklist in one session.
   do-fig-checklist-pm: v1
 
-  # Shared skills. classify-panels is invoked by every check;
-  # identify-panels and classify-plot-panels are reached by no pinned skill.
+  # Shared skill, invoked by every check.
   classify-panels: v1
-  classify-plot-panels: v1
-  identify-panels: v2
 
   # Checks. Each owns schema.json, eval-manifest.json and benchmark.json,
   # which stay above the version directories so two versions of one skill

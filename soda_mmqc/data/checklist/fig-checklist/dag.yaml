@@ -1,6 +1,6 @@
 # This file is generated. Never hand-edit it: run `python -m soda_mmqc.cli graph fig-checklist --write` instead. `graph fig-checklist` fails when it and the skills disagree.
 checklist: fig-checklist
-skill_set: d8781aae5baea937dd66e39dc99f0e3b73f7ceaeffd37f2e8b27d34d57de6279
+skill_set: a3280625345fa3af2b13cae7398bc45c6cdc557fbf959681c980806aa545cc78
 skills:
 - name: classify-panels
   version: v1
@@ -12,40 +12,6 @@ skills:
   calls: []
   produces:
   - panel_classes
-- name: classify-plot-panels
-  version: v1
-  content_hash: 4e8a64b6a4faecae6a583a7914c2a8bf05ad138f7108eb3266429b5c549839f6
-  kind: shared
-  description: 'Describe what kind of plot each figure panel contains and what its
-    axes are: the plot types observed, whether drawn axes are present, and for each
-    axis its numeric or categorical scale, its tick labels verbatim, and its title.
-    Use this whenever a task needs to know what a panel plots or how its axes are
-    laid out. Reports observations only — it does not decide whether a panel counts
-    as a quantitative plot for any particular check, because different checks answer
-    that differently.'
-  calls:
-  - identify-panels
-  produces:
-  - plot_panels
-- name: do-fig-checklist-cm
-  version: v1
-  content_hash: 29aa9a684b4a4ee93c532012f2aa0531d4ec7c53943001f293caa5a617709a25
-  kind: check
-  description: Run the whole figure checklist on a figure.
-  calls:
-  - error-bars-defined
-  - image-annotation-defined
-  - individual-data-points
-  - micrograph-scale-bar
-  - panel-image-matches-caption
-  - plot-axis-units
-  - plot-gap-labeling
-  - replication-reporting
-  - single-channel-for-overlay
-  - stat-significance-level
-  - stat-test
-  produces:
-  - do-fig-checklist-cm
 - name: do-fig-checklist-pm
   version: v1
   content_hash: 224a662568ec46431b2376827d5f6fa65fba643580a7474da7e831f9be7ff8ad
@@ -75,14 +41,6 @@ skills:
   - classify-panels
   produces:
   - error-bars-defined
-- name: identify-panels
-  version: v2
-  content_hash: e160683ccb461857d589c708c8f6506f8cd4e79a5e1e3b41f5a8e0ea0be72177
-  kind: shared
-  description: Find every labelled panel in a figure. Use before any per-panel check.
-  calls: []
-  produces:
-  - panels
 - name: image-annotation-defined
   version: v2
   content_hash: ff0036306983839a1c9727ee6a939f642d3c0f89fc9f19da01a03d26d58658d7

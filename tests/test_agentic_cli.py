@@ -1167,20 +1167,16 @@ FIG_CHECKLIST_DIR = CHECKLIST_DIR / "fig-checklist"
 # The production design since 2026-10-12 (exp-04 to exp-08): one entry skill
 # invokes the eleven checks, and each check invokes classify-panels, which
 # lists the panels and classifies them. The panel inventory is classify-panels'
-# job; identify-panels and classify-plot-panels, the shared skills of the
-# per-check design before it, remain in the checklist but no pinned skill
-# reaches them.
+# job. Since 2026-10-23 the checklist holds production and nothing else.
 SHARED_SKILL = "classify-panels"
 SHARED_VERSION = "v1"
 PILOT_LEAF = "micrograph-scale-bar"
 PILOT_VERSION = "v2"
-ENTRY_SKILL = "do-fig-checklist-cm"
-#: Production answers panel-major since exp-10 (2026-10-22); the check-major
-#: entry point stays pinned beside it.
-PM_ENTRY_SKILL = "do-fig-checklist-pm"
-ENTRY_SKILLS = (ENTRY_SKILL, PM_ENTRY_SKILL)
+#: Production answers panel-major since exp-10 (2026-10-22).
+ENTRY_SKILL = "do-fig-checklist-pm"
+ENTRY_SKILLS = (ENTRY_SKILL,)
 #: Skills whose job is the panels themselves; the rest must not restate it.
-PANEL_SKILLS = {SHARED_SKILL, "identify-panels", "classify-plot-panels"}
+PANEL_SKILLS = {SHARED_SKILL}
 
 
 def _pinned_skills(checklist_dir: Path = None):
@@ -1370,7 +1366,7 @@ class TestLoadSkillsOnTheRealChecklist:
         assert SHARED_SKILL in skills
         assert PILOT_LEAF in skills
         assert sorted(skills[SHARED_SKILL]) == [SHARED_VERSION]
-        assert sorted(skills[PILOT_LEAF]) == ["v1", PILOT_VERSION]
+        assert sorted(skills[PILOT_LEAF]) == [PILOT_VERSION]
 
     def test_the_leaf_declares_and_invokes_the_shared_skill(self):
         leaf = load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF][PILOT_VERSION]
@@ -1751,90 +1747,6 @@ class TestEvaluationContractsStayAtSkillLevel:
             resolve_check_dir("fig-checklist", SHARED_SKILL)
 
 
-class TestTheLeafProseMatchesItsContracts:
-    """The leaf points at `schema.json` instead of pasting a JSON example.
-
-    That is what the plan asks for, but it moves a burden: the prose is now
-    the only place that says what to put in a field, and nothing in the schema
-    can catch prose that contradicts it. `panel_label` is the sharp case --
-    it is the evaluator's list-alignment key, and it is unconstrained in the
-    schema, so blanking it produces output that validates perfectly and scores
-    close to zero.
-    """
-
-    @pytest.fixture
-    def leaf_body(self) -> str:
-        return load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
-
-    def test_the_prose_names_every_field_of_the_schema(self, leaf_body: str):
-        schema = json.loads(
-            (PILOT_CHECK_DIR / "schema.json").read_text(encoding="utf-8")
-        )
-        fields = schema["format"]["schema"]["properties"]["outputs"]["items"][
-            "properties"
-        ]
-        missing = [name for name in fields if name not in leaf_body]
-        assert missing == [], (
-            "the leaf points at schema.json instead of pasting a JSON "
-            f"example, so its prose must name every field: {missing}"
-        )
-
-    def test_the_prose_names_the_top_level_container(self, leaf_body: str):
-        """The item fields were covered; the container was not.
-
-        A live session wrote its answer under `panels` -- the intermediate's
-        key -- instead of `outputs`, producing content that was entirely
-        correct and validation that entirely failed. Naming the fields is not
-        enough if the envelope is left implicit.
-        """
-        schema = json.loads(
-            (PILOT_CHECK_DIR / "schema.json").read_text(encoding="utf-8")
-        )
-        for key in schema["format"]["schema"]["properties"]:
-            assert key in leaf_body, f"the prose never names {key!r}"
-
-    def test_the_prose_names_the_list_alignment_key(self, leaf_body: str):
-        manifest = json.loads(
-            (PILOT_CHECK_DIR / "eval-manifest.json").read_text(encoding="utf-8")
-        )
-        for keys in manifest["list_alignment"].values():
-            for key in keys:
-                assert key in leaf_body
-
-    def test_the_prose_does_not_blank_every_remaining_field(
-        self, leaf_body: str
-    ):
-        """A non-micrograph panel keeps its label; only the answers empty out.
-
-        `prompt.2.txt`'s panel C shows exactly this. Generalizing it to "every
-        remaining field" would collapse all non-micrograph panels onto one
-        empty alignment key -- output that validates against `schema.json`
-        perfectly and scores close to zero.
-        """
-        blanking = [
-            block
-            for block in _prose_blocks(leaf_body)
-            if "empty string" in block
-        ]
-        assert blanking, "the prose no longer says what an unused field holds"
-
-        universal = (
-            "every remaining field",
-            "all remaining fields",
-            "every other field",
-            "all other fields",
-        )
-        for block in blanking:
-            for phrase in universal:
-                assert phrase not in block.lower(), (
-                    f"{phrase!r} sweeps panel_label, the alignment key, into "
-                    "the blanking rule"
-                )
-            assert "label" in block, (
-                "the rule that empties fields must say the panel label is kept"
-            )
-
-
 # ---------------------------------------------------------------------------
 # The shared skill against the real gold
 # ---------------------------------------------------------------------------
@@ -1971,7 +1883,7 @@ def gold_rows():
 class TestLeafProseAgainstPilotGold:
     @pytest.fixture
     def leaf_body(self) -> str:
-        return load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF]["v1"].body
+        return load_skills(FIG_CHECKLIST_DIR)[PILOT_LEAF][PILOT_VERSION].body
 
     def test_gold_defines_scale_bars_in_both_places_at_once(self, gold_rows):
         """The evidence for the leaf's independence rule."""
@@ -2133,13 +2045,6 @@ class TestNoLeafRestatesTheSharedSkill:
         for check in FIG_CHECKLIST_CHECKS:
             assert f"`{check}`" in entry.body, f"the entry never names {check}"
 
-    def test_the_two_entry_points_differ_in_their_name_only(self):
-        """The answer's shape is the contract's, not the prose's (exp-04, exp-10)."""
-        pinned = _pinned_skills()
-        texts = {name: pinned[name].path.read_text(encoding="utf-8") for name in ENTRY_SKILLS}
-        assert (texts[ENTRY_SKILL].replace(ENTRY_SKILL, "<entry>")
-                == texts[PM_ENTRY_SKILL].replace(PM_ENTRY_SKILL, "<entry>"))
-
     def test_no_skill_asks_the_session_to_write_a_file(self):
         """The session has no write tool, so prose asking for one would send
         it after something it cannot do.
@@ -2153,12 +2058,13 @@ class TestNoLeafRestatesTheSharedSkill:
         constraint.
         """
         for name, versions in load_skills(FIG_CHECKLIST_DIR).items():
-            body = versions["v1"].body.lower()
-            for forbidden in ("panels.json", "plot_panels.json", "`write`"):
-                assert forbidden not in body, (
-                    f"{name} still asks for a filesystem exchange "
-                    f"({forbidden}); the session cannot write"
-                )
+            for version, skill in versions.items():
+                body = skill.body.lower()
+                for forbidden in ("panels.json", "plot_panels.json", "`write`"):
+                    assert forbidden not in body, (
+                        f"{name} {version} still asks for a filesystem "
+                        f"exchange ({forbidden}); the session cannot write"
+                    )
 
     def test_the_leaf_takes_the_inventory_from_the_shared_skill(self):
         """It must still defer to `classify-panels` rather than deriving its
