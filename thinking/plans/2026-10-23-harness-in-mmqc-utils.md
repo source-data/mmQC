@@ -103,6 +103,58 @@ hash per example plus the full text, in the scratchpad.
   the HTML, so a changed character can move a span.
 - **Blocks:** Milestone 1.
 
+> **Decision — 2026-10-23, Thomas Lemberger: accepted.** Removing images
+> from the HTML is wanted, not merely tolerated. As model input, it also
+> removes a place to hide an invisible prompt injection. The mmQC curation
+> document view should not show images either. Milestone 1 may start.
+>
+> **Artifact produced — 2026-10-23.**
+>
+> **What changed in the code from 0.3.3 to 0.3.5:**
+> - `images.py` was refactored and gained a `tifffile` fallback, which runs
+>   only when ImageMagick fails on a TIFF.
+> - `document_to_html` now always runs `postprocess_html`.
+> - `quote.py` and `text.py` are identical.
+>
+> **Found in 0.3.4, and fixed here** (`html_cleanup.py`, with a regression
+> test, CHANGELOG "Unreleased"): `postprocess_html` serialized the top-level
+> nodes with `str()`, which turns `<!DOCTYPE html>` into the text `html`.
+> Every converted manuscript therefore began with a stray word, and HTML
+> comments lost their delimiters. Production is not affected: soda-curation
+> locks 0.3.3.
+>
+> **Before and after, with the fix:**
+>
+> | | Result |
+> |---|---|
+> | Image conversion (`convert_to_bounded_jpeg`, `compress_to_bounded_jpeg`) on `mmqc_utils`' fixtures | byte-identical |
+> | Visible text of the 15 `.docx` examples | identical in all 15 |
+> | Markup | 34 empty `<p>` removed across 12 documents |
+> | `EMBOR-2025-61250V2` | 12 embedded images (`data:image`) removed, with their paragraphs: 5.6 MB → 93 KB |
+> | Gold strings of 20+ characters for these documents | 480 in total; 164 appear verbatim in the text, all 164 still do; no gold stores character offsets |
+>
+> **For the decision:**
+>
+> - **The image removal is a side effect.** `remove_empty_elements` deletes
+>   a `<p>` with no visible text, and a paragraph holding only an `<img>`
+>   has none.
+> - **As model input it is a gain.** `WordExample` sends the HTML as a
+>   text part, so this manuscript sent 5.5 MB of base64 to the model.
+> - **For a viewer of the HTML it is a loss.** The figures disappear
+>   ([`curation-document-viewer.md`](../curation-document-viewer.md)).
+> - **The maintainer should say whether it is intended.**
+>
+> **Environment changes from switching:**
+>
+> - `uv sync` added `tifffile` (needed by 0.3.5) and `websockets`;
+> - it removed `toml` and `watchdog`, which had been installed outside the
+>   lock (`watchdog` is only Streamlit's auto-reload);
+> - `uv.lock` is gitignored;
+> - the root suite passes: 972 passed, 7 skipped;
+> - the `mmqc_utils` suite passes (83) with
+>   `MAGICK_HOME=/opt/homebrew/opt/imagemagick`. Without it, 6 image tests
+>   fail to load ImageMagick, before and after the fix alike.
+
 **Automatic gate:** `uv run pytest`.
 
 ---
@@ -389,4 +441,6 @@ its code.
 
 ## Decisions recorded
 
-*(none yet)*
+- **0A, 2026-10-23: accepted.** mmQC runs the in-repo `mmqc_utils`, with
+  the doctype fix. Image removal from converted documents is wanted (model
+  input, injection surface, curation view).

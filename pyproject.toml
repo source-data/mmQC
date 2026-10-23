@@ -64,6 +64,12 @@ export-fig-report = "soda_mmqc.scripts.export_fig_checklist_report:main"
 [tool.hatch.build.targets.wheel]
 packages = ["soda_mmqc"]
 
+[tool.uv.sources]
+# The in-repo package, not the PyPI release: mmQC tests what it ships to
+# production, and the harness is moving into it
+# (thinking/plans/2026-10-23-harness-in-mmqc-utils.md).
+mmqc-utils = { path = "mmqc_utils", editable = true }
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

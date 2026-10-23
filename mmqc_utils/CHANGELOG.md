@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Fixed
+- `postprocess_html` (and so `document_to_html`, since 0.3.4) turned the doctype into the text `html` at the start of the document, and dropped the delimiters of HTML comments: `str()` of a BeautifulSoup doctype or comment is its bare content.
+
 ## [0.3.5] - 2026-06-12
 
 ### Added
