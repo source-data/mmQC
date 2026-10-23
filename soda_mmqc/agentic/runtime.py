@@ -1,11 +1,15 @@
 """Assembling the sealed runtime for one example, and the session profile.
 
-The runtime is a copy of one example's `content/` -- byte-identical, minus
-any nested answer key -- plus exactly one version of every skill, and nothing
-else: no evaluation contract, no gold, no sibling example, no link back to
-the repository. `_assert_sealed` re-checks that on every assembly, in
+The runtime is a copy of one example's content -- byte-identical, minus
+whatever the caller excludes -- plus exactly one version of every skill, and
+nothing else: no evaluation contract, no gold, no sibling example, no link
+back to the repository. `_assert_sealed` re-checks that on every assembly, in
 production as well as in the tests, because the cost of a leak is a scored
 run that quietly saw the answer.
+
+Assembly knows nothing about where examples are stored or what kind they
+are. The caller states the content as an :class:`ExampleContent`; mmQC's
+benchmark does that in :mod:`soda_mmqc.agentic.benchmark`.
 """
 
 from __future__ import annotations
@@ -37,10 +41,8 @@ from soda_mmqc.config import (
     AGENTIC_RUNTIME_PREFIX,
     AGENTIC_SETTING_SOURCES,
     AGENTIC_SKILLS_SUBDIR,
-    EXAMPLES_DIR,
     resolve_agentic_runtime_root,
 )
-from soda_mmqc.core.examples import EXAMPLE_FACTORY, Example
 from soda_mmqc.agentic.pinning import (
     SkillSet,
     SkillSetEntry,
@@ -52,12 +54,13 @@ from soda_mmqc.agentic.skills import (
     _read_json,
     Skill,
     call_closure,
-    resolve_check_dir,
+    check_dir_in,
     select_versions,
     validate_skills,
 )
 
 __all__ = [
+    "ExampleContent",
     "RuntimeLayout",
     "assemble_runtime",
     "session_options",
@@ -65,7 +68,6 @@ __all__ = [
     "describe_permission_profile",
     "runtime_skill_set",
     "session_cache_key",
-    "EXAMPLE_INPUT_SUBDIR",
     "ASSEMBLY_CLOSURE",
     "ASSEMBLY_ALL",
     "_leaf_schema",
@@ -84,11 +86,34 @@ ASSEMBLY_MODES = (ASSEMBLY_CLOSURE, ASSEMBLY_ALL)
 
 WITHHELD_FROM_RUNTIME = ("benchmark.json", "eval-manifest.json")
 
-#: Subdirectory of an example holding its gold. Never copied.
+#: A directory holding gold, wherever it sits. A runtime containing one is
+#: refused, whatever the caller excluded.
 EXAMPLE_GOLD_SUBDIR = "checks"
 
-#: Subdirectory of an example holding its inputs. The only thing copied.
-EXAMPLE_INPUT_SUBDIR = "content"
+
+@dataclass(frozen=True)
+class ExampleContent:
+    """One example's content, as the caller states it.
+
+    Nothing here says where the example is stored or what kind it is; that is
+    the caller's knowledge, whether the caller is mmQC's benchmark or an
+    application.
+    """
+
+    #: The directory staged as the runtime's ``input/``. Every path in
+    #: :attr:`parts` and :attr:`files` is relative to it.
+    source_root: Path
+    #: What the example is, in order, as provider-neutral parts:
+    #: ``{"kind": "text", "text": str}`` or ``{"kind": "image", "path": str}``.
+    parts: Tuple[Mapping[str, Any], ...]
+    #: Files that accompany the content without being sent: role to a path,
+    #: ``None``, or a list of paths. Named in ``input/inputs.json``.
+    files: Mapping[str, Any]
+    #: How the example is named in the layout and in logs.
+    label: str
+    #: Names left out of the staged copy, wherever they occur under
+    #: :attr:`source_root`.
+    exclude: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -111,29 +136,9 @@ class RuntimeLayout:
     example: str
 
     #: The example's content, as provider-neutral parts, with `path`
-    #: values rebased onto this runtime. Resolved at assembly because the
-    #: layout deliberately keeps no link back to the benchmark that names
-    #: the example class.
+    #: values rebased onto this runtime.
     input_parts: Tuple[Mapping[str, Any], ...] = ()
 
-
-
-def _resolve_example_input_dir(example: str) -> Path:
-    """Return the directory holding one example's inputs.
-
-    Raises:
-        FileNotFoundError: If the example or its input directory is absent.
-    """
-    example_dir = EXAMPLES_DIR / example
-    if not example_dir.is_dir():
-        raise FileNotFoundError(f"Example not found: {example_dir}")
-    input_dir = example_dir / EXAMPLE_INPUT_SUBDIR
-    if not input_dir.is_dir():
-        raise FileNotFoundError(
-            f"Example {example} has no {EXAMPLE_INPUT_SUBDIR}/ directory: "
-            f"{input_dir}"
-        )
-    return input_dir
 
 
 def _copy_skill(skill: Skill, destination: Path) -> None:
@@ -150,25 +155,6 @@ def _copy_skill(skill: Skill, destination: Path) -> None:
     schema = skill.skill_dir / "schema.json"
     if schema.is_file():
         shutil.copy2(schema, destination / "schema.json")
-
-
-def _resolve_example(checklist: str, check: str, example: str) -> Example:
-    """Build the `Example` for one benchmark entry.
-
-    Raises:
-        ValueError: If the check's benchmark declares no ``example_class``.
-    """
-    benchmark = _read_json(
-        resolve_check_dir(checklist, check) / "benchmark.json"
-    )
-    example_class = benchmark.get("example_class")
-    if not example_class:
-        raise ValueError(
-            f"No example_class in {checklist}/{check}/benchmark.json. The "
-            "harness cannot state this example's input without knowing what "
-            "kind of example it is, and it must not guess from extensions."
-        )
-    return EXAMPLE_FACTORY.create(example, example_class)
 
 
 def _rebase_into_input(value: Any) -> Any:
@@ -197,7 +183,9 @@ def _rebase_parts(
     return tuple(rebased)
 
 
-def _write_input_manifest(source_root: Path, staged: Example) -> None:
+def _write_input_manifest(
+    source_root: Path, files: Mapping[str, Any]
+) -> None:
     """Write `input/inputs.json`, naming the files the session may open.
 
     The example's *content* is not here -- it is in the opening message, so
@@ -214,16 +202,16 @@ def _write_input_manifest(source_root: Path, staged: Example) -> None:
     """
     manifest = {
         role: _rebase_into_input(value)
-        for role, value in staged.supporting_files().items()
+        for role, value in files.items()
     }
     path = source_root / AGENTIC_INPUT_SUBDIR / AGENTIC_INPUT_MANIFEST_FILENAME
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
 def assemble_runtime(
-    checklist: str,
+    checklist_dir: Path,
     check: str,
-    example: str,
+    content: ExampleContent,
     *,
     root: Optional[Path] = None,
     pins: Optional[Mapping[str, str]] = None,
@@ -251,9 +239,9 @@ def assemble_runtime(
     into place only once complete, so a failure leaves nothing half-built.
 
     Args:
-        checklist: Checklist name, e.g. ``fig-checklist``.
+        checklist_dir: The checklist's directory.
         check: The entry-point leaf.
-        example: Example relative source path.
+        content: The example's content, as the caller states it.
         root: Where to put the runtime. Defaults to a fresh directory under
             the configured runtime root, which is outside the repository.
         pins: Optional ``{skill: version}``. Defaults to the checklist's
@@ -262,11 +250,11 @@ def assemble_runtime(
         assembly: ``"closure"`` (default) or ``"all"``.
 
     Raises:
-        FileNotFoundError: If the checklist, check or example is absent.
+        FileNotFoundError: If the checklist, the check or the content's
+            source directory is absent.
         ValueError: If the check is not a check, or the skills are invalid.
     """
-    check_dir = resolve_check_dir(checklist, check)
-    checklist_dir = check_dir.parent
+    checklist_dir = check_dir_in(checklist_dir, check).parent
 
     # Validate the graph before building anything from it: a runtime
     # assembled from an inconsistent checklist would fail confusingly, at
@@ -289,8 +277,11 @@ def assemble_runtime(
         raise ValueError(
             f"assembly must be one of {ASSEMBLY_MODES}, got {assembly!r}"
         )
-    input_dir = _resolve_example_input_dir(example)
-    staged_example = _resolve_example(checklist, check, example)
+    input_dir = Path(content.source_root)
+    if not input_dir.is_dir():
+        raise FileNotFoundError(
+            f"The content of {content.label} is not a directory: {input_dir}"
+        )
 
     if root is None:
         root = Path(
@@ -312,17 +303,20 @@ def assemble_runtime(
         for name, skill in selected.items():
             _copy_skill(skill, skills_root / name)
 
-        # `content/` is copied whole, minus any nested answer key. The
-        # example layout is recursive -- a document-level example's
-        # `content/` holds its figure sub-examples, each with its own
-        # `checks/` -- so a plain copy would stage the gold for every figure
-        # in the manuscript. `_assert_sealed` catches that afterwards; this
-        # is the copier honouring the rule rather than relying on the alarm.
+        # The content is copied whole, minus what the caller excludes. For
+        # mmQC's benchmark that is any nested answer key: a document-level
+        # example's `content/` holds its figure sub-examples, each with its
+        # own `checks/`. `_assert_sealed` catches a leak afterwards; the
+        # exclusion is the copier honouring the rule rather than relying on
+        # the alarm.
         shutil.copytree(
             input_dir,
             staging / AGENTIC_INPUT_SUBDIR,
             symlinks=False,
-            ignore=shutil.ignore_patterns(EXAMPLE_GOLD_SUBDIR),
+            ignore=(
+                shutil.ignore_patterns(*content.exclude)
+                if content.exclude else None
+            ),
         )
         (staging / AGENTIC_ARTIFACTS_SUBDIR).mkdir()
         (staging / AGENTIC_AGENT_HOME_SUBDIR).mkdir()
@@ -336,10 +330,10 @@ def assemble_runtime(
             orientation_path=root / AGENTIC_ORIENTATION_FILENAME,
             entry_point=check,
             schema_path=root / AGENTIC_SKILLS_SUBDIR / check / "schema.json",
-            example=example,
-            input_parts=_rebase_parts(staged_example.input_parts()),
+            example=content.label,
+            input_parts=_rebase_parts(content.parts),
         )
-        _write_input_manifest(staging, staged_example)
+        _write_input_manifest(staging, content.files)
         shutil.copy2(
             AGENTIC_CLAUDE_TEMPLATE, staging / AGENTIC_ORIENTATION_FILENAME
         )
@@ -351,8 +345,9 @@ def assemble_runtime(
         raise
 
     logger.info(
-        "Assembled runtime for %s/%s at %s (%d skills, %s)",
-        checklist, check, root, len(selected), assembly,
+        "Assembled runtime for %s/%s on %s at %s (%d skills, %s)",
+        checklist_dir.name, check, content.label, root, len(selected),
+        assembly,
     )
     return layout
 

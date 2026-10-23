@@ -202,6 +202,62 @@ job. `_assert_sealed` stays in the harness as defence in depth.
   predictions and sidecars match the previous ones byte for byte.
 - **Blocks:** Milestone 2.
 
+> **Decision — 2026-10-23, Thomas Lemberger: accepted.** Milestone 2 may
+> start.
+>
+> **Artifact produced — 2026-10-23.**
+>
+> **What changed:**
+>
+> - `assemble_runtime(checklist_dir, check, content)` and
+>   `runtime_session(...)` take the checklist's directory and an
+>   `ExampleContent`. That type holds `source_root`, `parts`, `files`,
+>   `label`, and `exclude`, the names the caller leaves out of the staged
+>   copy.
+> - `runtime.py` no longer imports `EXAMPLES_DIR`, `EXAMPLE_FACTORY` or
+>   `Example`, and reads no `benchmark.json`.
+> - The benchmark side is a new module,
+>   [`agentic/benchmark.py`](../../soda_mmqc/agentic/benchmark.py).
+>   `example_content(checklist, check, example)` finds the example under
+>   `EXAMPLES_DIR`, reads `example_class` from the check's
+>   `benchmark.json`, builds the parts through `EXAMPLE_FACTORY`, and
+>   excludes `checks/`.
+> - `skills.check_dir_in(checklist_dir, check)` is the path-based lookup;
+>   `resolve_check_dir` wraps it.
+> - The runner and the `assemble` command call the adapter. No name-based
+>   wrapper is left in the harness.
+> - `_assert_sealed` still refuses any `checks/`, whatever the caller
+>   excluded.
+>
+> **Byte-identical runtimes.** A snapshot script recorded every runtime the
+> harness assembles, before and after the change:
+>
+> - every `fig-checklist` check over its benchmark, 457 runtimes, closure
+>   assembly;
+> - `fig-checklist-exp02`'s `micrograph-scale-bar` on 5 examples, with
+>   `assembly="all"`;
+> - the 15 Word examples, through a one-check checklist built for the
+>   snapshot.
+>
+> For each runtime it recorded every file's path and SHA-256, the
+> directories, every layout field (input parts included), and the session
+> options with the root replaced. Result: **493 runtimes and 12,238 files;
+> the two JSON records are byte-identical.**
+>
+> The mock run (`run_check_mock`) assembles no runtime, so it does not
+> exercise this change. The snapshot stands in for it.
+>
+> **Tests.** 972 passed, 7 skipped. The tests reach assembly through two
+> helpers, `_assemble` and `_session`, which call the adapter as the runner
+> does.
+>
+> The opt-in live test `tests/test_agentic_integration.py` was already
+> broken before this milestone: it called `cli.session_options`,
+> `cli._default_client` and `cli._extract_*`, which `cli` no longer has,
+> and passed a prompt string where `_default_client` takes parts. It now
+> imports from the modules that define them, and it is collected. It was
+> not run, because it spends credit.
+
 **Automatic gate:** `uv run pytest`.
 
 ---
@@ -444,3 +500,6 @@ its code.
 - **0A, 2026-10-23: accepted.** mmQC runs the in-repo `mmqc_utils`, with
   the doctype fix. Image removal from converted documents is wanted (model
   input, injection surface, curation view).
+- **1A, 2026-10-23: accepted.** Assembly takes a checklist directory and an
+  `ExampleContent`. The benchmark adapter is `agentic/benchmark.py`. The
+  493 assembled runtimes are byte-identical to the ones before the change.

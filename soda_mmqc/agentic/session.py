@@ -26,6 +26,7 @@ from soda_mmqc.agentic.pinning import checklist_pins
 from soda_mmqc.agentic.render import render_anthropic
 from soda_mmqc.agentic.runtime import (
     ASSEMBLY_CLOSURE,
+    ExampleContent,
     RuntimeLayout,
     _leaf_schema,
     assemble_runtime,
@@ -82,9 +83,9 @@ __all__ = [
 
 @contextlib.contextmanager
 def runtime_session(
-    checklist: str,
+    checklist_dir: Path,
     check: str,
-    example: str,
+    content: ExampleContent,
     *,
     root: Optional[Path] = None,
     keep: bool = False,
@@ -100,7 +101,8 @@ def runtime_session(
     which is when it is most wanted.
     """
     layout = assemble_runtime(
-        checklist, check, example, root=root, pins=pins, assembly=assembly
+        checklist_dir, check, content, root=root, pins=pins,
+        assembly=assembly,
     )
     try:
         yield layout

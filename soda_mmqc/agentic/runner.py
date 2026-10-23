@@ -23,6 +23,7 @@ from soda_mmqc.config import (
     EVALUATION_DIR,
 )
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
+from soda_mmqc.agentic.benchmark import example_content
 from soda_mmqc.agentic.pinning import (
     validate_version_manifest,
     SkillSet,
@@ -479,7 +480,8 @@ def run_check_live(
         )
         try:
             with runtime_session(
-                checklist, check, relative_source_path,
+                checklist_dir, check,
+                example_content(checklist, check, relative_source_path),
                 keep=keep_runtime, pins=versions, assembly=assembly,
             ) as layout:
                 try:

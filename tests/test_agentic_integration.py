@@ -21,7 +21,10 @@ from pathlib import Path
 
 import pytest
 
-from soda_mmqc import cli
+from soda_mmqc.agentic import session
+from soda_mmqc.agentic.benchmark import example_content
+from soda_mmqc.agentic.runtime import session_options
+from soda_mmqc.agentic.skills import resolve_check_dir
 from soda_mmqc.config import CHECKLIST_DIR, EXAMPLES_DIR
 from tests.conftest import requires_key
 
@@ -79,16 +82,17 @@ async def _probe(layout) -> tuple[list[str], list[str], list[str]]:
     on `block.type == "tool_result"` silently never fires and the probe
     reports success against an empty list.
     """
-    options = dict(cli.session_options(layout))
+    options = dict(session_options(layout))
     pool: list[str] = []
     attempted: list[str] = []
     results: list[str] = []
 
-    async for message in cli._default_client(PROMPT, options):
-        info = cli._extract_session_info(message)
+    parts = [{"kind": "text", "text": PROMPT}]
+    async for message in session._default_client(parts, options):
+        info = session._extract_session_info(message)
         if info and info.get("skills"):
             pool = list(info["skills"])
-        for tool_name, tool_input, _ in cli._extract_tool_calls(message):
+        for tool_name, tool_input, _ in session._extract_tool_calls(message):
             if tool_name == "Skill" and isinstance(tool_input, dict):
                 attempted.append(str(tool_input.get("skill", "")))
         content = getattr(message, "content", None)
@@ -109,8 +113,11 @@ def test_a_bundled_skill_is_reported_but_never_invocable():
     property the experiment actually needs.
     """
     example = _first_example_on_disk()
-    with cli.runtime_session(CHECKLIST, CHECK, example, keep=False) as layout:
-        assembled = set(cli.session_options(layout)["skills"])
+    with session.runtime_session(
+        resolve_check_dir(CHECKLIST, CHECK).parent, CHECK,
+        example_content(CHECKLIST, CHECK, example), keep=False,
+    ) as layout:
+        assembled = set(session_options(layout)["skills"])
         pool, attempted, results = asyncio.run(_probe(layout))
 
     # A subset test, never equality: `init` also carries the installation's

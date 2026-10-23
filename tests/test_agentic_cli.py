@@ -56,6 +56,7 @@ from soda_mmqc.core.scoring import (
 import soda_mmqc.cli as cli
 import soda_mmqc.config as config
 import soda_mmqc.agentic.runner as runner
+import soda_mmqc.agentic.benchmark as agentic_benchmark
 import soda_mmqc.agentic.runtime as agentic_runtime
 
 # Imported from the module that defines each name, rather than
@@ -76,6 +77,7 @@ from soda_mmqc.agentic.runner import (
     run_check_live,
     run_check_mock,
 )
+from soda_mmqc.agentic.benchmark import example_content
 from soda_mmqc.agentic.runtime import (
     ASSEMBLY_ALL,
     EXAMPLE_GOLD_SUBDIR,
@@ -132,6 +134,23 @@ from soda_mmqc.core.scoring import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _assemble(checklist: str, check: str, example: str, **kwargs):
+    """Assemble a runtime for a benchmark example, as the runner does."""
+    return assemble_runtime(
+        resolve_check_dir(checklist, check).parent, check,
+        example_content(checklist, check, example), **kwargs,
+    )
+
+
+def _session(checklist: str, check: str, example: str, **kwargs):
+    """A runtime session for a benchmark example, as the runner opens one."""
+    return runtime_session(
+        resolve_check_dir(checklist, check).parent, check,
+        example_content(checklist, check, example), **kwargs,
+    )
+
 PILOT_CHECK_DIR = (
     REPO_ROOT / "soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar"
 )
@@ -2177,7 +2196,7 @@ def _all_files(root: Path):
 @pytest.fixture
 def assembled(tmp_path: Path):
     """A runtime assembled for the pilot leaf and one real example."""
-    layout = assemble_runtime(
+    layout = _assemble(
         "fig-checklist",
         PILOT_LEAF,
         SUBPANEL_FIGURE,
@@ -2241,7 +2260,7 @@ class TestRuntimeSkillPlacement:
     def test_closure_is_transitive(self, tmp_path: Path):
         """The entry reaches classify-panels only through the checks; it is
         assembled, and the unreached panel skills are not."""
-        layout = assemble_runtime(
+        layout = _assemble(
             "fig-checklist", ENTRY_SKILL, SUBPANEL_FIGURE,
             root=tmp_path / "runtime",
         )
@@ -2271,7 +2290,7 @@ class TestRuntimeSkillPlacement:
     ):
         """Kept so that runs made before closure became the default can be
         reproduced exactly."""
-        layout = assemble_runtime(
+        layout = _assemble(
             "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
             root=tmp_path / "runtime", assembly=ASSEMBLY_ALL,
         )
@@ -2282,7 +2301,7 @@ class TestRuntimeSkillPlacement:
 
     def test_an_unknown_assembly_mode_is_refused(self, tmp_path: Path):
         with pytest.raises(ValueError, match=r"assembly must be one of"):
-            assemble_runtime(
+            _assemble(
                 "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
                 root=tmp_path / "runtime", assembly="everything",
             )
@@ -2421,7 +2440,7 @@ class TestRuntimeOrientation:
 @requires_subpanel_figure
 class TestRuntimeLifecycle:
     def test_the_session_removes_the_runtime_by_default(self, tmp_path: Path):
-        with runtime_session(
+        with _session(
             "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
             root=tmp_path / "rt",
         ) as layout:
@@ -2430,7 +2449,7 @@ class TestRuntimeLifecycle:
         assert not root.exists()
 
     def test_keep_runtime_preserves_it(self, tmp_path: Path):
-        with runtime_session(
+        with _session(
             "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
             root=tmp_path / "rt", keep=True,
         ) as layout:
@@ -2440,7 +2459,7 @@ class TestRuntimeLifecycle:
     def test_the_runtime_is_removed_after_an_exception(self, tmp_path: Path):
         captured = {}
         with pytest.raises(RuntimeError, match="boom"):
-            with runtime_session(
+            with _session(
                 "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
                 root=tmp_path / "rt",
             ) as layout:
@@ -2451,7 +2470,7 @@ class TestRuntimeLifecycle:
     def test_keep_runtime_survives_an_exception(self, tmp_path: Path):
         captured = {}
         with pytest.raises(RuntimeError):
-            with runtime_session(
+            with _session(
                 "fig-checklist", PILOT_LEAF, SUBPANEL_FIGURE,
                 root=tmp_path / "rt", keep=True,
             ) as layout:
@@ -2463,7 +2482,7 @@ class TestRuntimeLifecycle:
         """A failed assembly leaves no half-built runtime behind."""
         root = tmp_path / "rt"
         with pytest.raises((FileNotFoundError, ValueError)):
-            assemble_runtime(
+            _assemble(
                 "fig-checklist", PILOT_LEAF, "no/such/example", root=root
             )
         assert not root.exists()
@@ -3766,7 +3785,7 @@ class TestGeneratedGraphViews:
             lambda *a, **k: pytest.fail("graph assembled a runtime"),
         )
         monkeypatch.setattr(
-            agentic_runtime, "_resolve_example_input_dir",
+            agentic_benchmark, "_example_input_dir",
             lambda *a, **k: pytest.fail("graph read an example"),
         )
         cli.main(["graph", "toy-checklist", "--write"])
@@ -4375,7 +4394,7 @@ class TestANonFigureExampleAssembles:
         return root
 
     def _assemble(self, tmp_path):
-        return assemble_runtime(
+        return _assemble(
             "doc-pilot", "section-order", WORD_EXAMPLE,
             root=tmp_path / "runtime",
         )

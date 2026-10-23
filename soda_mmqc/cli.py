@@ -30,10 +30,12 @@ from soda_mmqc.config import (
     AGENTIC_DEFAULT_MODEL,
     DEFAULT_SENTENCE_TRANSFORMER_MODEL,
 )
+from soda_mmqc.agentic.benchmark import example_content
 from soda_mmqc.agentic.pinning import MODEL_DEFAULTS_FILENAME
 from soda_mmqc.agentic.runner import run_check_live, run_check_mock
 from soda_mmqc.agentic.runtime import describe_permission_profile
 from soda_mmqc.agentic.session import runtime_session
+from soda_mmqc.agentic.skills import resolve_check_dir
 from soda_mmqc.agentic.views import graph_checklist
 from soda_mmqc.core.gold_drafts import init_expected_outputs
 from soda_mmqc.core.scoring import score_check
@@ -487,9 +489,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.command == "assemble":
         try:
             with runtime_session(
-                args.checklist,
+                resolve_check_dir(args.checklist, args.check).parent,
                 args.check,
-                args.example,
+                example_content(args.checklist, args.check, args.example),
                 keep=args.keep_runtime,
             ) as layout:
                 print(describe_permission_profile(layout))

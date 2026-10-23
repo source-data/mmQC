@@ -41,6 +41,7 @@ __all__ = [
     "validate_skills",
     "select_versions",
     "resolve_check_dir",
+    "check_dir_in",
 ]
 
 
@@ -64,14 +65,24 @@ _LIST_KEYS = ("requires", "produces", "needs")
 
 
 def resolve_check_dir(checklist: str, check: str) -> Path:
-    """Return the directory of ``check`` within ``checklist``.
+    """Return the directory of ``check`` within the named ``checklist``.
 
     Raises:
         FileNotFoundError: If the checklist or the check directory is absent.
         ValueError: If the directory exists but is not a check, i.e. it does
             not own the evaluation contracts (a shared skill, for instance).
     """
-    checklist_dir = config.CHECKLIST_DIR / checklist
+    return check_dir_in(config.CHECKLIST_DIR / checklist, check)
+
+
+def check_dir_in(checklist_dir: Path, check: str) -> Path:
+    """Return the directory of ``check`` within the checklist at ``checklist_dir``.
+
+    Raises:
+        FileNotFoundError: If the checklist or the check directory is absent.
+        ValueError: If the directory exists but is not a check.
+    """
+    checklist_dir = Path(checklist_dir)
     if not checklist_dir.is_dir():
         raise FileNotFoundError(f"Checklist not found: {checklist_dir}")
 
