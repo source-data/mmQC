@@ -300,6 +300,8 @@ scheduling tool are removed by name (`soda_mmqc/config.py` gives the reason
 for each); widening that set is a deliberate decision, not a configuration
 edit.
 
+![How a session is contained: from the repository, the harness resolves the pins, takes the entry point's closure of skills, and copies it with one figure into a throwaway runtime outside the repository, refusing gold, contracts and symlinks; the session has only the Skill tool and a schema-bound answer; the run writes prediction.json, the skill trace, the tool and cost audit and the skill set, then deletes the runtime; gold meets the prediction only at scoring](soda_mmqc/docs/session-containment.svg)
+
 ## Benchmarking and scoring
 
 Gold lives beside the examples:
