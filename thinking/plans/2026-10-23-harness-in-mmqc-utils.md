@@ -589,6 +589,11 @@ deterministic: same input, same bytes.
 **Step 4:** Run, score, and write the results into the experiment note and
 `notebooks/experiments/exp-11-input-parity.ipynb`.
 
+**Cleanup after exp-11 (decided 2026-10-24).** Remove the `figure-converted`
+example class and the `example_class` override of `run_check_live`: they
+exist only to run exp-11's converted arm. If the builder is adopted, it
+becomes `FigureExample`'s image path directly.
+
 **Step 5: Human gate 4B.**
 
 - **Decision:** does the benchmark switch to re-converted images? If the
