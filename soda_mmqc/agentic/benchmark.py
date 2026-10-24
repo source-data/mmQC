@@ -10,7 +10,6 @@ none of this.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from soda_mmqc.config import EXAMPLES_DIR, resolve_check_dir
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
@@ -23,17 +22,8 @@ __all__ = ["EXAMPLE_INPUT_SUBDIR", "example_content"]
 EXAMPLE_INPUT_SUBDIR = "content"
 
 
-def example_content(
-    checklist: str,
-    check: str,
-    example: str,
-    *,
-    example_class: Optional[str] = None,
-) -> ExampleContent:
+def example_content(checklist: str, check: str, example: str) -> ExampleContent:
     """The content of one benchmark example, for assembling a runtime.
-
-    ``example_class`` overrides the benchmark's for one run. Temporary: it
-    exists for exp-11's converted arm and is removed after exp-11.
 
     Raises:
         FileNotFoundError: If the example or its input directory is absent.
@@ -41,7 +31,7 @@ def example_content(
     """
     input_dir = _example_input_dir(example)
     benchmark = _read_json(resolve_check_dir(checklist, check) / "benchmark.json")
-    example_class = example_class or benchmark.get("example_class")
+    example_class = benchmark.get("example_class")
     if not example_class:
         raise ValueError(
             f"No example_class in {checklist}/{check}/benchmark.json. The "

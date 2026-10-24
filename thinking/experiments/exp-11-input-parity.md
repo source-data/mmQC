@@ -240,3 +240,11 @@ stand, read as describing production's input. The temporary
 (plan, Milestone 4).
 
 **Not measured, as stated in Scope:** published against submitted figures.
+
+**Gate 4B, 2026-10-24: accepted** (Thomas Lemberger).
+
+- `FigureExample` now sends the converted figure, and the temporary switch
+  is removed.
+- From then on, `run.py` refuses to rerun; check out `24e99b665` to repeat
+  either arm.
+- The notebook still verifies these runs against the stored files.

@@ -31,6 +31,12 @@ jobs:
     - name: Install project
       run: uv venv --python 3.12 && uv pip install -e .
 
+    # A figure is sent converted, as production converts it (mmqc_utils'
+    # figure_image_part, through Wand), so assembling a figure runtime needs
+    # ImageMagick's library.
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y libmagickwand-dev
+
     - name: Run the agentic checklist suite
       run: |
         uv run pytest \

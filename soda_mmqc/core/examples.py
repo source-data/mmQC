@@ -473,16 +473,18 @@ class FigureExample(Example):
         return sorted(out)
 
     def input_parts(self) -> List[Dict[str, Any]]:
-        """A figure is its caption and its image, in that order."""
+        """A figure is its caption and its image, in that order.
+
+        The image is the figure as production sends it: the stored file
+        converted once by ``mmqc_utils``' ``figure_image_part`` (300 dpi,
+        2,048 px, JPEG 80) and carried as bytes, so a benchmark score
+        describes production's input. Adopted after exp-11, gate 4B
+        (2026-10-24); runs before then sent the stored file as it was.
+        """
+        from mmqc_utils.agentic import figure_parts
+
         self._ensure_loaded()
-        content = self.source_path / "content"
-        return [
-            {"kind": "text", "text": f"Figure caption:\n{self.caption}"},
-            {
-                "kind": "image",
-                "path": self.image_path.relative_to(content).as_posix(),
-            },
-        ]
+        return list(figure_parts(self.image_path, self.caption))
 
     def supporting_files(self) -> Dict[str, Any]:
         """Source data: available on request, not sent up front.
@@ -695,23 +697,7 @@ class WordExample(Example):
 
 
 # Register example types
-class ConvertedFigureExample(FigureExample):
-    """A figure as production sends it: converted once, carried as bytes.
-
-    Temporary: exp-11's converted arm (thinking/experiments/
-    exp-11-input-parity.md). Removed after exp-11; if the conversion is
-    adopted, it becomes ``FigureExample``'s own image part.
-    """
-
-    def input_parts(self) -> List[Dict[str, Any]]:
-        from mmqc_utils.agentic import figure_parts
-
-        self._ensure_loaded()
-        return list(figure_parts(self.image_path, self.caption))
-
-
 EXAMPLE_TYPES["figure"] = FigureExample
-EXAMPLE_TYPES["figure-converted"] = ConvertedFigureExample
 EXAMPLE_TYPES["word"] = WordExample
 
 

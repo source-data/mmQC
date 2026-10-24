@@ -616,6 +616,17 @@ deterministic: same input, same bytes.
 > - Details: [`exp-11-input-parity.md`](../experiments/exp-11-input-parity.md).
 > - Gate 4B is open.
 
+> **Decision — 2026-10-24, Thomas Lemberger: gate 4B accepted.**
+>
+> - The builder is the benchmark's only image path: `FigureExample` sends
+>   the figure converted once, as bytes.
+> - Earlier results stand, read as describing production's input.
+> - The cleanup below is done: the `figure-converted` class and the
+>   `example_class` override are removed.
+> - exp-11's `run.py` refuses to rerun; check out `24e99b665` for that.
+>   Its notebook still verifies the recorded runs.
+> - CI's agentic job now installs ImageMagick.
+
 **Cleanup after exp-11 (decided 2026-10-24).** Remove the `figure-converted`
 example class and the `example_class` override of `run_check_live`: they
 exist only to run exp-11's converted arm. If the builder is adopted, it
@@ -728,6 +739,9 @@ its code.
 - **1A, 2026-10-23: accepted.** Assembly takes a checklist directory and an
   `ExampleContent`. The benchmark adapter is `agentic/benchmark.py`. The
   493 assembled runtimes are byte-identical to the ones before the change.
+- **4B, 2026-10-24: accepted.** exp-11 found converted figures
+  non-inferior. `FigureExample` sends the figure converted once (300 dpi,
+  2,048 px, JPEG 80), and the temporary switch is removed.
 - **3A, 2026-10-23: deferred by decision.** Implementation proceeds; the
   maintainer of `mmqc-utils` is consulted when it is done, before any
   release.

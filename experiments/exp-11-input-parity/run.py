@@ -25,6 +25,12 @@ notebook's, against `gold-v7`, after it has checked from each session's image
 fingerprint that the arm sent what it claims.
 
 The converted arm needs ImageMagick (`MAGICK_HOME` on macOS with Homebrew).
+
+**Gate 4B (2026-10-24) adopted the converted input**: `FigureExample` now
+sends the converted figure, and the temporary switch that ran the stored
+arm is gone. The runs cannot be repeated from this commit -- check out
+24e99b665 for that. What the notebook needs still works: the constants, and
+the image each arm must have sent (computed from the stored file).
 """
 
 from __future__ import annotations
@@ -40,10 +46,14 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO))
 
 from soda_mmqc import logger                                      # noqa: E402
-from soda_mmqc.agentic.benchmark import example_content           # noqa: E402
 from soda_mmqc.agentic.runner import RunAborted, run_check_live   # noqa: E402
+from soda_mmqc.core.examples import EXAMPLE_FACTORY               # noqa: E402
+from mmqc_utils.agentic import figure_image_part                  # noqa: E402
 from mmqc_utils.agentic.runtime import ASSEMBLY_CLOSURE            # noqa: E402
 from soda_mmqc.config import resolve_check_dir                    # noqa: E402
+
+#: The commit that can still run both arms.
+RUNNABLE_AT = "24e99b665"
 
 CHECKLIST = "fig-checklist-exp11"
 ENTRY = "do-fig-checklist-pm"
@@ -75,10 +85,13 @@ def benchmark_examples() -> List[str]:
 
 
 def expected_image_sha256(arm: str, example: str) -> str:
-    """The SHA-256 of the image this arm must have sent for this figure."""
-    content = example_content(CHECKLIST, ENTRY, example, example_class=ARMS[arm])
-    image = next(p for p in content.parts if p["kind"] == "image")
-    data = image["data"] if "data" in image else (content.source_root / image["path"]).read_bytes()
+    """The SHA-256 of the image this arm must have sent for this figure.
+
+    Stored: the stored file's bytes. Converted: `figure_image_part` on that
+    file, re-converted now -- so a change in ImageMagick since the run shows.
+    """
+    stored = EXAMPLE_FACTORY.create(example, "figure").image_path
+    data = stored.read_bytes() if arm == "stored" else figure_image_part(stored)["data"]
     return hashlib.sha256(data).hexdigest()
 
 
@@ -100,7 +113,7 @@ def run(root: Path, *, replicates: int, limit: Optional[int], force: bool) -> Li
         _, report = run_check_live(
             CHECKLIST, ENTRY, output=root / arm, model=MODEL, provider=PROVIDER, limit=limit,
             replicates=replicates, force=force, assembly=ASSEMBLY,
-            concurrency=CONCURRENCY, retry_failed=False, example_class=example_class,
+            concurrency=CONCURRENCY, retry_failed=False,
         )
         logger.info("  %d ran, %d skipped, %d failed",
                     sum(e["status"] == "ok" for e in report),
@@ -149,6 +162,10 @@ def main(argv: List[str] | None = None) -> int:
     parser.add_argument("--smoke", action="store_true", help="Both inputs on a few figures, one replicate")
     args = parser.parse_args(argv)
 
+    if not args.dry_run:
+        logger.error("exp-11 cannot be rerun from this commit: gate 4B made the converted input "
+                     "the only one. Check out %s to rerun either arm.", RUNNABLE_AT)
+        return 2
     if not preflight():
         return 2
 

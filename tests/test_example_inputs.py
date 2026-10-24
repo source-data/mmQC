@@ -21,18 +21,20 @@ class TestFigureExampleStatesItsContent:
         assert [part["kind"] for part in parts] == ["text", "image"]
         assert example.caption in parts[0]["text"]
 
-    def test_the_image_part_names_a_file_under_content(self):
+    def test_the_image_is_the_stored_figure_converted_once(self):
+        """As production sends it (exp-11, gate 4B): bytes, not a file."""
+        from mmqc_utils.agentic import figure_image_part
+
         example = EXAMPLE_FACTORY.create(FIGURE_EXAMPLE, "figure")
         image = next(p for p in example.input_parts() if p["kind"] == "image")
-        content = example.source_path / "content"
-        assert (content / image["path"]).is_file()
-        assert image["path"] == example.image_path.name
+        assert image == figure_image_part(example.image_path)
+        assert image["media_type"] == "image/jpeg"
 
     def test_no_part_carries_provider_vocabulary(self):
         """`Example` states content; drivers render it. Neither leaks."""
         example = EXAMPLE_FACTORY.create(FIGURE_EXAMPLE, "figure")
         for part in example.input_parts():
-            assert set(part) <= {"kind", "text", "path"}
+            assert set(part) <= {"kind", "text", "path", "media_type", "data"}
             assert part["kind"] in {"text", "image"}
 
     def test_supporting_files_are_the_source_data(self):
@@ -48,7 +50,7 @@ class TestFigureExampleStatesItsContent:
     def test_no_path_escapes_content(self):
         """A path climbing out of content/ would break the runtime's seal."""
         example = EXAMPLE_FACTORY.create(FIGURE_EXAMPLE, "figure")
-        paths = [p["path"] for p in example.input_parts() if p["kind"] == "image"]
+        paths = [p["path"] for p in example.input_parts() if "path" in p]
         paths += example.supporting_files()["source_data"]
         for entry in paths:
             assert not entry.startswith("/")

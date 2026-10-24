@@ -4309,10 +4309,11 @@ class TestTheContentIsPushedNotPulled:
         kinds = [part["kind"] for part in assembled.input_parts]
         assert kinds == ["text", "image"]
 
-    def test_image_parts_are_rebased_onto_the_runtime(self, assembled):
+    def test_the_figure_travels_as_bytes_not_as_a_staged_file(self, assembled):
+        """Converted once, as production sends it (exp-11, gate 4B)."""
         image = next(p for p in assembled.input_parts if p["kind"] == "image")
-        assert image["path"].startswith(f"{AGENTIC_INPUT_SUBDIR}/")
-        assert (assembled.root / image["path"]).is_file()
+        assert "path" not in image
+        assert image["media_type"] == "image/jpeg" and image["data"]
 
     def test_the_session_message_leads_with_the_instruction(self, assembled):
         message = _session_message(assembled)
