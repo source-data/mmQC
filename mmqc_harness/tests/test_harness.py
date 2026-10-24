@@ -21,15 +21,15 @@ from pathlib import Path
 
 import pytest
 
-from mmqc_utils.agentic import (
+from mmqc_harness import (
     ExampleContent,
     assemble_runtime,
     run_session,
     runtime_session,
     session_options,
 )
-from mmqc_utils.agentic.render import render_anthropic
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.render import render_anthropic
+from mmqc_harness.runtime import (
     AGENTIC_FORBIDDEN_TOOLS,
     AGENTIC_INPUT_MANIFEST_FILENAME,
     ASSEMBLY_ALL,
@@ -264,8 +264,8 @@ def large_figure(tmp_path) -> Path:
 def test_the_builder_converts_once(large_figure):
     """The bytes sent are `convert_to_bounded_jpeg`'s, not a re-encode of them."""
     from mmqc_utils import convert_to_bounded_jpeg
-    from mmqc_utils.agentic import figure_image_part
-    from mmqc_utils.agentic.content import (
+    from mmqc_harness import figure_image_part
+    from mmqc_harness.content import (
         FIGURE_JPEG_QUALITY, FIGURE_MAX_DIMENSION, FIGURE_RASTERIZATION_DPI)
 
     part = figure_image_part(large_figure)
@@ -280,7 +280,7 @@ def test_the_builder_bounds_the_figure(large_figure):
     from PIL import Image
     import io
 
-    from mmqc_utils.agentic import figure_parts
+    from mmqc_harness import figure_parts
 
     caption, image = figure_parts(large_figure, "A wide figure.")
     assert caption == {"kind": "text", "text": "Figure caption:\nA wide figure."}
@@ -305,7 +305,7 @@ def test_an_image_carrying_its_bytes_is_sent_not_staged(checklist, content, tmp_
 
 
 def test_an_image_part_names_a_file_or_carries_bytes_not_both(tmp_path):
-    from mmqc_utils.agentic.render import image_bytes
+    from mmqc_harness.render import image_bytes
 
     with pytest.raises(ValueError, match="exactly one"):
         image_bytes({"kind": "image", "path": "a.png", "data": PNG,
@@ -370,7 +370,7 @@ def production(checklist) -> Path:
 
 
 def _published(production) -> _Store:
-    from mmqc_utils.agentic.publication import skill_payloads
+    from mmqc_harness.publication import skill_payloads
 
     store = _Store()
     for payload in skill_payloads(production):
@@ -379,20 +379,20 @@ def _published(production) -> _Store:
 
 
 def test_a_production_checklist_has_one_entry_point_and_reaches_every_pin(checklist, production):
-    from mmqc_utils.agentic.publication import production_entry_point
+    from mmqc_harness.publication import production_entry_point
 
     assert production_entry_point(production) == "do-toy"
 
 
 def test_an_unreached_pinned_skill_is_refused(checklist):
-    from mmqc_utils.agentic.publication import production_entry_point
+    from mmqc_harness.publication import production_entry_point
 
     with pytest.raises(ValueError, match="entry point"):
         production_entry_point(checklist)          # `extra` is a second root
 
 
 def test_versions_may_vary_prose_but_not_topology(production):
-    from mmqc_utils.agentic.publication import production_entry_point
+    from mmqc_harness.publication import production_entry_point
 
     _skill(production, "check-a", "v3", prose="Look elsewhere.")   # calls nothing
     with pytest.raises(ValueError, match="topology"):
@@ -400,7 +400,7 @@ def test_versions_may_vary_prose_but_not_topology(production):
 
 
 def test_one_prompt_per_pinned_skill(production):
-    from mmqc_utils.agentic.publication import skill_payloads
+    from mmqc_harness.publication import skill_payloads
 
     payloads = {p["name"]: p for p in skill_payloads(production)}
     assert set(payloads) == {"skills/toy/do-toy", "skills/toy/check-a", "skills/toy/shared"}
@@ -415,7 +415,7 @@ def test_one_prompt_per_pinned_skill(production):
 
 
 def test_the_published_checklist_loads_back_byte_identical(production, content, tmp_path):
-    from mmqc_utils.agentic.publication import load_published_checklist
+    from mmqc_harness.publication import load_published_checklist
 
     loaded = load_published_checklist(_published(production), "toy", "do-toy", tmp_path / "from-store")
     for name, version in (("do-toy", "v1"), ("check-a", "v2"), ("shared", "v1")):
@@ -430,7 +430,7 @@ def test_the_published_checklist_loads_back_byte_identical(production, content, 
 
 
 def test_a_mixed_release_is_refused(production, tmp_path):
-    from mmqc_utils.agentic.publication import load_published_checklist
+    from mmqc_harness.publication import load_published_checklist
 
     store = _published(production)
     store.prompts["skills/toy/shared"]["config"]["skill"]["release"] = "an-older-release"
@@ -439,7 +439,7 @@ def test_a_mixed_release_is_refused(production, tmp_path):
 
 
 def test_text_that_does_not_match_its_hash_is_refused(production, tmp_path):
-    from mmqc_utils.agentic.publication import load_published_checklist
+    from mmqc_harness.publication import load_published_checklist
 
     store = _published(production)
     store.prompts["skills/toy/check-a"]["prompt"] += "\nOne more instruction.\n"
@@ -451,14 +451,14 @@ def test_text_that_does_not_match_its_hash_is_refused(production, tmp_path):
 
 
 def _skills_cli(argv, store):
-    from mmqc_utils.agentic.cli import main
+    from mmqc_harness.cli import main
 
     return main(argv, client_factory=lambda: store)
 
 
 def _republish(production, store, prose):
     _skill(production, "check-a", "v2", requires=("shared",), prose=prose)
-    for payload in __import__("mmqc_utils.agentic.publication", fromlist=["x"]).skill_payloads(production):
+    for payload in __import__("mmqc_harness.publication", fromlist=["x"]).skill_payloads(production):
         store.create_prompt(**payload)
 
 

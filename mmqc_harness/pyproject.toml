@@ -1,0 +1,73 @@
+[project]
+name = "mmqc-harness"
+version = "0.1.0"
+description = "Run a structured checklist of agent skills on one example, in a sealed Claude Agent SDK session, exactly as mmQC benchmarks it."
+readme = "README.md"
+authors = [
+  {name = "Thomas Lemberger", email = "thomas.lemberger@embo.org"}
+]
+maintainers = [
+  {name = "Thomas Lemberger", email = "thomas.lemberger@embo.org"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+license = "Apache-2.0"
+dependencies = [
+    # Pinned exactly rather than floated: the SDK is 0.x with no semver
+    # promise and ships frequently, and a silently updated agent runtime would
+    # make scores non-comparable between runs, and production with the
+    # benchmark. Bumping it is a deliberate change. It bundles the Claude Code
+    # CLI that each session runs.
+    "claude-agent-sdk==0.2.165",
+    "jsonschema>=4.0.0",
+    # The figure conversion (convert_to_bounded_jpeg) production and the
+    # benchmark share.
+    "mmqc-utils>=0.3.5",
+    "pyyaml>=6.0.0",
+]
+requires-python = ">= 3.12"
+
+[project.optional-dependencies]
+# For `mmqc-skills pull` and `status`, which read checklists from Langfuse.
+langfuse = ["langfuse>=4.0.0"]
+
+[project.scripts]
+# Keep a local copy of a published checklist current and verified.
+mmqc-skills = "mmqc_harness.cli:main"
+
+[dependency-groups]
+test = [
+    "pillow>=12.2.0",
+    "pytest>=9.0.3",
+]
+
+[project.urls]
+bugs = "https://github.com/source-data/mmQC/issues"
+homepage = "https://github.com/source-data/mmQC"
+
+[tool.uv.sources]
+# Developed beside the conversion utilities it depends on.
+mmqc-utils = { path = "../mmqc_utils", editable = true }
+
+[tool.ruff]
+line-length = 120
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mmqc_harness = ["py.typed", "CLAUDE.md"]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

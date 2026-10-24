@@ -72,3 +72,24 @@ jobs:
     - name: Format, lint, test
       run: just qa
       working-directory: ./mmqc_utils
+
+  harness:
+    # mmqc_harness on its own, as an application installs it: its tests build
+    # their own checklist and never call a model, and soda_mmqc is not
+    # installed, which is the point.
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+
+    - name: Install ImageMagick
+      run: sudo apt-get install -y imagemagick
+
+    - name: Test
+      run: uv run --group test pytest -q
+      working-directory: ./mmqc_harness

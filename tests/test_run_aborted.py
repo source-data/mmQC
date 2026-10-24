@@ -79,7 +79,7 @@ def test_any_other_failure_is_recorded_and_the_run_goes_on(tmp_path: Path, monke
 # Concurrent runs: the same sessions, the same report, the same stop.
 # ---------------------------------------------------------------------------
 
-from mmqc_utils.agentic.session import ToolAuditLog  # noqa: E402
+from mmqc_harness.session import ToolAuditLog  # noqa: E402
 
 
 def _examples(n: int) -> list[str]:
@@ -154,7 +154,7 @@ def test_concurrency_is_refused_where_it_cannot_work(tmp_path: Path, kwargs):
 
 def test_a_failed_session_keeps_its_trace_audit_and_error(tmp_path: Path, monkeypatch):
     """exp-07: a session that declined to answer left no record at all."""
-    from mmqc_utils.agentic.session import SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME
+    from mmqc_harness.session import SKILL_TRACE_FILENAME, TOOL_AUDIT_FILENAME
     (example,) = _examples(1)
 
     async def fake_session(layout, *, versions, approver, options, client):

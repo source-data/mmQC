@@ -27,20 +27,20 @@ from soda_mmqc.config import (
 )
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.agentic.benchmark import example_content
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.pinning import (
     validate_version_manifest,
     SkillSet,
     checklist_pins,
     expand_skill_sets,
     load_model_defaults,
 )
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.runtime import (
     ASSEMBLY_CLOSURE,
     RuntimeLayout,
     effective_session_options,
     runtime_skill_set,
 )
-from mmqc_utils.agentic.session import (
+from mmqc_harness.session import (
     compare_declared_and_observed,
     INTERMEDIATES_DIRNAME,
     runtime_session,
@@ -52,7 +52,7 @@ from mmqc_utils.agentic.session import (
     interactive_approver,
     load_skill_file,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     SKILL_FILENAME,
     load_skills,
     _read_json,

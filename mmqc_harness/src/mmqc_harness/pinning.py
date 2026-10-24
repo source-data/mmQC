@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import yaml
 
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     Skill,
     load_skills,
 )

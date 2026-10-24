@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
-from mmqc_utils.agentic.publication import (
+from mmqc_harness.publication import (
     load_published_checklist,
     production_entry_point,
     skill_payloads,

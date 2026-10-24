@@ -59,12 +59,12 @@ import soda_mmqc.cli as cli
 import soda_mmqc.config as config
 import soda_mmqc.agentic.runner as runner
 import soda_mmqc.agentic.benchmark as agentic_benchmark
-import mmqc_utils.agentic.runtime as agentic_runtime
+import mmqc_harness.runtime as agentic_runtime
 
 # Imported from the module that defines each name, rather than
 # through a re-export surface on cli: patching and reading must
 # reach the one definition.
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.pinning import (
     MODEL_DEFAULTS_FILENAME,
     VERSION_MANIFEST_FILENAME,
     checklist_pins,
@@ -80,7 +80,7 @@ from soda_mmqc.agentic.runner import (
     run_check_mock,
 )
 from soda_mmqc.agentic.benchmark import example_content
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.runtime import (
     ASSEMBLY_ALL,
     EXAMPLE_GOLD_SUBDIR,
     assemble_runtime,
@@ -88,7 +88,7 @@ from mmqc_utils.agentic.runtime import (
     session_cache_key,
     session_options,
 )
-from mmqc_utils.agentic.session import (
+from mmqc_harness.session import (
     AUDIT_INPUT_MAX_BYTES,
     INTERMEDIATES_DIRNAME,
     PREDICTION_FILENAME,
@@ -106,7 +106,7 @@ from mmqc_utils.agentic.session import (
     runtime_session,
     validate_against_schema,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     SKILL_FILENAME,
     SKILL_TOOL,
     _prose_blocks,
@@ -125,7 +125,7 @@ from soda_mmqc.agentic.views import (
     render_dag,
     render_readme,
 )
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.runtime import (
     AGENTIC_INPUT_MANIFEST_FILENAME,
     AGENTIC_INPUT_SUBDIR,
 )
@@ -2182,7 +2182,7 @@ class TestNoLeafRestatesTheSharedSkill:
 # The second is why "outside the repo" is necessary but not sufficient, and
 # why the setting sources are pinned to "project" alone.
 
-from mmqc_utils.agentic.runtime import (  # noqa: E402
+from mmqc_harness.runtime import (  # noqa: E402
     AGENTIC_ARTIFACTS_SUBDIR,
     AGENTIC_ORIENTATION_FILENAME,
     AGENTIC_SETTING_SOURCES,
@@ -2502,7 +2502,7 @@ class TestRuntimeLifecycle:
 # mistaken widening reports which guarantee it broke rather than just that a
 # set changed.
 
-from mmqc_utils.agentic.runtime import (  # noqa: E402
+from mmqc_harness.runtime import (  # noqa: E402
     AGENTIC_ALLOWED_TOOL_NAMES,
     AGENTIC_BASE_TOOLS,
     AGENTIC_FORBIDDEN_TOOLS,
@@ -4754,7 +4754,7 @@ class TestTheRunRecordsWhatItCost:
         """A safety-classifier fallback changes the model mid-session; the
         audit says when, and whether a subagent was speaking."""
         from types import SimpleNamespace
-        from mmqc_utils.agentic.session import _extract_turn
+        from mmqc_harness.session import _extract_turn
         audit = ToolAuditLog(tmp_path / "audit.json")
         for model, mid in (("claude-opus-5-5", "m1"), ("claude-opus-5-5", "m1"),
                            ("claude-opus-5", "m2")):
@@ -4765,7 +4765,7 @@ class TestTheRunRecordsWhatItCost:
         assert [t["model"] for t in written["turns"]] == ["claude-opus-5-5", "claude-opus-5"]
 
     def test_a_result_message_is_not_a_turn_and_keeps_its_stop_reason(self):
-        from mmqc_utils.agentic.session import _extract_turn
+        from mmqc_harness.session import _extract_turn
         result = {"subtype": "success", "total_cost_usd": 0.1, "stop_reason": "refusal",
                   "content": None}
         assert _extract_turn(result) is None
@@ -4833,7 +4833,7 @@ class TestTheCliIsAParser:
 
     def test_no_constant_is_defined_twice(self):
         from soda_mmqc.agentic import runner as _runner
-        from mmqc_utils.agentic import session as _session
+        from mmqc_harness import session as _session
 
         assert "PREDICTION_FILENAME" not in vars(cli), (
             "PREDICTION_FILENAME is owned by agentic.session; cli must not "

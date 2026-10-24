@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, List, Optional
 
-from mmqc_utils.agentic.publication import (
+from mmqc_harness.publication import (
     PRODUCTION_LABEL,
     RELEASE_RECORD,
     published_release,

@@ -1,6 +1,7 @@
 """Run a structured checklist on one example, in a sealed agent session.
 
-Requires the ``agentic`` extra: ``pip install "mmqc-utils[agentic]"``.
+Install: ``pip install mmqc-harness`` (it brings ``mmqc-utils`` and the
+pinned Claude Agent SDK).
 
 A checklist is a directory of versioned skills (``<skill>/vN/SKILL.md``) that
 call each other in their prose. One of them, the entry point, owns a
@@ -21,22 +22,22 @@ session's permission profile), :mod:`.session` (running and auditing a
 session), :mod:`.render` (content parts for a provider).
 """
 
-from mmqc_utils.agentic.content import figure_image_part, figure_parts
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.content import figure_image_part, figure_parts
+from mmqc_harness.pinning import (
     SkillSet,
     checklist_pins,
     load_model_defaults,
     skill_content_hash,
 )
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.runtime import (
     ExampleContent,
     RuntimeLayout,
     assemble_runtime,
     effective_session_options,
     session_options,
 )
-from mmqc_utils.agentic.session import run_session, runtime_session
-from mmqc_utils.agentic.skills import Skill, call_closure, validate_skills
+from mmqc_harness.session import run_session, runtime_session
+from mmqc_harness.skills import Skill, call_closure, validate_skills
 
 __all__ = [
     "ExampleContent",

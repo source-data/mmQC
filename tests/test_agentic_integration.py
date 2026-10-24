@@ -21,9 +21,9 @@ from pathlib import Path
 
 import pytest
 
-from mmqc_utils.agentic import session
+from mmqc_harness import session
 from soda_mmqc.agentic.benchmark import example_content
-from mmqc_utils.agentic.runtime import session_options
+from mmqc_harness.runtime import session_options
 from soda_mmqc.config import resolve_check_dir
 from soda_mmqc.config import CHECKLIST_DIR, EXAMPLES_DIR
 from tests.conftest import requires_key

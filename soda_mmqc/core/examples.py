@@ -481,7 +481,7 @@ class FigureExample(Example):
         describes production's input. Adopted after exp-11, gate 4B
         (2026-10-24); runs before then sent the stored file as it was.
         """
-        from mmqc_utils.agentic import figure_parts
+        from mmqc_harness import figure_parts
 
         self._ensure_loaded()
         return list(figure_parts(self.image_path, self.caption))

@@ -9,7 +9,7 @@ Which checklists: the `skills` list of
 soda_mmqc/data/production_prompts/production.json. Which versions: each
 checklist's own version-manifest.yaml. One prompt per pinned skill,
 `skills/<checklist>/<skill>`, labelled `production`; what a prompt holds is
-mmqc_utils.agentic.publication's account (the whole SKILL.md as text, the
+mmqc_harness.publication's account (the whole SKILL.md as text, the
 contracts and the release in the config).
 
 Per checklist, the script:
@@ -23,7 +23,7 @@ Per checklist, the script:
    content hash against the repository's.
 
 Credentials: LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, LANGFUSE_BASE_URL.
-Needs mmqc_utils (no `agentic` extra: publishing runs no session), pyyaml and
+Needs mmqc_harness (which brings mmqc_utils and pyyaml) and
 langfuse.
 """
 
@@ -37,7 +37,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from mmqc_utils.agentic.publication import (
+from mmqc_harness.publication import (
     PRODUCTION_LABEL,
     load_published_checklist,
     production_entry_point,

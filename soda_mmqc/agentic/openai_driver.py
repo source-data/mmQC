@@ -255,7 +255,7 @@ def make_openai_client(
     """
     from openai import OpenAI
 
-    from mmqc_utils.agentic.render import render_openai
+    from mmqc_harness.render import render_openai
 
     async def client(
         parts: Sequence[Mapping[str, Any]], options: Mapping[str, Any]

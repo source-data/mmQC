@@ -19,8 +19,8 @@ from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     owns_evaluation_contracts,
 )
-from mmqc_utils.agentic.publication import production_entry_point
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.publication import production_entry_point
+from mmqc_harness.pinning import (
     VERSION_MANIFEST_FILENAME,
     SkillSet,
     load_version_manifest,
@@ -28,7 +28,7 @@ from mmqc_utils.agentic.pinning import (
     skill_content_hash,
     validate_version_manifest,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     Skill,
     invoked_skills,
     validate_skills,

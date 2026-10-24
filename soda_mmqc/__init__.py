@@ -50,11 +50,12 @@ logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
 
-# The agentic harness logs under `mmqc_utils.agentic`, a package of its own
-# that configures no handlers; its messages belong in mmQC's console and log
-# file like the rest.
-_harness_logger = logging.getLogger("mmqc_utils")
-_harness_logger.addHandler(console_handler)
-_harness_logger.addHandler(file_handler)
-_harness_logger.setLevel(logging.DEBUG)
-_harness_logger.propagate = False
+# The harness (`mmqc_harness`) and the conversions (`mmqc_utils`) are packages
+# of their own that configure no handlers; their messages belong in mmQC's
+# console and log file like the rest.
+for _package in ("mmqc_harness", "mmqc_utils"):
+    _package_logger = logging.getLogger(_package)
+    _package_logger.addHandler(console_handler)
+    _package_logger.addHandler(file_handler)
+    _package_logger.setLevel(logging.DEBUG)
+    _package_logger.propagate = False

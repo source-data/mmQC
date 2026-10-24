@@ -807,6 +807,21 @@ its code.
 
 ## Decisions recorded
 
+- **2026-10-24, the harness becomes its own package,** `mmqc-harness`
+  (import `mmqc_harness`), in a sibling folder, `mmqc_harness/`, next to
+  `mmqc_utils/`. This settles design-note decision 7 against the
+  `[agentic]` extra this plan assumed.
+  - **Why:** `mmqc-utils` is conversion utilities, maintained by someone
+    else. The harness is a different kind of thing, with its own release
+    cadence and dependencies.
+  - **What moved:** the code, its tests, `CLAUDE.md` and `mmqc-skills`.
+  - **What `mmqc_utils` keeps:** its `pyproject.toml`, README and CHANGELOG
+    are back to their Milestone 0 state, the doctype fix included.
+  - **Dependencies:** `mmqc-harness` depends on `mmqc-utils`, never the
+    reverse; a boundary test enforces it.
+  - **CI:** a job tests the harness on its own.
+  - Where this plan says `mmqc_utils.agentic`, read `mmqc_harness`.
+
 - **0A, 2026-10-23: accepted.** mmQC runs the in-repo `mmqc_utils`, with
   the doctype fix. Image removal from converted documents is wanted (model
   input, injection surface, curation view).

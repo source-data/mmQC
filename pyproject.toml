@@ -37,9 +37,10 @@ dependencies = [
     "jupyterlab>=4.0.0",
     "pytest>=7.0.0",
     "openpyxl>=3.1.5",
-    # The agentic harness lives in mmqc_utils.agentic; the extra pins the
-    # Claude Agent SDK exactly (see mmqc_utils/pyproject.toml).
-    "mmqc-utils[agentic]>=0.3.0",
+    "mmqc-utils>=0.3.0",
+    # The agentic harness; it pins the Claude Agent SDK exactly (see
+    # mmqc_harness/pyproject.toml).
+    "mmqc-harness",
     "rapidfuzz>=3.0.0",
     "itables>=2.0.0",
 ]
@@ -63,6 +64,7 @@ packages = ["soda_mmqc"]
 # production, and the harness is moving into it
 # (thinking/plans/2026-10-23-harness-in-mmqc-utils.md).
 mmqc-utils = { path = "mmqc_utils", editable = true }
+mmqc-harness = { path = "mmqc_harness", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

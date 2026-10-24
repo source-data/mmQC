@@ -426,5 +426,7 @@ Scheduled, with milestones and gates, in
    published-versus-submitted gap, or measure only the encoding gap?
 6. ~~**Staged files**~~ — decided 2026-10-23: not now. File access comes
    with `ref-checklist`, or with the first checklist that needs it.
-7. **Packaging:** the `[agentic]` extra inside `mmqc-utils` (proposed), or
-   a sibling distribution in the same repository?
+7. ~~**Packaging**~~ — decided 2026-10-24: a sibling package,
+   `mmqc-harness` (import `mmqc_harness`), in `mmqc_harness/` next to
+   `mmqc_utils/`, depending on `mmqc-utils`. Not an extra of `mmqc-utils`:
+   that package is conversion utilities, maintained separately.

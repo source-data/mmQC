@@ -37,7 +37,7 @@ from typing import Any, Dict, List, Mapping
 
 import yaml
 
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.pinning import (
     MODEL_DEFAULTS_FILENAME,
     VERSION_MANIFEST_FILENAME,
     checklist_pins,
@@ -45,7 +45,7 @@ from mmqc_utils.agentic.pinning import (
     skill_content_hash,
     validate_version_manifest,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     SKILL_FILENAME,
     call_closure,
     load_skill,

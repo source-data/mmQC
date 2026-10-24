@@ -48,8 +48,8 @@ sys.path.insert(0, str(REPO))
 from soda_mmqc import logger                                      # noqa: E402
 from soda_mmqc.agentic.runner import RunAborted, run_check_live   # noqa: E402
 from soda_mmqc.core.examples import EXAMPLE_FACTORY               # noqa: E402
-from mmqc_utils.agentic import figure_image_part                  # noqa: E402
-from mmqc_utils.agentic.runtime import ASSEMBLY_CLOSURE            # noqa: E402
+from mmqc_harness import figure_image_part                  # noqa: E402
+from mmqc_harness.runtime import ASSEMBLY_CLOSURE            # noqa: E402
 from soda_mmqc.config import resolve_check_dir                    # noqa: E402
 
 #: The commit that can still run both arms.

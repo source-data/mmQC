@@ -10,7 +10,6 @@ Reusable conversion utilities for MMQC projects.
 - Align a quote against a source text and return character-level spans, score, and match status
 - Align multiple quotes against a shared source with automatic resolution of duplicate-occurrence ambiguity
 - Render HTML fragments visualizing a single alignment or multi-quote coverage of a shared source
-- Run a structured checklist of agent skills on one example, in a sealed Claude Agent SDK session (`mmqc_utils.agentic`, optional extra `agentic`)
 
 ## System requirements
 
@@ -279,70 +278,6 @@ Required CSS classes:
 | `.coverage-view` | wrapper `<div>` |
 | `.cov-legend` | legend row above the source |
 | `.cov-chip` | each colored label chip in the legend |
-
-### Agentic checklist runs
-
-Requires the `agentic` extra, which pins the Claude Agent SDK exactly (it bundles the Claude Code CLI that each session runs):
-
-```bash
-pip install "mmqc-utils[agentic]"
-```
-
-A checklist is a directory of versioned skills, `<skill>/vN/SKILL.md`, that invoke each other in their prose. Its `version-manifest.yaml` picks one version of each. The entry point owns a `schema.json`, the structure of the answer. mmQC develops and benchmarks the checklists; an application runs them the same way:
-
-```python
-import asyncio
-from pathlib import Path
-
-from mmqc_utils.agentic import (
-    ExampleContent,
-    effective_session_options,
-    figure_parts,
-    load_model_defaults,
-    run_session,
-    runtime_session,
-    validate_skills,
-)
-
-checklist = Path("fig-checklist")             # a checklist directory
-content = ExampleContent(
-    source_root=Path("figure-3"),             # staged into the runtime (supporting files live here)
-    parts=figure_parts("figure-3/figure.tif", caption),  # caption, then the figure converted once
-    files={},                                 # supporting files, by role (not sent; listed for the session)
-    label="figure-3",
-)
-
-skills = validate_skills(checklist)
-defaults = load_model_defaults(checklist)
-with runtime_session(checklist, "do-fig-checklist-pm", content, parent=Path("/var/tmp/runtimes")) as layout:
-    options = effective_session_options(layout, skills, defaults=defaults.session)
-    options["model"] = defaults.model_for("claude-sdk")
-    answer, trace, audit = asyncio.run(run_session(layout, options=options))
-```
-
-- `runtime_session` assembles a sealed runtime for the entry point: the skills its pinned prose reaches, one version each, and the example's content. It yields the runtime and removes it afterwards. The runtime is created under `parent` (default: the system temp directory); keep it off synced folders and outside any repository holding skills.
-- The session has one tool, `Skill`, and no shell, file, network or subagent tools. The example's content travels in the request.
-- `figure_parts` converts the figure once (rasterized at 300 dpi, longest side 2048 px, JPEG quality 80) and sends those bytes; build figures with it so the model sees what mmQC benchmarked. An image part either names a file under `source_root` (`{"kind": "image", "path": ...}`) or carries its bytes (`{"kind": "image", "media_type": ..., "data": ...}`).
-- `run_session` returns the answer, validated against the entry point's schema, the trace of the skills the session invoked (`trace.invoked`), and an audit of its tool calls and token usage, which also records a fingerprint (media type, size, dimensions, SHA-256) of every image sent. It raises `ValueError` when the session ends without an answer, or with one that is not JSON or does not satisfy the schema.
-- The harness logs under `mmqc_utils.agentic` and configures no handlers.
-
-#### Getting a checklist from Langfuse: `mmqc-skills`
-
-mmQC publishes each production checklist to Langfuse, one prompt per skill (`skills/<checklist>/<skill>`, label `production`). An application keeps a local copy and runs it from there:
-
-```bash
-mmqc-skills pull   fig-checklist --entry do-fig-checklist-pm --dest skills/
-mmqc-skills verify skills/fig-checklist
-mmqc-skills status skills/fig-checklist
-```
-
-- `pull` brings `skills/fig-checklist` to the published release, or does nothing if it is already there. It fetches into a temporary directory and checks it first: each `SKILL.md` against its content hash, a single release, and the production rules (one entry point, every skill reached, one call graph). Only then does it swap the copy into place, so a refused update leaves the previous copy untouched. It writes `release.json` beside the skills, recording the release, the label, when it was fetched, and each skill's version and hash.
-- `verify` checks a local copy offline against `release.json`. Use it at start-up or in a health check.
-- `status` compares the local release with the published one.
-- Exit codes: `0` fine (for `status`, up to date); `1` a check failed (for `status`, an update is available); `2` a usage or configuration error.
-- `pull` and `status` need the `langfuse` package and `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` and `LANGFUSE_BASE_URL` (or `LANGFUSE_HOST`).
-- `SKILL.md` files are written back byte-identical. The contract files (`schema.json`, `eval-manifest.json`, `model-defaults.yaml`) are equal in content, rewritten from the prompt's config.
-- The same functions are available in Python: `mmqc_utils.agentic.publication.pull_checklist`, `verify_local_checklist` and `published_release`.
 
 ## Development
 

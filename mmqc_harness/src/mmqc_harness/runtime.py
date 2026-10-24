@@ -26,13 +26,13 @@ from typing import (
     Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple,
 )
 
-from mmqc_utils.agentic.pinning import (
+from mmqc_harness.pinning import (
     SkillSet,
     SkillSetEntry,
     checklist_pins,
     validate_version_manifest,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     SKILL_FILENAME,
     _read_json,
     Skill,

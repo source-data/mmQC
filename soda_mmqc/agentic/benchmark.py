@@ -13,8 +13,8 @@ from pathlib import Path
 
 from soda_mmqc.config import EXAMPLES_DIR, resolve_check_dir
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
-from mmqc_utils.agentic.runtime import EXAMPLE_GOLD_SUBDIR, ExampleContent
-from mmqc_utils.agentic.skills import _read_json
+from mmqc_harness.runtime import EXAMPLE_GOLD_SUBDIR, ExampleContent
+from mmqc_harness.skills import _read_json
 
 __all__ = ["EXAMPLE_INPUT_SUBDIR", "example_content"]
 

@@ -22,9 +22,9 @@ from typing import (
 
 import yaml
 
-from mmqc_utils.agentic.pinning import checklist_pins
-from mmqc_utils.agentic.render import image_fingerprints, render_anthropic
-from mmqc_utils.agentic.runtime import (
+from mmqc_harness.pinning import checklist_pins
+from mmqc_harness.render import image_fingerprints, render_anthropic
+from mmqc_harness.runtime import (
     ASSEMBLY_CLOSURE,
     ExampleContent,
     RuntimeLayout,
@@ -32,7 +32,7 @@ from mmqc_utils.agentic.runtime import (
     assemble_runtime,
     session_options,
 )
-from mmqc_utils.agentic.skills import (
+from mmqc_harness.skills import (
     _FRONTMATTER,
     SKILL_TOOL,
     load_skills,

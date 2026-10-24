@@ -31,7 +31,7 @@ from soda_mmqc.core.run_layout import (
     replicate_dirname,
     resolve_check_root,
 )
-from mmqc_utils.agentic.skills import _read_json
+from mmqc_harness.skills import _read_json
 from soda_mmqc.config import resolve_check_dir
 from soda_mmqc.core.examples import EXAMPLE_FACTORY
 from soda_mmqc.core.scoring import load_predictions

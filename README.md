@@ -182,11 +182,15 @@ uv sync                       # or: python -m venv .venv && pip install -e .
 source .venv/bin/activate
 ```
 
-The agent runtime is the Claude Agent SDK (`claude-agent-sdk`, pinned in
-`pyproject.toml`: a silently updated runtime would make scores
-non-comparable). For TIFF, PDF and other non-JPEG/PNG figure inputs, install
-[ImageMagick](https://imagemagick.org/download/) (see
-[mmqc-utils](mmqc_utils/README.md)).
+Two packages live beside `soda_mmqc` and are installed from their folders:
+[mmqc-harness](mmqc_harness/README.md), the agentic harness that applications
+install too, and [mmqc-utils](mmqc_utils/README.md), the conversions it and
+production share. The agent runtime is the Claude Agent SDK
+(`claude-agent-sdk`, pinned in `mmqc_harness/pyproject.toml`: a silently
+updated runtime would make scores non-comparable). Every figure is converted
+for the model as production converts it, so install
+[ImageMagick](https://imagemagick.org/download/) and, on macOS with Homebrew,
+set `MAGICK_HOME=/opt/homebrew/opt/imagemagick` in `.env`.
 
 ## Configuration
 

@@ -23,7 +23,7 @@ class TestFigureExampleStatesItsContent:
 
     def test_the_image_is_the_stored_figure_converted_once(self):
         """As production sends it (exp-11, gate 4B): bytes, not a file."""
-        from mmqc_utils.agentic import figure_image_part
+        from mmqc_harness import figure_image_part
 
         example = EXAMPLE_FACTORY.create(FIGURE_EXAMPLE, "figure")
         image = next(p for p in example.input_parts() if p["kind"] == "image")

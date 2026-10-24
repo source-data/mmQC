@@ -55,10 +55,10 @@ def _propagate_package_logs():
     Autouse, because the trap is silent and catches any test that asserts on
     a log message, not just the ones that hit it today.
 
-    The harness (`mmqc_utils`) gets the same handlers and the same flag, so
-    the same applies to it.
+    The harness (`mmqc_harness`) and the conversions (`mmqc_utils`) get the
+    same handlers and the same flag, so the same applies to them.
     """
-    loggers = [logging.getLogger(name) for name in ("soda_mmqc", "mmqc_utils")]
+    loggers = [logging.getLogger(name) for name in ("soda_mmqc", "mmqc_harness", "mmqc_utils")]
     previous = [logger.propagate for logger in loggers]
     for logger in loggers:
         logger.propagate = True
