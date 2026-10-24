@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="664" viewBox="0 0 960 664" role="img" aria-label="mmqc-harness: mmQC publishes a production checklist to Langfuse; an application pulls a verified local copy with mmqc-skills; per figure, the figure is converted once, a throwaway runtime holds the closure of skills and a sealed agent session with only the Skill tool, and run_session returns the validated answer, the skill trace and an audit with cost and image fingerprints; the runtime is then deleted">
+<defs><marker id="head-6b7280" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/></marker><marker id="head-374151" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker><marker id="head-6d28d9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6d28d9"/></marker><marker id="head-0f766e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="head-c2410c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker></defs>
+<rect width="960" height="664" fill="#ffffff"/>
+<text x="480.0" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="16" fill="#1f2937" font-weight="bold" text-anchor="middle">mmqc-harness: from a published checklist to one figure's answer</text>
+<text x="480.0" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#6b7280" font-weight="normal" text-anchor="middle">the same code runs mmQC's benchmark and the application, so a benchmark score describes production</text>
+<text x="160" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#374151" font-weight="bold" text-anchor="middle">mmQC repository</text>
+<text x="160" y="101" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="middle">develops, benchmarks, publishes</text>
+<rect x="20" y="110" width="280" height="168" rx="10" fill="#f9fafb" stroke="#374151" stroke-width="1" stroke-opacity="0.45"/>
+<text x="480" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#6d28d9" font-weight="bold" text-anchor="middle">Langfuse</text>
+<text x="480" y="101" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="middle">the boundary: production only</text>
+<rect x="340" y="110" width="280" height="168" rx="10" fill="#f5f3ff" stroke="#6d28d9" stroke-width="1" stroke-opacity="0.45"/>
+<text x="800" y="86" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#0f766e" font-weight="bold" text-anchor="middle">Application</text>
+<text x="800" y="101" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="middle">e.g. soda-curation</text>
+<rect x="660" y="110" width="280" height="168" rx="10" fill="#f0fdfa" stroke="#0f766e" stroke-width="1" stroke-opacity="0.45"/>
+<rect x="32" y="122" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="42" y="139" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">fig-checklist/</text>
+<text x="42" y="154" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">skills in versions, contracts</text>
+<rect x="32" y="170" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="42" y="187" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">version-manifest.yaml</text>
+<text x="42" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">pins the production version of each</text>
+<rect x="32" y="218" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="42" y="235" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">publish_langfuse_skills.py</text>
+<text x="42" y="250" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">checks the production rules, publishes</text>
+<rect x="352" y="122" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="362" y="139" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">skills/fig-checklist/&lt;skill&gt;</text>
+<text x="362" y="154" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">one prompt per skill, 13 in all</text>
+<rect x="352" y="170" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="362" y="187" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">label: production</text>
+<text x="362" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">one release: the skill set's digest</text>
+<rect x="352" y="218" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="362" y="235" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">SKILL.md + config</text>
+<text x="362" y="250" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">schema, eval-manifest, model defaults</text>
+<rect x="672" y="122" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="682" y="139" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">mmqc-skills pull</text>
+<text x="682" y="154" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">atomic; verified before it is swapped in</text>
+<rect x="672" y="170" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="682" y="187" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">skills/fig-checklist/</text>
+<text x="682" y="202" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">local copy + release.json (hashes)</text>
+<rect x="672" y="218" width="256" height="40" rx="6" fill="#ffffff" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="682" y="235" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">mmqc-skills verify | status</text>
+<text x="682" y="250" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">offline check · newer release?</text>
+<line x1="301" y1="192" x2="338" y2="192" stroke="#6d28d9" stroke-width="1.5" marker-end="url(#head-6d28d9)"/>
+<text x="319.5" y="184" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6d28d9" font-weight="bold" text-anchor="middle">publish</text>
+<line x1="621" y1="192" x2="658" y2="192" stroke="#0f766e" stroke-width="1.5" marker-end="url(#head-0f766e)"/>
+<text x="639.5" y="184" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#0f766e" font-weight="bold" text-anchor="middle">pull</text>
+<rect x="20" y="300" width="920" height="340" rx="12" fill="#ffffff" stroke="#374151" stroke-width="1" stroke-opacity="0.35"/>
+<text x="36" y="322" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#1f2937" font-weight="bold" text-anchor="start">per figure</text>
+<text x="106" y="322" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#6b7280" font-weight="normal" text-anchor="start">— one session, sharing nothing with any other; run many concurrently</text>
+<rect x="36" y="346" width="190" height="120" rx="8" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" stroke-opacity="1"/>
+<text x="48" y="366" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2937" font-weight="bold" text-anchor="start">figure file + caption</text>
+<text x="48" y="384" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">TIFF, PDF, EPS, PNG, JPEG, …</text>
+<text x="48" y="408" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">figure_parts</text>
+<text x="48" y="424" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">converted once:</text>
+<text x="48" y="439" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">300 dpi · 2,048 px · JPEG 80</text>
+<text x="48" y="454" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">sent as bytes, never re-encoded</text>
+<rect x="262" y="340" width="428" height="280" rx="10" fill="#fff7ed" stroke="#c2410c" stroke-width="1.5" stroke-opacity="1" stroke-dasharray="6 4"/>
+<text x="276" y="360" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12.5" fill="#c2410c" font-weight="bold" text-anchor="start">ephemeral runtime</text>
+<text x="276" y="376" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#c2410c" font-weight="normal" text-anchor="start">created per figure under parent, sealed, deleted after — even on failure</text>
+<text x="278" y="400" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">.claude/skills/</text>
+<text x="394" y="400" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">the entry point's closure, one version each</text>
+<text x="278" y="419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">CLAUDE.md</text>
+<text x="394" y="419" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">one tool, nothing to open</text>
+<text x="278" y="438" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">input/</text>
+<text x="394" y="438" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">staged content; never gold or contracts</text>
+<text x="278" y="457" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">agent-home/</text>
+<text x="394" y="457" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">the transcript stays inside</text>
+<rect x="276" y="486" width="400" height="120" rx="8" fill="#ffffff" stroke="#c2410c" stroke-width="1" stroke-opacity="1"/>
+<text x="288" y="506" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#1f2937" font-weight="bold" text-anchor="start">Claude agent session</text>
+<text x="288" y="524" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">dispatched with the entry point; it calls the other skills itself</text>
+<text x="288" y="542" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">tools: Skill only — no shell, files, network or subagents</text>
+<text x="288" y="560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">content arrives in the request: caption, then the figure</text>
+<text x="288" y="578" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">answer constrained to the entry point's schema</text>
+<text x="288" y="594" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">model and turn limit from model-defaults.yaml</text>
+<rect x="726" y="346" width="198" height="196" rx="8" fill="#f0fdfa" stroke="#0f766e" stroke-width="1" stroke-opacity="0.6"/>
+<text x="738" y="366" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#1f2937" font-weight="bold" text-anchor="start">run_session returns</text>
+<text x="738" y="390" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">answer</text>
+<text x="788" y="390" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">valid per the schema;</text>
+<text x="788" y="407" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">one row per panel</text>
+<text x="738" y="426" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">trace</text>
+<text x="788" y="426" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">skills invoked, in order</text>
+<text x="738" y="443" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#1f2937" font-weight="normal" text-anchor="start">audit</text>
+<text x="788" y="443" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">tool calls, cost, tokens;</text>
+<text x="788" y="460" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">SHA-256 of each image</text>
+<text x="738" y="514" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">written to artifacts/ too:</text>
+<text x="738" y="530" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#6b7280" font-weight="normal" text-anchor="start">copy out before teardown</text>
+<line x1="227" y1="406" x2="260" y2="406" stroke="#374151" stroke-width="1.5" marker-end="url(#head-374151)"/>
+<line x1="691" y1="444" x2="724" y2="444" stroke="#0f766e" stroke-width="1.5" marker-end="url(#head-0f766e)"/>
+<line x1="676" y1="279" x2="676" y2="339" stroke="#0f766e" stroke-width="1.5" marker-end="url(#head-0f766e)"/>
+<text x="686" y="316" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#0f766e" font-weight="normal" text-anchor="start">assemble_runtime</text>
+<text x="686" y="331" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="10.5" fill="#0f766e" font-weight="normal" text-anchor="start">copies the closure of skills in</text>
+</svg>

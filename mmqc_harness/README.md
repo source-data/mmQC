@@ -2,6 +2,8 @@
 
 Run a structured quality-control checklist on one example — a figure and its caption, a manuscript — in a sealed Claude agent session, exactly as [mmQC](https://github.com/source-data/mmQC) benchmarks it.
 
+![mmQC publishes a production checklist to Langfuse; an application pulls a verified local copy with mmqc-skills; per figure, the figure is converted once, a throwaway runtime holds the closure of skills and a sealed agent session with only the Skill tool, and run_session returns the validated answer, the skill trace and an audit with cost and image fingerprints; the runtime is then deleted](docs/harness-overview.svg)
+
 **Documentation:** this README is the quick start. The [guide](docs/guide.md) explains concepts, the life of a session, containment, results, publishing, and the API. [Integrating into soda-curation](docs/soda-curation-integration.md) is the brief for the production application. [`examples/run_figure_checklist.py`](examples/run_figure_checklist.py) runs the whole path on one figure, with `--mock` for a run without a model.
 
 A checklist is a set of **skills**: Markdown instructions that call each other by name. One of them, the **entry point**, owns a JSON schema, and the session's answer is constrained to it. mmQC writes the skills, benchmarks them against curated gold, and publishes the production version to Langfuse. An application installs this package, pulls the published checklist, and runs it on its own examples. Because both sides use the same harness, the same figure conversion and the same skill files, a benchmark score describes what production does.
