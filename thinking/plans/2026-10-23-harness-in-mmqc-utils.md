@@ -731,6 +731,20 @@ retries, then refuses (design-note decision 3).
 benchmark with `LangfuseSource` and assert that every content hash equals
 the filesystem's.
 
+> **Gate 5A — 2026-10-24, Thomas Lemberger: accepted, and published.**
+>
+> - **Payloads:** approved as dry-run.
+> - **First publish:** by hand, with a new key (`mmqc-agentic`), running
+>   `uv run --env-file .env python .github/scripts/publish_langfuse_skills.py`.
+>   It published 13 prompts under `skills/fig-checklist/` (release
+>   `a3280625345f`) and verified them by loading back.
+> - **Later releases:** through CI, once `agentic` is merged to `master`;
+>   until then, by hand when needed.
+> - **Verification, a deviation from Step 5:** the publisher's load-back
+>   compares every `SKILL.md` with the repository, which covers the
+>   content-hash check. No benchmark sample was run from Langfuse; with
+>   identical files, it could only repeat the same comparison.
+
 **Automatic gate:** both suites.
 
 ---
@@ -740,6 +754,18 @@ the filesystem's.
 **Deliverable:** what soda-curation needs to integrate, without mmQC writing
 its code.
 
+- **Updating and verifying the skills in soda-curation** (requested
+  2026-10-24): one easy command, whatever schedule soda-curation chooses.
+  It should:
+  - fetch the `production` release of a checklist from Langfuse into a
+    local directory, atomically;
+  - check integrity (each `SKILL.md` against its content hash) and
+    consistency (one release; the production rules);
+  - report the release it holds against the one Langfuse carries, so an
+    update can be triggered when they differ.
+
+  Built on `load_published_checklist`, which already does the fetching
+  and checking.
 - `mmqc_utils/examples/run_figure_checklist.py`: from a figure file and
   caption to a validated panel-major prediction. It uses `LangfuseSource`,
   and mocks the session when run with `--mock`.
