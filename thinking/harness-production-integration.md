@@ -76,7 +76,7 @@ Four couplings tie it to mmQC:
   functions in `mmqc_utils`.
 - `passed` on a panel check means "the model returned a non-empty dict for
   this panel" (`base_analyzers.py:298`). It does not mean that the check
-  passed.
+  passed, and deciding that is not soda-curation's job (see below).
 - The Docker image (`python:3.12-slim-bookworm`) has no agent SDK.
 
 ## Target layout
@@ -308,8 +308,9 @@ alone.
 
 `eval-manifest` is not needed to run anything. It is published because it
 is the only place a field's N/A values are declared (`na_values`, for
-example `not_applicable` on `error_bar_on_figure`). Production needs those
-to tell "does not apply" from "fails" when it derives `passed`.
+example `not_applicable` on `error_bar_on_figure`). Whoever interprets an
+answer needs those to tell "does not apply" from "fails": Data4Rev's
+handlers, not soda-curation.
 
 ### Loading in production
 
@@ -349,8 +350,11 @@ application side, as found at tag 3.8.2.
   under its name) maps directly onto `figures.<fig>.panels[].qc_checks[]`.
 - Run sessions concurrently. The QC pipeline runs one figure at a time, and
   a session takes 25 to 30 turns.
-- Derive `passed` from the verdict fields in the schema, not from whether a
-  dict is empty.
+- **Pass or fail is not soda-curation's call** (2026-10-24, the author).
+  Interpreting a check's answer belongs to the frontend application,
+  Data4Rev, and its "handlers". soda-curation passes each check's answer
+  through unchanged. If its current `passed` field is read downstream as a
+  verdict, that is a miscommunication to clear up with the Data4Rev team.
 - For the new path, load skills from `skills/<checklist>/*` at label
   `production` through the harness's Langfuse skill source, instead of the
   prompt registry and its schema-equivalence check. `qc_check_metadata`

@@ -116,7 +116,7 @@ Into the current structure (`qc_pipeline.py:246-337`):
 ```text
 figures.<figure>.panels[i] = {
   "panel_label": row["panel_label"],
-  "qc_checks": [ {"check_name": <check, as below>, "passed": <section 6>, "model_output": row[<check>]}
+  "qc_checks": [ {"check_name": <check, as below>, "model_output": row[<check>]}
                  for each of the eleven checks ]
 }
 ```
@@ -130,27 +130,28 @@ figures.<figure>.panels[i] = {
   - `trace.invoked`;
   - `audit.usage`, which feeds your `cost` block.
 
-## 6. `passed` — a proposal to review
+## 6. Pass or fail is not soda-curation's call
 
-Today `passed` means "the model returned a non-empty dict for this panel" (`base_analyzers.py:298-301`), not that the check passed. The harness's answer carries each check's actual verdict:
+Our understanding is that **deciding whether a check passes or fails is not
+soda-curation's responsibility**, and should not be. It belongs to the
+"handlers" of the frontend application, Data4Rev, which interpret each
+check's answer for editors and authors. soda-curation's job is to run the
+checks and hand over their answers unchanged: each check's object for each
+panel, under `model_output`.
 
-| check | verdict field | passes when | does not apply when |
-|---|---|---|---|
-| `micrograph-scale-bar` | `scale_bar_defined_in_caption` | `yes` | `not_applicable` |
-| `image-annotation-defined` | `annotation_defined_in_caption` (one value per annotation) | every value `yes` | `image_data` or `any_annotation_present_on_image` is `no` |
-| `single-channel-for-overlay` | `all_channels_shown_separately` | `yes` | `not_applicable` |
-| `individual-data-points` | `decision` | `PASS` | `not_applicable` |
-| `error-bars-defined` | `decision` | `PASS` | `not_applicable` |
-| `plot-axis-units` | `decision` | `PASS` | `not_applicable` |
-| `plot-gap-labeling` | `decision` | `PASS` | `not_applicable` |
-| `stat-significance-level` | `decision` | `PASS` | `not_applicable` |
-| `stat-test` | `decision` | `PASS` | `not_applicable` |
-| `replication-reporting` | `decision` | `PASS` | `not_applicable` |
-| `panel-image-matches-caption` | `image_matches_caption` | `yes` | `not_applicable` |
+The current output has a `passed` field per check. At 3.8.2 it is set from
+"the model returned a non-empty answer" (`base_analyzers.py:298-301`), not
+from any verdict. If Data4Rev reads it as pass or fail, that is a mistake or
+a miscommunication to clear up with the Data4Rev team, not something to fix
+by computing a verdict in soda-curation. Until that is settled, keep
+`passed` as it is today, or drop it if no consumer needs it.
 
-**A check that does not apply** to a panel (a plot check on a micrograph) is neither passed nor failed. Record `passed: null`, or omit that check for that panel, rather than `true`. The values meaning "does not apply" are declared per field in each prompt's `eval-manifest` config (`na_values`), so the mapping can be read from the published checklist rather than hard-coded.
+What a handler needs to interpret an answer is published with each check
+(section 2):
 
-*This table encodes editorial judgement, in particular which field is the verdict and what counts as passing. It is a proposal from mmQC, to confirm with the editors before it drives anything users see.*
+- the check's schema, which states every field and its values;
+- its `eval-manifest`, which declares which values mean "does not apply"
+  (`na_values`).
 
 ## 7. Roll-out
 
@@ -164,7 +165,7 @@ Guideline reviews, such as the acceptance-guidelines step with its prose report,
 
 Not caused by the harness. Noted here because they touch the same code:
 
-- **`passed` is not a verdict.** Panel checks set it from "non-empty dict" (`base_analyzers.py:298-301`), figure and manuscript checks from `bool(result)` (`:419-422`, `:612-615`).
+- **`passed` is not a verdict.** Panel checks set it from "non-empty dict" (`base_analyzers.py:298-301`), figure and manuscript checks from `bool(result)` (`:419-422`, `:612-615`). If anything downstream reads it as pass or fail, see section 6.
 - **A latent `TypeError`.** `FigureQCAnalyzer.analyze_figure` takes 3 arguments, but `qc_pipeline.py:195-197` passes 4. It is caught as status `error`, and is latent only because no figure-level test is configured.
 - **Document tests can be skipped.** They run inside the figure loop, on the first figure (`qc_pipeline.py:217`), so a manuscript with no figures runs none.
 - **The analyzer factory never finds a module.** `AnalyzerFactory` imports `soda_curation.qc_tests.<name>`, which does not exist, so every test falls back to the generic analyzer (`analyzer_factory.py:27-43`).

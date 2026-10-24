@@ -788,7 +788,7 @@ its code.
 - The section "Changes in soda-curation" of the design note, completed into
   an integration brief:
   - output mapping (panel-major rows to `figures.<fig>.panels[].qc_checks[]`);
-  - `passed` from verdict fields and `eval-manifest` N/A values;
+  - pass or fail left to Data4Rev's handlers (decided 2026-10-24);
   - concurrency across figures;
   - Docker (SDK, bundled CLI, a writable runtime directory, the API key);
   - `qc_check_metadata` from content hashes;
@@ -809,7 +809,9 @@ its code.
 >   - not adding the expected-panel-labels constraint;
 >   - concurrency and failures;
 >   - mapping the panel-major answer to `qc_results`;
->   - a `passed` table, **marked as a proposal for editorial review**;
+>   - why pass or fail is not soda-curation's call: it belongs to
+>     Data4Rev's handlers. A first draft proposed a `passed` table, and
+>     was corrected on 2026-10-24;
 >   - roll-out;
 >   - an appendix of issues found at 3.8.2.
 > - **`docs/guide.md`, the full guide:** concepts, the life of a session,
