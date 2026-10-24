@@ -24,7 +24,7 @@ Four roles, in the notation of the experiments:
 
 | | skill | role |
 |---|---|---|
-| **A** | `identify-panels` | list the figure's panels |
+| **A** | `identify-panels` | list the figure's panels (experiment checklists only; production merges A and B) |
 | **B** | `classify-panels` | classify each panel by content (micrograph, plot, blot, …) |
 | **C_i** | the eleven checks | judge one thing, panel by panel |
 | **D** | `do-fig-checklist-pm` | the entry point: run every check, return one answer — one row per panel |
@@ -200,14 +200,16 @@ Create a `.env` in the project root:
 ANTHROPIC_API_KEY=...     # for --provider claude-sdk, the default
 OPENAI_API_KEY=...        # for --provider openai
 DEVICE=cpu                # cpu, cuda or mps, for the scorer's sentence embeddings
+MAGICK_HOME=...           # ImageMagick; macOS + Homebrew: /opt/homebrew/opt/imagemagick
 ```
 
 The model comes from the checklist's `model-defaults.yaml`
 (`claude-sonnet-5-5` for `fig-checklist`) unless `--model` says otherwise.
-[Langfuse](https://langfuse.com) is optional, for the curation app's prompt
-management and for tracing (`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`,
-`LANGFUSE_BASE_URL`); without it, local files are used and tracing is off.
-See [API providers](soda_mmqc/docs/api_providers.md).
+[Langfuse](https://langfuse.com) (`LANGFUSE_PUBLIC_KEY`,
+`LANGFUSE_SECRET_KEY`, `LANGFUSE_BASE_URL`) is where production checklists
+are published (see [In production](#in-production)). It also serves the
+curation app's prompt management and tracing. Without it, local files are
+used and tracing is off. See [API providers](soda_mmqc/docs/api_providers.md).
 
 ## Usage
 
@@ -251,9 +253,16 @@ has a prediction, so an interrupted run resumes; an account or connection
 error stops the run at once.
 
 A run writes `<output>/<arm>/rep-NN/<example>/prediction.json`, with
-`intermediates/` beside it: `skill_trace.json` (which skills the agent
-invoked), `tool_audit.json` (every tool call, cost, tokens, and the model that
-wrote each message), and, for a session that failed, `failure.json`.
+`intermediates/` beside it:
+- `skill_trace.json`: which skills the agent invoked;
+- `tool_audit.json`: every tool call, cost, tokens, the model that wrote each
+  message, and a fingerprint of each image sent (media type, size,
+  dimensions, SHA-256);
+- `failure.json`, for a session that failed.
+
+Each figure is sent as production sends it: converted once by
+`mmqc_harness.figure_parts` (300 dpi, longest side 2,048 px, JPEG quality 80).
+exp-11 found this non-inferior to the stored files that earlier runs sent.
 
 ## Checklists and skills on disk
 
@@ -287,7 +296,18 @@ must pin every skill: a missing pin, or one naming a skill or version that
 does not exist, refuses. Adding `v3/SKILL.md` changes nothing until its pin
 moves, so a result is attributed to a reviewed set of versions, not to
 whatever is highest on disk. Experiments keep their own frozen copies
-(`fig-checklist-exp04` … `-exp07`).
+(`fig-checklist-exp01` … `-exp11`).
+
+**The production checklist holds one topology.** `fig-checklist` contains
+the production entry point, the skills it reaches and their contracts.
+
+- Versions of a skill may differ in prose, never in which skills they call.
+- Exactly one skill is called by no other, and it owns a `schema.json`.
+- Every pinned skill is reached from it.
+
+`mmqc graph` checks these rules for the checklists listed under `skills` in
+`soda_mmqc/data/production_prompts/production.json`. A different arrangement
+belongs in an experiment copy.
 
 **Skill frontmatter.** `requires` names the skills a skill calls — its edges
 in the DAG — and `produces` what it returns; the prose must call each
@@ -296,13 +316,18 @@ required skill with the `Skill` tool, and the tests check that it does.
 ## How a session is contained
 
 Each example gets a throwaway directory **outside the repository**, holding
-the entry point's closure of skills, that one figure's image and caption, and
-nothing else: no other example, no gold, no benchmark, no repository path. The
-agent has one tool, `Skill`, and answers through the structured output its
-contract defines. Shells, subagents, network access and every egress or
-scheduling tool are removed by name (`soda_mmqc/config.py` gives the reason
-for each); widening that set is a deliberate decision, not a configuration
-edit.
+the entry point's closure of skills, that one example's staged content, and
+nothing else: no other example, no gold, no benchmark, no repository path.
+
+- **The content travels in the request:** the caption, and the figure
+  converted for the model.
+- **The agent has one tool, `Skill`,** and answers through the structured
+  output its contract defines.
+- **Everything else is removed by name:** shells, subagents, network access,
+  and every egress or scheduling tool.
+  [`mmqc_harness/src/mmqc_harness/runtime.py`](mmqc_harness/src/mmqc_harness/runtime.py)
+  gives the reason for each. Widening that set is a deliberate decision, not
+  a configuration edit.
 
 ![How a session is contained: from the repository, the harness resolves the pins, takes the entry point's closure of skills, and copies it with one figure into a throwaway runtime outside the repository, refusing gold, contracts and symlinks; the session has only the Skill tool and a schema-bound answer; the run writes prediction.json, the skill trace, the tool and cost audit and the skill set, then deletes the runtime; gold meets the prediction only at scoring](soda_mmqc/docs/session-containment.svg)
 
@@ -327,7 +352,7 @@ the check's `eval-manifest.json`, and reports three layers:
 
 ![The three scoring layers on one micrograph-scale-bar prediction: Layer S pairs rows, Layer 1 judges applicability, Layer 2 matches values](soda_mmqc/docs/scoring-layers.svg)
 
-Gold changes are curated and **tagged** (`gold-v1` … `gold-v6`); an
+Gold changes are curated and **tagged** (`gold-v1` … `gold-v7`); an
 experiment pins the tag it is scored against with `soda_mmqc.gold.pin_gold`,
 so later curation never moves its numbers. Details in
 [Benchmarking and evaluation](soda_mmqc/docs/benchmarking.md).
@@ -349,10 +374,36 @@ the run, the runs and their notebooks after. See
 | [exp-08](thinking/experiments/exp-08-arrangements-sonnet.md) | the arrangements again, on exp-07's configuration | `A\|B ← C_i ← D` stays |
 | [exp-09](thinking/experiments/exp-09-inline-panels.md) | every check doing its own panels, `A\|B\|C_i ← D` | as accurate, a third dearer; `A\|B ← C_i ← D` stays |
 | [exp-10](thinking/experiments/exp-10-panel-major-revisited.md) | per check or per panel, on eleven checks | level; production switches to per panel |
+| [exp-11](thinking/experiments/exp-11-input-parity.md) | the figure converted as production converts it, against the stored file | non-inferior; every run now sends the converted figure |
 
 The open problem is **partial dispatch**: in 5–15% of sessions, depending on
 the model, the agent runs the first check and answers the rest without
 invoking them.
+
+## In production
+
+The harness that runs a session is a package of its own,
+[`mmqc-harness`](mmqc_harness/README.md), beside `soda_mmqc` in this
+repository. mmQC benchmarks with it, and applications install it, so a
+benchmark score describes what production runs: the same skill files, the
+same session, the same figure conversion.
+
+1. **Publishing.** The checklists listed under `skills` in
+   `soda_mmqc/data/production_prompts/production.json` are published to
+   Langfuse: one prompt per pinned skill, `skills/<checklist>/<skill>`,
+   labelled `production`. Each prompt holds the whole `SKILL.md`, with its
+   contracts and the release (the digest of the skill set) in its config.
+   `.github/scripts/publish_langfuse_skills.py` publishes, skips a release
+   Langfuse already has, and verifies by loading it back; `--dry-run` shows
+   the payloads without credentials.
+2. **Pulling.** An application keeps a local copy with `mmqc-skills pull`
+   (atomic and verified), checks it offline with `mmqc-skills verify`, and
+   asks `mmqc-skills status` whether a newer release is out.
+3. **Running.** It then runs the checklist on its own figures with
+   `mmqc_harness`, as described in the package's README.
+
+The integration with soda-curation, the production application, is planned
+in [`thinking/plans/2026-10-23-harness-in-mmqc-utils.md`](thinking/plans/2026-10-23-harness-in-mmqc-utils.md).
 
 ## Reporting
 
@@ -377,3 +428,10 @@ the pins, the containment profile, the contracts and the gold conventions.
 Tests that call a live API are marked `integration` and deselected by
 default; `pytest -m integration` runs them, each skipping without its
 provider's key.
+
+The two packages have their own suites, run in their own environments:
+
+```bash
+(cd mmqc_harness && uv run --group test pytest)   # never calls a model; no soda_mmqc
+(cd mmqc_utils && uv run --group test pytest)
+```
