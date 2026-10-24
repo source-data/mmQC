@@ -509,3 +509,31 @@ def test_verify_catches_a_local_file_changed_after_the_pull(production, tmp_path
     # A pull repairs a copy that fails verification, even at the same release.
     assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 0
     assert _skills_cli(["verify", str(dest / "toy")], store) == 0
+
+
+# --- the runnable example ----------------------------------------------------
+
+
+def test_the_example_runs_the_whole_path_in_mock_mode(production, tmp_path, capsys):
+    """examples/run_figure_checklist.py, end to end without a model."""
+    import importlib.util
+
+    store, dest = _published(production), tmp_path / "skills"
+    _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store)
+    from PIL import Image
+
+    figure = tmp_path / "figure.png"
+    Image.new("RGB", (64, 48), "white").save(figure)
+    spec = importlib.util.spec_from_file_location(
+        "run_figure_checklist", Path(__file__).resolve().parents[1] / "examples" / "run_figure_checklist.py")
+    example = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(example)
+
+    # The toy schema wants {"verdict": ...}; the example's stand-in answers fig-checklist's shape.
+    example.mock_client = lambda answer: _client({"result": json.dumps({"verdict": "pass"})})
+    out = tmp_path / "answer.json"
+    assert example.main(["--checklist-dir", str(dest / "toy"), "--figure", str(figure),
+                         "--caption", "A cell.", "--mock", "--out", str(out),
+                         "--runtime-parent", str(tmp_path)]) == 0
+    assert json.loads(out.read_text()) == {"verdict": "pass"}
+    assert "image sent: image/jpeg" in capsys.readouterr().err

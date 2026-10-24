@@ -14,3 +14,4 @@ First version, separated from mmQC (`soda_mmqc.agentic`), where it was developed
 - Rendering content for Anthropic and OpenAI (`render`); image parts name a file or carry their bytes.
 - Figures as the model receives them (`content`): `figure_parts` / `figure_image_part` convert once with `mmqc_utils.convert_to_bounded_jpeg` (300 dpi, 2,048 px, JPEG 80).
 - Publishing a production checklist to a prompt store and loading it back (`publication`), with the production rules; the `mmqc-skills` command (`pull`, `verify`, `status`).
+- Documentation: `docs/guide.md`, `docs/soda-curation-integration.md`, and `examples/run_figure_checklist.py` (with `--mock`).

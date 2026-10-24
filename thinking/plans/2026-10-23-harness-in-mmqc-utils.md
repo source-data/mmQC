@@ -794,6 +794,29 @@ its code.
   - `qc_check_metadata` from content hashes;
   - side-by-side running before switching.
 
+> **Done — 2026-10-24, in the `mmqc-harness` package:**
+>
+> - **`examples/run_figure_checklist.py`:** verify the pulled checklist,
+>   build the content with `figure_parts`, run one session, print the
+>   answer and a summary (skills invoked, turns, cost, image fingerprint).
+>   `--mock` replaces the model with a stand-in answer. Tried on the
+>   checklist pulled from Langfuse, and covered by a test.
+> - **`docs/soda-curation-integration.md`, the brief:**
+>   - install and Docker;
+>   - getting skills with `mmqc-skills`, pinned per deploy or followed;
+>   - building input from the source figure (and the double-encoding
+>     bug);
+>   - not adding the expected-panel-labels constraint;
+>   - concurrency and failures;
+>   - mapping the panel-major answer to `qc_results`;
+>   - a `passed` table, **marked as a proposal for editorial review**;
+>   - roll-out;
+>   - an appendix of issues found at 3.8.2.
+> - **`docs/guide.md`, the full guide:** concepts, the life of a session,
+>   content, containment, results, running many examples, publishing and
+>   pulling, and the API reference (signatures taken from the code).
+> - Remaining: gate 6A.
+
 **Human gate 6A.**
 
 - **Decision:** can someone outside mmQC integrate from the brief and the
