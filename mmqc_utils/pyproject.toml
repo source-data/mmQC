@@ -31,6 +31,10 @@ dependencies = [
 ]
 requires-python = ">= 3.12"
 
+[project.scripts]
+# Keep a local copy of a published checklist current and verified.
+mmqc-skills = "mmqc_utils.agentic.cli:main"
+
 [project.optional-dependencies]
 # The agentic harness (mmqc_utils.agentic): sealed agent sessions running a
 # checklist of skills on one example.

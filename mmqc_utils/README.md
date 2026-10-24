@@ -326,6 +326,24 @@ with runtime_session(checklist, "do-fig-checklist-pm", content, parent=Path("/va
 - `run_session` returns the answer, validated against the entry point's schema, the trace of the skills the session invoked (`trace.invoked`), and an audit of its tool calls and token usage, which also records a fingerprint (media type, size, dimensions, SHA-256) of every image sent. It raises `ValueError` when the session ends without an answer, or with one that is not JSON or does not satisfy the schema.
 - The harness logs under `mmqc_utils.agentic` and configures no handlers.
 
+#### Getting a checklist from Langfuse: `mmqc-skills`
+
+mmQC publishes each production checklist to Langfuse, one prompt per skill (`skills/<checklist>/<skill>`, label `production`). An application keeps a local copy and runs it from there:
+
+```bash
+mmqc-skills pull   fig-checklist --entry do-fig-checklist-pm --dest skills/
+mmqc-skills verify skills/fig-checklist
+mmqc-skills status skills/fig-checklist
+```
+
+- `pull` brings `skills/fig-checklist` to the published release, or does nothing if it is already there. It fetches into a temporary directory and checks it first: each `SKILL.md` against its content hash, a single release, and the production rules (one entry point, every skill reached, one call graph). Only then does it swap the copy into place, so a refused update leaves the previous copy untouched. It writes `release.json` beside the skills, recording the release, the label, when it was fetched, and each skill's version and hash.
+- `verify` checks a local copy offline against `release.json`. Use it at start-up or in a health check.
+- `status` compares the local release with the published one.
+- Exit codes: `0` fine (for `status`, up to date); `1` a check failed (for `status`, an update is available); `2` a usage or configuration error.
+- `pull` and `status` need the `langfuse` package and `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` and `LANGFUSE_BASE_URL` (or `LANGFUSE_HOST`).
+- `SKILL.md` files are written back byte-identical. The contract files (`schema.json`, `eval-manifest.json`, `model-defaults.yaml`) are equal in content, rewritten from the prompt's config.
+- The same functions are available in Python: `mmqc_utils.agentic.publication.pull_checklist`, `verify_local_checklist` and `published_release`.
+
 ## Development
 
 ### Releasing a New Version

@@ -766,6 +766,22 @@ its code.
 
   Built on `load_published_checklist`, which already does the fetching
   and checking.
+
+  > **Done — 2026-10-24: `mmqc-skills`**, the console script of
+  > `mmqc-utils`, with three commands:
+  >
+  > - `pull` (atomic; a no-op when the copy is current and verifies);
+  > - `verify` (offline, against the `release.json` written at pull);
+  > - `status` (local release against the published one).
+  >
+  > The same functions are in `publication`. Tests: 5 package tests,
+  > covering a first pull, idempotence, an update, a refused pull leaving
+  > the copy intact, and a tampered file repaired by the next pull.
+  >
+  > Tried against the real store: `pull`, `verify` and `status` all
+  > succeed. The 13 `SKILL.md` files are byte-identical to the
+  > repository's; the 24 contract files and `model-defaults.yaml` are equal
+  > in content.
 - `mmqc_utils/examples/run_figure_checklist.py`: from a figure file and
   caption to a validated panel-major prediction. It uses `LangfuseSource`,
   and mocks the session when run with `--mock`.

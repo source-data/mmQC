@@ -445,3 +445,67 @@ def test_text_that_does_not_match_its_hash_is_refused(production, tmp_path):
     store.prompts["skills/toy/check-a"]["prompt"] += "\nOne more instruction.\n"
     with pytest.raises(ValueError, match="content hash"):
         load_published_checklist(store, "toy", "do-toy", tmp_path / "from-store")
+
+
+# --- mmqc-skills: pull, verify, status ---------------------------------------
+
+
+def _skills_cli(argv, store):
+    from mmqc_utils.agentic.cli import main
+
+    return main(argv, client_factory=lambda: store)
+
+
+def _republish(production, store, prose):
+    _skill(production, "check-a", "v2", requires=("shared",), prose=prose)
+    for payload in __import__("mmqc_utils.agentic.publication", fromlist=["x"]).skill_payloads(production):
+        store.create_prompt(**payload)
+
+
+def test_pull_writes_a_verified_copy_and_is_idempotent(production, tmp_path, capsys):
+    store, dest = _published(production), tmp_path / "skills"
+    assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 0
+    assert "updated to release" in capsys.readouterr().out
+    record = json.loads((dest / "toy" / "release.json").read_text())
+    assert set(record["skills"]) == {"do-toy", "check-a", "shared"}
+    assert _skills_cli(["verify", str(dest / "toy")], store) == 0
+    assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 0
+    assert "already at release" in capsys.readouterr().out
+    assert not list(dest.glob(".toy.*")), "no staging or previous copy left behind"
+
+
+def test_status_and_pull_follow_a_new_release(production, tmp_path, capsys):
+    store, dest = _published(production), tmp_path / "skills"
+    _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store)
+    assert _skills_cli(["status", str(dest / "toy")], store) == 0
+    _republish(production, store, "Look more closely still.")
+    assert _skills_cli(["status", str(dest / "toy")], store) == 1
+    assert "pull to update" in capsys.readouterr().out
+    assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 0
+    assert "more closely still" in (dest / "toy" / "check-a" / "v2" / "SKILL.md").read_text()
+    assert _skills_cli(["status", str(dest / "toy")], store) == 0
+
+
+def test_a_refused_pull_leaves_the_local_copy_as_it_was(production, tmp_path, capsys):
+    store, dest = _published(production), tmp_path / "skills"
+    _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store)
+    before = (dest / "toy" / "check-a" / "v2" / "SKILL.md").read_bytes()
+    _republish(production, store, "A new release.")
+    store.prompts["skills/toy/check-a"]["prompt"] += "\nTampered.\n"
+    assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 1
+    assert "local copy is unchanged" in capsys.readouterr().err
+    assert (dest / "toy" / "check-a" / "v2" / "SKILL.md").read_bytes() == before
+    assert _skills_cli(["verify", str(dest / "toy")], store) == 0
+    assert not list(dest.glob(".toy.*"))
+
+
+def test_verify_catches_a_local_file_changed_after_the_pull(production, tmp_path, capsys):
+    store, dest = _published(production), tmp_path / "skills"
+    _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store)
+    skill = dest / "toy" / "shared" / "v1" / "SKILL.md"
+    skill.write_text(skill.read_text() + "\nEdited by hand.\n", encoding="utf-8")
+    assert _skills_cli(["verify", str(dest / "toy")], store) == 1
+    assert "content hash" in capsys.readouterr().err
+    # A pull repairs a copy that fails verification, even at the same release.
+    assert _skills_cli(["pull", "toy", "--entry", "do-toy", "--dest", str(dest)], store) == 0
+    assert _skills_cli(["verify", str(dest / "toy")], store) == 0

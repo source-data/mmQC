@@ -55,11 +55,15 @@ from mmqc_utils.agentic.skills import (
 
 __all__ = [
     "PRODUCTION_LABEL",
+    "RELEASE_RECORD",
     "SKILLS_NAMESPACE",
     "load_published_checklist",
     "production_entry_point",
     "prompt_name",
+    "published_release",
+    "pull_checklist",
     "skill_payloads",
+    "verify_local_checklist",
 ]
 
 SKILLS_NAMESPACE = "skills"
@@ -225,3 +229,123 @@ def load_published_checklist(
     (root / VERSION_MANIFEST_FILENAME).write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
     validate_skills(root)
     return root
+
+
+#: Written beside a pulled checklist: which release it is, from where, and
+#: each skill's content hash, so a local copy can be verified offline.
+RELEASE_RECORD = "release.json"
+
+
+def published_release(client: Any, checklist: str, entry: str, *, label: str = PRODUCTION_LABEL) -> str:
+    """The release the store's entry point carries under ``label``."""
+    fetched = client.get_prompt(prompt_name(checklist, entry), label=label)
+    return ((fetched.config or {}).get("skill") or {}).get("release")
+
+
+def verify_local_checklist(path: Path) -> Dict[str, Any]:
+    """Check a pulled checklist offline; return its release record.
+
+    Integrity: every skill's ``SKILL.md`` matches the content hash recorded
+    when it was pulled. Consistency: the production rules hold, with the
+    recorded entry point.
+
+    Raises:
+        ValueError: Naming every problem.
+    """
+    path = Path(path)
+    record_path = path / RELEASE_RECORD
+    if not record_path.is_file():
+        raise ValueError(f"{path}: no {RELEASE_RECORD}; not a pulled checklist")
+    record = json.loads(record_path.read_text(encoding="utf-8"))
+    problems: List[str] = []
+    for name, meta in sorted(record["skills"].items()):
+        skill_file = path / name / meta["version"] / SKILL_FILENAME
+        if not skill_file.is_file():
+            problems.append(f"{name}: {skill_file.relative_to(path)} is missing")
+        elif hashlib.sha256(skill_file.read_bytes()).hexdigest() != meta["content_hash"]:
+            problems.append(f"{name}: {skill_file.relative_to(path)} does not match its content hash")
+    if not problems:
+        try:
+            entry = production_entry_point(path)
+            if entry != record["entry"]:
+                problems.append(f"entry point is {entry}, the record says {record['entry']}")
+        except ValueError as exc:
+            problems.append(str(exc))
+    if problems:
+        raise ValueError(f"{path} failed verification:\n  " + "\n  ".join(problems))
+    return record
+
+
+def pull_checklist(
+    client: Any,
+    checklist: str,
+    entry: str,
+    dest: Path,
+    *,
+    label: str = PRODUCTION_LABEL,
+) -> Dict[str, Any]:
+    """Bring ``dest/<checklist>`` to the store's release, atomically.
+
+    Does nothing when the local copy already holds that release and verifies.
+    Otherwise fetches into a temporary directory beside it, checks it (hashes,
+    one release, the production rules, the entry point), records the release,
+    and only then swaps it into place -- so a failed update leaves the copy
+    that was there.
+
+    Returns:
+        The release record, with ``"changed"``: whether anything was replaced.
+
+    Raises:
+        ValueError: If what the store holds does not check out.
+    """
+    from datetime import datetime, timezone
+    import os
+    import shutil
+    import tempfile
+
+    dest = Path(dest)
+    target = dest / checklist
+    remote = published_release(client, checklist, entry, label=label)
+    if (target / RELEASE_RECORD).is_file():
+        try:
+            record = verify_local_checklist(target)
+            if record["release"] == remote:
+                return {**record, "changed": False}
+        except ValueError:
+            pass                                   # replace a copy that fails
+
+    dest.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=f".{checklist}.pull-", dir=dest))
+    try:
+        loaded = load_published_checklist(client, checklist, entry, staging, label=label)
+        if production_entry_point(loaded) != entry:
+            raise ValueError(f"{checklist}: the published checklist's entry point is not {entry}")
+        pins = checklist_pins(loaded)
+        record = {
+            "checklist": checklist,
+            "entry": entry,
+            "label": label,
+            "release": remote,
+            "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "skills": {
+                name: {
+                    "version": version,
+                    "content_hash": hashlib.sha256(
+                        (loaded / name / version / SKILL_FILENAME).read_bytes()).hexdigest(),
+                }
+                for name, version in sorted(pins.items())
+            },
+        }
+        (loaded / RELEASE_RECORD).write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+        verify_local_checklist(loaded)
+        previous = None
+        if target.exists():
+            previous = dest / f".{checklist}.previous"
+            shutil.rmtree(previous, ignore_errors=True)
+            os.replace(target, previous)
+        os.replace(loaded, target)
+        if previous is not None:
+            shutil.rmtree(previous, ignore_errors=True)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+    return {**record, "changed": True}
