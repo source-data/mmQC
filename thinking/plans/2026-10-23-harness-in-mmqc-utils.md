@@ -831,8 +831,22 @@ its code.
 >   commands in its header.
 > - Milestone 6 is done otherwise. Open for soda-curation: that container
 >   run.
-> - Known so far: the harness has run only on macOS; the example has run
->   only with `--mock`.
+> - Known so far: the harness has run only on macOS.
+>
+> **First real run of the example — 2026-10-24, run by Thomas Lemberger.**
+>
+> - **Figure:** `C10.1038_s44319-026-00708-5` Fig. 1, which is not in
+>   `fig-checklist`'s benchmark.
+> - **Path:** the checklist pulled from Langfuse (release `a3280625345f`),
+>   the figure sent as a 2048 × 1421 JPEG, Sonnet 5.5, 26 turns, $0.171.
+> - **Answer:** valid, 10 panels (A–F, I, J blots; G, H micrographs).
+>   All eleven checks invoked; plot and statistics checks
+>   `not_applicable` throughout. No gold exists for this figure.
+> - **`classify-panels` was not invoked.** Across exp-11's converted arm
+>   it was invoked in 61 of 111 sessions; otherwise the panels are
+>   classified in the answer (`panel_classes`), as exp-10's smoke test
+>   first saw under panel-major. Accuracy held either way; noted as a
+>   question for the skills, not a defect of the integration.
 
 **Human gate 6A.**
 
