@@ -19,6 +19,7 @@ from soda_mmqc.config import (
     EVALUATION_CONTRACT_FILES,
     owns_evaluation_contracts,
 )
+from mmqc_utils.agentic.publication import production_entry_point
 from mmqc_utils.agentic.pinning import (
     VERSION_MANIFEST_FILENAME,
     SkillSet,
@@ -281,6 +282,14 @@ def graph_checklist(checklist: str, *, write: bool = False) -> int:
         )
         return 1
     print(f"{checklist}: generated views are in sync with the skills")
+
+    if checklist in config.production_skill_checklists():
+        try:
+            entry = production_entry_point(checklist_dir)
+        except ValueError as exc:
+            print(exc)
+            return 1
+        print(f"{checklist}: a production checklist; entry point {entry}, every pin reached, one topology")
     return 0
 
 

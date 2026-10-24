@@ -36,12 +36,20 @@ jobs:
             - name: Set up Python
               uses: actions/setup-python@v5
               with:
-                python-version: "3.11"
+                python-version: "3.12"
 
             - name: Install dependencies
               run: |
-                pip install "langfuse>=2.0.0"
+                pip install "langfuse>=4.0.0" pyyaml ./mmqc_utils
 
             - name: Build production prompts from GitHub to Langfuse
               run: |
                 python .github/scripts/build_langfuse_checklist.py soda_mmqc/data/production_prompts/production.json
+
+            # The agentic checklists named under `skills` in production.json:
+            # one prompt per pinned skill, skills/<checklist>/<skill>,
+            # labelled production. Skipped when Langfuse already carries the
+            # release; verified by loading it back.
+            - name: Publish production skills to Langfuse
+              run: |
+                python .github/scripts/publish_langfuse_skills.py

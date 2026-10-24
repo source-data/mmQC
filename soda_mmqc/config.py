@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 import logging
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -161,6 +161,19 @@ def list_checks(checklist_dir: Path) -> Dict[str, Path]:
         for check_dir in sorted(checklist_dir.iterdir())
         if owns_evaluation_contracts(check_dir)
     }
+
+
+#: What goes to production: the agentic checklists published as skills
+#: (``skills``), and the prompt-based runner's per-check prompt versions
+#: (``checks``). Read by the publishers in .github/scripts/.
+PRODUCTION_MANIFEST = DATA_DIR / "production_prompts" / "production.json"
+
+
+def production_skill_checklists() -> List[str]:
+    """The checklists published to production as skills."""
+    import json
+
+    return list(json.loads(PRODUCTION_MANIFEST.read_text(encoding="utf-8")).get("skills") or [])
 
 
 def resolve_check_dir(checklist: str, check: str) -> Path:

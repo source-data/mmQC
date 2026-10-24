@@ -687,6 +687,38 @@ Test that writing a payload back out gives a byte-identical `SKILL.md` and
 the release IDs differ across the set, the publish is still in progress: it
 retries, then refuses (design-note decision 3).
 
+> **Steps 1–3 done — 2026-10-24.**
+>
+> - **Where:** `mmqc_utils.agentic.publication`, plus the publisher
+>   `.github/scripts/publish_langfuse_skills.py`. The publication module
+>   imports no client.
+> - **Production rules:** `production_entry_point` checks them: one
+>   topology across versions, exactly one entry point (a pinned skill no
+>   other calls, owning a `schema.json`), every pin reached. `mmqc graph`
+>   runs it for the checklists in `production.json`'s new `skills` list
+>   (`["fig-checklist"]`).
+> - **Payloads:** `skill_payloads` builds one per pinned skill: the whole
+>   `SKILL.md` as text; `schema` and `eval-manifest` where owned;
+>   `model-defaults` on the entry point; `skill` with checklist, name,
+>   version, role, content hash and `release`.
+> - **Release ID:** the skill set's digest, which equals the `skill_set`
+>   in `dag.yaml`. The publisher skips a checklist whose release Langfuse
+>   already carries.
+> - **Loading, a deviation from Step 3:** there is no `LangfuseSource`
+>   class and no listing of the store. `load_published_checklist` fetches
+>   the entry point and follows `requires`, writes an ordinary checklist
+>   directory, and refuses mixed releases and text that does not match its
+>   hash. The release-ID guard (decision 3) is in.
+> - **The publisher:** `--dry-run` writes the payloads with no
+>   credentials. A real run publishes, then loads back uncached and checks
+>   every `SKILL.md` against the repository. The Langfuse workflow runs it
+>   after the prompt publisher (Python 3.12, `langfuse>=4`).
+> - **Tests:** 8 package tests (rules, payloads, round trip, mixed release,
+>   tampered text); `tests/test_production_publication.py` round-trips
+>   `fig-checklist` through a fake store. Root 977 passed; `mmqc_utils` 122.
+> - **Dry run:** 13 payloads for `fig-checklist`, release `a3280625345f`,
+>   all under 24 KB.
+
 **Step 4: Human gate 5A — the first publish.**
 
 - **Decision:** is each prompt's payload right, and is the namespace right?

@@ -334,3 +334,114 @@ def test_the_session_records_what_the_model_was_shown(checklist, content, tmp_pa
     }]
     recorded = json.loads(audit.path.read_text(encoding="utf-8"))
     assert recorded["inputs"] == audit.inputs
+
+
+# --- publishing a production checklist, and loading it back ------------------
+
+
+class _Store:
+    """A prompt store with Langfuse's shape: create_prompt, get_prompt."""
+
+    def __init__(self):
+        self.prompts = {}
+
+    def create_prompt(self, *, name, prompt, config, labels, tags, type):
+        self.prompts[name] = {"prompt": prompt, "config": json.loads(json.dumps(config)), "labels": labels}
+
+    def get_prompt(self, name, *, label):
+        from types import SimpleNamespace
+
+        stored = self.prompts[name]
+        assert label in stored["labels"]
+        return SimpleNamespace(prompt=stored["prompt"], config=stored["config"])
+
+
+@pytest.fixture
+def production(checklist) -> Path:
+    """The toy checklist made production-ready: nothing pinned goes unreached."""
+    import shutil
+
+    shutil.rmtree(checklist / "extra")
+    (checklist / "version-manifest.yaml").write_text(
+        "checklist: toy\nskills:\n  do-toy: v1\n  check-a: v2\n  shared: v1\n", encoding="utf-8")
+    (checklist / "model-defaults.yaml").write_text(
+        "models:\n  claude-sdk: claude-sonnet-5-5\nsession:\n  max_turns: 40\n", encoding="utf-8")
+    return checklist
+
+
+def _published(production) -> _Store:
+    from mmqc_utils.agentic.publication import skill_payloads
+
+    store = _Store()
+    for payload in skill_payloads(production):
+        store.create_prompt(**payload)
+    return store
+
+
+def test_a_production_checklist_has_one_entry_point_and_reaches_every_pin(checklist, production):
+    from mmqc_utils.agentic.publication import production_entry_point
+
+    assert production_entry_point(production) == "do-toy"
+
+
+def test_an_unreached_pinned_skill_is_refused(checklist):
+    from mmqc_utils.agentic.publication import production_entry_point
+
+    with pytest.raises(ValueError, match="entry point"):
+        production_entry_point(checklist)          # `extra` is a second root
+
+
+def test_versions_may_vary_prose_but_not_topology(production):
+    from mmqc_utils.agentic.publication import production_entry_point
+
+    _skill(production, "check-a", "v3", prose="Look elsewhere.")   # calls nothing
+    with pytest.raises(ValueError, match="topology"):
+        production_entry_point(production)
+
+
+def test_one_prompt_per_pinned_skill(production):
+    from mmqc_utils.agentic.publication import skill_payloads
+
+    payloads = {p["name"]: p for p in skill_payloads(production)}
+    assert set(payloads) == {"skills/toy/do-toy", "skills/toy/check-a", "skills/toy/shared"}
+    entry, leaf, shared = (payloads[f"skills/toy/{n}"] for n in ("do-toy", "check-a", "shared"))
+    assert [entry["tags"], leaf["tags"], shared["tags"]] == [["entry"], ["leaf"], ["shared"]]
+    assert all(p["labels"] == ["production"] for p in payloads.values())
+    assert leaf["prompt"] == (production / "check-a" / "v2" / "SKILL.md").read_text(encoding="utf-8")
+    assert leaf["config"]["schema"]["format"]["schema"] == SCHEMA
+    assert "schema" not in shared["config"]
+    assert entry["config"]["model-defaults"]["session"]["max_turns"] == 40
+    assert len({p["config"]["skill"]["release"] for p in payloads.values()}) == 1
+
+
+def test_the_published_checklist_loads_back_byte_identical(production, content, tmp_path):
+    from mmqc_utils.agentic.publication import load_published_checklist
+
+    loaded = load_published_checklist(_published(production), "toy", "do-toy", tmp_path / "from-store")
+    for name, version in (("do-toy", "v1"), ("check-a", "v2"), ("shared", "v1")):
+        assert (loaded / name / version / "SKILL.md").read_bytes() == \
+            (production / name / version / "SKILL.md").read_bytes()
+    assert json.loads((loaded / "check-a" / "schema.json").read_text()) == \
+        json.loads((production / "check-a" / "schema.json").read_text())
+    assert not (loaded / "check-a" / "v1").exists(), "only the published version"
+    layout = assemble_runtime(loaded, "do-toy", content, root=tmp_path / "rt")
+    assert {p.parent.name for p in layout.skills_root.glob("*/SKILL.md")} == {"do-toy", "check-a", "shared"}
+    assert "very closely" in (layout.skills_root / "check-a" / "SKILL.md").read_text()
+
+
+def test_a_mixed_release_is_refused(production, tmp_path):
+    from mmqc_utils.agentic.publication import load_published_checklist
+
+    store = _published(production)
+    store.prompts["skills/toy/shared"]["config"]["skill"]["release"] = "an-older-release"
+    with pytest.raises(ValueError, match="releases"):
+        load_published_checklist(store, "toy", "do-toy", tmp_path / "from-store")
+
+
+def test_text_that_does_not_match_its_hash_is_refused(production, tmp_path):
+    from mmqc_utils.agentic.publication import load_published_checklist
+
+    store = _published(production)
+    store.prompts["skills/toy/check-a"]["prompt"] += "\nOne more instruction.\n"
+    with pytest.raises(ValueError, match="content hash"):
+        load_published_checklist(store, "toy", "do-toy", tmp_path / "from-store")
