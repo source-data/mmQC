@@ -818,6 +818,21 @@ its code.
 >   content, containment, results, running many examples, publishing and
 >   pulling, and the API reference (signatures taken from the code).
 > - Remaining: gate 6A.
+>
+> **Gate 6A — 2026-10-24, Thomas Lemberger: the container run is skipped.**
+>
+> - It cannot be done from mmQC: there is no access to soda-curation's
+>   container.
+> - The check moves to soda-curation: running the example in their own
+>   container, as their container user, is step 1 of the brief's roll-out.
+>   It is the first test that the Agent SDK's bundled CLI runs on their
+>   image.
+> - The example stays a reference, not a supported tool, with concrete
+>   commands in its header.
+> - Milestone 6 is done otherwise. Open for soda-curation: that container
+>   run.
+> - Known so far: the harness has run only on macOS; the example has run
+>   only with `--mock`.
 
 **Human gate 6A.**
 
@@ -856,6 +871,8 @@ its code.
 - **4B, 2026-10-24: accepted.** exp-11 found converted figures
   non-inferior. `FigureExample` sends the figure converted once (300 dpi,
   2,048 px, JPEG 80), and the temporary switch is removed.
+- **6A, 2026-10-24: container run skipped.** It moves to soda-curation's
+  roll-out, step 1. Milestone 6 is otherwise done.
 - **3A, 2026-10-23: deferred by decision.** Implementation proceeds; the
   maintainer of `mmqc-utils` is consulted when it is done, before any
   release.

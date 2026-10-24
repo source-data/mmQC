@@ -155,7 +155,7 @@ What a handler needs to interpret an answer is published with each check
 
 ## 7. Roll-out
 
-1. **Install, pull, verify.** Run the example on a few figures from real packages, as your container user.
+1. **Install, pull, verify.** Run the example on a few figures from real packages, as your container user. This is also the first check that the Agent SDK's bundled Claude Code CLI runs on your image: mmQC has run the harness on macOS, not in your container.
 2. **Side by side.** Add the harness behind a config flag and run both paths on the same manuscripts. Compare per check and per panel; the panel-major answer makes the comparison mechanical.
 3. **Switch** panel QC to the harness. Keep document-level QC on the current runner until mmQC publishes a `doc-checklist` of skills, then switch it the same way.
 

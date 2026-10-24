@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
 """Run a published checklist on one figure: the whole path an application takes.
 
+A reference, not a supported tool: an application makes these calls from its
+own pipeline. It exists to show the exact sequence, runnably, and a test keeps
+it working.
+
+From the mmQC repository, on one of the benchmark's figures:
+
+    uv run --env-file .env mmqc-skills pull fig-checklist --entry do-fig-checklist-pm --dest /tmp/skills
+    F=soda_mmqc/data/examples/10.1038_s44318-026-00715-1/content/1/content
+    uv run --env-file .env python mmqc_harness/examples/run_figure_checklist.py \
+        --checklist-dir /tmp/skills/fig-checklist \
+        --figure $F/44318_2026_715_Fig1_HTML.webp --caption-file $F/caption.txt --mock
+
+Without --mock it runs a real session: about a minute, about $0.15.
+
+In general:
+
     # Get the checklist (needs the `langfuse` extra and LANGFUSE_* variables):
     mmqc-skills pull fig-checklist --entry do-fig-checklist-pm --dest skills/
 
