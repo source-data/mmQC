@@ -1,0 +1,64 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "stat-test",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "is_a_plot": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the figure is a plot"
+                            },
+                            "statistical_significance_claim": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether the panel marks or states statistical significance (p-values, significance symbols, a claim of a significant difference); not_applicable for a panel that is not a plot"
+                            },
+                            "statistical_test_mentioned": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_required", "not_applicable"],
+                                "description": "Whether the statistical test is mentioned; not_required for a plot that needs no test, not_applicable for a panel that is not a plot"
+                            },
+                            "from_the_caption": {
+                                "type": "string",
+                                "description": "Extracted text describing the statistical test when mentioned"
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict on whether the statistical test is adequately reported; not_applicable for a panel that is not a plot"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Short explanation of the decision, especially when the test is missing"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "is_a_plot",
+                            "statistical_significance_claim",
+                            "statistical_test_mentioned",
+                            "from_the_caption",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

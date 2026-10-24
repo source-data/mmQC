@@ -1,0 +1,64 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "single-channel-for-overlay",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "multicolored_overlay_micrograph": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel shows a multicolored overlay microscopy image"
+                            },
+                            "overlay_channels": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "Each channel merged in the overlay, briefly, by colour and what it shows (e.g. 'green: phalloidin (actin)'); empty when there is no overlay"
+                            },
+                            "number_of_channels_in_overlay": {
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 0},
+                                    {"type": "string", "enum": ["not_applicable"]}
+                                ],
+                                "description": "Number of distinct channels merged in the overlay image; not_applicable for a panel with no overlay"
+                            },
+                            "number_of_single_channel_images_shown": {
+                                "anyOf": [
+                                    {"type": "integer", "minimum": 0},
+                                    {"type": "string", "enum": ["not_applicable"]}
+                                ],
+                                "description": "Number of single-channel images shown for the overlay in this panel; not_applicable for a panel with no overlay"
+                            },
+                           "all_channels_shown_separately": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_applicable"],
+                                "description": "Whether all channels in the overlay are shown as separate single-channel images"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "multicolored_overlay_micrograph",
+                            "overlay_channels",
+                            "number_of_channels_in_overlay",
+                            "number_of_single_channel_images_shown",
+                            "all_channels_shown_separately"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

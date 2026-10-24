@@ -141,10 +141,10 @@ bound is above **−0.02** (exp-10's margin).
 
 | # | step | done |
 |---|---|---|
-| P1 | `fig-checklist-exp11`: a copy of `fig-checklist`, `dag.yaml` and README regenerated | |
-| P2 | The converted arm: an example class, `figure-converted`, whose image part comes from `figure_image_part`. `run_check_live` takes an `example_class` override for the run, so the same checklist and contracts run either input. **Temporary**: both are removed after exp-11, at gate 4B (decided with the author) | |
-| P3 | `experiments/exp-11-input-parity/run.py`: both arms, 3 replicates, concurrency 38; `--smoke` for 3 figures, one replicate | |
-| P4 | Dry run of both arms with `--mock` | |
+| P1 | `fig-checklist-exp11`: a copy of `fig-checklist`, `dag.yaml` and README regenerated. Only the manifest and the generated views differ; the skill-set digest equals production's (`a3280625…`) | 2026-10-24 |
+| P2 | The converted arm: an example class, `figure-converted`, whose image part comes from `figure_image_part`. `run_check_live` takes an `example_class` override for the run, so the same checklist and contracts run either input. **Temporary**: both are removed after exp-11, at gate 4B (decided with the author) | 2026-10-24 |
+| P3 | `experiments/exp-11-input-parity/run.py`: both arms, 3 replicates, concurrency 38; `--smoke` for 3 figures, one replicate. Refuses to start if ImageMagick cannot be loaded (`MAGICK_HOME`) | 2026-10-24 |
+| P4 | Dry run of both arms. `--mock` assembles no runtime, so it would test nothing here. Instead, the real runner ran both arms on 2 figures with the SDK replaced by a client returning an empty answer: no failure, the stored arm sent its WebP files, the converted arm sent JPEG bytes (2048×1552, 1606×2048), and every recorded fingerprint matched the arm's expected bytes | 2026-10-24 |
 | P5 | Smoke test: both arms on 3 figures, one replicate; the fingerprints checked | |
 | P6 | Notebook `notebooks/experiments/exp-11-input-parity.ipynb`: exp-10's, two arms, the fingerprint verification first | |
 

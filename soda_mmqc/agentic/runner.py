@@ -363,6 +363,7 @@ def run_check_live(
     assembly: str = ASSEMBLY_CLOSURE,
     concurrency: int = 1,
     retry_failed: bool = True,
+    example_class: Optional[str] = None,
 ) -> Tuple[Path, List[Dict[str, Any]]]:
     """Run one real session per example, for each selected SkillSet.
 
@@ -396,6 +397,9 @@ def run_check_live(
     extending a run does not quietly turn a recorded failure into a success.
     A failure to reach the API is ``transient`` and always rerun; ``force``
     reruns any.
+
+    ``example_class`` overrides the benchmark's for this run. Temporary: it
+    exists for exp-11's converted arm and is removed after exp-11.
 
     Returns:
         ``(run root, per-example report)``. The root holds one directory per
@@ -488,7 +492,10 @@ def run_check_live(
         try:
             with runtime_session(
                 checklist_dir, check,
-                example_content(checklist, check, relative_source_path),
+                example_content(
+                    checklist, check, relative_source_path,
+                    example_class=example_class,
+                ),
                 parent=resolve_agentic_runtime_root(),
                 keep=keep_runtime, pins=versions, assembly=assembly,
             ) as layout:

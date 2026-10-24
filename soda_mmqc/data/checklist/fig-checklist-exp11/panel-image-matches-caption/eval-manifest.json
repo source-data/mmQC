@@ -1,0 +1,29 @@
+{
+  "checklist": "panel-image-matches-caption",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].image_matches_caption": {
+      "na_values": ["not_applicable"],
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].discrepancies": {
+      "matching_metric": "graded_string",
+      "na_values": [""],
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

@@ -1,0 +1,64 @@
+# Stat-test
+Proceed step-by-step and establish a systematical strategy to be very accurate and avoid mistakes.
+
+The first task is to understand the figure image and identify the labeled figure sub-panels. Each labeled panel depicts an experiment either with a plot, a micrograph, some other kinds of images, a scheme. Sometimes a panel can include several images.## For example, a panel can include both an image and a plot that tyipcally displays a quantification of some features shown on the image.
+
+In this task, you must focus on plots that display quantitative data. Note that if a plot is included as part of a schematic or workflow diagram for illustrative purposes, the panel is not considered to show quantitative data. It is just an illustration. Take this into consideration before embarking on the analysis of the panel.
+
+For each panel in the figure:
+
+## 1.
+Determine whether the panel is a plot of quantitative data (plots with XY or XYZ axes, bar charts, line charts, any scatter plots, including FACS analyses, histograms, pie charts, box plots, heatmaps, area charts, bubble charts, violin plots, radar or spider charts, treemaps, waterfall charts, funnel charts, dot plots, Sankey diagrams, contour plots, density plots, candlestick charts, polar charts, gauge charts, etc.). If it is not a plot of quantitative data, set `statistical_test_needed` to `"no"`, `statistical_test_mentioned` to `"not needed"`, `from_the_caption` to `""`, `decision` to `"PASS"`, and `explanation` to `""`. If it is a plot of quantitative data but there is no mention of statistical significance, use the same values. 
+
+## 2. 
+If, and only if, it is a quantitative plot, use the image of the panel and the text of the figure caption to understand whether a statistical test needs to be mentioned. This is only the case if there is any statement of statistical significance, such as p-values. It is then mandatory to state which statistical test was used. The mere presence of error bars does NOT imply statistical analysis and does NOT require a statistical test.
+
+##3. 
+If, and only if, statistical significance is indicated, verify whether the statistical test is explicitly mentioned in the caption. If there is no need of a statistical test, set `statistical_test_mentioned` to `"not needed"`, `from_the_caption` to `""`, `decision` to `"PASS"`, and `explanation` to `""`.
+
+##4. Decision and explanation
+- Set `decision` to `PASS` when no statistical test is required, or when the required test is mentioned in the caption.
+- Set `decision` to `FAIL` when a statistical test is required but not mentioned in the caption.
+- Set `explanation` to `""` on `PASS`. On `FAIL`, provide a brief one-sentence rationale in `explanation`.
+
+##5. 
+If the statistical test is mentioned, extract the exact statement from the caption in `from_the_caption`.
+
+IMPORTANT: When extracting the text from the caption, ONLY include the specific text that describes the statistical test, if any. Do NOT include general descriptions of the figure or panel content. Be *very concise* and extract *only* the statement of the test and do not include further statistical information such as the p-values or n-numbers. For example: :"Unpaired two-tailed Student’s t test", "Ordinary one-way ANOVA test", "Mann-Whitney test", "one-way ANOVA with Dunnett’s multiple comparisons test". If there is no relevant text, do not extract anything for this panel.
+
+Provide your analysis in JSON format for EACH and EVERY panel. Be thorough and precise in your analysis.
+
+
+{
+    "outputs": [
+        {
+            "panel_label": "A",
+            "is_a_plot": "yes",
+            "statistical_test_needed": "yes",
+            "statistical_test_mentioned": "yes",
+            "from_the_caption": "Unpaired two-tailed Student's t test",
+            "decision": "PASS",
+            "explanation": ""
+        },
+        {
+            "panel_label": "B",
+            "is_a_plot": "yes",
+            "statistical_test_needed": "yes",
+            "statistical_test_mentioned": "no",
+            "from_the_caption": "",
+            "decision": "FAIL",
+            "explanation": "The image and the caption refer to a statistical level of significance without mentioning the test used."
+        },
+        {
+            "panel_label": "C",
+            "is_a_plot": "no",
+            "statistical_test_needed": "no",
+            "statistical_test_mentioned": "not needed",
+            "from_the_caption": "",
+            "decision": "PASS",
+            "explanation": ""
+        }
+    ]
+}
+
+Be thorough and precise in your analysis.

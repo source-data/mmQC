@@ -695,7 +695,23 @@ class WordExample(Example):
 
 
 # Register example types
+class ConvertedFigureExample(FigureExample):
+    """A figure as production sends it: converted once, carried as bytes.
+
+    Temporary: exp-11's converted arm (thinking/experiments/
+    exp-11-input-parity.md). Removed after exp-11; if the conversion is
+    adopted, it becomes ``FigureExample``'s own image part.
+    """
+
+    def input_parts(self) -> List[Dict[str, Any]]:
+        from mmqc_utils.agentic import figure_parts
+
+        self._ensure_loaded()
+        return list(figure_parts(self.image_path, self.caption))
+
+
 EXAMPLE_TYPES["figure"] = FigureExample
+EXAMPLE_TYPES["figure-converted"] = ConvertedFigureExample
 EXAMPLE_TYPES["word"] = WordExample
 
 

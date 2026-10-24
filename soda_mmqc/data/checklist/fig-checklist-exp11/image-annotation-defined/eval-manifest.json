@@ -1,0 +1,40 @@
+{
+  "checklist": "image-annotation-defined",
+  "defaults": {
+    "matching_metric": "binary_polarity",
+    "positive_value": "yes",
+    "negative_value": "no",
+    "na_values": []
+  },
+  "list_alignment": {
+    "outputs": ["panel_label"]
+  },
+  "fields": {
+    "outputs[].panel_label": {
+      "matching_metric": "graded_string",
+      "string_compare": "exact",
+      "match_threshold": 1.0
+    },
+    "outputs[].image_data": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].any_annotation_present_on_image": {
+      "matching_metric": "binary_polarity"
+    },
+    "outputs[].annotation_description_on_image": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    },
+    "outputs[].annotation_defined_in_caption": {
+      "primitive_list_compare": "positional"
+    },
+    "outputs[].from_the_caption": {
+      "primitive_list_compare": "positional",
+      "matching_metric": "graded_string",
+      "string_compare": "semantic",
+      "match_threshold": 0.8
+    }
+  }
+}

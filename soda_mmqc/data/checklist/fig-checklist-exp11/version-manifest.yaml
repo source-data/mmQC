@@ -1,0 +1,27 @@
+# Pinned skill versions for fig-checklist-exp11 (thinking/experiments/
+# exp-11-input-parity.md): a copy of fig-checklist, the production checklist,
+# as of exp-11's preregistration (4c79d8fe7) -- the same skills, versions and
+# contracts. exp-11 varies the figure's encoding, not the checklist.
+checklist: fig-checklist-exp11
+
+skills:
+  # Entry point: the whole checklist in one session.
+  do-fig-checklist-pm: v1
+
+  # Shared skill, invoked by every check.
+  classify-panels: v1
+
+  # Checks. Each owns schema.json, eval-manifest.json and benchmark.json,
+  # which stay above the version directories so two versions of one skill
+  # score against the same contract and stay comparable.
+  error-bars-defined: v2
+  image-annotation-defined: v2
+  individual-data-points: v2
+  micrograph-scale-bar: v2
+  panel-image-matches-caption: v2
+  plot-axis-units: v2
+  plot-gap-labeling: v2
+  replication-reporting: v2
+  single-channel-for-overlay: v2
+  stat-significance-level: v2
+  stat-test: v2

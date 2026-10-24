@@ -1,0 +1,53 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "individual-data-points",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "is_a_plot_with_axes": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel is a plot of quantitative data with drawn axes; heat maps are not"
+                            },
+                            "individual_values": {
+                                "type": "string",
+                                "enum": ["yes", "no", "not_required", "not_applicable"],
+                                "description": "Whether the panel displays individual data points: not_required for a plot type that does not require them, not_applicable for a panel that is not a plot with axes"
+                            },
+                            "decision": {
+                                "type": "string",
+                                "enum": ["PASS", "FAIL", "not_applicable"],
+                                "description": "Panel-level verdict on whether individual data points are shown where average values are displayed; not_applicable for a panel that is not a plot with axes"
+                            },
+                            "explanation": {
+                                "type": "string",
+                                "description": "Short explanation of the decision"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "is_a_plot_with_axes",
+                            "individual_values",
+                            "decision",
+                            "explanation"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}

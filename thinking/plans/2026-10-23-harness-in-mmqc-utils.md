@@ -127,7 +127,7 @@ hash per example plus the full text, in the scratchpad.
 >
 > | | Result |
 > |---|---|
-> | Image conversion (`convert_to_bounded_jpeg`, `compress_to_bounded_jpeg`) on `mmqc_utils`' fixtures | byte-identical |
+> | Image conversion (`convert_to_bounded_jpeg`, `compress_to_bounded_jpeg`) | byte-identical — **see the correction below** |
 > | Visible text of the 15 `.docx` examples | identical in all 15 |
 > | Markup | 34 empty `<p>` removed across 12 documents |
 > | `EMBOR-2025-61250V2` | 12 embedded images (`data:image`) removed, with their paragraphs: 5.6 MB → 93 KB |
@@ -144,6 +144,21 @@ hash per example plus the full text, in the scratchpad.
 >   ([`curation-document-viewer.md`](../curation-document-viewer.md)).
 > - **The maintainer should say whether it is intended.**
 >
+> **Correction — 2026-10-24.** The image row above was not measured on
+> 2026-10-23.
+>
+> - **What went wrong:** mmQC's environment cannot load ImageMagick
+>   without `MAGICK_HOME`. The comparison script recorded a failed
+>   conversion as an error string, so it compared three identical
+>   `ImportError`s and reported them as "identical".
+> - **Re-measured:** with `MAGICK_HOME` set, against a genuine 0.3.3 in an
+>   isolated environment. The script now fails on any error instead of
+>   recording it. Over 77 sources (the 37 benchmark figures and 40
+>   `mmqc_utils` test fixtures), each through `convert_to_bounded_jpeg`
+>   with default and production parameters and through
+>   `compress_to_bounded_jpeg`, **all 231 outputs are byte-identical.**
+> - **The conclusion stands;** the evidence for it dates from today.
+
 > **Environment changes from switching:**
 >
 > - `uv sync` added `tifffile` (needed by 0.3.5) and `websockets`;

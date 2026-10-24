@@ -1,0 +1,67 @@
+{
+    "format": {
+        "type": "json_schema",
+        "name": "image-annotation-defined",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "outputs": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "panel_label": {
+                                "type": "string",
+                                "description": "Label of the panel (e.g., A, B, C)"
+                            },
+                            "image_data": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the panel is an image, a picture of a microscopic sample, macroscopic sample"
+                            },
+                            "any_annotation_present_on_image": {
+                                "type": "string",
+                                "enum": ["yes", "no"],
+                                "description": "Whether the image is annotated with any symbols, arrows, lines, etc."
+                            },
+                            "annotation_description_on_image": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "This is the description of the detected annotations predicted by model or expected output. Eg. 'red circle', 'white arrow', 'red arrowhead'"
+                            },
+                            "annotation_defined_in_caption": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": ["yes", "no"]
+                                },
+                                "description": "Whether the annotation is mentioned in the figure caption"
+                            },
+                            "from_the_caption": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "description": "Text from caption describing annotation, when symbols are present"
+                            }
+                        },
+                        "required": [
+                            "panel_label",
+                            "image_data",
+                            "any_annotation_present_on_image",
+                            "annotation_description_on_image",
+                            "annotation_defined_in_caption",
+                            "from_the_caption"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "required": ["outputs"],
+            "additionalProperties": false
+        },
+        "strict": true
+    }
+}
