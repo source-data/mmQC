@@ -154,6 +154,7 @@ def _session(checklist: str, check: str, example: str, **kwargs):
         example_content(checklist, check, example), **kwargs,
     )
 
+
 PILOT_CHECK_DIR = (
     REPO_ROOT / "soda_mmqc/data/checklist/fig-checklist/micrograph-scale-bar"
 )
@@ -3273,7 +3274,8 @@ class TestToolAudit:
         path = tmp_path / "a.json"
         ToolAuditLog(path)
         assert json.loads(path.read_text()) == {
-            "session": {}, "usage": {}, "turns": [], "events": [], "calls": [],
+            "session": {}, "inputs": [], "usage": {}, "turns": [], "events": [],
+            "calls": [],
         }
 
     def test_the_audit_records_what_the_sdk_reported_at_startup(

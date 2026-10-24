@@ -246,3 +246,91 @@ def test_a_prose_answer_is_refused(checklist, content, tmp_path):
     client = _client({"result": "I cannot answer within this schema."})
     with pytest.raises(ValueError, match="not JSON"):
         asyncio.run(run_session(layout, client=client))
+
+
+# --- a figure as the model receives it --------------------------------------
+
+
+@pytest.fixture
+def large_figure(tmp_path) -> Path:
+    """A PNG wider than the figure limit, so the builder has to downscale."""
+    from PIL import Image
+
+    path = tmp_path / "large.png"
+    Image.new("RGB", (3000, 1200), "white").save(path)
+    return path
+
+
+def test_the_builder_converts_once(large_figure):
+    """The bytes sent are `convert_to_bounded_jpeg`'s, not a re-encode of them."""
+    from mmqc_utils import convert_to_bounded_jpeg
+    from mmqc_utils.agentic import figure_image_part
+    from mmqc_utils.agentic.content import (
+        FIGURE_JPEG_QUALITY, FIGURE_MAX_DIMENSION, FIGURE_RASTERIZATION_DPI)
+
+    part = figure_image_part(large_figure)
+    once = convert_to_bounded_jpeg(
+        large_figure, rasterization_dpi=FIGURE_RASTERIZATION_DPI,
+        max_dimension=FIGURE_MAX_DIMENSION, compression_quality=FIGURE_JPEG_QUALITY)
+    assert part == {"kind": "image", "media_type": "image/jpeg", "data": once}
+    assert figure_image_part(large_figure)["data"] == once, "deterministic"
+
+
+def test_the_builder_bounds_the_figure(large_figure):
+    from PIL import Image
+    import io
+
+    from mmqc_utils.agentic import figure_parts
+
+    caption, image = figure_parts(large_figure, "A wide figure.")
+    assert caption == {"kind": "text", "text": "Figure caption:\nA wide figure."}
+    with Image.open(io.BytesIO(image["data"])) as decoded:
+        assert decoded.format == "JPEG"
+        assert max(decoded.size) == 2048
+
+
+def _inline(content: ExampleContent) -> ExampleContent:
+    parts = (content.parts[0], {"kind": "image", "media_type": "image/png", "data": PNG})
+    return ExampleContent(**{**vars(content), "parts": parts})
+
+
+def test_an_image_carrying_its_bytes_is_sent_not_staged(checklist, content, tmp_path):
+    (content.source_root / "figure.png").unlink()
+    layout = assemble_runtime(checklist, "do-toy", _inline(content), root=tmp_path / "rt")
+    assert layout.input_parts[1]["data"] == PNG
+    assert not list(layout.input_root.glob("*.png")), "nothing derived is written in"
+    block = render_anthropic(layout.input_parts, layout.root)[1]
+    assert block["source"]["media_type"] == "image/png"
+    assert base64.b64decode(block["source"]["data"]) == PNG
+
+
+def test_an_image_part_names_a_file_or_carries_bytes_not_both(tmp_path):
+    from mmqc_utils.agentic.render import image_bytes
+
+    with pytest.raises(ValueError, match="exactly one"):
+        image_bytes({"kind": "image", "path": "a.png", "data": PNG,
+                     "media_type": "image/png"}, tmp_path)
+    with pytest.raises(ValueError, match="exactly one"):
+        image_bytes({"kind": "image"}, tmp_path)
+    with pytest.raises(ValueError, match="media_type"):
+        image_bytes({"kind": "image", "data": PNG}, tmp_path)
+
+
+@pytest.mark.parametrize("inline", [False, True], ids=["staged", "inline"])
+def test_the_session_records_what_the_model_was_shown(checklist, content, tmp_path, inline):
+    import hashlib
+
+    example = _inline(content) if inline else content
+    layout = assemble_runtime(checklist, "do-toy", example, root=tmp_path / "rt")
+    client = _client({"result": json.dumps({"verdict": "pass"})})
+    _, _, audit = asyncio.run(run_session(layout, client=client))
+    assert audit.inputs == [{
+        "part": 1,
+        "source": "inline" if inline else "input/figure.png",
+        "media_type": "image/png",
+        "bytes": len(PNG),
+        "dimensions": [1, 1],
+        "sha256": hashlib.sha256(PNG).hexdigest(),
+    }]
+    recorded = json.loads(audit.path.read_text(encoding="utf-8"))
+    assert recorded["inputs"] == audit.inputs

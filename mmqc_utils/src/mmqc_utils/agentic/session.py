@@ -23,7 +23,7 @@ from typing import (
 import yaml
 
 from mmqc_utils.agentic.pinning import checklist_pins
-from mmqc_utils.agentic.render import render_anthropic
+from mmqc_utils.agentic.render import image_fingerprints, render_anthropic
 from mmqc_utils.agentic.runtime import (
     ASSEMBLY_CLOSURE,
     ExampleContent,
@@ -449,6 +449,9 @@ async def run_session(
         trace_path or intermediates / SKILL_TRACE_FILENAME, versions or {}
     )
     audit = audit_log or ToolAuditLog(intermediates / TOOL_AUDIT_FILENAME)
+    # Before anything is sent, so a session that fails still records what
+    # the model was shown.
+    audit.note_inputs(image_fingerprints(layout.input_parts, layout.root))
     run = client or _default_client
     options = dict(options if options is not None else session_options(layout))
     options["hooks"] = {
@@ -562,6 +565,10 @@ class ToolAuditLog:
         self.turns: List[Dict[str, Any]] = []
         #: System messages other than init, truncated; capped.
         self.events: List[Dict[str, Any]] = []
+        #: A fingerprint of each image sent to the model -- media type,
+        #: size, dimensions, SHA-256 -- so what the model saw can be checked
+        #: later without keeping the image.
+        self.inputs: List[Dict[str, Any]] = []
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._flush()
 
@@ -590,6 +597,7 @@ class ToolAuditLog:
             json.dumps(
                 {
                     "session": self.session_info,
+                    "inputs": self.inputs,
                     "usage": self.usage,
                     "turns": self.turns,
                     "events": self.events,
@@ -601,6 +609,10 @@ class ToolAuditLog:
             + "\n",
             encoding="utf-8",
         )
+
+    def note_inputs(self, fingerprints: Sequence[Mapping[str, Any]]) -> None:
+        self.inputs = [dict(f) for f in fingerprints]
+        self._flush()
 
     def note_session(self, info: Mapping[str, Any]) -> None:
         self.session_info = dict(info)

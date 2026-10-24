@@ -494,11 +494,85 @@ measures whether past scores carry over.
 files (TIFF, PDF, EPS) available? Record the answer in the design note
 (decision 5).
 
+> **Step 1 finding — 2026-10-23.**
+>
+> **The benchmark figures are published figures, not author
+> submissions.** All 37 come from journal websites:
+>
+> - Springer Nature's web renderings (`…_Fig1_HTML.webp`, `…_fig1_html.png`);
+> - Wiley's medium-size images (`…-fig-0001-m.jpg`);
+> - supplementary-material images (`…_esm.jpg`);
+> - JCS PNGs.
+>
+> Some examples also hold the publisher's PowerPoint export. None holds a
+> submitted TIFF, PDF or EPS. Production processes submissions, so its
+> figures were never typeset: different labelling, layout, resolution and
+> text rendering.
+>
+> **The encoding gap is modest.**
+>
+> - Stored formats: 15 png, 14 webp, 8 jpg. The longest side is
+>   1419–3041 px for png, 2111–2750 px for webp, and 750–5372 px for jpg;
+>   30 of 37 exceed 2048 px.
+> - The API downscales anyway. Claude Sonnet 5.5 is in the
+>   high-resolution tier: images are downscaled to at most 2,576 px on the
+>   long edge and 4,784 visual tokens of 28×28 px (vision docs,
+>   2026-10-23). The model therefore sees a median of 3.7 megapixels of a
+>   benchmark figure today.
+> - Through production's chain (2048 px long edge, then the API's
+>   limits), it would see 0.63 to 1.00 times as many pixels (median 0.93;
+>   within 2% for 13 of 37 figures). Wide figures lose most.
+> - Production also compresses twice (JPEG quality 80, decoded and
+>   re-encoded at 80). The vision docs warn that multiple compression
+>   passes can introduce artefacts detrimental to performance.
+>
+> **What this means for exp-11.** Re-converting the stored images measures
+> only the encoding gap: a modest resolution loss plus double compression.
+> The larger gap, between published and submitted figures, can only be
+> measured with the submitted files of the benchmark manuscripts. Seven of
+> the eight journals are EMBO Press titles; JCS is not.
+
 **Step 2:** Write `figure_content(source_path, caption, ...)` in
 `mmqc_utils`, defaulting to production's parameters. Leave out the second
 re-encode: soda-curation can drop it when it adopts the builder, so the
 builder decides what production's chain becomes. Test that the output is
 deterministic: same input, same bytes.
+
+> **Decided — 2026-10-24, with Thomas Lemberger:**
+>
+> - The benchmark processes its figures as if they were submissions,
+>   through exactly production's chain and compressed once. Some authors
+>   do submit JPEGs.
+> - The converted image travels in the request as bytes, not as a file
+>   staged in the runtime.
+> - The harness records a fingerprint of every image it sends (media type,
+>   size, dimensions, SHA-256). It does not keep the image: with the hash,
+>   a re-conversion can be checked, and how production shows what the
+>   model saw is soda-curation's call.
+> - The double compression is soda-curation's, not `mmqc_utils`':
+>   `compress_to_bounded_jpeg` re-encodes from the source at each attempt.
+>   An issue was drafted for soda-curation.
+>
+> **Step 2 done — 2026-10-24.**
+>
+> - **Builder:** `mmqc_utils.agentic.content`, with `figure_image_part`
+>   and `figure_parts`. Production's parameters are constants there
+>   (300 dpi, 2048 px, quality 80), and the source is converted once.
+> - **Image parts carrying bytes:**
+>   `{"kind": "image", "media_type": ..., "data": bytes}` is accepted by
+>   assembly (never written into the runtime), by both renderers, and by
+>   `session_cache_key` (added to the key only when present, so existing
+>   keys are unchanged). An image part names a file or carries bytes,
+>   exactly one of the two.
+> - **Fingerprint:** `render.image_fingerprints`. `run_session` records it
+>   in `tool_audit.json` under `inputs` before anything is sent, so a
+>   failed session still records what the model was shown.
+> - **Not yet changed:** the benchmark's `FigureExample` still sends the
+>   stored file. exp-11 compares the two inputs, and gate 4B decides.
+> - **Checks:** 7 new package tests (single conversion and determinism,
+>   bounding, inline vs staged, the part rule, fingerprints for both
+>   kinds); `mmqc_utils` 114 passed; root 972 passed; the gate 1A snapshot
+>   is still byte-identical.
 
 **Step 3: Human gate 4A — preregistration.** Write
 `thinking/experiments/exp-11-input-parity.md` before any run.

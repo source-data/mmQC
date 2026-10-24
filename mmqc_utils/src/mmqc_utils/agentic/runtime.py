@@ -312,7 +312,9 @@ class ExampleContent:
     #: :attr:`parts` and :attr:`files` is relative to it.
     source_root: Path
     #: What the example is, in order, as provider-neutral parts:
-    #: ``{"kind": "text", "text": str}`` or ``{"kind": "image", "path": str}``.
+    #: ``{"kind": "text", "text": str}``, ``{"kind": "image", "path": str}``,
+    #: or an image carrying its bytes,
+    #: ``{"kind": "image", "media_type": str, "data": bytes}``.
     parts: Tuple[Mapping[str, Any], ...]
     #: Files that accompany the content without being sent: role to a path,
     #: ``None``, or a list of paths. Named in ``input/inputs.json``.
@@ -381,10 +383,14 @@ def _rebase_into_input(value: Any) -> Any:
 def _rebase_parts(
     parts: Sequence[Mapping[str, Any]]
 ) -> Tuple[Mapping[str, Any], ...]:
-    """Rebase image parts onto the runtime; text parts pass through."""
+    """Rebase image paths onto the runtime; everything else passes through.
+
+    An image carrying its bytes has no path to rebase: it travels in the
+    request and is never written into the runtime.
+    """
     rebased: List[Mapping[str, Any]] = []
     for part in parts:
-        if part["kind"] == "image":
+        if part["kind"] == "image" and "path" in part:
             rebased.append({**part, "path": _rebase_into_input(part["path"])})
         else:
             rebased.append(dict(part))
@@ -815,6 +821,7 @@ def session_cache_key(
         "example": digest(
             p for p in layout.input_root.rglob("*") if p.is_file()
         ),
+
         "skill_set": skill_set.digest,
         "model": model,
         "config": hashlib.sha256(canonical.encode()).hexdigest(),
@@ -822,6 +829,15 @@ def session_cache_key(
             layout.schema_path.read_bytes()
         ).hexdigest(),
     }
+    # Images carried in the request are not files in the runtime. Added only
+    # when present, so a key for an all-file example is what it always was.
+    inline = [
+        hashlib.sha256(part["data"]).hexdigest()
+        for part in layout.input_parts
+        if part.get("kind") == "image" and "data" in part
+    ]
+    if inline:
+        parts["inline_images"] = inline
     return hashlib.sha256(
         json.dumps(parts, sort_keys=True).encode()
     ).hexdigest()
