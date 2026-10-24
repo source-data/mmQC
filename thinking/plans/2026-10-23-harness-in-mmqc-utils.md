@@ -604,6 +604,18 @@ deterministic: same input, same bytes.
 **Step 4:** Run, score, and write the results into the experiment note and
 `notebooks/experiments/exp-11-input-parity.ipynb`.
 
+> **Step 4 done — 2026-10-24.**
+>
+> - 222 of 222 sessions answered, $34.16; every arm sent what it claims.
+> - **Non-inferior:** converted − stored, E1 +0.020 [−0.006, +0.058], E2
+>   +0.007 [−0.004, +0.022]. The gain is dispatch, and the arms are level
+>   on complete sessions.
+> - Two E3 decisions are inconclusive, `panel-image-matches-caption`
+>   (−0.012 [−0.027, +0.0004]) and `stat-significance-level`.
+> - Cost is unchanged.
+> - Details: [`exp-11-input-parity.md`](../experiments/exp-11-input-parity.md).
+> - Gate 4B is open.
+
 **Cleanup after exp-11 (decided 2026-10-24).** Remove the `figure-converted`
 example class and the `example_class` override of `run_check_live`: they
 exist only to run exp-11's converted arm. If the builder is adopted, it

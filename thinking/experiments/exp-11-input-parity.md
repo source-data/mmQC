@@ -1,7 +1,7 @@
 ---
 title: exp-11 — the figure as production sends it, against the stored file
 date: 2026-10-24
-status: planned        # draft | planned | running | done | abandoned
+status: done           # draft | planned | running | done | abandoned
 kind: experiment
 tags: [experiment, input, images, production, sonnet, non-inferiority]
 ---
@@ -153,6 +153,7 @@ bound is above **−0.02** (exp-10's margin).
 | date | arm | command | cost | output |
 |------|-----|---------|------|--------|
 | 2026-10-24 | smoke, both arms | `MAGICK_HOME=… run.py --smoke` | $1.16 | `experiments/runs/exp-11-input-parity/smoke/` (not committed) |
+| 2026-10-24 | both arms, 3 replicates | `MAGICK_HOME=… caffeinate -i python experiments/exp-11-input-parity/run.py` | $34.16 ($16.93 stored + $17.24 converted) | `experiments/runs/exp-11-input-parity/`; 222 of 222 answered |
 
 **Smoke test, 2026-10-24.**
 
@@ -164,4 +165,78 @@ bound is above **−0.02** (exp-10's margin).
 
 ## Findings
 
-*(none yet)*
+From `notebooks/experiments/exp-11-input-parity.ipynb`, run on 2026-10-24.
+
+### The arms sent what they claim
+
+All 222 sessions passed the fingerprint check: each sent exactly the image its
+arm requires, and every figure was converted to the same bytes in all three
+replicates.
+
+| arm | media type sent (sessions) | median size | median long edge |
+|---|---|---|---|
+| stored | PNG (45), WebP (42), JPEG (24) | 0.46–1.99 MB | 1,716–2,746 px |
+| converted | JPEG (111) | 0.37 MB | 2,048 px |
+
+No session fell back to another model; 222 of 222 answered.
+
+### The verdict: **non-inferior**
+
+| endpoint | stored | converted | converted − stored | 95% interval | verdict |
+|---|---|---|---|---|---|
+| E1 layer S | 0.9768 | 0.9969 | +0.0200 | [−0.0062, +0.0575] | non-inferior |
+| E2 layer 1 | 0.9774 | 0.9840 | +0.0066 | [−0.0043, +0.0218] | non-inferior |
+
+Both lower bounds are above −0.02.
+
+### Reading
+
+**The difference in the converted arm's favour is dispatch, not images.**
+
+| | stored | converted |
+|---|---|---|
+| sessions with all eleven checks | 101 | 106 |
+| partial | 8 | 5 |
+| no check | 2 | 0 |
+| E1, sessions with all eleven checks | 1.0000 | 0.9969 |
+| E2, sessions with all eleven checks | 0.9863 | 0.9841 |
+
+On complete sessions the two arms are level. Skipped checks are the
+series' known stochastic failure (exp-07); nothing here says the encoding
+caused them, and this experiment cannot tell.
+
+**Secondary, E3.**
+
+- Nine of the eleven decisions are non-inferior.
+- Two are inconclusive:
+  - `panel-image-matches-caption`: −0.0123 [−0.0273, +0.0004];
+  - `stat-significance-level`: −0.0021 [−0.0290, +0.0202].
+- The first is the check that compares the image with the caption, which
+  makes it the one to watch if the conversion is ever tightened. Neither
+  is in the verdict.
+- `micrograph-scale-bar` and `plot-axis-units`, the other fine-text checks,
+  are equivalent.
+
+**Pixels lost do not predict the difference.**
+
+- Model-seen pixels, converted over stored: median 0.93, range 0.63–1.00.
+- Spearman correlation with the per-figure E2 difference: −0.02.
+- The largest per-figure difference (+0.19, `s44321-025-00219-1` Fig. 1)
+  is a figure with partial sessions in both arms.
+
+**Cost is unchanged.**
+
+| | stored | converted |
+|---|---|---|
+| cost per session | $0.153 | $0.155 |
+| input tokens | 63.7k | 64.9k |
+| output tokens | 9.5k | 9.6k |
+| time per session | 51.5 s | 51.5 s |
+
+**For gate 4B.** As preregistered, a non-inferior verdict decides that the
+builder becomes the benchmark's only image path, and that earlier results
+stand, read as describing production's input. The temporary
+`figure-converted` class and the `example_class` override are then removed
+(plan, Milestone 4).
+
+**Not measured, as stated in Scope:** published against submitted figures.
