@@ -297,6 +297,7 @@ from pathlib import Path
 from mmqc_utils.agentic import (
     ExampleContent,
     effective_session_options,
+    figure_parts,
     load_model_defaults,
     run_session,
     runtime_session,
@@ -305,11 +306,8 @@ from mmqc_utils.agentic import (
 
 checklist = Path("fig-checklist")             # a checklist directory
 content = ExampleContent(
-    source_root=Path("figure-3"),             # staged into the runtime; paths below are relative to it
-    parts=(
-        {"kind": "text", "text": "Figure caption:\n" + caption},
-        {"kind": "image", "path": "figure.jpg"},
-    ),
+    source_root=Path("figure-3"),             # staged into the runtime (supporting files live here)
+    parts=figure_parts("figure-3/figure.tif", caption),  # caption, then the figure converted once
     files={},                                 # supporting files, by role (not sent; listed for the session)
     label="figure-3",
 )
@@ -324,7 +322,8 @@ with runtime_session(checklist, "do-fig-checklist-pm", content, parent=Path("/va
 
 - `runtime_session` assembles a sealed runtime for the entry point: the skills its pinned prose reaches, one version each, and the example's content. It yields the runtime and removes it afterwards. The runtime is created under `parent` (default: the system temp directory); keep it off synced folders and outside any repository holding skills.
 - The session has one tool, `Skill`, and no shell, file, network or subagent tools. The example's content travels in the request.
-- `run_session` returns the answer, validated against the entry point's schema, the trace of the skills the session invoked (`trace.invoked`), and an audit of its tool calls and token usage. It raises `ValueError` when the session ends without an answer, or with one that is not JSON or does not satisfy the schema.
+- `figure_parts` converts the figure once (rasterized at 300 dpi, longest side 2048 px, JPEG quality 80) and sends those bytes; build figures with it so the model sees what mmQC benchmarked. An image part either names a file under `source_root` (`{"kind": "image", "path": ...}`) or carries its bytes (`{"kind": "image", "media_type": ..., "data": ...}`).
+- `run_session` returns the answer, validated against the entry point's schema, the trace of the skills the session invoked (`trace.invoked`), and an audit of its tool calls and token usage, which also records a fingerprint (media type, size, dimensions, SHA-256) of every image sent. It raises `ValueError` when the session ends without an answer, or with one that is not JSON or does not satisfy the schema.
 - The harness logs under `mmqc_utils.agentic` and configures no handlers.
 
 ## Development
