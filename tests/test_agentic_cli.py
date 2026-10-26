@@ -3274,8 +3274,8 @@ class TestToolAudit:
         path = tmp_path / "a.json"
         ToolAuditLog(path)
         assert json.loads(path.read_text()) == {
-            "session": {}, "inputs": [], "usage": {}, "turns": [], "events": [],
-            "calls": [],
+            "session": {}, "orientation": {}, "inputs": [], "usage": {},
+            "turns": [], "events": [], "calls": [],
         }
 
     def test_the_audit_records_what_the_sdk_reported_at_startup(

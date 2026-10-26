@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Added
+- `orientation=` on `assemble_runtime` and `runtime_session`: a file copied verbatim as the runtime's `CLAUDE.md`, in place of the harness's mmQC template, for applications whose sessions do something else. A missing file, a directory or a symbolic link is refused. Without it, the runtime is as before.
+- `RuntimeLayout.orientation_source` and `.orientation_sha256`; the audit (`tool_audit.json`) records both under `orientation`.
+
+### Changed
+- `session_cache_key` includes the SHA-256 of the runtime's `CLAUDE.md`. Keys computed before this change no longer match, including for runs on the default template.
+
 ## [0.1.0] - Unreleased
 
 First version, separated from mmQC (`soda_mmqc.agentic`), where it was developed and benchmarked.

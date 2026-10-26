@@ -143,14 +143,21 @@ AGENTIC_MAX_BUFFER_BYTES = 64 * 1024 * 1024
 #: orientation file: the SDK loads it automatically when `setting_sources`
 #: includes "project" (which it does), so the session starts with the layout
 #: already in context instead of spending its first turn reading a file. It is
-#: static -- identical for every run -- and everything per-run lives in the
-#: manifest below.
+#: the same for every run of an application -- everything per-run lives in
+#: the manifest below.
 AGENTIC_ORIENTATION_FILENAME = "CLAUDE.md"
 
-#: Template copied verbatim into each runtime as `CLAUDE.md`. It lives
-#: beside the harness rather than under `data/` because it is what dictates
-#: the agent's general behaviour, not a data asset a checklist owns.
+#: Template copied verbatim into each runtime as `CLAUDE.md`, unless the
+#: caller supplies its own orientation. It lives beside the harness rather
+#: than under `data/` because it is what dictates the agent's general
+#: behaviour, not a data asset a checklist owns. It is written for mmQC's
+#: checks; an application whose sessions do something else (reviewing a whole
+#: manuscript, say) passes ``orientation=`` instead of rewriting the file after
+#: assembly, so the audit and the cache key see what the session was told.
 AGENTIC_CLAUDE_TEMPLATE = Path(__file__).resolve().parent / "CLAUDE.md"
+
+#: How the audit and the layout name the harness's own template.
+DEFAULT_ORIENTATION_SOURCE = "default"
 
 #: Per-run manifest naming exactly what the harness staged. Machine-readable
 #: on purpose: which files exist is data, not prose, and the agent has no way
@@ -349,6 +356,12 @@ class RuntimeLayout:
     #: values rebased onto this runtime.
     input_parts: Tuple[Mapping[str, Any], ...] = ()
 
+    #: Where the runtime's `CLAUDE.md` came from: the caller's path, or
+    #: ``"default"`` for the harness's template.
+    orientation_source: str = DEFAULT_ORIENTATION_SOURCE
+    #: SHA-256 of the runtime's `CLAUDE.md`, as staged.
+    orientation_sha256: str = ""
+
 
 
 def _copy_skill(skill: Skill, destination: Path) -> None:
@@ -422,6 +435,25 @@ def _write_input_manifest(
     path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
 
 
+def _orientation_file(orientation: Optional[Path]) -> Tuple[Path, str]:
+    """The file staged as `CLAUDE.md`, and how the audit names it.
+
+    A symlink is refused before anything else: it would put a path outside
+    the runtime behind the session's standing instructions, and
+    `_assert_sealed` refuses links anyway -- better to say why up front.
+    """
+    if orientation is None:
+        return AGENTIC_CLAUDE_TEMPLATE, DEFAULT_ORIENTATION_SOURCE
+    path = Path(orientation)
+    if path.is_symlink():
+        raise ValueError(f"The orientation file is a symbolic link: {path}")
+    if not path.exists():
+        raise ValueError(f"The orientation file does not exist: {path}")
+    if not path.is_file():
+        raise ValueError(f"The orientation is not a regular file: {path}")
+    return path, str(path.absolute())
+
+
 def assemble_runtime(
     checklist_dir: Path,
     check: str,
@@ -431,6 +463,7 @@ def assemble_runtime(
     parent: Optional[Path] = None,
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
+    orientation: Optional[Path] = None,
 ) -> RuntimeLayout:
     """Assemble a sealed runtime directory for one example.
 
@@ -468,12 +501,17 @@ def assemble_runtime(
             ``version-manifest.yaml``, and -- only when there is none -- to
             the highest version of each skill.
         assembly: ``"closure"`` (default) or ``"all"``.
+        orientation: A file copied verbatim as the runtime's ``CLAUDE.md``,
+            the session's standing instructions. Defaults to the harness's
+            template, which is written for mmQC's checks. Its source and
+            SHA-256 are on the layout, in the audit and in the cache key.
 
     Raises:
         FileNotFoundError: If the checklist or the content's source
             directory is absent.
         ValueError: If the check is not a skill of the checklist, has no
-            ``schema.json``, or the skills are invalid.
+            ``schema.json``, or the skills are invalid; or if the
+            orientation is missing, not a regular file, or a symbolic link.
     """
     checklist_dir = Path(checklist_dir)
     if not checklist_dir.is_dir():
@@ -512,6 +550,7 @@ def assemble_runtime(
         raise FileNotFoundError(
             f"The content of {content.label} is not a directory: {input_dir}"
         )
+    orientation_file, orientation_source = _orientation_file(orientation)
 
     if root is None:
         root = Path(
@@ -551,6 +590,10 @@ def assemble_runtime(
         (staging / AGENTIC_ARTIFACTS_SUBDIR).mkdir()
         (staging / AGENTIC_AGENT_HOME_SUBDIR).mkdir()
 
+        _write_input_manifest(staging, content.files)
+        staged_orientation = staging / AGENTIC_ORIENTATION_FILENAME
+        shutil.copy2(orientation_file, staged_orientation)
+
         layout = RuntimeLayout(
             root=root,
             skills_root=root / AGENTIC_SKILLS_SUBDIR,
@@ -562,10 +605,11 @@ def assemble_runtime(
             schema_path=root / AGENTIC_SKILLS_SUBDIR / check / "schema.json",
             example=content.label,
             input_parts=_rebase_parts(content.parts),
-        )
-        _write_input_manifest(staging, content.files)
-        shutil.copy2(
-            AGENTIC_CLAUDE_TEMPLATE, staging / AGENTIC_ORIENTATION_FILENAME
+            orientation_source=orientation_source,
+            # Hashed as staged, not as found: what the session reads.
+            orientation_sha256=hashlib.sha256(
+                staged_orientation.read_bytes()
+            ).hexdigest(),
         )
 
         _assert_sealed(staging)
@@ -785,7 +829,8 @@ def session_cache_key(
     different path could never reuse a cached result -- and, worse, that the
     cache would encode our expectation of how discovery should go. The inputs
     are what determine the output: the example, the SkillSet, the model, the
-    effective configuration, and the schema the answer must satisfy.
+    effective configuration, the schema the answer must satisfy, and the
+    standing instructions in the runtime's `CLAUDE.md`.
 
     The skills term is the **SkillSet digest** rather than a raw hash of the
     assembled files, so that a cache entry is attributable to the same
@@ -827,6 +872,11 @@ def session_cache_key(
         "config": hashlib.sha256(canonical.encode()).hexdigest(),
         "leaf_schema": hashlib.sha256(
             layout.schema_path.read_bytes()
+        ).hexdigest(),
+        # Read from the runtime, like the rest: a `CLAUDE.md` changed after
+        # assembly keys differently, which is the honest answer.
+        "orientation": hashlib.sha256(
+            layout.orientation_path.read_bytes()
         ).hexdigest(),
     }
     # Images carried in the request are not files in the runtime. Added only

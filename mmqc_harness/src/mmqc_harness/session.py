@@ -94,6 +94,7 @@ def runtime_session(
     keep: bool = False,
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
+    orientation: Optional[Path] = None,
 ) -> Iterator[RuntimeLayout]:
     """Assemble a runtime, yield it, and remove it afterwards.
 
@@ -105,7 +106,7 @@ def runtime_session(
     """
     layout = assemble_runtime(
         checklist_dir, check, content, root=root, parent=parent, pins=pins,
-        assembly=assembly,
+        assembly=assembly, orientation=orientation,
     )
     try:
         yield layout
@@ -452,6 +453,10 @@ async def run_session(
     # Before anything is sent, so a session that fails still records what
     # the model was shown.
     audit.note_inputs(image_fingerprints(layout.input_parts, layout.root))
+    audit.note_orientation(
+        {"source": layout.orientation_source,
+         "sha256": layout.orientation_sha256}
+    )
     run = client or _default_client
     options = dict(options if options is not None else session_options(layout))
     options["hooks"] = {
@@ -569,6 +574,10 @@ class ToolAuditLog:
         #: size, dimensions, SHA-256 -- so what the model saw can be checked
         #: later without keeping the image.
         self.inputs: List[Dict[str, Any]] = []
+        #: The session's standing instructions, the runtime's `CLAUDE.md`:
+        #: where it came from (a path, or "default" for the harness's
+        #: template) and its SHA-256.
+        self.orientation: Dict[str, Any] = {}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._flush()
 
@@ -597,6 +606,7 @@ class ToolAuditLog:
             json.dumps(
                 {
                     "session": self.session_info,
+                    "orientation": self.orientation,
                     "inputs": self.inputs,
                     "usage": self.usage,
                     "turns": self.turns,
@@ -612,6 +622,10 @@ class ToolAuditLog:
 
     def note_inputs(self, fingerprints: Sequence[Mapping[str, Any]]) -> None:
         self.inputs = [dict(f) for f in fingerprints]
+        self._flush()
+
+    def note_orientation(self, info: Mapping[str, Any]) -> None:
+        self.orientation = dict(info)
         self._flush()
 
     def note_session(self, info: Mapping[str, Any]) -> None:

@@ -98,7 +98,7 @@ ExampleContent(
 - builds the runtime in a staging directory under `parent`, then renames it into place, so a failed assembly leaves nothing behind. The runtime holds:
   - `.claude/skills/<name>/SKILL.md`, flattened from the version folders, each with its `schema.json` if it has one;
   - `input/`, the content staged from `source_root`, minus `exclude`, plus `inputs.json` naming the supporting files;
-  - `CLAUDE.md`, the session's standing instructions: one tool, nothing to open, follow the skill you were dispatched with;
+  - `CLAUDE.md`, the session's standing instructions. By default the harness's template, written for mmQC's checks: one tool, nothing to open, follow the skill you were dispatched with. `orientation=Path(...)` copies the caller's file instead, verbatim; a missing file, a directory or a symbolic link is refused. Its source and SHA-256 are on the layout, in the audit (`orientation` in `tool_audit.json`) and in the cache key;
   - `agent-home/`, where the SDK keeps its transcript, so it never lands in your home directory;
   - `artifacts/`, where the answer and the sidecars are written;
 - **refuses a runtime that leaks:** any `benchmark.json`, `eval-manifest.json`, `checks/` folder or symbolic link, wherever it sits.
@@ -209,7 +209,7 @@ Errors from the SDK itself, such as a bad API key, no credit or a lost connectio
 - **One session per example.** Sessions share nothing: each has its own runtime, its own SDK process and its own answer.
 - **Run them concurrently.** A `fig-checklist` session takes 25–30 turns, about a minute with Sonnet 5.5, and costs about $0.15. mmQC runs 38 at a time in a thread pool, each thread running its session's event loop with `asyncio.run`.
 - **Expect some partial dispatch.** In a few percent of sessions the agent answers some checks without invoking them. `trace.invoked` shows it. Decide per application whether to retry such a session.
-- **Caching.** `runtime.session_cache_key(layout, model=…, options=…)` keys a session by everything that can change its answer: content, skill set, model, options and schema. Never by its trace.
+- **Caching.** `runtime.session_cache_key(layout, model=…, options=…)` keys a session by everything that can change its answer: content, skill set, model, options, schema and the runtime's `CLAUDE.md`. Never by its trace.
 
 ---
 
@@ -274,10 +274,10 @@ On top of it, the `mmqc-skills` command and its functions:
 | name | signature, and what it does |
 |---|---|
 | `ExampleContent` | dataclass: `source_root`, `parts`, `files`, `label`, `exclude=()` |
-| `RuntimeLayout` | dataclass: the assembled runtime's paths (`root`, `skills_root`, `input_root`, `artifacts_root`, `agent_home`, `orientation_path`, `schema_path`), `entry_point`, `example`, `input_parts` |
+| `RuntimeLayout` | dataclass: the assembled runtime's paths (`root`, `skills_root`, `input_root`, `artifacts_root`, `agent_home`, `orientation_path`, `schema_path`), `entry_point`, `example`, `input_parts`, `orientation_source` (a path, or `"default"`), `orientation_sha256` |
 | `figure_parts` | `(source, caption) -> tuple of parts`: the caption, then the figure converted once |
 | `figure_image_part` | `(source) -> part`: the figure converted once, as bytes |
-| `assemble_runtime` | `(checklist_dir, check, content, *, root=None, parent=None, pins=None, assembly="closure") -> RuntimeLayout` |
+| `assemble_runtime` | `(checklist_dir, check, content, *, root=None, parent=None, pins=None, assembly="closure", orientation=None) -> RuntimeLayout`. `orientation` is a file copied verbatim as the runtime's `CLAUDE.md`; `None` uses the harness's template |
 | `runtime_session` | the same as a context manager, `keep=False`; removes the runtime on exit |
 | `session_options` | `(layout) -> dict`: the permission profile |
 | `effective_session_options` | `(layout, skills, *, defaults=None) -> dict`: plus the checklist's session defaults |

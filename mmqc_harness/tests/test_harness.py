@@ -30,9 +30,11 @@ from mmqc_harness import (
 )
 from mmqc_harness.render import render_anthropic
 from mmqc_harness.runtime import (
+    AGENTIC_CLAUDE_TEMPLATE,
     AGENTIC_FORBIDDEN_TOOLS,
     AGENTIC_INPUT_MANIFEST_FILENAME,
     ASSEMBLY_ALL,
+    session_cache_key,
 )
 
 # Smallest valid PNG (1x1, transparent).
@@ -179,6 +181,82 @@ def test_the_runtime_session_removes_the_runtime(checklist, content, tmp_path):
     with runtime_session(checklist, "do-toy", content, root=tmp_path / "rt") as layout:
         assert layout.root.is_dir()
     assert not layout.root.exists()
+
+
+# --- the orientation (`CLAUDE.md`) -------------------------------------------
+
+
+def _sha256(data: bytes) -> str:
+    import hashlib
+
+    return hashlib.sha256(data).hexdigest()
+
+
+@pytest.fixture
+def orientation(tmp_path) -> Path:
+    path = tmp_path / "review-orientation.md"
+    path.write_bytes(b"# Manuscript review\n\nWrite a peer review.\r\n\xc3\xa9\n")
+    return path
+
+
+def test_the_default_orientation_is_the_template(checklist, content, tmp_path):
+    layout = assemble_runtime(checklist, "do-toy", content, root=tmp_path / "rt")
+    template = AGENTIC_CLAUDE_TEMPLATE.read_bytes()
+    assert layout.orientation_path.read_bytes() == template
+    assert layout.orientation_source == "default"
+    assert layout.orientation_sha256 == _sha256(template)
+
+
+def test_a_custom_orientation_is_copied_verbatim_and_recorded(checklist, content, orientation, tmp_path):
+    layout = assemble_runtime(checklist, "do-toy", content, root=tmp_path / "rt", orientation=orientation)
+    assert layout.orientation_path == layout.root / "CLAUDE.md"
+    assert layout.orientation_path.read_bytes() == orientation.read_bytes()
+    assert layout.orientation_source == str(orientation)
+    assert layout.orientation_sha256 == _sha256(orientation.read_bytes())
+
+    client = _client({"result": json.dumps({"verdict": "pass"})})
+    _, _, audit = asyncio.run(run_session(layout, client=client))
+    recorded = json.loads(audit.path.read_text(encoding="utf-8"))
+    assert recorded["orientation"] == {
+        "source": str(orientation), "sha256": _sha256(orientation.read_bytes()),
+    }
+
+
+def test_the_runtime_session_passes_the_orientation(checklist, content, orientation, tmp_path):
+    with runtime_session(checklist, "do-toy", content, root=tmp_path / "rt", orientation=orientation) as layout:
+        assert layout.orientation_path.read_bytes() == orientation.read_bytes()
+
+
+def _symlink(tmp_path, orientation):
+    link = tmp_path / "link.md"
+    link.symlink_to(orientation)
+    return link
+
+
+@pytest.mark.parametrize("make, reason", [
+    (lambda tmp_path, orientation: tmp_path / "absent.md", "does not exist"),
+    (lambda tmp_path, orientation: tmp_path, "not a regular file"),
+    (_symlink, "symbolic link"),
+], ids=["missing", "directory", "symlink"])
+def test_an_unusable_orientation_is_refused(checklist, content, orientation, tmp_path, make, reason):
+    root = tmp_path / "rt"
+    with pytest.raises(ValueError, match=reason):
+        assemble_runtime(checklist, "do-toy", content, root=root, orientation=make(tmp_path, orientation))
+    assert not root.exists(), "a refused assembly leaves nothing behind"
+
+
+def test_the_cache_key_follows_the_orientation(checklist, content, orientation, tmp_path):
+    def key(name, orientation=None):
+        layout = assemble_runtime(checklist, "do-toy", content, root=tmp_path / name, orientation=orientation)
+        return session_cache_key(layout, model="m", options=session_options(layout))
+
+    assert key("a") == key("b")
+    assert key("c", orientation) == key("d", orientation)
+    assert key("e", orientation) != key("f")
+
+    changed = tmp_path / "changed.md"
+    changed.write_bytes(orientation.read_bytes() + b"One more line.\n")
+    assert key("g", changed) != key("h", orientation)
 
 
 # --- the permission profile -------------------------------------------------

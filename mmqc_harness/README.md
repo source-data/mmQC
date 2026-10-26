@@ -108,7 +108,12 @@ One thing: invoke a skill. It has the `Skill` tool and nothing else:
 - only the project's settings;
 - its transcript is kept inside the runtime.
 
-The content arrives in the request, and the answer is the structured output. `session_options(layout)` returns the exact profile, and the permission profile is not configurable. Checklist defaults (`model-defaults.yaml`) may set the model and session knobs such as `max_turns`, nothing else.
+The content arrives in the request, and the answer is the structured output. `session_options(layout)` returns the exact profile, and the permission profile is not configurable.
+
+**Its standing instructions** are the runtime's `CLAUDE.md`. By default it is the harness's template, written for mmQC's checks. An application whose sessions do something else passes its own file: `runtime_session(..., orientation=Path("review.md"))`, or the same argument to `assemble_runtime`.
+- The file is copied verbatim. A missing file, a directory or a symbolic link is refused.
+- Its source (a path, or `"default"`) and SHA-256 are on the layout (`layout.orientation_source`, `layout.orientation_sha256`), in `tool_audit.json` under `orientation`, and in `session_cache_key`.
+- It changes what the session is told, not what it may do: the permission profile is the same. Checklist defaults (`model-defaults.yaml`) may set the model and session knobs such as `max_turns`, nothing else.
 
 ## The production rules
 
