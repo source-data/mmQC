@@ -259,6 +259,62 @@ def test_the_cache_key_follows_the_orientation(checklist, content, orientation, 
     assert key("g", changed) != key("h", orientation)
 
 
+# --- the instruction that opens the request ----------------------------------
+
+
+REVIEW = "Write a peer review of the manuscript below, starting with `do-toy`."
+
+
+def _sent(layout):
+    sent = []
+
+    async def client(parts, options):
+        sent.extend(parts)
+        yield {"result": json.dumps({"verdict": "pass"})}
+
+    _, _, audit = asyncio.run(run_session(layout, client=client))
+    return sent, json.loads(audit.path.read_text(encoding="utf-8"))
+
+
+def test_the_default_instruction_names_the_entry_point(checklist, content, tmp_path):
+    layout = assemble_runtime(checklist, "do-toy", content, root=tmp_path / "rt")
+    expected = (
+        "Apply the `do-toy` check to the example below, and answer with the "
+        "structured output you were given a schema for."
+    )
+    sent, audit = _sent(layout)
+    assert sent[0] == {"kind": "text", "text": expected}
+    assert sent[1:] == list(layout.input_parts)
+    assert audit["instruction"] == {"source": "default", "sha256": _sha256(expected.encode())}
+
+
+def test_a_custom_instruction_is_sent_verbatim_and_recorded(checklist, content, tmp_path):
+    with runtime_session(checklist, "do-toy", content, root=tmp_path / "rt", instruction=REVIEW) as layout:
+        assert (layout.instruction, layout.instruction_source) == (REVIEW, "caller")
+        assert layout.instruction_sha256 == _sha256(REVIEW.encode())
+        sent, audit = _sent(layout)
+    assert sent[0] == {"kind": "text", "text": REVIEW}
+    assert audit["instruction"] == {"source": "caller", "sha256": _sha256(REVIEW.encode())}
+
+
+@pytest.mark.parametrize("instruction", ["", "  \n", b"bytes"], ids=["empty", "blank", "bytes"])
+def test_an_unusable_instruction_is_refused(checklist, content, tmp_path, instruction):
+    root = tmp_path / "rt"
+    with pytest.raises(ValueError, match="instruction"):
+        assemble_runtime(checklist, "do-toy", content, root=root, instruction=instruction)
+    assert not root.exists()
+
+
+def test_the_cache_key_follows_the_instruction(checklist, content, tmp_path):
+    def key(name, instruction=None):
+        layout = assemble_runtime(checklist, "do-toy", content, root=tmp_path / name, instruction=instruction)
+        return session_cache_key(layout, model="m", options=session_options(layout))
+
+    assert key("a", REVIEW) == key("b", REVIEW)
+    assert key("c", REVIEW) != key("d")
+    assert key("e", REVIEW) != key("f", REVIEW + " Be brief.")
+
+
 # --- the permission profile -------------------------------------------------
 
 

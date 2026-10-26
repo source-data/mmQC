@@ -95,6 +95,7 @@ def runtime_session(
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
     orientation: Optional[Path] = None,
+    instruction: Optional[str] = None,
 ) -> Iterator[RuntimeLayout]:
     """Assemble a runtime, yield it, and remove it afterwards.
 
@@ -106,7 +107,7 @@ def runtime_session(
     """
     layout = assemble_runtime(
         checklist_dir, check, content, root=root, parent=parent, pins=pins,
-        assembly=assembly, orientation=orientation,
+        assembly=assembly, orientation=orientation, instruction=instruction,
     )
     try:
         yield layout
@@ -281,15 +282,11 @@ def _session_message(layout: RuntimeLayout) -> List[Dict[str, Any]]:
     file. A session cannot fail to fetch what it was already given, which is
     why the gate that used to check is gone -- and why the session has no
     file tool left to fetch anything with.
+
+    The instruction's wording was settled at assembly: mmQC's by default, or
+    the caller's own.
     """
-    instruction = {
-        "kind": "text",
-        "text": (
-            f"Apply the `{layout.entry_point}` check to the example below, "
-            f"and answer with the structured output you were given a schema "
-            f"for."
-        ),
-    }
+    instruction = {"kind": "text", "text": layout.instruction}
     return [instruction, *(dict(part) for part in layout.input_parts)]
 
 
@@ -457,6 +454,10 @@ async def run_session(
         {"source": layout.orientation_source,
          "sha256": layout.orientation_sha256}
     )
+    audit.note_instruction(
+        {"source": layout.instruction_source,
+         "sha256": layout.instruction_sha256}
+    )
     run = client or _default_client
     options = dict(options if options is not None else session_options(layout))
     options["hooks"] = {
@@ -578,6 +579,9 @@ class ToolAuditLog:
         #: where it came from (a path, or "default" for the harness's
         #: template) and its SHA-256.
         self.orientation: Dict[str, Any] = {}
+        #: The text that opened the request: "default" or "caller", and its
+        #: SHA-256. The text itself is on the layout.
+        self.instruction: Dict[str, Any] = {}
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._flush()
 
@@ -607,6 +611,7 @@ class ToolAuditLog:
                 {
                     "session": self.session_info,
                     "orientation": self.orientation,
+                    "instruction": self.instruction,
                     "inputs": self.inputs,
                     "usage": self.usage,
                     "turns": self.turns,
@@ -626,6 +631,10 @@ class ToolAuditLog:
 
     def note_orientation(self, info: Mapping[str, Any]) -> None:
         self.orientation = dict(info)
+        self._flush()
+
+    def note_instruction(self, info: Mapping[str, Any]) -> None:
+        self.instruction = dict(info)
         self._flush()
 
     def note_session(self, info: Mapping[str, Any]) -> None:

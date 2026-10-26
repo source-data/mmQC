@@ -159,6 +159,17 @@ AGENTIC_CLAUDE_TEMPLATE = Path(__file__).resolve().parent / "CLAUDE.md"
 #: How the audit and the layout name the harness's own template.
 DEFAULT_ORIENTATION_SOURCE = "default"
 
+#: The opening line of the session's request, before the content, unless the
+#: caller supplies its own. Like the template, it is written for mmQC's
+#: checks; ``{entry}`` is the entry point.
+AGENTIC_DEFAULT_INSTRUCTION = (
+    "Apply the `{entry}` check to the example below, and answer with the "
+    "structured output you were given a schema for."
+)
+
+#: How the audit and the layout name an instruction the caller supplied.
+CALLER_INSTRUCTION_SOURCE = "caller"
+
 #: Per-run manifest naming exactly what the harness staged. Machine-readable
 #: on purpose: which files exist is data, not prose, and the agent has no way
 #: to discover them otherwise.
@@ -362,6 +373,13 @@ class RuntimeLayout:
     #: SHA-256 of the runtime's `CLAUDE.md`, as staged.
     orientation_sha256: str = ""
 
+    #: The text that opens the session's request, before the content.
+    instruction: str = ""
+    #: ``"default"`` for the harness's wording, ``"caller"`` otherwise.
+    instruction_source: str = DEFAULT_ORIENTATION_SOURCE
+    #: SHA-256 of :attr:`instruction`, UTF-8 encoded.
+    instruction_sha256: str = ""
+
 
 
 def _copy_skill(skill: Skill, destination: Path) -> None:
@@ -454,6 +472,21 @@ def _orientation_file(orientation: Optional[Path]) -> Tuple[Path, str]:
     return path, str(path.absolute())
 
 
+def _instruction_text(
+    instruction: Optional[str], entry_point: str
+) -> Tuple[str, str]:
+    """The text that opens the session's request, and how the audit names
+    it."""
+    if instruction is None:
+        return (
+            AGENTIC_DEFAULT_INSTRUCTION.format(entry=entry_point),
+            DEFAULT_ORIENTATION_SOURCE,
+        )
+    if not isinstance(instruction, str) or not instruction.strip():
+        raise ValueError("The instruction must be a non-empty string")
+    return instruction, CALLER_INSTRUCTION_SOURCE
+
+
 def assemble_runtime(
     checklist_dir: Path,
     check: str,
@@ -464,6 +497,7 @@ def assemble_runtime(
     pins: Optional[Mapping[str, str]] = None,
     assembly: str = ASSEMBLY_CLOSURE,
     orientation: Optional[Path] = None,
+    instruction: Optional[str] = None,
 ) -> RuntimeLayout:
     """Assemble a sealed runtime directory for one example.
 
@@ -505,13 +539,19 @@ def assemble_runtime(
             the session's standing instructions. Defaults to the harness's
             template, which is written for mmQC's checks. Its source and
             SHA-256 are on the layout, in the audit and in the cache key.
+        instruction: The text that opens the session's request, before the
+            content, sent verbatim. Defaults to mmQC's "Apply the `<check>`
+            check to the example below, ...". Recorded and hashed like the
+            orientation. Name the entry point in it if the session should
+            start there: nothing else in the request does.
 
     Raises:
         FileNotFoundError: If the checklist or the content's source
             directory is absent.
         ValueError: If the check is not a skill of the checklist, has no
             ``schema.json``, or the skills are invalid; or if the
-            orientation is missing, not a regular file, or a symbolic link.
+            orientation is missing, not a regular file, or a symbolic link;
+            or if the instruction is empty.
     """
     checklist_dir = Path(checklist_dir)
     if not checklist_dir.is_dir():
@@ -551,6 +591,7 @@ def assemble_runtime(
             f"The content of {content.label} is not a directory: {input_dir}"
         )
     orientation_file, orientation_source = _orientation_file(orientation)
+    instruction_text, instruction_source = _instruction_text(instruction, check)
 
     if root is None:
         root = Path(
@@ -609,6 +650,11 @@ def assemble_runtime(
             # Hashed as staged, not as found: what the session reads.
             orientation_sha256=hashlib.sha256(
                 staged_orientation.read_bytes()
+            ).hexdigest(),
+            instruction=instruction_text,
+            instruction_source=instruction_source,
+            instruction_sha256=hashlib.sha256(
+                instruction_text.encode("utf-8")
             ).hexdigest(),
         )
 
@@ -829,8 +875,9 @@ def session_cache_key(
     different path could never reuse a cached result -- and, worse, that the
     cache would encode our expectation of how discovery should go. The inputs
     are what determine the output: the example, the SkillSet, the model, the
-    effective configuration, the schema the answer must satisfy, and the
-    standing instructions in the runtime's `CLAUDE.md`.
+    effective configuration, the schema the answer must satisfy, the
+    standing instructions in the runtime's `CLAUDE.md`, and the instruction
+    that opens the request.
 
     The skills term is the **SkillSet digest** rather than a raw hash of the
     assembled files, so that a cache entry is attributable to the same
@@ -877,6 +924,9 @@ def session_cache_key(
         # assembly keys differently, which is the honest answer.
         "orientation": hashlib.sha256(
             layout.orientation_path.read_bytes()
+        ).hexdigest(),
+        "instruction": hashlib.sha256(
+            layout.instruction.encode("utf-8")
         ).hexdigest(),
     }
     # Images carried in the request are not files in the runtime. Added only

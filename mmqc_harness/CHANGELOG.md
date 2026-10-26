@@ -7,9 +7,10 @@ All notable changes to this project will be documented here.
 ### Added
 - `orientation=` on `assemble_runtime` and `runtime_session`: a file copied verbatim as the runtime's `CLAUDE.md`, in place of the harness's mmQC template, for applications whose sessions do something else. A missing file, a directory or a symbolic link is refused. Without it, the runtime is as before.
 - `RuntimeLayout.orientation_source` and `.orientation_sha256`; the audit (`tool_audit.json`) records both under `orientation`.
+- `instruction=` on `assemble_runtime` and `runtime_session`: the text that opens the session's request, in place of mmQC's "Apply the `<entry>` check …". It is sent verbatim; an empty one is refused. `RuntimeLayout.instruction`, `.instruction_source` and `.instruction_sha256`; the audit records source and hash under `instruction`.
 
 ### Changed
-- `session_cache_key` includes the SHA-256 of the runtime's `CLAUDE.md`. Keys computed before this change no longer match, including for runs on the default template.
+- `session_cache_key` includes the SHA-256 of the runtime's `CLAUDE.md` and of the opening instruction. Keys computed before this change no longer match, including for runs on the default template.
 
 ## [0.1.0] - Unreleased
 
